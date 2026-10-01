@@ -968,7 +968,7 @@ function recognizeNames(lines) {
     if (HEAD.test(l) && !/,/.test(l)) continue;
     let g = ''; const gm = l.match(/(?:\(|\s|^)(w|m|d|weiblich|männlich|divers)(?:\)|\s|$)/i);
     if (gm) { const v = gm[1].toLowerCase(); g = v[0] === 'w' ? 'w' : v[0] === 'm' ? 'm' : 'd'; l = l.replace(gm[0], ' '); }
-    l = l.replace(/\b\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})\b/g, ' ').replace(/\b\d+[a-z]?\b/gi, ' ').replace(/\b(ev|rk|ak|eth|isl|ohne|RK|EV|K|E)\b\.?/g, ' ').replace(/[|•·]/g, ' ').replace(/\s+/g, ' ').trim();
+    l = l.replace(/\b\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})\b/g, ' ').replace(/\b\d+[a-z]?\b/gi, ' ').replace(/(?<![\p{L}\p{N}])(ev|rk|ak|eth|isl|ohne|RK|EV|K|E)(?![\p{L}\p{N}])\.?/gu, ' ').replace(/[|•·]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!l || !/[A-Za-zÀ-ÿ]{2}/.test(l)) continue;
     let first, last;
     if (l.includes(',')) { const p = l.split(',').map(x => x.trim()).filter(Boolean); last = p[0]; first = (p[1] || '').split(' ').filter(Boolean).join(' '); }
