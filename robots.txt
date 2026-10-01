@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://theisapps.de/sitemap.xml

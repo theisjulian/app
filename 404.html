@@ -15,7 +15,9 @@
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-<meta property="og:image" content="assets/img/theis-512.png">
+<meta property="og:image" content="https://theisapps.de/assets/img/theis-512.png">
+<meta property="og:url" content="https://theisapps.de/404.html">
+<link rel="canonical" href="https://theisapps.de/404.html">
 <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -36,10 +38,11 @@
 </main>
 <footer><div class="wrap">
   <div>© 2026 theis · Apps für die Schule</div>
-  <nav aria-label="Rechtliches"><a href="lizenz.html">Lizenz</a><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></nav>
+  <nav aria-label="Rechtliches"><a href="lizenz.html">Lizenz</a><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="impressum.html#kontakt">Kontakt</a></nav>
 </div></footer>
 <script>
 (()=>{const t=document.getElementById('top');const f=()=>t.classList.toggle('scrolled',scrollY>4);addEventListener('scroll',f,{passive:true});f();})();
+document.querySelectorAll('a.em').forEach(a=>{const m=a.dataset.u+'@'+a.dataset.d;a.href='mailto:'+m+(a.dataset.s?'?subject='+encodeURIComponent(a.dataset.s):'');if(a.textContent.includes('[at]'))a.textContent=m;});
 </script>
 </body>
 </html>
