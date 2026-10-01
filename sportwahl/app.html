@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sportwahl Planung</title>
+<style>@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(../assets/fonts/barlow-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(../assets/fonts/barlow-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:'Barlow';font-style:normal;font-weight:500;font-display:swap;src:url(../assets/fonts/barlow-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Barlow';font-style:normal;font-weight:500;font-display:swap;src:url(../assets/fonts/barlow-latin-ext-500-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(../assets/fonts/barlow-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(../assets/fonts/barlow-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url(../assets/fonts/barlow-condensed-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url(../assets/fonts/barlow-condensed-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:700;font-display:swap;src:url(../assets/fonts/barlow-condensed-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:700;font-display:swap;src:url(../assets/fonts/barlow-condensed-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:500;font-display:swap;src:url(../assets/fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}</style>
+
+<style>
+/* Layout: Arbeitswerkzeug mit Reitern in Reihenfolge des Ablaufs; Farben der Gruppen A/B/C als Hallenlinien */
+:root {
+  --bg: #f2f4f3; --surface: #ffffff; --ink: #17202b; --muted: #596473; --line: #d6dbd8; --sunk: #e9edeb;
+  --accent: #0a5bd3; --accent-ink: #ffffff; --soft: #e6edf8;
+  --gA: #0f8a6c; --gB: #c2410c; --gC: #6d45d9;
+  --ok: #2b8a3e; --warn: #a86b00; --bad: #c92a2a; --okbg: #e6f4ea; --warnbg: #fff3d6; --badbg: #fde8e8;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11151a; --surface: #1a2027; --ink: #e7eaee; --muted: #9aa5b2; --line: #2d3540; --sunk: #151a20;
+  --accent: #5b9dff; --accent-ink: #0b1220; --soft: #1f2a3a; --gA: #3fc39c; --gB: #ff8a4c; --gC: #a58cff;
+  --ok: #51cf66; --warn: #f0b429; --bad: #ff6b6b; --okbg: #17301f; --warnbg: #33290f; --badbg: #3a1c1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11151a; --surface: #1a2027; --ink: #e7eaee; --muted: #9aa5b2; --line: #2d3540; --sunk: #151a20;
+  --accent: #5b9dff; --accent-ink: #0b1220; --soft: #1f2a3a; --gA: #3fc39c; --gB: #ff8a4c; --gC: #a58cff;
+  --ok: #51cf66; --warn: #f0b429; --bad: #ff6b6b; --okbg: #17301f; --warnbg: #33290f; --badbg: #3a1c1c; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+.lines { height: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.lines span:nth-child(1) { background: var(--gA); } .lines span:nth-child(2) { background: var(--gB); } .lines span:nth-child(3) { background: var(--gC); }
+.shell { max-width: 1240px; margin: 0 auto; padding: 0 16px 48px; display: grid; gap: 18px; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-end; justify-content: space-between; padding-block: 18px 0; }
+.brand h1 { font: 700 34px/1 var(--f-display); margin: 0; letter-spacing: .01em; }
+.brand .sub { color: var(--muted); font-size: 14px; }
+nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 4; padding-top: 6px; }
+nav.tabs button { font: 600 15px var(--f-body); background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 12px 9px; color: var(--muted); cursor: pointer; display: flex; gap: 6px; align-items: baseline; }
+nav.tabs button .n { font: 700 16px var(--f-display); color: var(--muted); }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs button[aria-selected="true"] .n { color: var(--accent); }
+.banner { background: var(--warnbg); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+h2 { font: 700 26px/1.1 var(--f-display); margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 700 19px/1.15 var(--f-display); margin: 0; letter-spacing: .02em; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.stack { display: grid; gap: 18px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; align-items: start; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.field { display: grid; gap: 4px; font-weight: 600; font-size: 14px; }
+input[type=text], input[type=number], select, textarea { font: 15px var(--f-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--ink); width: 100%; }
+textarea { font-family: var(--f-mono); font-size: 13px; min-height: 130px; resize: vertical; }
+input[type=number] { width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn { font: 600 15px var(--f-body); padding: 9px 15px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; white-space: nowrap; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font: 600 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--sunk); white-space: nowrap; position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+td.c, th.c { text-align: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 600 12px/1 var(--f-body); padding: 4px 7px; border-radius: 5px; background: var(--sunk); white-space: nowrap; }
+.chip.gA { box-shadow: inset 3px 0 0 var(--gA); } .chip.gB { box-shadow: inset 3px 0 0 var(--gB); } .chip.gC { box-shadow: inset 3px 0 0 var(--gC); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.gdot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: 1px; }
+.pill { display: inline-block; font: 600 12px/1 var(--f-body); padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--okbg); color: var(--ok); } .pill.warn { background: var(--warnbg); color: var(--warn); } .pill.bad { background: var(--badbg); color: var(--bad); } .pill.info { background: var(--soft); color: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 2px; }
+.stat b { font: 700 32px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 13px; }
+.stat.bad b { color: var(--bad); } .stat.ok b { color: var(--ok); }
+.grid-in td { padding: 5px 8px; }
+.cell { display: flex; gap: 4px; align-items: center; justify-content: center; }
+.cell label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.cell input { width: 46px; padding: 5px 4px; }
+.courses { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.course { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 8px; background: var(--surface); min-width: 0; }
+.course.over { border-color: var(--bad); }
+.course h4 { margin: 0; font: 600 15px var(--f-body); }
+.bar { height: 6px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.course.over .bar i { background: var(--bad); }
+.course ol { margin: 0; padding-left: 22px; font-size: 14px; columns: 1; }
+.course input { font-size: 13px; padding: 5px 8px; }
+.hj-title { display: flex; align-items: baseline; gap: 12px; }
+.hj-title h3 { font-size: 24px; }
+.subtabs { display: flex; gap: 6px; }
+.subtabs button { font: 600 14px var(--f-body); padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.subtabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+td select { min-width: 180px; padding: 5px 6px; font-size: 13px; }
+td select.miss { border-color: var(--bad); background: var(--badbg); }
+td select.alt { border-color: var(--warn); }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.steps li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; }
+.steps li::before { counter-increment: s; content: counter(s); font: 700 24px/1 var(--f-display); color: var(--accent); }
+.steps b { display: block; }
+.prose { max-width: 72ch; display: grid; gap: 10px; }
+.prose ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.code-inline { font: 500 13px var(--f-mono); background: var(--sunk); padding: 1px 5px; border-radius: 4px; word-break: break-all; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-weight: 600; z-index: 20; max-width: calc(100% - 32px); }
+.confirm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 12px; display: flex; gap: 6px 18px; flex-wrap: wrap; }
+.warnlist { margin: 0; padding-left: 18px; font-size: 14px; }
+#print-area { display: none; }
+@media print {
+  body { background: #fff; color: #000; }
+  .shell, .lines, .toast { display: none !important; }
+  #print-area { display: block; font: 12px/1.35 var(--f-body); }
+  #print-area section { break-after: page; }
+  #print-area .pc { break-inside: avoid; border: 1px solid #999; padding: 8px; margin: 0 0 10px; }
+  #print-area h2 { font-size: 22px; } #print-area h3 { font-size: 15px; margin: 0 0 4px; }
+  #print-area .pcs { columns: 2; }
+}
+</style>
+</head>
+<body>
+<div class="lines" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <h1>Sportwahl Planung</h1>
+      <div class="sub" id="head-sub"></div>
+    </div>
+    <div class="row small muted" id="head-stats"></div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="start"><span class="n">0</span>Anleitung</button>
+    <button role="tab" data-tab="angebot"><span class="n">1</span>Angebot</button>
+    <button role="tab" data-tab="wahlen"><span class="n">2</span>Wahlen</button>
+    <button role="tab" data-tab="kurse"><span class="n">3</span>Kursplanung</button>
+    <button role="tab" data-tab="verteilung"><span class="n">4</span>Verteilung</button>
+    <button role="tab" data-tab="export"><span class="n">5</span>Export</button>
+  </nav>
+  <div id="banner"></div>
+  <main id="view"></main>
+  <footer>
+    <span><b>Über diese App:</b> Sportwahl Planung · Julian Theis · © 2026 · theis@ovmg.de</span>
+    <span>Alle Daten bleiben auf diesem Rechner. Nichts wird ins Internet gesendet.</span>
+  </footer>
+</div>
+<div id="print-area"></div>
+<input type="file" id="file-project" accept=".json,application/json" hidden>
+<input type="file" id="file-wahlen" accept=".csv,.txt,text/csv,text/plain" hidden>
+
+<script>
+/* Sportwahl – gemeinsame Logik (Wahlbogen + Planung)
+   Grundlage: KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13
+   (neunjähriges Gymnasium)“ vom 1. August 2022 (BayMBl. 2022 Nr. 485), Nr. 1.1.2 und 2.1 */
+const SPW = (() => {
+  const HJ = ['12/1', '12/2', '13/1', '13/2'];
+  const GROUPS = {
+    A: 'Gruppe A · Individualsportarten',
+    B: 'Gruppe B · Mannschaftssportarten',
+    C: 'Gruppe C · Weitere Sportarten'
+  };
+  const CATALOG = [
+    { id: 'GT',  name: 'Gerätturnen',                    group: 'A', hf: 'GT',  split: true },
+    { id: 'GYT', name: 'Gymnastik und Tanz',             group: 'A', hf: 'GYT' },
+    { id: 'LA',  name: 'Leichtathletik',                 group: 'A', hf: 'LA' },
+    { id: 'SW',  name: 'Schwimmen',                      group: 'A', hf: 'SW' },
+    { id: 'BB',  name: 'Basketball',                     group: 'B', hf: 'BB',  split: true },
+    { id: 'FB',  name: 'Fußball',                        group: 'B', hf: 'FB',  split: true },
+    { id: 'HB',  name: 'Handball',                       group: 'B', hf: 'HB',  split: true },
+    { id: 'VB',  name: 'Volleyball',                     group: 'B', hf: 'VB' },
+    { id: 'BAD', name: 'Badminton',                      group: 'C', hf: 'RS' },
+    { id: 'TEN', name: 'Tennis',                         group: 'C', hf: 'RS' },
+    { id: 'TT',  name: 'Tischtennis',                    group: 'C', hf: 'RS' },
+    { id: 'RU',  name: 'Rudern',                         group: 'C', hf: 'RU',  qual: true },
+    { id: 'KL',  name: 'Sportklettern',                  group: 'C', hf: 'KL',  qual: true },
+    { id: 'BK',  name: 'Bewegungskünste',                group: 'C', hf: 'BK',  qual: true },
+    { id: 'FIT', name: 'Gesundheitsorientierte Fitness', group: 'C', hf: 'FIT' },
+    { id: 'ALP', name: 'Alpine Gleitsportarten',         group: 'C', hf: 'ALP' }
+  ];
+  const HF_NAMES = { RS: 'Rückschlagspiele' };
+
+  // Katalog inkl. schuleigener (genehmigter) Sportarten
+  function catalog(custom) {
+    const list = CATALOG.map(s => ({ ...s }));
+    (custom || []).forEach(c => {
+      if (c && c.id && c.name) list.push({ id: c.id, name: c.name, group: c.group || 'C', hf: c.id, custom: true });
+    });
+    return list;
+  }
+  function index(list) { const m = {}; list.forEach(s => { m[s.id] = s; }); return m; }
+
+  function countBy(arr, fn) {
+    const m = {};
+    arr.forEach(x => { const k = fn(x); m[k] = (m[k] || 0) + 1; });
+    return m;
+  }
+
+  // Prüft eine Wahl (4 Einträge, Reihenfolge egal) nach Nr. 1.1.2 der KMBek
+  function validate(picks, lf, idx) {
+    const known = picks.filter(p => idx[p]);
+    const hfCount = countBy(known, p => idx[p].hf);
+    const groups = new Set(known.map(p => idx[p].group));
+    const checks = [];
+    checks.push({ key: 'count', ok: known.length === 4, label: `Vier Halbjahre belegt (${known.length} von 4)` });
+    if (!lf) {
+      const over = Object.keys(hfCount).filter(h => hfCount[h] > 2);
+      checks.push({ key: 'max2', ok: over.length === 0, label: 'Keine Sportart öfter als zweimal' + (over.includes('RS') ? ' (Badminton, Tennis und Tischtennis zählen zusammen als Rückschlagspiele)' : '') });
+      checks.push({ key: 'groups', ok: groups.size >= 2, label: `Sportarten aus mindestens zwei Gruppen (bisher ${groups.size ? [...groups].sort().join(', ') : 'keine'})` });
+    } else {
+      const hfs = Object.keys(hfCount);
+      const twoByTwo = hfs.length === 2 && hfs.every(h => hfCount[h] === 2);
+      checks.push({ key: 'lf2x2', ok: twoByTwo, label: 'Zwei Sportarten mit je zwei Halbjahren' });
+      checks.push({ key: 'lfgroups', ok: twoByTwo && groups.size === 2, label: 'Die beiden Sportarten stammen aus verschiedenen Gruppen' });
+    }
+    return { ok: checks.every(c => c.ok), checks };
+  }
+
+  // Prüfsumme gegen Tippfehler beim Kopieren
+  function checksum(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return (h % 1679616).toString(36).toUpperCase().padStart(4, '0');
+  }
+  function clean(s) { return String(s || '').replace(/[;\r\n"\t]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  // Wahlcode: SPW1;Name;Klasse;g;gA|LF;W+W+W+W;E,E;PRÜF
+  function encode(o) {
+    const body = ['SPW1', clean(o.name), clean(o.klasse), o.g, o.lf ? 'LF' : 'gA', o.wishes.join('+'), (o.alt || []).join(',')].join(';');
+    return body + ';' + checksum(body);
+  }
+  const CODE_RE = /SPW1;([^;\r\n"]*);([^;\r\n"]*);([wmd]);(gA|LF);([A-Z0-9+]*);([A-Z0-9,]*);([0-9A-Z]{4})/g;
+  function parseAll(text) {
+    const out = [];
+    let m;
+    CODE_RE.lastIndex = 0;
+    while ((m = CODE_RE.exec(text))) {
+      const body = m[0].slice(0, m[0].length - 5);
+      out.push({
+        name: m[1].trim(), klasse: m[2].trim(), g: m[3], lf: m[4] === 'LF',
+        wishes: m[5] ? m[5].split('+') : [], alt: m[6] ? m[6].split(',').filter(Boolean) : [],
+        valid: checksum(body) === m[7], raw: m[0]
+      });
+    }
+    return out;
+  }
+  return { HJ, GROUPS, CATALOG, HF_NAMES, catalog, index, validate, encode, parseAll, checksum, countBy };
+})();
+
+</script>
+<script>
+/* Sportwahl – Planungslogik: Kurse ableiten, Kursangebot vorschlagen, Schüler verteilen */
+const ENGINE = (() => {
+  const HJ = SPW.HJ;
+
+  function ctx(P) {
+    const cat = SPW.catalog(P.custom);
+    const idx = SPW.index(cat);
+    return { cat, idx };
+  }
+  function isSplit(P, sid) { return !!(P.sports[sid] && P.sports[sid].split); }
+  function capOf(P, sid) { return +(P.sports[sid] && P.sports[sid].cap) || +P.settings.cap || 24; }
+
+  // Aus Raster (Anzahl Kurse je Sportart und Halbjahr) und LF-Kursgruppen die Kursliste bilden
+  function buildCourses(P) {
+    const { idx } = ctx(P);
+    const list = [];
+    Object.keys(P.grid || {}).forEach(sid => {
+      const s = idx[sid];
+      if (!s || !(P.sports[sid] && P.sports[sid].offered)) return;
+      const cap = capOf(P, sid);
+      HJ.forEach(h => {
+        const c = (P.grid[sid] || {})[h] || {};
+        if (isSplit(P, sid)) {
+          [['w', 'Schülerinnen'], ['m', 'Schüler']].forEach(([g, gl]) => {
+            const n = +c[g] || 0;
+            for (let i = 1; i <= n; i++) list.push({ id: `${sid}|${h}|${g}${i}`, sport: sid, hj: h, g, cap, lf: false, label: `${s.name} · ${gl}${n > 1 ? ' ' + i : ''}` });
+          });
+        } else {
+          const n = +c.n || 0;
+          for (let i = 1; i <= n; i++) list.push({ id: `${sid}|${h}|x${i}`, sport: sid, hj: h, g: 'x', cap, lf: false, label: `${s.name}${n > 1 ? ' · Kurs ' + i : ''}` });
+        }
+      });
+    });
+    (P.lfGroups || []).forEach(gr => {
+      HJ.forEach(h => {
+        const sp = gr.sports[h];
+        if (!sp || !idx[sp]) return;
+        list.push({ id: `LF${gr.id}|${h}|L`, sport: sp, hj: h, g: 'x', cap: +gr.cap || 24, lf: true, lfGroup: gr.id, label: `${idx[sp].name} · ${gr.name}` });
+      });
+    });
+    return list;
+  }
+
+  function compat(c, g) { return c.g === 'x' || g === 'd' || c.g === g; }
+
+  // Bewertung einer Belegung (4 Sportarten) gegenüber den Wünschen
+  function scoreSports(st, sp, idx) {
+    const wish = SPW.countBy(st.wishes, x => x);
+    const wishHF = new Set(st.wishes.filter(w => idx[w]).map(w => idx[w].hf));
+    let s = 0;
+    const rest = [];
+    sp.forEach(x => { if (wish[x] > 0) { wish[x]--; s += 10; } else rest.push(x); });
+    rest.forEach(x => {
+      const r = (st.alt || []).indexOf(x);
+      if (r >= 0) s += Math.max(2, 6 - 2 * r);
+      else if (idx[x] && wishHF.has(idx[x].hf)) s += 3;
+    });
+    return s;
+  }
+  function matched(st, sp) {
+    const wish = SPW.countBy(st.wishes, x => x);
+    let m = 0;
+    sp.forEach(x => { if (x && wish[x] > 0) { wish[x]--; m++; } });
+    return m;
+  }
+
+  function fastValidGA(sp, idx) {
+    const hf = {}; const gr = {};
+    for (const x of sp) { const s = idx[x]; hf[s.hf] = (hf[s.hf] || 0) + 1; if (hf[s.hf] > 2) return false; gr[s.group] = 1; }
+    return Object.keys(gr).length >= 2;
+  }
+
+  function lfGroupValid(P, gr) {
+    const { idx } = ctx(P);
+    const sp = HJ.map(h => gr.sports[h]).filter(Boolean);
+    return SPW.validate(sp, true, idx);
+  }
+
+  function plansFor(P, st, courses, idx) {
+    if (st.lf) {
+      return (P.lfGroups || []).filter(gr => HJ.every(h => gr.sports[h])).map(gr => {
+        const sp = HJ.map(h => gr.sports[h]);
+        return { sp, lfGroup: gr.id, score: scoreSports(st, sp, idx) };
+      }).sort((a, b) => b.score - a.score);
+    }
+    const perH = HJ.map(h => {
+      const set = new Set();
+      courses.forEach(c => { if (!c.lf && c.hj === h && compat(c, st.g)) set.add(c.sport); });
+      return [...set];
+    });
+    const res = [];
+    for (const a of perH[0]) for (const b of perH[1]) for (const c of perH[2]) for (const d of perH[3]) {
+      const sp = [a, b, c, d];
+      if (!fastValidGA(sp, idx)) continue;
+      res.push({ sp, score: scoreSports(st, sp, idx) });
+    }
+    res.sort((x, y) => y.score - x.score);
+    return res.slice(0, 1500);
+  }
+
+  function shuffle(a, rnd) {
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // Verteilung: viele zufällige Reihenfolgen, jeweils gierig bester freier Plan; beste Gesamtlösung gewinnt
+  function distribute(P, opts) {
+    opts = opts || {};
+    const budget = opts.budgetMs ?? 1200;
+    const { idx } = ctx(P);
+    const courses = buildCourses(P);
+    const byId = {}; courses.forEach(c => { byId[c.id] = c; });
+    const bySH = {}; courses.forEach(c => { if (!c.lf) (bySH[c.sport + '|' + c.hj] = bySH[c.sport + '|' + c.hj] || []).push(c); });
+    const baseUsed = {};
+    const keep = {};
+    const locked = new Set(Object.keys(P.locks || {}).filter(k => P.locks[k]));
+    P.students.forEach(st => {
+      if (!locked.has(st.id)) return;
+      const a = (P.assignment || {})[st.id] || {};
+      const m = {};
+      HJ.forEach(h => { if (a[h] && byId[a[h]]) { m[h] = a[h]; baseUsed[a[h]] = (baseUsed[a[h]] || 0) + 1; } });
+      keep[st.id] = m;
+    });
+    const free = P.students.filter(st => !locked.has(st.id));
+    const plans = {};
+    free.forEach(st => { plans[st.id] = plansFor(P, st, courses, idx); });
+
+    function pick(st, used) {
+      const pl = plans[st.id];
+      let bestScore = null, best = null, bestSlack = -1;
+      for (const p of pl) {
+        if (bestScore !== null && p.score < bestScore) break;
+        let map = {}, slack = Infinity, ok = true;
+        for (let i = 0; i < 4 && ok; i++) {
+          const h = HJ[i];
+          let cand;
+          if (st.lf) cand = [byId[`LF${p.lfGroup}|${h}|L`]].filter(Boolean);
+          else cand = (bySH[p.sp[i] + '|' + h] || []).filter(c => compat(c, st.g));
+          let bc = null, bf = 0;
+          for (const c of cand) { const f = c.cap - (used[c.id] || 0); if (f > bf) { bf = f; bc = c; } }
+          if (!bc) ok = false; else { map[h] = bc.id; slack = Math.min(slack, bf); }
+        }
+        if (!ok) continue;
+        if (bestScore === null) bestScore = p.score;
+        if (slack > bestSlack) { bestSlack = slack; best = { map, score: p.score }; }
+      }
+      return best;
+    }
+
+    const rnd = mulberry(opts.seed ?? 12345);
+    const t0 = Date.now();
+    let best = null;
+    let run = 0;
+    while (run < 3 || (Date.now() - t0 < budget && run < (opts.maxRuns ?? 4000))) {
+      let order;
+      if (run === 0) order = free.slice().sort((a, b) => plans[a.id].length - plans[b.id].length || (a.lf ? -1 : 1));
+      else order = shuffle(free.slice(), rnd);
+      // Leistungsfach-Schüler zuerst (feste Kursgruppe)
+      order.sort((a, b) => (b.lf ? 1 : 0) - (a.lf ? 1 : 0));
+      const used = { ...baseUsed };
+      const asg = {}; const un = []; let total = 0;
+      for (const st of order) {
+        const r = pick(st, used);
+        if (!r) { un.push(st.id); continue; }
+        asg[st.id] = r.map; total += r.score;
+        HJ.forEach(h => { used[r.map[h]] = (used[r.map[h]] || 0) + 1; });
+      }
+      total -= 1000 * un.length;
+      if (!best || total > best.total) best = { total, asg, un };
+      run++;
+    }
+    const assignment = { ...keep };
+    Object.keys(best.asg).forEach(k => { assignment[k] = best.asg[k]; });
+    best.un.forEach(k => { assignment[k] = {}; });
+    return { assignment, unassigned: best.un, runs: run };
+  }
+
+  // Kursangebot aus der Nachfrage vorschlagen
+  function demand(P) {
+    const { idx } = ctx(P);
+    const d = {};
+    P.students.forEach(st => {
+      if (st.lf) return;
+      const g = st.g === 'm' ? 'm' : 'w';
+      const cnt = SPW.countBy(st.wishes, x => x);
+      Object.keys(cnt).forEach(sid => {
+        if (!idx[sid]) return;
+        const e = d[sid] = d[sid] || { total: 0, w: 0, m: 0, d: 0, double: 0, alt: 0 };
+        e.total += cnt[sid]; e[st.g] += cnt[sid];
+        if (cnt[sid] > 1) e.double++;
+      });
+      (st.alt || []).forEach(sid => { if (idx[sid]) { const e = d[sid] = d[sid] || { total: 0, w: 0, m: 0, d: 0, double: 0, alt: 0 }; e.alt++; } });
+      void g;
+    });
+    return d;
+  }
+
+  function proposeGrid(P) {
+    const { idx } = ctx(P);
+    const dem = demand(P);
+    const gA = P.students.filter(s => !s.lf);
+    const N = gA.length;
+    const Nw = gA.filter(s => s.g !== 'm').length, Nm = gA.filter(s => s.g !== 'w').length;
+    const grid = {};
+    const offered = Object.keys(P.sports).filter(id => P.sports[id].offered && idx[id]);
+    offered.forEach(id => { grid[id] = {}; HJ.forEach(h => { grid[id][h] = isSplit(P, id) ? { w: 0, m: 0 } : { n: 0 }; }); });
+    const seats = { all: [0, 0, 0, 0], w: [0, 0, 0, 0], m: [0, 0, 0, 0] };
+    function place(id, key) {
+      const cap = capOf(P, id);
+      let bi = 0, bv = Infinity;
+      HJ.forEach((h, i) => {
+        const same = grid[id][h][key];
+        const load = key === 'n' ? seats.all[i] : seats[key][i];
+        const v = same * 100000 + load;
+        if (v < bv) { bv = v; bi = i; }
+      });
+      grid[id][HJ[bi]][key]++;
+      seats.all[bi] += cap;
+      if (key !== 'm') seats.w[bi] += cap;
+      if (key !== 'w') seats.m[bi] += cap;
+    }
+    const units = [];
+    offered.forEach(id => {
+      const e = dem[id]; if (!e) return;
+      const cap = capOf(P, id);
+      if (isSplit(P, id)) {
+        const dw = e.w + e.d, dm = e.m;
+        if (dw) units.push([id, 'w', Math.max(Math.ceil(dw / cap), e.double ? 2 : 1)]);
+        if (dm) units.push([id, 'm', Math.max(Math.ceil(dm / cap), e.double ? 2 : 1)]);
+      } else if (e.total) units.push([id, 'n', Math.max(Math.ceil(e.total / cap), e.double ? 2 : 1)]);
+    });
+    units.sort((a, b) => b[2] - a[2]);
+    units.forEach(([id, key, k]) => { for (let i = 0; i < k; i++) place(id, key); });
+    // Fehlende Plätze je Halbjahr mit der gefragtesten gemischten Sportart auffüllen
+    const mixed = offered.filter(id => !isSplit(P, id) && dem[id]).sort((a, b) => dem[b].total - dem[a].total);
+    if (mixed.length) {
+      HJ.forEach((h, i) => {
+        let guard = 0;
+        while ((seats.all[i] < N || seats.w[i] < Nw || seats.m[i] < Nm) && guard++ < 20) {
+          const id = mixed.slice().sort((a, b) => {
+            const ca = HJ.reduce((s, hh) => s + grid[a][hh].n, 0) * capOf(P, a) / dem[a].total;
+            const cb = HJ.reduce((s, hh) => s + grid[b][hh].n, 0) * capOf(P, b) / dem[b].total;
+            return ca - cb;
+          })[0];
+          grid[id][h].n++;
+          const cap = capOf(P, id);
+          seats.all[i] += cap; seats.w[i] += cap; seats.m[i] += cap;
+        }
+      });
+    }
+    return grid;
+  }
+
+  // Status eines Schülers nach aktueller Zuteilung
+  function studentStatus(P, st, byId, idx) {
+    const a = (P.assignment || {})[st.id] || {};
+    const sp = HJ.map(h => a[h] && byId[a[h]] ? byId[a[h]].sport : null);
+    const complete = sp.every(Boolean);
+    const v = complete ? SPW.validate(sp, st.lf, idx) : null;
+    const hits = matched(st, sp);
+    return { sp, complete, ruleOk: !!(v && v.ok), checks: v ? v.checks : [], hits };
+  }
+
+  return { buildCourses, distribute, demand, proposeGrid, studentStatus, compat, lfGroupValid, scoreSports, matched, mulberry, isSplit, capOf };
+})();
+
+</script>
+<script>
+/* Beispieldaten (frei erfunden) zum Ausprobieren */
+const EXAMPLE = (() => {
+  function defaults() {
+    const sports = {};
+    SPW.CATALOG.forEach(s => { sports[s.id] = { offered: false, lf: false, split: !!s.split, cap: 0 }; });
+    return {
+      version: 1, example: false,
+      meta: { schule: '', jahrgang: 'Abiturjahrgang 2029', frist: '', abgabeHinweis: 'Mebis-Kurs „Oberstufe Sport“ → Aktivität „Sportwahl – Abgabe“ → Code in das Textfeld einfügen und absenden.' },
+      settings: { cap: 24, ersatz: 2 },
+      sports, custom: [], students: [], grid: {}, lfGroups: [], assignment: {}, locks: {}, courseMeta: {}
+    };
+  }
+
+  function build() {
+    const P = defaults();
+    P.example = true;
+    P.meta.schule = 'Beispiel-Gymnasium Musterstadt';
+    P.meta.frist = 'Freitag, 17. April 2026';
+    const offered = ['GT', 'GYT', 'LA', 'SW', 'BB', 'FB', 'VB', 'BAD', 'TT', 'FIT'];
+    offered.forEach(id => { P.sports[id].offered = true; });
+    ['LA', 'SW', 'VB', 'BB'].forEach(id => { P.sports[id].lf = true; });
+    P.sports.SW.cap = 20;
+    const rnd = ENGINE.mulberry(2029);
+    const pickW = (weights) => { const tot = Object.values(weights).reduce((a, b) => a + b, 0); let r = rnd() * tot; for (const k in weights) { r -= weights[k]; if (r <= 0) return k; } return Object.keys(weights)[0]; };
+    const W = { GYT: 5, LA: 3, SW: 4, VB: 6, BB: 2, FB: 1.2, GT: 1.5, BAD: 5, TT: 2, FIT: 5 };
+    const M = { GYT: 0.6, LA: 3, SW: 3, VB: 5, BB: 4, FB: 6, GT: 1.2, BAD: 3, TT: 4, FIT: 4 };
+    const fw = ['Anna', 'Lea', 'Marie', 'Sophie', 'Emma', 'Lina', 'Mia', 'Hannah', 'Clara', 'Laura', 'Johanna', 'Paula', 'Nele', 'Ida', 'Frieda', 'Greta', 'Theresa', 'Amelie', 'Luisa', 'Zoe', 'Elif', 'Selin', 'Nina', 'Carla'];
+    const fm = ['Lukas', 'Felix', 'Jonas', 'Leon', 'Paul', 'Maximilian', 'Elias', 'Noah', 'Ben', 'Finn', 'Jakob', 'Moritz', 'Tim', 'David', 'Simon', 'Anton', 'Emil', 'Luca', 'Niklas', 'Samuel', 'Tobias', 'Can', 'Deniz', 'Valentin'];
+    const ln = ['Huber', 'Bauer', 'Wagner', 'Müller', 'Schmid', 'Maier', 'Hofmann', 'Fischer', 'Weber', 'Brunner', 'Lechner', 'Gruber', 'Schneider', 'Kaiser', 'Wolf', 'Berger', 'Winkler', 'Lang', 'Sommer', 'Keller', 'Hartmann', 'Vogel', 'Frank', 'Roth', 'Ertl', 'Obermeier', 'Kraus', 'Seidl', 'Yılmaz', 'Novak', 'Rossi', 'Pichler'];
+    const idx = SPW.index(SPW.catalog());
+    const used = new Set();
+    for (let i = 0; i < 96; i++) {
+      const g = i === 40 ? 'd' : (rnd() < 0.52 ? 'w' : 'm');
+      let name;
+      do { name = `${ln[Math.floor(rnd() * ln.length)]}, ${(g === 'm' ? fm : fw)[Math.floor(rnd() * 24)]}`; } while (used.has(name));
+      used.add(name);
+      const lf = i % 12 === 5;
+      let wishes;
+      if (lf) wishes = rnd() < 0.7 ? ['LA', 'LA', 'VB', 'VB'] : ['SW', 'SW', 'VB', 'VB'];
+      else {
+        do {
+          wishes = [];
+          while (wishes.length < 4) wishes.push(pickW(g === 'm' ? M : W));
+        } while (!SPW.validate(wishes, false, idx).ok);
+        wishes.sort();
+      }
+      const alt = [];
+      let guard = 0;
+      while (alt.length < 2 && guard++ < 50) {
+        const x = lf ? ['LA', 'SW', 'VB', 'BB'][Math.floor(rnd() * 4)] : pickW(g === 'm' ? M : W);
+        if (!wishes.includes(x) && !alt.includes(x)) alt.push(x);
+      }
+      P.students.push({ id: 's' + (i + 1), name, klasse: '11' + 'ABCD'[i % 4], g, lf, wishes, alt });
+    }
+    P.lfGroups = [{ id: 'g1', name: 'Leistungsfach Sport', cap: 24, sports: { '12/1': 'VB', '12/2': 'VB', '13/1': 'LA', '13/2': 'LA' } }];
+    P.grid = ENGINE.proposeGrid(P);
+    P.assignment = ENGINE.distribute(P, { budgetMs: 600 }).assignment;
+    return P;
+  }
+  return { defaults, build };
+})();
+
+</script>
+<script>
+const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>Sportwahl Q12/Q13<\/title>\n<script id=\"spw-config\" type=\"application/json\">__CONFIG__<\/script>\n<style>\n/* Layout: eine Spalte, Schritt für Schritt, Zusammenfassung klebt unten – fürs Handy gedacht */\n:root {\n  --bg: #f2f4f3; --surface: #ffffff; --ink: #17202b; --muted: #596473; --line: #d6dbd8;\n  --accent: #0a5bd3; --accent-ink: #ffffff;\n  --gA: #0f8a6c; --gB: #c2410c; --gC: #6d45d9;\n  --ok: #2b8a3e; --bad: #c92a2a; --soft: #e8ecf5;\n  --f-display: \"Barlow Condensed\", \"Arial Narrow\", \"Roboto Condensed\", sans-serif;\n  --f-body: \"Barlow\", \"Segoe UI\", system-ui, sans-serif;\n  --f-mono: \"IBM Plex Mono\", ui-monospace, \"SFMono-Regular\", Consolas, monospace;\n  color-scheme: light;\n}\n@media (prefers-color-scheme: dark) { :root:not([data-theme=\"light\"]) {\n  --bg: #11151a; --surface: #1a2027; --ink: #e7eaee; --muted: #9aa5b2; --line: #2d3540;\n  --accent: #5b9dff; --accent-ink: #0b1220; --gA: #3fc39c; --gB: #ff8a4c; --gC: #a58cff;\n  --ok: #51cf66; --bad: #ff6b6b; --soft: #1f2a3a; color-scheme: dark; } }\n:root[data-theme=\"dark\"] {\n  --bg: #11151a; --surface: #1a2027; --ink: #e7eaee; --muted: #9aa5b2; --line: #2d3540;\n  --accent: #5b9dff; --accent-ink: #0b1220; --gA: #3fc39c; --gB: #ff8a4c; --gC: #a58cff;\n  --ok: #51cf66; --bad: #ff6b6b; --soft: #1f2a3a; color-scheme: dark; }\n* { box-sizing: border-box; }\nhtml, body { margin: 0; }\nbody { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); padding: 0 16px 140px; }\n.wrap { max-width: 680px; margin: 0 auto; display: grid; gap: 20px; }\n.lines { height: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 0 -16px; }\n.lines span:nth-child(1) { background: var(--gA); } .lines span:nth-child(2) { background: var(--gB); } .lines span:nth-child(3) { background: var(--gC); }\nheader { padding-block: 22px 4px; display: grid; gap: 4px; }\n.eyebrow { font: 600 13px/1.2 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }\nh1 { font: 700 clamp(30px, 7vw, 42px)/1.05 var(--f-display); margin: 0; text-wrap: balance; letter-spacing: .01em; }\nh2 { font: 700 22px/1.1 var(--f-display); margin: 0; letter-spacing: .02em; }\n.lead { color: var(--muted); margin: 0; max-width: 60ch; }\n.deadline { font-weight: 600; color: var(--ink); }\nsection.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }\n.step-head { display: flex; gap: 10px; align-items: baseline; }\n.step-no { font: 700 22px/1 var(--f-display); color: var(--accent); }\nlabel.field { display: grid; gap: 4px; font-weight: 600; font-size: 15px; }\ninput[type=text], select { font: 16px var(--f-body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100%; }\ninput:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }\n.row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }\n@media (max-width: 460px) { .row2 { grid-template-columns: 1fr; } }\n.hint { font-size: 14px; color: var(--muted); margin: 0; font-weight: 400; }\n.seg { display: flex; flex-wrap: wrap; gap: 8px; }\n.seg button { font: 500 15px var(--f-body); padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }\n.seg button[aria-pressed=\"true\"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }\n.group { display: grid; gap: 8px; }\n.group-title { display: flex; align-items: center; gap: 8px; font: 600 13px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }\n.dot { width: 10px; height: 10px; border-radius: 2px; }\n.sport { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }\n.sport.on { border-color: var(--accent); background: var(--soft); }\n.sport.off { opacity: .45; }\n.sport .nm { flex: 1; min-width: 0; }\n.sport .nm b { font-weight: 600; display: block; }\n.sport .nm small { color: var(--muted); font-size: 13px; }\n.stepper { display: flex; align-items: center; gap: 4px; }\n.stepper button { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 20px/1 var(--f-body); cursor: pointer; }\n.stepper button:disabled { opacity: .35; cursor: not-allowed; }\n.stepper output { width: 30px; text-align: center; font: 700 22px var(--f-display); font-variant-numeric: tabular-nums; }\n.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }\n.checks li { display: flex; gap: 8px; align-items: flex-start; }\n.checks li::before { content: \"○\"; color: var(--muted); font-weight: 700; width: 1em; flex: none; }\n.checks li.ok::before { content: \"✓\"; color: var(--ok); }\n.checks li.no::before { content: \"✗\"; color: var(--bad); }\n.sticky { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 5; }\n.sticky .in { max-width: 680px; margin: 0 auto; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }\n.slots { display: flex; gap: 4px; }\n.slots span { width: 34px; height: 30px; border-radius: 6px; border: 1px dashed var(--line); font: 700 12px/30px var(--f-display); text-align: center; color: #fff; overflow: hidden; }\n.slots span.gA { background: var(--gA); border: 0; } .slots span.gB { background: var(--gB); border: 0; } .slots span.gC { background: var(--gC); border: 0; }\n.btn { font: 600 16px var(--f-body); padding: 11px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }\n.btn:disabled { opacity: .45; cursor: not-allowed; }\n.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }\n.result { display: grid; gap: 12px; }\n.code { font: 500 15px/1.4 var(--f-mono); background: var(--bg); border: 2px solid var(--accent); border-radius: 8px; padding: 12px; word-break: break-all; user-select: all; }\n.summary { margin: 0; padding-left: 18px; }\n.note { background: var(--soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }\nfooter { color: var(--muted); font-size: 13px; padding-block: 8px 0; display: grid; gap: 2px; }\n.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }\n@media (prefers-reduced-motion: no-preference) { .sport { transition: background .15s, border-color .15s; } }\n<\/style>\n<\/head>\n<body>\n<div class=\"lines\" aria-hidden=\"true\"><span><\/span><span><\/span><span><\/span><\/div>\n<div class=\"wrap\">\n  <header>\n    <div class=\"eyebrow\" id=\"school\"><\/div>\n    <h1>Sportwahl für die Qualifikationsphase<\/h1>\n    <p class=\"lead\">Du wählst jetzt deine Sportarten für alle vier Halbjahre 12/1 bis 13/2. Die Fachschaft Sport stellt daraus die Kurse zusammen. In welchem Halbjahr du welche Sportart hast, legt die Schule fest.<\/p>\n    <p class=\"lead deadline\" id=\"deadline\" hidden><\/p>\n  <\/header>\n\n  <section class=\"step\" aria-labelledby=\"h-1\">\n    <div class=\"step-head\"><span class=\"step-no\">1<\/span><h2 id=\"h-1\">Deine Angaben<\/h2><\/div>\n    <div class=\"row2\">\n      <label class=\"field\">Name (Nachname, Vorname)<input type=\"text\" id=\"name\" autocomplete=\"name\" placeholder=\"Muster, Anna\"><\/label>\n      <label class=\"field\">Klasse<input type=\"text\" id=\"klasse\" placeholder=\"11B\"><\/label>\n    <\/div>\n    <div class=\"field\">\n      <span id=\"l-g\" style=\"font-weight:600\">Geschlecht<\/span>\n      <div class=\"seg\" role=\"group\" aria-labelledby=\"l-g\" id=\"seg-g\">\n        <button type=\"button\" data-v=\"w\" aria-pressed=\"false\">weiblich<\/button>\n        <button type=\"button\" data-v=\"m\" aria-pressed=\"false\">männlich<\/button>\n        <button type=\"button\" data-v=\"d\" aria-pressed=\"false\">divers<\/button>\n      <\/div>\n      <p class=\"hint\">Wird nur gebraucht, weil Basketball, Fußball, Handball und Gerätturnen in der Regel getrennt unterrichtet werden.<\/p>\n    <\/div>\n    <div class=\"field\">\n      <span id=\"l-lf\" style=\"font-weight:600\">Hast du Sport als Leistungsfach gewählt?<\/span>\n      <div class=\"seg\" role=\"group\" aria-labelledby=\"l-lf\" id=\"seg-lf\">\n        <button type=\"button\" data-v=\"0\" aria-pressed=\"true\">Nein<\/button>\n        <button type=\"button\" data-v=\"1\" aria-pressed=\"false\">Ja, Leistungsfach Sport<\/button>\n      <\/div>\n    <\/div>\n  <\/section>\n\n  <section class=\"step\" aria-labelledby=\"h-2\">\n    <div class=\"step-head\"><span class=\"step-no\">2<\/span><h2 id=\"h-2\">Deine Sportarten<\/h2><\/div>\n    <p class=\"hint\" id=\"rules-text\"><\/p>\n    <div id=\"groups\" class=\"wrap\" style=\"gap:16px\"><\/div>\n    <ul class=\"checks\" id=\"checks\" aria-live=\"polite\"><\/ul>\n  <\/section>\n\n  <section class=\"step\" aria-labelledby=\"h-3\" id=\"step-alt\">\n    <div class=\"step-head\"><span class=\"step-no\">3<\/span><h2 id=\"h-3\">Ersatzwünsche<\/h2><\/div>\n    <p class=\"hint\">Nicht jeder Wunsch lässt sich erfüllen, weil Hallen und Lehrkräfte begrenzt sind. Welche Sportarten wären für dich außerdem in Ordnung?<\/p>\n    <div id=\"alts\" style=\"display:grid;gap:10px\"><\/div>\n  <\/section>\n\n  <section class=\"step\" aria-labelledby=\"h-4\" id=\"step-code\">\n    <div class=\"step-head\"><span class=\"step-no\">4<\/span><h2 id=\"h-4\">Wahlcode abgeben<\/h2><\/div>\n    <div id=\"missing\" class=\"hint\"><\/div>\n    <div><button class=\"btn\" type=\"button\" id=\"make\">Wahlcode erzeugen<\/button><\/div>\n    <div class=\"result\" id=\"result\" hidden>\n      <ul class=\"summary\" id=\"summary\"><\/ul>\n      <div class=\"code\" id=\"code\" tabindex=\"0\" aria-label=\"Dein Wahlcode\"><\/div>\n      <div style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:center\">\n        <button class=\"btn\" type=\"button\" id=\"copy\">Code kopieren<\/button>\n        <span id=\"copied\" class=\"hint\" aria-live=\"polite\"><\/span>\n      <\/div>\n      <div class=\"note\" id=\"howto\"><\/div>\n      <p class=\"hint\">Du willst etwas ändern? Wähle neu, erzeuge einen neuen Code und gib ihn erneut ab. Es zählt die zuletzt abgegebene Wahl.<\/p>\n    <\/div>\n  <\/section>\n\n  <footer>\n    <div><b>Über diese App:<\/b> Sportwahl · Julian Theis · © 2026 · theis@ovmg.de<\/div>\n    <div>Diese Seite speichert und sendet nichts. Deine Wahl wird erst übermittelt, wenn du den Code in Mebis abgibst.<\/div>\n  <\/footer>\n<\/div>\n\n<div class=\"sticky\" role=\"status\">\n  <div class=\"in\">\n    <div style=\"display:flex;gap:10px;align-items:center\">\n      <div class=\"slots\" id=\"slots\" aria-hidden=\"true\"><\/div>\n      <span id=\"slot-text\" style=\"font-weight:600\"><\/span>\n    <\/div>\n    <a href=\"#step-code\" class=\"btn ghost\" id=\"jump\" style=\"text-decoration:none\">Zum Wahlcode<\/a>\n  <\/div>\n<\/div>\n\n<script>\n/* Sportwahl – gemeinsame Logik (Wahlbogen + Planung)\n   Grundlage: KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13\n   (neunjähriges Gymnasium)“ vom 1. August 2022 (BayMBl. 2022 Nr. 485), Nr. 1.1.2 und 2.1 */\nconst SPW = (() => {\n  const HJ = ['12/1', '12/2', '13/1', '13/2'];\n  const GROUPS = {\n    A: 'Gruppe A · Individualsportarten',\n    B: 'Gruppe B · Mannschaftssportarten',\n    C: 'Gruppe C · Weitere Sportarten'\n  };\n  const CATALOG = [\n    { id: 'GT',  name: 'Gerätturnen',                    group: 'A', hf: 'GT',  split: true },\n    { id: 'GYT', name: 'Gymnastik und Tanz',             group: 'A', hf: 'GYT' },\n    { id: 'LA',  name: 'Leichtathletik',                 group: 'A', hf: 'LA' },\n    { id: 'SW',  name: 'Schwimmen',                      group: 'A', hf: 'SW' },\n    { id: 'BB',  name: 'Basketball',                     group: 'B', hf: 'BB',  split: true },\n    { id: 'FB',  name: 'Fußball',                        group: 'B', hf: 'FB',  split: true },\n    { id: 'HB',  name: 'Handball',                       group: 'B', hf: 'HB',  split: true },\n    { id: 'VB',  name: 'Volleyball',                     group: 'B', hf: 'VB' },\n    { id: 'BAD', name: 'Badminton',                      group: 'C', hf: 'RS' },\n    { id: 'TEN', name: 'Tennis',                         group: 'C', hf: 'RS' },\n    { id: 'TT',  name: 'Tischtennis',                    group: 'C', hf: 'RS' },\n    { id: 'RU',  name: 'Rudern',                         group: 'C', hf: 'RU',  qual: true },\n    { id: 'KL',  name: 'Sportklettern',                  group: 'C', hf: 'KL',  qual: true },\n    { id: 'BK',  name: 'Bewegungskünste',                group: 'C', hf: 'BK',  qual: true },\n    { id: 'FIT', name: 'Gesundheitsorientierte Fitness', group: 'C', hf: 'FIT' },\n    { id: 'ALP', name: 'Alpine Gleitsportarten',         group: 'C', hf: 'ALP' }\n  ];\n  const HF_NAMES = { RS: 'Rückschlagspiele' };\n\n  // Katalog inkl. schuleigener (genehmigter) Sportarten\n  function catalog(custom) {\n    const list = CATALOG.map(s => ({ ...s }));\n    (custom || []).forEach(c => {\n      if (c && c.id && c.name) list.push({ id: c.id, name: c.name, group: c.group || 'C', hf: c.id, custom: true });\n    });\n    return list;\n  }\n  function index(list) { const m = {}; list.forEach(s => { m[s.id] = s; }); return m; }\n\n  function countBy(arr, fn) {\n    const m = {};\n    arr.forEach(x => { const k = fn(x); m[k] = (m[k] || 0) + 1; });\n    return m;\n  }\n\n  // Prüft eine Wahl (4 Einträge, Reihenfolge egal) nach Nr. 1.1.2 der KMBek\n  function validate(picks, lf, idx) {\n    const known = picks.filter(p => idx[p]);\n    const hfCount = countBy(known, p => idx[p].hf);\n    const groups = new Set(known.map(p => idx[p].group));\n    const checks = [];\n    checks.push({ key: 'count', ok: known.length === 4, label: `Vier Halbjahre belegt (${known.length} von 4)` });\n    if (!lf) {\n      const over = Object.keys(hfCount).filter(h => hfCount[h] > 2);\n      checks.push({ key: 'max2', ok: over.length === 0, label: 'Keine Sportart öfter als zweimal' + (over.includes('RS') ? ' (Badminton, Tennis und Tischtennis zählen zusammen als Rückschlagspiele)' : '') });\n      checks.push({ key: 'groups', ok: groups.size >= 2, label: `Sportarten aus mindestens zwei Gruppen (bisher ${groups.size ? [...groups].sort().join(', ') : 'keine'})` });\n    } else {\n      const hfs = Object.keys(hfCount);\n      const twoByTwo = hfs.length === 2 && hfs.every(h => hfCount[h] === 2);\n      checks.push({ key: 'lf2x2', ok: twoByTwo, label: 'Zwei Sportarten mit je zwei Halbjahren' });\n      checks.push({ key: 'lfgroups', ok: twoByTwo && groups.size === 2, label: 'Die beiden Sportarten stammen aus verschiedenen Gruppen' });\n    }\n    return { ok: checks.every(c => c.ok), checks };\n  }\n\n  // Prüfsumme gegen Tippfehler beim Kopieren\n  function checksum(str) {\n    let h = 0x811c9dc5;\n    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }\n    return (h % 1679616).toString(36).toUpperCase().padStart(4, '0');\n  }\n  function clean(s) { return String(s || '').replace(/[;\\r\\n\"\\t]/g, ' ').replace(/\\s+/g, ' ').trim(); }\n\n  // Wahlcode: SPW1;Name;Klasse;g;gA|LF;W+W+W+W;E,E;PRÜF\n  function encode(o) {\n    const body = ['SPW1', clean(o.name), clean(o.klasse), o.g, o.lf ? 'LF' : 'gA', o.wishes.join('+'), (o.alt || []).join(',')].join(';');\n    return body + ';' + checksum(body);\n  }\n  const CODE_RE = /SPW1;([^;\\r\\n\"]*);([^;\\r\\n\"]*);([wmd]);(gA|LF);([A-Z0-9+]*);([A-Z0-9,]*);([0-9A-Z]{4})/g;\n  function parseAll(text) {\n    const out = [];\n    let m;\n    CODE_RE.lastIndex = 0;\n    while ((m = CODE_RE.exec(text))) {\n      const body = m[0].slice(0, m[0].length - 5);\n      out.push({\n        name: m[1].trim(), klasse: m[2].trim(), g: m[3], lf: m[4] === 'LF',\n        wishes: m[5] ? m[5].split('+') : [], alt: m[6] ? m[6].split(',').filter(Boolean) : [],\n        valid: checksum(body) === m[7], raw: m[0]\n      });\n    }\n    return out;\n  }\n  return { HJ, GROUPS, CATALOG, HF_NAMES, catalog, index, validate, encode, parseAll, checksum, countBy };\n})();\n\n<\/script>\n<script>\n(() => {\n  let cfg = {};\n  try { cfg = JSON.parse(document.getElementById('spw-config').textContent); } catch (e) { cfg = {}; }\n  const cat = SPW.catalog(cfg.custom);\n  const idx = SPW.index(cat);\n  const offered = (cfg.angebot && cfg.angebot.length ? cfg.angebot : cat.map(s => s.id)).filter(id => idx[id]);\n  const lfOffered = (cfg.lfAngebot || []).filter(id => offered.includes(id));\n  const nAlt = Math.max(0, Math.min(3, cfg.ersatzAnzahl ?? 2));\n\n  const st = { g: '', lf: false, counts: {}, alt: [] };\n  const $ = id => document.getElementById(id);\n\n  $('school').textContent = [cfg.schule, cfg.jahrgang].filter(Boolean).join(' · ') || 'Gymnasium · Oberstufe';\n  if (cfg.frist) { $('deadline').hidden = false; $('deadline').textContent = 'Abgabe bis ' + cfg.frist; }\n\n  function seg(id, cb) {\n    const el = $(id);\n    el.addEventListener('click', e => {\n      const b = e.target.closest('button'); if (!b) return;\n      el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));\n      cb(b.dataset.v);\n    });\n  }\n  seg('seg-g', v => { st.g = v; update(); });\n  seg('seg-lf', v => { st.lf = v === '1'; st.counts = {}; st.alt = []; renderSports(); renderAlts(); update(); });\n\n  function picks() { const p = []; Object.keys(st.counts).forEach(id => { for (let i = 0; i < st.counts[id]; i++) p.push(id); }); return p; }\n  function hfUsed(hf) { return Object.keys(st.counts).filter(id => idx[id].hf === hf).reduce((a, id) => a + st.counts[id], 0); }\n\n  function renderSports() {\n    $('rules-text').textContent = st.lf\n      ? 'Leistungsfach: Wähle zwei Sportarten aus zwei verschiedenen Gruppen, jede für zwei Halbjahre. Möglich sind nur die Sportarten, die die Schule im Leistungsfach anbietet.'\n      : 'Verteile vier Halbjahre auf deine Wunschsportarten. Jede Sportart höchstens zweimal, insgesamt aus mindestens zwei Gruppen.';\n    const box = $('groups'); box.innerHTML = '';\n    ['A', 'B', 'C'].forEach(g => {\n      const list = offered.filter(id => idx[id].group === g);\n      if (!list.length) return;\n      const wrap = document.createElement('div'); wrap.className = 'group';\n      wrap.innerHTML = `<div class=\"group-title\"><span class=\"dot\" style=\"background:var(--g${g})\"><\/span>${SPW.GROUPS[g]}<\/div>`;\n      list.forEach(id => {\n        const s = idx[id];\n        const disabled = st.lf && !lfOffered.includes(id);\n        const row = document.createElement('div');\n        row.className = 'sport' + (disabled ? ' off' : '');\n        row.dataset.id = id;\n        const sub = s.hf === 'RS' ? 'zählt zu „Rückschlagspiele“ (höchstens zweimal zusammen)' : (disabled ? 'nicht im Leistungsfach angeboten' : '');\n        row.innerHTML = `<div class=\"nm\"><b>${s.name}<\/b>${sub ? `<small>${sub}<\/small>` : ''}<\/div>\n          <div class=\"stepper\"><button type=\"button\" data-d=\"-1\" aria-label=\"${s.name} weniger\">−<\/button><output aria-label=\"Halbjahre ${s.name}\">0<\/output><button type=\"button\" data-d=\"1\" aria-label=\"${s.name} mehr\">+<\/button><\/div>`;\n        if (disabled) row.querySelectorAll('button').forEach(b => b.disabled = true);\n        wrap.appendChild(row);\n      });\n      box.appendChild(wrap);\n    });\n  }\n  $('groups').addEventListener('click', e => {\n    const b = e.target.closest('button[data-d]'); if (!b || b.disabled) return;\n    const id = b.closest('.sport').dataset.id; const d = +b.dataset.d;\n    const step = st.lf ? 2 : 1;\n    const cur = st.counts[id] || 0;\n    let next = cur + d * step;\n    if (next < 0) next = 0;\n    if (d > 0) {\n      const total = picks().length;\n      if (total + step > 4 || next > 2 || hfUsed(idx[id].hf) + step > 2) return;\n    }\n    if (next) st.counts[id] = next; else delete st.counts[id];\n    update();\n  });\n\n  function renderAlts() {\n    const box = $('alts'); box.innerHTML = '';\n    if (!nAlt) { $('step-alt').hidden = true; return; }\n    const pool = (st.lf ? lfOffered : offered);\n    for (let i = 0; i < nAlt; i++) {\n      const lab = document.createElement('label'); lab.className = 'field';\n      lab.innerHTML = `${i + 1}. Ersatzwunsch<select id=\"alt${i}\"><option value=\"\">– bitte wählen –<\/option>${pool.map(id => `<option value=\"${id}\">${idx[id].name}<\/option>`).join('')}<\/select>`;\n      box.appendChild(lab);\n    }\n    box.querySelectorAll('select').forEach((s, i) => { s.value = st.alt[i] || ''; s.addEventListener('change', () => { st.alt[i] = s.value; update(); }); });\n  }\n\n  function altState() {\n    const chosen = new Set(Object.keys(st.counts));\n    const pool = (st.lf ? lfOffered : offered).filter(id => !chosen.has(id));\n    const need = Math.min(nAlt, pool.length);\n    const vals = st.alt.slice(0, nAlt).filter(Boolean);\n    const clash = vals.some(v => chosen.has(v)) || new Set(vals).size !== vals.length;\n    return { need, vals, ok: vals.length >= need && !clash, clash };\n  }\n\n  function update() {\n    const p = picks();\n    document.querySelectorAll('.sport').forEach(row => {\n      const id = row.dataset.id; const n = st.counts[id] || 0;\n      row.querySelector('output').textContent = n;\n      row.classList.toggle('on', n > 0);\n    });\n    const v = SPW.validate(p, st.lf, idx);\n    $('checks').innerHTML = v.checks.map(c => `<li class=\"${c.ok ? 'ok' : (p.length ? 'no' : '')}\">${c.label}<\/li>`).join('');\n    // Anzeige der vier Plätze\n    const sorted = p.slice().sort((a, b) => idx[a].group.localeCompare(idx[b].group));\n    $('slots').innerHTML = [0, 1, 2, 3].map(i => sorted[i] ? `<span class=\"g${idx[sorted[i]].group}\">${sorted[i]}<\/span>` : '<span><\/span>').join('');\n    $('slot-text').textContent = v.ok ? 'Wahl gültig' : `${p.length} von 4 Halbjahren`;\n    // Ersatz-Auswahl deaktiviert gewählte Sportarten\n    const chosen = new Set(Object.keys(st.counts));\n    document.querySelectorAll('#alts select').forEach(s => s.querySelectorAll('option').forEach(o => { if (o.value) o.disabled = chosen.has(o.value); }));\n    const a = altState();\n    const missing = [];\n    if (!$('name').value.trim()) missing.push('deinen Namen');\n    if (!$('klasse').value.trim()) missing.push('deine Klasse');\n    if (!st.g) missing.push('dein Geschlecht');\n    if (!v.ok) missing.push('eine gültige Sportwahl (Schritt 2)');\n    if (!a.ok) missing.push(a.clash ? 'Ersatzwünsche ohne Doppelungen und ohne bereits gewählte Sportarten' : `${a.need} Ersatzwünsche`);\n    $('missing').textContent = missing.length ? 'Es fehlt noch: ' + missing.join(', ') + '.' : 'Alles vollständig.';\n    $('make').disabled = missing.length > 0;\n    $('result').hidden = true;\n  }\n  ['name', 'klasse'].forEach(id => $(id).addEventListener('input', update));\n\n  $('make').addEventListener('click', () => {\n    const wishes = picks().sort();\n    const alt = altState().vals;\n    const code = SPW.encode({ name: $('name').value, klasse: $('klasse').value, g: st.g, lf: st.lf, wishes, alt });\n    const cnt = SPW.countBy(wishes, x => x);\n    $('summary').innerHTML = Object.keys(cnt).map(id => `<li>${idx[id].name}: ${cnt[id]} Halbjahr${cnt[id] > 1 ? 'e' : ''}<\/li>`).join('')\n      + (alt.length ? `<li>Ersatz: ${alt.map(id => idx[id].name).join(', ')}<\/li>` : '')\n      + (st.lf ? '<li>Leistungsfach Sport<\/li>' : '');\n    $('code').textContent = code;\n    $('howto').innerHTML = '<b>So gibst du ab:<\/b> Kopiere den Code und füge ihn in Mebis ein. ' + (cfg.abgabeHinweis ? escapeHtml(cfg.abgabeHinweis) : 'Die Abgabestelle nennt dir deine Sportlehrkraft.');\n    $('result').hidden = false;\n    $('copied').textContent = '';\n    $('code').scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });\n  });\n  function escapeHtml(s) { return String(s).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c])); }\n  function selectCode() { const r = document.createRange(); r.selectNodeContents($('code')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }\n  $('copy').addEventListener('click', () => {\n    const t = $('code').textContent;\n    const done = () => { $('copied').textContent = 'Kopiert. Jetzt in Mebis einfügen.'; };\n    const fail = () => { selectCode(); $('copied').textContent = 'Code ist markiert. Mit Strg+C (Mac: ⌘+C) kopieren.'; };\n    try { navigator.clipboard.writeText(t).then(done, fail); } catch (e) { fail(); }\n  });\n\n  renderSports(); renderAlts(); update();\n})();\n<\/script>\n<\/body>\n<\/html>\n";
+</script>
+<script>
+(() => {
+  const HJ = SPW.HJ;
+  const KEY = 'sportwahl-planung-v1';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let P;
+  let tab = 'start';
+  let sub = 'schueler';
+  let filter = { q: '', only: false, wq: '' };
+  let lastRun = null;
+
+  // ---------- Speichern ----------
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) { /* ohne Speicher weiterarbeiten */ } renderHead(); }
+  function load() {
+    try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); if (p && p.version === 1) return normalize(p); } } catch (e) { }
+    return EXAMPLE.build();
+  }
+  function normalize(p) {
+    const d = EXAMPLE.defaults();
+    const out = { ...d, ...p, meta: { ...d.meta, ...(p.meta || {}) }, settings: { ...d.settings, ...(p.settings || {}) } };
+    SPW.CATALOG.forEach(s => { if (!out.sports[s.id]) out.sports[s.id] = d.sports[s.id]; });
+    (out.custom || []).forEach(c => { if (!out.sports[c.id]) out.sports[c.id] = { offered: true, lf: false, split: false, cap: 0 }; });
+    ['students', 'lfGroups', 'custom'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+    ['grid', 'assignment', 'locks', 'courseMeta'].forEach(k => { if (!out[k] || typeof out[k] !== 'object') out[k] = {}; });
+    return out;
+  }
+
+  // ---------- Hilfen ----------
+  function C() { const cat = SPW.catalog(P.custom); return { cat, idx: SPW.index(cat) }; }
+  function offeredIds() { const { cat } = C(); return cat.filter(s => P.sports[s.id] && P.sports[s.id].offered).map(s => s.id); }
+  function chip(id, n) { const { idx } = C(); const s = idx[id]; if (!s) return `<span class="chip">${esc(id)}</span>`; return `<span class="chip g${s.group}" title="${esc(s.name)}">${esc(s.name)}${n > 1 ? ' ×' + n : ''}</span>`; }
+  function chips(list) { const cnt = SPW.countBy(list, x => x); return `<div class="chips">${Object.keys(cnt).map(id => chip(id, cnt[id])).join('')}</div>`; }
+  function gLabel(g) { return { w: 'w', m: 'm', d: 'd' }[g] || g; }
+  let toastT;
+  function toast(msg) {
+    let t = document.querySelector('.toast');
+    if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200);
+  }
+  function download(name, content, type) {
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function copyText(t, okMsg) {
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) { }
+      ta.remove(); toast(ok ? okMsg : 'Kopieren nicht möglich. Bitte manuell markieren.');
+    };
+    try { navigator.clipboard.writeText(t).then(() => toast(okMsg), fallback); } catch (e) { fallback(); }
+  }
+  // Rückfrage direkt im Button statt Dialogfenster
+  function confirmInline(btn, question, yesLabel, action) {
+    const box = document.createElement('span'); box.className = 'confirm';
+    box.innerHTML = `<span class="small">${esc(question)}</span><button class="btn danger" type="button">${esc(yesLabel)}</button><button class="btn quiet" type="button">Abbrechen</button>`;
+    btn.replaceWith(box);
+    const [yes, no] = box.querySelectorAll('button');
+    yes.focus();
+    yes.onclick = () => { action(); };
+    no.onclick = () => { box.replaceWith(btn); btn.focus(); };
+  }
+  function slug(s) { return String(s || 'sportwahl').toLowerCase().replace(/[äöüß]/g, c => ({ 'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss' }[c])).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sportwahl'; }
+  function csv(rows) { return '﻿' + rows.map(r => r.map(v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n'); }
+
+  // ---------- Kopf ----------
+  function renderHead() {
+    $('head-sub').textContent = [P.meta.schule, P.meta.jahrgang].filter(Boolean).join(' · ');
+    const nLF = P.students.filter(s => s.lf).length;
+    $('head-stats').innerHTML = `<span>${P.students.length} Wahlen</span><span>·</span><span>${P.students.length - nLF} Sport (gA)</span><span>·</span><span>${nLF} Leistungsfach</span>`;
+    $('banner').innerHTML = P.example
+      ? `<div class="banner"><span><b>Beispieldaten zum Ausprobieren.</b> Die 96 Schülerinnen und Schüler sind frei erfunden.</span><span class="row"><button class="btn" type="button" id="b-new">Leeres Projekt anlegen</button></span></div>` : '';
+    const b = $('b-new');
+    if (b) b.onclick = () => confirmInline(b, 'Beispieldaten verwerfen?', 'Ja, leeres Projekt', () => {
+      const keep = { meta: P.meta };
+      P = EXAMPLE.defaults(); P.meta = { ...keep.meta, frist: '' };
+      ['GYT', 'LA', 'SW', 'BB', 'FB', 'VB', 'BAD', 'FIT'].forEach(id => { P.sports[id].offered = true; });
+      save(); go('angebot'); toast('Leeres Projekt angelegt. Jetzt das Angebot einstellen.');
+    });
+  }
+
+  // ---------- Reiter ----------
+  function go(t) {
+    tab = t;
+    try { localStorage.setItem(KEY + '-tab', t); } catch (e) { }
+    document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false'));
+    render();
+    window.scrollTo({ top: 0 });
+  }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.tab); });
+  function render() {
+    const v = $('view');
+    ({ start: vStart, angebot: vAngebot, wahlen: vWahlen, kurse: vKurse, verteilung: vVerteilung, export: vExport })[tab](v);
+  }
+
+  // ---------- 0 Anleitung ----------
+  function vStart(v) {
+    v.innerHTML = `<div class="cols">
+    <section class="panel">
+      <h2>So läuft die Sportwahl</h2>
+      <ol class="steps">
+        <li><div><b>Angebot festlegen</b><span class="muted">Welche Sportarten bietet die Schule an, welche im Leistungsfach, wie groß sind die Kurse? (Reiter 1)</span></div></li>
+        <li><div><b>Wahlbogen in Mebis bereitstellen</b><span class="muted">Im Reiter 1 den Wahlbogen herunterladen und in den Mebis-Kurs der 11. Klassen hochladen. Er zeigt nur eure Sportarten und lässt nur regelkonforme Wahlen zu.</span></div></li>
+        <li><div><b>Abgabe in Mebis</b><span class="muted">Daneben eine Aktivität „Feedback“ anlegen: nicht anonym, eine Frage vom Typ „Eingabebereich“ (langer Text) „Dein Wahlcode“. Die Schüler fügen dort ihren Code ein.</span></div></li>
+        <li><div><b>Wahlen einlesen</b><span class="muted">Nach der Frist in Mebis unter „Antworten anzeigen“ die Antworten exportieren oder markieren und kopieren, dann hier im Reiter 2 einfügen. Das Tool findet die Codes selbst, egal in welchem Format.</span></div></li>
+        <li><div><b>Kurse planen</b><span class="muted">Reiter 3 zeigt die Nachfrage. Mit „Kursangebot vorschlagen“ entsteht ein erster Plan: Welche Sportart läuft in welchem Halbjahr wie oft? Dann nach Hallen und Lehrkräften anpassen.</span></div></li>
+        <li><div><b>Verteilen und nachsteuern</b><span class="muted">Reiter 4 verteilt alle automatisch, möglichst nach Wunsch und immer regelkonform. Einzelne Schüler lassen sich per Auswahlfeld umsetzen. Umgesetzte Schüler werden fixiert und bleiben bei neuer Verteilung erhalten.</span></div></li>
+        <li><div><b>Weitergeben</b><span class="muted">Reiter 5: Kurslisten und Schülerübersicht als CSV für Excel/ASV, zum Drucken, und das Projekt als Datei für die Oberstufenkoordination.</span></div></li>
+      </ol>
+    </section>
+    <div class="stack">
+    <section class="panel prose">
+      <h3>Die Regeln (G9, Jahrgangsstufen 12 und 13)</h3>
+      <ul>
+        <li>Pro Halbjahr eine Sportart, über die vier Halbjahre aus <b>mindestens zwei der Gruppen A, B, C</b>.</li>
+        <li>Jede Sportart <b>höchstens zweimal</b>. Badminton, Tennis und Tischtennis bilden zusammen das Handlungsfeld Rückschlagspiele.</li>
+        <li><b>Leistungsfach:</b> zwei Sportarten aus zwei verschiedenen Gruppen, jede für zwei Halbjahre, grundsätzlich in einer Kursgruppe mit der Sporttheorie. Voraussetzung: mindestens „befriedigend“ im Zwischenzeugnis der 11, Wahl bis 15. April.</li>
+        <li>Basketball, Fußball, Handball und Gerätturnen in der Regel <b>nicht koedukativ</b> (Ausnahme durch die Schulleitung).</li>
+        <li>Rudern, Sportklettern und Bewegungskünste nur mit <b>Zusatzqualifikation</b> der Lehrkraft; Rückschlagspiele setzen vertiefte Kenntnisse voraus.</li>
+      </ul>
+      <p class="small muted">Quelle: KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, BayMBl. 2022 Nr. 485, Nr. 1.1.1, 1.1.2 und 2.</p>
+    </section>
+    <section class="panel prose">
+      <h3>Datenschutz</h3>
+      <p>Der Wahlbogen speichert und sendet nichts. Die Wahlen liegen ausschließlich in Mebis und, nach dem Einlesen, lokal in diesem Browser. Zum Weitergeben dient die Projektdatei (Reiter 5).</p>
+    </section>
+    </div></div>`;
+  }
+
+  // ---------- 1 Angebot ----------
+  function vAngebot(v) {
+    const { cat } = C();
+    const rows = cat.map(s => {
+      const o = P.sports[s.id] || (P.sports[s.id] = { offered: false, lf: false, split: false, cap: 0 });
+      const note = s.qual ? '<span class="pill warn" title="Nur mit Zusatzqualifikation der Lehrkraft">Qualifikation</span>' : (s.hf === 'RS' ? '<span class="pill info">Rückschlagspiele</span>' : (s.custom ? '<span class="pill info">genehmigt</span>' : ''));
+      return `<tr data-id="${s.id}">
+        <td><span class="gdot" style="background:var(--g${s.group})"></span>${esc(s.name)} ${note}</td>
+        <td class="c">${s.group}</td>
+        <td class="c"><input type="checkbox" data-k="offered" ${o.offered ? 'checked' : ''} aria-label="${esc(s.name)} angeboten"></td>
+        <td class="c"><input type="checkbox" data-k="lf" ${o.lf ? 'checked' : ''} ${o.offered ? '' : 'disabled'} aria-label="${esc(s.name)} im Leistungsfach"></td>
+        <td class="c"><input type="checkbox" data-k="split" ${o.split ? 'checked' : ''} ${o.offered ? '' : 'disabled'} aria-label="${esc(s.name)} getrennt"></td>
+        <td class="c"><input type="number" min="4" max="40" data-k="cap" value="${o.cap || ''}" placeholder="${P.settings.cap}" ${o.offered ? '' : 'disabled'} aria-label="Kursgröße ${esc(s.name)}"></td>
+        <td class="c">${s.custom ? `<button class="btn quiet" type="button" data-del="${s.id}">Entfernen</button>` : ''}</td>
+      </tr>`;
+    }).join('');
+    v.innerHTML = `<div class="stack">
+    <div class="cols">
+      <section class="panel">
+        <h2>Angebot der Schule</h2>
+        <label class="field">Schule<input type="text" id="m-schule" value="${esc(P.meta.schule)}" placeholder="Name Ihrer Schule"></label>
+        <label class="field">Jahrgang<input type="text" id="m-jahrgang" value="${esc(P.meta.jahrgang)}" placeholder="Abiturjahrgang 2029"></label>
+        <label class="field">Abgabefrist (erscheint auf dem Wahlbogen)<input type="text" id="m-frist" value="${esc(P.meta.frist)}" placeholder="Freitag, 17. April"></label>
+        <label class="field">Wo geben die Schüler den Code ab?<input type="text" id="m-abgabe" value="${esc(P.meta.abgabeHinweis)}"></label>
+        <div class="row">
+          <label class="field">Ersatzwünsche<select id="m-ersatz">${[0, 1, 2, 3].map(n => `<option ${+P.settings.ersatz === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+          <label class="field">Standard-Kursgröße<input type="number" id="m-cap" min="4" max="40" value="${P.settings.cap}"></label>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Wahlbogen für die Schüler</h2>
+        <p>Der Wahlbogen enthält genau die angekreuzten Sportarten und die Angaben links. Er funktioniert am Handy und am Rechner und lässt nur regelkonforme Wahlen zu.</p>
+        <div class="row">
+          <button class="btn" type="button" id="wb-dl">Wahlbogen herunterladen</button>
+          <button class="btn ghost" type="button" id="wb-open">Vorschau öffnen</button>
+        </div>
+        <div class="prose small">
+          <b>In Mebis einbinden, Weg 1 (einfach):</b>
+          <p>Kurs bearbeiten → „Aktivität oder Material anlegen“ → „Datei“ → die heruntergeladene HTML-Datei hochladen. Unter „Aussehen“ die Anzeige „Öffnen“ oder „In neuem Fenster“ wählen.</p>
+          <b>Weg 2 (direkt im Kurs sichtbar):</b>
+          <p>„Textfeld“ oder „Textseite“ anlegen, im Editor auf die HTML-Ansicht &lt;/&gt; umschalten und den Einbettungscode einfügen.</p>
+          <div><button class="btn quiet" type="button" id="wb-embed">Einbettungscode kopieren</button></div>
+          <p class="muted">Nach dem Einbinden einmal mit einem Schülerzugang testen. Falls Mebis die Datei zum Herunterladen anbietet statt sie anzuzeigen, Weg 2 nehmen.</p>
+        </div>
+      </section>
+    </div>
+    <section class="panel">
+      <div class="row" style="justify-content:space-between"><h2>Sportarten</h2><span class="small muted">Leeres Feld bei Kursgröße = Standard (${P.settings.cap})</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Sportart</th><th class="c">Gruppe</th><th class="c">Angeboten</th><th class="c">Im Leistungsfach</th><th class="c">Getrennt nach Geschlecht</th><th class="c">Kursgröße</th><th></th></tr></thead>
+        <tbody id="sp-body">${rows}</tbody>
+      </table></div>
+      <div class="row">
+        <label class="field" style="flex:1;min-width:220px">Weitere vom Kultusministerium genehmigte Sportart (Gruppe C)<input type="text" id="c-name" placeholder="z. B. Inline-Skating"></label>
+        <button class="btn quiet" type="button" id="c-add" style="align-self:flex-end">Hinzufügen</button>
+      </div>
+    </section></div>`;
+    const bind = (id, fn) => $(id).addEventListener('change', e => { fn(e.target.value); save(); });
+    bind('m-schule', x => P.meta.schule = x.trim());
+    bind('m-jahrgang', x => P.meta.jahrgang = x.trim());
+    bind('m-frist', x => P.meta.frist = x.trim());
+    bind('m-abgabe', x => P.meta.abgabeHinweis = x.trim());
+    bind('m-ersatz', x => P.settings.ersatz = +x);
+    bind('m-cap', x => { P.settings.cap = Math.max(4, Math.min(40, +x || 24)); render(); });
+    $('sp-body').addEventListener('change', e => {
+      const tr = e.target.closest('tr'); const id = tr.dataset.id; const k = e.target.dataset.k; if (!k) return;
+      const o = P.sports[id];
+      if (k === 'cap') o.cap = e.target.value ? Math.max(4, Math.min(40, +e.target.value)) : 0;
+      else o[k] = e.target.checked;
+      if (k === 'offered' && !o.offered) o.lf = false;
+      save(); if (k === 'offered') render();
+    });
+    $('sp-body').addEventListener('click', e => {
+      const b = e.target.closest('[data-del]'); if (!b) return;
+      const id = b.dataset.del;
+      P.custom = P.custom.filter(c => c.id !== id); delete P.sports[id]; delete P.grid[id];
+      save(); render();
+    });
+    $('c-add').onclick = () => {
+      const name = $('c-name').value.trim(); if (!name) { $('c-name').focus(); return; }
+      let n = 1; while (P.sports['X' + n]) n++;
+      const id = 'X' + n;
+      P.custom.push({ id, name, group: 'C' });
+      P.sports[id] = { offered: true, lf: false, split: false, cap: 0 };
+      save(); render(); toast(`„${name}“ hinzugefügt.`);
+    };
+    $('wb-dl').onclick = () => download(`Sportwahl-Wahlbogen-${slug(P.meta.jahrgang)}.html`, wahlbogenHtml(), 'text/html;charset=utf-8');
+    $('wb-open').onclick = () => {
+      const url = URL.createObjectURL(new Blob([wahlbogenHtml()], { type: 'text/html;charset=utf-8' }));
+      const w = window.open(url, '_blank');
+      if (!w) toast('Vorschau blockiert. Bitte „Wahlbogen herunterladen“ nutzen.');
+    };
+    $('wb-embed').onclick = () => {
+      const b64 = btoa(unescape(encodeURIComponent(wahlbogenHtml())));
+      copyText(`<iframe src="data:text/html;base64,${b64}" width="100%" height="1500" style="border:0;max-width:760px" allow="clipboard-write" title="Sportwahl"></iframe>`, 'Einbettungscode kopiert.');
+    };
+  }
+  function wahlbogenHtml() {
+    const cfg = {
+      schule: P.meta.schule, jahrgang: P.meta.jahrgang, frist: P.meta.frist, abgabeHinweis: P.meta.abgabeHinweis,
+      ersatzAnzahl: +P.settings.ersatz, custom: P.custom,
+      angebot: offeredIds(), lfAngebot: offeredIds().filter(id => P.sports[id].lf)
+    };
+    const json = JSON.stringify(cfg).replace(/</g, '\\u003c');
+    return WAHLBOGEN_TEMPLATE.replace('__CONFIG__', () => json);
+  }
+
+  // ---------- 2 Wahlen ----------
+  function importText(text) {
+    const found = SPW.parseAll(text);
+    let neu = 0, upd = 0; const bad = [];
+    found.forEach(f => {
+      if (!f.valid) { bad.push(f.raw); return; }
+      const key = (f.name + '|' + f.klasse).toLowerCase();
+      const ex = P.students.find(s => (s.name + '|' + s.klasse).toLowerCase() === key);
+      const rec = { name: f.name, klasse: f.klasse, g: f.g, lf: f.lf, wishes: f.wishes, alt: f.alt };
+      if (ex) { Object.assign(ex, rec); upd++; }
+      else { let n = P.students.length + 1; while (P.students.some(s => s.id === 's' + n)) n++; P.students.push({ id: 's' + n, ...rec }); neu++; }
+    });
+    return { total: found.length, neu, upd, bad };
+  }
+  function wishIssues(st) {
+    const { idx } = C();
+    const off = new Set(offeredIds());
+    const issues = [];
+    const v = SPW.validate(st.wishes, st.lf, idx);
+    if (!v.ok) issues.push('Wahl verstößt gegen die Regeln');
+    const notOff = st.wishes.filter(w => !off.has(w) || (st.lf && !P.sports[w].lf));
+    if (notOff.length) issues.push('nicht (mehr) angeboten: ' + [...new Set(notOff)].map(w => idx[w] ? idx[w].name : w).join(', '));
+    return issues;
+  }
+  function vWahlen(v) {
+    const q = filter.wq.toLowerCase();
+    const list = P.students.filter(s => !q || (s.name + ' ' + s.klasse).toLowerCase().includes(q));
+    const rows = list.map(s => {
+      const is = wishIssues(s);
+      return `<tr>
+        <td>${esc(s.name)}</td><td>${esc(s.klasse)}</td><td class="c">${gLabel(s.g)}</td>
+        <td>${s.lf ? '<span class="pill info">LF</span>' : 'gA'}</td>
+        <td>${chips(s.wishes)}</td>
+        <td>${chips(s.alt || [])}</td>
+        <td>${is.length ? `<span class="pill warn" title="${esc(is.join('; '))}">Prüfen</span> <span class="small muted">${esc(is.join('; '))}</span>` : '<span class="pill ok">In Ordnung</span>'}</td>
+        <td class="c"><button class="btn quiet" type="button" data-rm="${s.id}" aria-label="${esc(s.name)} entfernen">×</button></td>
+      </tr>`;
+    }).join('');
+    const nIss = P.students.filter(s => wishIssues(s).length).length;
+    v.innerHTML = `<div class="stack">
+      <section class="panel">
+        <h2>Wahlen einlesen</h2>
+        <p class="muted">Den Export der Mebis-Aktivität hier hineinkopieren, egal ob aus Excel, CSV oder direkt von der Antwortseite. Das Tool erkennt alle Wahlcodes (beginnen mit <span class="code-inline">SPW1;</span>) und prüft sie. Gibt jemand zweimal ab, gilt die spätere Zeile.</p>
+        <textarea id="imp" placeholder="Hier einfügen, z. B.&#10;Huber, Anna;SPW1;Huber, Anna;11A;w;gA;LA+LA+VB+BAD;SW,FIT;…"></textarea>
+        <div class="row">
+          <button class="btn" type="button" id="imp-go">Wahlen übernehmen</button>
+          <button class="btn quiet" type="button" id="imp-file">CSV- oder Textdatei wählen</button>
+          <span id="imp-msg" class="small" aria-live="polite"></span>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="row" style="justify-content:space-between">
+          <h2>${P.students.length} Wahlen</h2>
+          <div class="row">
+            ${nIss ? `<span class="pill warn">${nIss} prüfen</span>` : ''}
+            <input type="text" id="w-q" placeholder="Name oder Klasse suchen" value="${esc(filter.wq)}" style="width:220px" aria-label="Suchen">
+            <button class="btn danger" type="button" id="w-clear" ${P.students.length ? '' : 'disabled'}>Alle Wahlen löschen</button>
+          </div>
+        </div>
+        ${P.students.length ? `<div class="tbl-wrap" style="max-height:70vh"><table>
+          <thead><tr><th>Name</th><th>Klasse</th><th class="c">G.</th><th>Art</th><th>Wünsche</th><th>Ersatz</th><th>Status</th><th></th></tr></thead>
+          <tbody id="w-body">${rows}</tbody></table></div>` : '<p class="muted">Noch keine Wahlen. Codes oben einfügen.</p>'}
+      </section></div>`;
+    $('imp-go').onclick = () => {
+      const r = importText($('imp').value);
+      if (!r.total) { $('imp-msg').textContent = 'Keine Wahlcodes gefunden. Enthält der Text Codes, die mit SPW1; beginnen?'; return; }
+      P.example = false; save(); render();
+      $('imp-msg').innerHTML = `${r.neu} neu, ${r.upd} aktualisiert.` + (r.bad.length ? ` <span style="color:var(--bad)">${r.bad.length} Codes beschädigt (Prüfziffer falsch), bitte neu abgeben lassen: ${esc(r.bad.map(b => b.split(';')[1]).join(', '))}</span>` : '');
+    };
+    $('imp-file').onclick = () => $('file-wahlen').click();
+    $('w-q').addEventListener('input', e => { filter.wq = e.target.value; const pos = e.target.selectionStart; render(); const i = $('w-q'); i.focus(); i.setSelectionRange(pos, pos); });
+    const body = $('w-body');
+    if (body) body.addEventListener('click', e => {
+      const b = e.target.closest('[data-rm]'); if (!b) return;
+      const id = b.dataset.rm;
+      P.students = P.students.filter(s => s.id !== id); delete P.assignment[id]; delete P.locks[id];
+      save(); render();
+    });
+    const clr = $('w-clear');
+    clr.onclick = () => confirmInline(clr, `Alle ${P.students.length} Wahlen und die Verteilung löschen?`, 'Ja, alles löschen', () => {
+      P.students = []; P.assignment = {}; P.locks = {}; P.example = false; save(); render(); toast('Alle Wahlen gelöscht.');
+    });
+  }
+  $('file-wahlen').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { if ($('imp')) { $('imp').value = rd.result; $('imp-go').click(); } };
+    rd.readAsText(f, 'utf-8'); e.target.value = '';
+  });
+
+  // ---------- 3 Kursplanung ----------
+  function vKurse(v) {
+    const { idx } = C();
+    const off = offeredIds();
+    const dem = ENGINE.demand(P);
+    const gA = P.students.filter(s => !s.lf);
+    const N = gA.length, Nw = gA.filter(s => s.g === 'w').length, Nm = gA.filter(s => s.g === 'm').length, Nd = N - Nw - Nm;
+    off.forEach(id => { P.grid[id] = P.grid[id] || {}; HJ.forEach(h => { P.grid[id][h] = P.grid[id][h] || {}; }); });
+    const seat = HJ.map(() => ({ all: 0, w: 0, m: 0, n: 0 }));
+    const rows = off.map(id => {
+      const s = idx[id]; const e = dem[id] || { total: 0, w: 0, m: 0, d: 0, alt: 0 };
+      const split = ENGINE.isSplit(P, id); const cap = ENGINE.capOf(P, id);
+      let courses = 0;
+      const cells = HJ.map((h, i) => {
+        const c = P.grid[id][h];
+        if (split) {
+          const w = +c.w || 0, m = +c.m || 0; courses += w + m;
+          seat[i].all += (w + m) * cap; seat[i].w += w * cap; seat[i].m += m * cap; seat[i].n += w + m;
+          return `<td><div class="cell"><label for="g-${id}-${i}-w">w</label><input type="number" min="0" max="9" id="g-${id}-${i}-w" data-id="${id}" data-h="${h}" data-k="w" value="${w}"><label for="g-${id}-${i}-m">m</label><input type="number" min="0" max="9" id="g-${id}-${i}-m" data-id="${id}" data-h="${h}" data-k="m" value="${m}"></div></td>`;
+        }
+        const n = +c.n || 0; courses += n;
+        seat[i].all += n * cap; seat[i].n += n;
+        return `<td><div class="cell"><input type="number" min="0" max="9" id="g-${id}-${i}" data-id="${id}" data-h="${h}" data-k="n" value="${n}" aria-label="${esc(s.name)} ${h} Kurse"></div></td>`;
+      }).join('');
+      const seatsSport = courses * cap;
+      const cover = e.total ? seatsSport / e.total : null;
+      const pill = !e.total ? (courses ? '<span class="pill info">ohne Wünsche</span>' : '') : cover >= 1 ? '<span class="pill ok">reicht</span>' : cover >= .85 ? '<span class="pill warn">knapp</span>' : '<span class="pill bad">zu wenig</span>';
+      return `<tr><td><span class="gdot" style="background:var(--g${s.group})"></span>${esc(s.name)}${split ? ' <span class="small muted">(getrennt)</span>' : ''}</td>
+        <td class="num"><b>${e.total}</b></td><td class="num small">${e.w}/${e.m}${e.d ? '/' + e.d : ''}</td><td class="num small">${e.alt}</td>
+        ${cells}<td class="num">${courses} × ${cap}</td><td>${pill}</td></tr>`;
+    }).join('');
+    const foot = HJ.map((h, i) => {
+      const s = seat[i];
+      const lack = [];
+      if (s.all < N) lack.push(`${N - s.all} Plätze fehlen`);
+      const mixed = s.all - s.w - s.m;
+      if (s.w + mixed < Nw) lack.push('zu wenig Plätze für Schülerinnen');
+      if (s.m + mixed < Nm) lack.push('zu wenig Plätze für Schüler');
+      return `<td class="c"><div><b>${s.n}</b> Kurse · ${s.all} Plätze</div>${lack.length ? `<span class="pill bad">${lack.join(', ')}</span>` : '<span class="pill ok">reicht</span>'}</td>`;
+    }).join('');
+    const lfCands = off.filter(id => P.sports[id].lf);
+    const lfRows = P.lfGroups.map((gr, gi) => {
+      const val = ENGINE.lfGroupValid(P, gr);
+      const n = P.students.filter(s => s.lf).length;
+      return `<div class="panel" style="background:var(--bg)" data-gi="${gi}">
+        <div class="row">
+          <label class="field" style="flex:1;min-width:180px">Name<input type="text" data-lk="name" value="${esc(gr.name)}"></label>
+          <label class="field">Größe<input type="number" min="4" max="40" data-lk="cap" value="${gr.cap}"></label>
+          <button class="btn quiet" type="button" data-lrm="${gi}" style="align-self:flex-end">Entfernen</button>
+        </div>
+        <div class="row">${HJ.map(h => `<label class="field">${h}<select data-lh="${h}"><option value="">–</option>${lfCands.map(id => `<option value="${id}" ${gr.sports[h] === id ? 'selected' : ''}>${esc(idx[id].name)}</option>`).join('')}</select></label>`).join('')}</div>
+        <div>${val.ok ? '<span class="pill ok">regelkonform</span>' : `<span class="pill bad">${esc(val.checks.filter(c => !c.ok).map(c => c.label).join('; '))}</span>`} <span class="small muted">${n} Schüler mit Leistungsfach</span></div>
+      </div>`;
+    }).join('');
+    v.innerHTML = `<div class="stack">
+      <div class="stats">
+        <div class="stat"><b>${N}</b><span>Schüler im Fach Sport (gA): ${Nw} w, ${Nm} m${Nd ? ', ' + Nd + ' d' : ''}</span></div>
+        <div class="stat"><b>${N * 4}</b><span>Belegungen über vier Halbjahre</span></div>
+        <div class="stat"><b>${N}</b><span>Plätze nötig pro Halbjahr</span></div>
+        <div class="stat"><b>${P.students.filter(s => s.lf).length}</b><span>Schüler im Leistungsfach</span></div>
+      </div>
+      <section class="panel">
+        <div class="row" style="justify-content:space-between">
+          <div><h2>Kursangebot je Halbjahr</h2><p class="muted small">Anzahl Kurse pro Sportart und Halbjahr. „Wünsche“ zählt gewählte Halbjahre (w/m/d), „Ersatz“ die Nennungen als Ersatzwunsch.</p></div>
+          <button class="btn ghost" type="button" id="k-prop" ${N ? '' : 'disabled'}>Kursangebot vorschlagen</button>
+        </div>
+        ${off.length ? `<div class="tbl-wrap"><table class="grid-in">
+          <thead><tr><th>Sportart</th><th class="num">Wünsche</th><th class="num">w/m</th><th class="num">Ersatz</th>${HJ.map(h => `<th class="c">${h}</th>`).join('')}<th class="num">Plätze</th><th></th></tr></thead>
+          <tbody id="k-body">${rows}</tbody>
+          <tfoot><tr><td colspan="4"><b>Summe je Halbjahr</b><div class="small muted">nötig: ${N} Plätze</div></td>${foot}<td colspan="2"></td></tr></tfoot>
+        </table></div>` : '<p class="muted">Zuerst im Reiter 1 Sportarten anbieten.</p>'}
+        <p class="small muted">Tipp: Wer eine Sportart zweimal wählt, braucht sie in zwei verschiedenen Halbjahren. Sportarten mit vielen Doppelwahlen deshalb auf mindestens zwei Halbjahre verteilen.</p>
+      </section>
+      <section class="panel">
+        <div class="row" style="justify-content:space-between">
+          <div><h2>Leistungsfach-Kursgruppen</h2><p class="muted small">Theorie und Praxis laufen grundsätzlich in einer Kursgruppe: zwei Sportarten aus verschiedenen Gruppen, je zwei Halbjahre.</p></div>
+          <button class="btn quiet" type="button" id="lf-add">Kursgruppe hinzufügen</button>
+        </div>
+        ${lfRows || '<p class="muted">Keine Leistungsfach-Kursgruppe angelegt.</p>'}
+      </section></div>`;
+    const kb = $('k-body');
+    if (kb) kb.addEventListener('change', e => {
+      const t = e.target; if (!t.dataset.id) return;
+      P.grid[t.dataset.id][t.dataset.h][t.dataset.k] = Math.max(0, Math.min(9, +t.value || 0));
+      save(); const id = t.id; render(); const el = $(id); if (el) el.focus();
+    });
+    const pb = $('k-prop');
+    if (pb) pb.onclick = () => confirmInline(pb, 'Das bisherige Kursangebot wird ersetzt.', 'Vorschlag übernehmen', () => {
+      P.grid = ENGINE.proposeGrid(P); save(); render(); toast('Vorschlag erstellt. Jetzt an Hallen und Lehrkräfte anpassen.');
+    });
+    $('lf-add').onclick = () => {
+      let n = 1; while (P.lfGroups.some(g => g.id === 'g' + n)) n++;
+      P.lfGroups.push({ id: 'g' + n, name: 'Leistungsfach Sport' + (P.lfGroups.length ? ' ' + (P.lfGroups.length + 1) : ''), cap: 24, sports: {} });
+      save(); render();
+    };
+    v.querySelectorAll('[data-gi]').forEach(box => {
+      const gr = P.lfGroups[+box.dataset.gi];
+      box.addEventListener('change', e => {
+        const t = e.target;
+        if (t.dataset.lk === 'name') gr.name = t.value.trim() || 'Leistungsfach Sport';
+        if (t.dataset.lk === 'cap') gr.cap = Math.max(4, Math.min(40, +t.value || 24));
+        if (t.dataset.lh) gr.sports[t.dataset.lh] = t.value;
+        save(); render();
+      });
+    });
+    v.querySelectorAll('[data-lrm]').forEach(b => b.onclick = () => { P.lfGroups.splice(+b.dataset.lrm, 1); save(); render(); });
+  }
+
+  // ---------- 4 Verteilung ----------
+  function courseState() {
+    const courses = ENGINE.buildCourses(P);
+    const byId = {}; courses.forEach(c => { byId[c.id] = c; c.members = []; });
+    P.students.forEach(st => { const a = P.assignment[st.id] || {}; HJ.forEach(h => { if (a[h] && byId[a[h]]) byId[a[h]].members.push(st); }); });
+    return { courses, byId };
+  }
+  function vVerteilung(v) {
+    const { idx } = C();
+    const { courses, byId } = courseState();
+    const stat = {}; let hits = 0, full = 0, incomplete = 0, broken = 0;
+    P.students.forEach(st => {
+      const s = ENGINE.studentStatus(P, st, byId, idx); stat[st.id] = s;
+      hits += s.hits; if (s.hits === 4) full++;
+      if (!s.complete) incomplete++; else if (!s.ruleOk) broken++;
+    });
+    const over = courses.filter(c => c.members.length > c.cap);
+    const n = P.students.length;
+    const pct = n ? Math.round(hits / (4 * n) * 100) : 0;
+    const assignedAny = P.students.some(st => Object.keys(P.assignment[st.id] || {}).length);
+    const nLocked = Object.values(P.locks).filter(Boolean).length;
+    v.innerHTML = `<div class="stack">
+      <section class="panel">
+        <div class="row" style="justify-content:space-between">
+          <div><h2>Verteilung</h2><p class="muted small">Verteilt alle Schüler regelkonform auf die Kurse aus Reiter 3, möglichst nach Erstwunsch, sonst nach Ersatzwunsch. ${nLocked ? `${nLocked} fixierte Schüler bleiben, wo sie sind.` : ''}</p></div>
+          <div class="row">
+            ${nLocked ? '<button class="btn quiet" type="button" id="v-unlock">Alle Fixierungen lösen</button>' : ''}
+            <button class="btn" type="button" id="v-run" ${n && courses.length ? '' : 'disabled'}>Automatisch verteilen</button>
+          </div>
+        </div>
+        ${lastRun ? `<p class="small muted">Letzte Verteilung: ${lastRun.runs} Durchläufe geprüft, beste Lösung übernommen.</p>` : ''}
+      </section>
+      ${assignedAny ? `<div class="stats">
+        <div class="stat ${pct >= 85 ? 'ok' : ''}"><b>${pct} %</b><span>der Wünsche erfüllt</span></div>
+        <div class="stat"><b>${full}</b><span>von ${n} bekommen alle vier Wünsche</span></div>
+        <div class="stat ${incomplete ? 'bad' : 'ok'}"><b>${incomplete}</b><span>ohne vollständigen Platz</span></div>
+        <div class="stat ${broken + over.length ? 'bad' : 'ok'}"><b>${broken + over.length}</b><span>Regelverstöße und überfüllte Kurse</span></div>
+      </div>
+      ${incomplete ? `<div class="banner" style="background:var(--badbg);border-color:var(--bad)"><span><b>${incomplete} Schüler ohne vollständigen Platz.</b> Meist fehlen Plätze in einem Halbjahr oder die passende Leistungsfach-Kursgruppe. Kurse in Reiter 3 ergänzen und neu verteilen, oder unten von Hand zuteilen.</span></div>` : ''}
+      <div class="row" style="justify-content:space-between">
+        <div class="subtabs" role="group" aria-label="Ansicht">
+          <button type="button" data-sub="schueler" aria-pressed="${sub === 'schueler'}">Schülerübersicht</button>
+          <button type="button" data-sub="kurse" aria-pressed="${sub === 'kurse'}">Kurslisten</button>
+        </div>
+        ${sub === 'schueler' ? `<div class="row"><input type="text" id="v-q" placeholder="Name oder Klasse suchen" value="${esc(filter.q)}" style="width:220px" aria-label="Suchen"><label class="row small" style="gap:6px"><input type="checkbox" id="v-only" ${filter.only ? 'checked' : ''}> nur Abweichungen</label></div>` : ''}
+      </div>
+      <div id="v-sub"></div>` : `<section class="panel"><p class="muted">Noch keine Verteilung. Erst Wahlen einlesen (Reiter 2) und Kurse planen (Reiter 3), dann „Automatisch verteilen“.</p></section>`}
+    </div>`;
+    const run = $('v-run');
+    if (run) run.onclick = () => {
+      run.disabled = true; run.textContent = 'Verteile …';
+      setTimeout(() => {
+        const r = ENGINE.distribute(P, { budgetMs: 1500 });
+        P.assignment = r.assignment; lastRun = r; save(); render();
+        toast(r.unassigned.length ? `${r.unassigned.length} Schüler ohne vollständigen Platz. Kurse ergänzen oder von Hand zuteilen.` : 'Alle verteilt.');
+      }, 30);
+    };
+    const ul = $('v-unlock'); if (ul) ul.onclick = () => { P.locks = {}; save(); render(); };
+    v.querySelectorAll('[data-sub]').forEach(b => b.onclick = () => { sub = b.dataset.sub; render(); });
+    if (!assignedAny) return;
+    if (sub === 'schueler') renderStudents($('v-sub'), courses, byId, stat);
+    else renderCourseLists($('v-sub'), courses);
+    const q = $('v-q');
+    if (q) q.addEventListener('input', e => { filter.q = e.target.value; const pos = e.target.selectionStart; render(); const i = $('v-q'); i.focus(); i.setSelectionRange(pos, pos); });
+    const only = $('v-only'); if (only) only.onchange = e => { filter.only = e.target.checked; render(); };
+  }
+  function renderStudents(box, courses, byId, stat) {
+    const { idx } = C();
+    const q = filter.q.toLowerCase();
+    const list = P.students.filter(st => {
+      if (q && !(st.name + ' ' + st.klasse).toLowerCase().includes(q)) return false;
+      if (filter.only) { const s = stat[st.id]; if (s.complete && s.ruleOk && s.hits === 4) return false; }
+      return true;
+    }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    const opts = {};
+    HJ.forEach(h => { opts[h] = courses.filter(c => c.hj === h); });
+    const rows = list.map(st => {
+      const s = stat[st.id]; const a = P.assignment[st.id] || {};
+      const wishLeft = SPW.countBy(st.wishes, x => x);
+      const cells = HJ.map(h => {
+        const cur = a[h] || '';
+        const pool = opts[h].filter(c => st.lf ? c.lf : (!c.lf && ENGINE.compat(c, st.g)));
+        const cc = byId[cur];
+        let cls = '';
+        if (!cc) cls = 'miss';
+        else if (wishLeft[cc.sport] > 0) wishLeft[cc.sport]--; else cls = 'alt';
+        return `<td><select data-st="${st.id}" data-h="${h}" class="${cls}" aria-label="${esc(st.name)} ${h}"><option value="">– kein Kurs –</option>${pool.map(c => `<option value="${c.id}" ${c.id === cur ? 'selected' : ''}>${esc(c.label)} (${c.members.length}/${c.cap})</option>`).join('')}</select></td>`;
+      }).join('');
+      let status;
+      if (!s.complete) status = '<span class="pill bad">unvollständig</span>';
+      else if (!s.ruleOk) status = `<span class="pill bad" title="${esc(s.checks.filter(c => !c.ok).map(c => c.label).join('; '))}">Regel verletzt</span>`;
+      else status = `<span class="pill ${s.hits === 4 ? 'ok' : 'warn'}">${s.hits}/4 Wünsche</span>`;
+      return `<tr><td>${esc(st.name)}${st.lf ? ' <span class="pill info">LF</span>' : ''}<div class="small muted">${esc(st.klasse)} · ${gLabel(st.g)}</div></td>
+        <td>${chips(st.wishes)}${(st.alt || []).length ? `<div class="small muted" style="margin-top:3px">Ersatz: ${st.alt.map(x => idx[x] ? idx[x].name : x).join(', ')}</div>` : ''}</td>
+        ${cells}<td>${status}</td>
+        <td class="c"><input type="checkbox" data-lock="${st.id}" ${P.locks[st.id] ? 'checked' : ''} title="Fixiert: bleibt bei neuer Verteilung" aria-label="${esc(st.name)} fixieren"></td></tr>`;
+    }).join('');
+    box.innerHTML = `<div class="tbl-wrap" style="max-height:75vh"><table>
+      <thead><tr><th>Name</th><th>Wünsche</th>${HJ.map(h => `<th>${h}</th>`).join('')}<th>Status</th><th class="c" title="Fixiert">Fix</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="8" class="muted">Keine Treffer.</td></tr>'}</tbody></table></div>
+      <p class="small muted">Gelb umrandet: Kurs entspricht keinem Erstwunsch. Rot: kein Kurs. Wer von Hand umgesetzt wird, ist automatisch fixiert.</p>`;
+    box.addEventListener('change', e => {
+      const t = e.target;
+      if (t.dataset.st) {
+        const a = P.assignment[t.dataset.st] = P.assignment[t.dataset.st] || {};
+        if (t.value) a[t.dataset.h] = t.value; else delete a[t.dataset.h];
+        P.locks[t.dataset.st] = true; save(); render();
+      } else if (t.dataset.lock) { P.locks[t.dataset.lock] = t.checked; save(); }
+    });
+  }
+  function renderCourseLists(box, courses) {
+    box.innerHTML = HJ.map(h => {
+      const cs = courses.filter(c => c.hj === h);
+      const n = cs.reduce((a, c) => a + c.members.length, 0);
+      return `<section class="panel"><div class="hj-title"><h3>Halbjahr ${h}</h3><span class="muted small">${cs.length} Kurse · ${n} Schüler</span></div>
+        <div class="courses">${cs.map(c => {
+          const m = c.members.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
+          const over = m.length > c.cap;
+          return `<div class="course ${over ? 'over' : ''}">
+            <div class="row" style="justify-content:space-between;gap:6px"><h4>${esc(c.label)}</h4><span class="small ${over ? '' : 'muted'}" style="${over ? 'color:var(--bad);font-weight:600' : ''}">${m.length}/${c.cap}</span></div>
+            <div class="bar"><i style="width:${Math.min(100, m.length / c.cap * 100)}%"></i></div>
+            <input type="text" data-cm="${c.id}" value="${esc((P.courseMeta[c.id] || {}).teacher || '')}" placeholder="Lehrkraft" aria-label="Lehrkraft ${esc(c.label)} ${h}">
+            ${m.length ? `<ol>${m.map(s => `<li>${esc(s.name)} <span class="muted small">${esc(s.klasse)}</span></li>`).join('')}</ol>` : '<span class="muted small">leer</span>'}
+          </div>`;
+        }).join('')}</div></section>`;
+    }).join('');
+    box.addEventListener('change', e => {
+      const t = e.target; if (!t.dataset.cm) return;
+      P.courseMeta[t.dataset.cm] = { ...(P.courseMeta[t.dataset.cm] || {}), teacher: t.value.trim() }; save();
+    });
+  }
+
+  // ---------- 5 Export ----------
+  function vExport(v) {
+    v.innerHTML = `<div class="cols">
+      <section class="panel">
+        <h2>Listen</h2>
+        <p class="muted">CSV-Dateien öffnen sich direkt in Excel (Semikolon-getrennt, Umlaute korrekt).</p>
+        <div class="row"><button class="btn" type="button" id="x-students">Schülerübersicht (CSV)</button></div>
+        <div class="row"><button class="btn" type="button" id="x-courses">Kurslisten (CSV)</button></div>
+        <div class="row"><button class="btn ghost" type="button" id="x-print">Kurslisten drucken</button></div>
+      </section>
+      <section class="panel">
+        <h2>Projekt</h2>
+        <p class="muted">Das Projekt enthält Angebot, Wahlen, Kursplanung und Verteilung. Die Datei kann die Oberstufenkoordination hier mit „Projekt öffnen“ laden und weiterbearbeiten.</p>
+        <div class="row"><button class="btn" type="button" id="x-save">Projekt speichern</button><button class="btn quiet" type="button" id="x-open">Projekt öffnen</button></div>
+        <p class="small muted">Zwischendurch speichert das Tool automatisch in diesem Browser. Die Projektdatei ist die Sicherung und der Weg zu Kollegen. Sie enthält Schülernamen, also nur dienstlich weitergeben.</p>
+      </section></div>`;
+    $('x-students').onclick = () => {
+      const { idx } = C(); const { byId } = courseState();
+      const rows = [['Name', 'Klasse', 'Geschlecht', 'Art', ...HJ, 'Wünsche', 'Erfüllte Wünsche', 'Hinweis']];
+      P.students.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).forEach(st => {
+        const s = ENGINE.studentStatus(P, st, byId, idx); const a = P.assignment[st.id] || {};
+        rows.push([st.name, st.klasse, st.g, st.lf ? 'Leistungsfach' : 'gA', ...HJ.map(h => byId[a[h]] ? byId[a[h]].label : ''),
+          st.wishes.map(w => idx[w] ? idx[w].name : w).join(', '), s.hits + '/4', !s.complete ? 'unvollständig' : (!s.ruleOk ? 'Regel verletzt' : '')]);
+      });
+      download(`Sportwahl-Schueler-${slug(P.meta.jahrgang)}.csv`, csv(rows), 'text/csv;charset=utf-8');
+    };
+    $('x-courses').onclick = () => {
+      const { courses } = courseState();
+      const rows = [['Halbjahr', 'Kurs', 'Lehrkraft', 'Name', 'Klasse', 'Geschlecht']];
+      courses.forEach(c => c.members.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).forEach(s => rows.push([c.hj, c.label, (P.courseMeta[c.id] || {}).teacher || '', s.name, s.klasse, s.g])));
+      download(`Sportwahl-Kurslisten-${slug(P.meta.jahrgang)}.csv`, csv(rows), 'text/csv;charset=utf-8');
+    };
+    $('x-print').onclick = () => {
+      const { courses } = courseState();
+      $('print-area').innerHTML = HJ.map(h => `<section><h2>Sport ${h} · ${esc(P.meta.jahrgang)}</h2><div class="pcs">${courses.filter(c => c.hj === h).map(c => `<div class="pc"><h3>${esc(c.label)} (${c.members.length})</h3><div>${esc((P.courseMeta[c.id] || {}).teacher || '')}</div><ol>${c.members.slice().sort((a, b) => a.name.localeCompare(b.name, 'de')).map(s => `<li>${esc(s.name)}, ${esc(s.klasse)}</li>`).join('')}</ol></div>`).join('')}</div></section>`).join('');
+      window.print();
+    };
+    $('x-save').onclick = () => { const p = { ...P, example: P.example }; download(`Sportwahl-Projekt-${slug(P.meta.jahrgang)}.json`, JSON.stringify(p, null, 1), 'application/json'); };
+    $('x-open').onclick = () => $('file-project').click();
+  }
+  $('file-project').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { const p = JSON.parse(rd.result); if (!p || p.version !== 1) throw 0; P = normalize(p); save(); go('verteilung'); toast('Projekt geladen.'); }
+      catch (err) { toast('Diese Datei ist kein Sportwahl-Projekt.'); }
+    };
+    rd.readAsText(f, 'utf-8'); e.target.value = '';
+  });
+
+  // ---------- Start ----------
+  P = load();
+  let t0 = 'start';
+  try { t0 = localStorage.getItem(KEY + '-tab') || 'start'; } catch (e) { }
+  renderHead();
+  go(['start', 'angebot', 'wahlen', 'kurse', 'verteilung', 'export'].includes(t0) ? t0 : 'start');
+})();
+</script>
+</body>
+</html>
