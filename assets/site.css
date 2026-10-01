@@ -166,3 +166,37 @@ footer nav{display:flex;flex-wrap:wrap;gap:6px 20px}
 footer a{text-decoration:none;color:var(--ink-2)}
 footer a:hover{color:var(--ink)}
 .kicker{font-size:13px;color:var(--ink-3)}
+
+/* ---- theis Branding ---- */
+.brand{gap:12px}
+.brand .mark{display:none}
+.brand .logo{height:24px;width:auto;display:block;color:var(--ink);overflow:visible}
+.brand .logo .dot{fill:#2F5BEA}
+.brand span{color:var(--ink-3);font-weight:450;font-size:14.5px;padding-left:12px;border-left:1px solid var(--line-2);line-height:1.1}
+@media (prefers-color-scheme:dark){.brand .logo .dot{fill:#6E8BFF}}
+@media (max-width:640px){.brand span{display:none}}
+
+/* ---- Downloads ---- */
+.dls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 4px}
+@media (max-width:900px){.dls{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.dls{grid-template-columns:1fr}}
+.dl{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);text-decoration:none;box-shadow:var(--shadow);transition:transform .15s,border-color .15s,box-shadow .15s;min-width:0}
+.dl:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:var(--shadow-lg)}
+.dl:first-child{background:var(--ink);color:var(--bg);border-color:transparent}
+.dl-ic{width:40px;height:40px;border-radius:11px;background:var(--bg-2);display:grid;place-items:center;flex:none;color:var(--ink)}
+.dl:first-child .dl-ic{background:color-mix(in srgb,var(--bg) 14%,transparent);color:var(--bg)}
+.dl-ic svg{width:21px;height:21px}
+.dl strong{display:block;font-weight:600;font-size:16px;letter-spacing:-.01em}
+.dl small{display:block;font-size:13px;color:var(--ink-3);margin-top:1px}
+.dl:first-child small{color:color-mix(in srgb,var(--bg) 65%,transparent)}
+
+/* ---- Installationshinweise ---- */
+.howto{display:grid;gap:10px}
+.howto details{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.howto summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:15px 18px;font-weight:600}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::after{content:"+";margin-left:auto;font:400 20px/1 var(--sans);color:var(--ink-3)}
+.howto details[open] summary::after{content:"–"}
+.howto summary svg{width:18px;height:18px;color:var(--ink-2)}
+.howto .steps{padding:0 14px 14px}
+.howto .steps li{background:var(--bg)}

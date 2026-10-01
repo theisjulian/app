@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Gruppen</title>
+<style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-opsz-normal.woff2) format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b2240">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gruppen">
+<style>
+:root{
+  /* System colours */
+  --blue:#0071E3; --green:#30B650; --orange:#F07800; --red:#E0342B;
+  --g1:#0A84FF; --g2:#30B0C7; --g3:#34C759; --g4:#5E5CE6;
+  --g5:#FF375F; --g6:#FF9500; --g7:#AF52DE; --g8:#00B5A5;
+
+  --canvas:#EDEEF2;
+  --wash-a:rgba(110,155,255,.42);
+  --wash-b:rgba(255,150,185,.32);
+  --wash-c:rgba(125,228,210,.34);
+
+  --glass:rgba(255,255,255,.62);
+  --glass-solid:rgba(255,255,255,.86);
+  --glass-hi:rgba(255,255,255,.85);
+  --hairline:rgba(0,0,0,.09);
+  --tile:rgba(255,255,255,.55);
+
+  --label:#14161A;
+  --label-2:rgba(30,34,40,.58);
+  --label-3:rgba(30,34,40,.30);
+  --fill:rgba(20,30,50,.07);
+  --fill-2:rgba(20,30,50,.13);
+  --thumb:#FFFFFF;
+  --track:rgba(20,30,50,.16);
+
+  --lift:0 1px 2px rgba(16,24,40,.05), 0 8px 26px -8px rgba(16,24,40,.16);
+  --lift-2:0 2px 6px rgba(16,24,40,.07), 0 22px 50px -18px rgba(16,24,40,.28);
+  --r-xl:28px; --r-lg:20px; --r-md:14px; --r-sm:10px;
+  --blur:saturate(180%) blur(28px);
+  --ui:"Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --spring:cubic-bezier(.22,1.2,.36,1);
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --canvas:#07080B;
+    --wash-a:rgba(50,100,220,.30); --wash-b:rgba(190,60,120,.20); --wash-c:rgba(20,150,150,.22);
+    --glass:rgba(38,41,48,.58); --glass-solid:rgba(34,37,44,.88); --glass-hi:rgba(255,255,255,.14);
+    --hairline:rgba(255,255,255,.10); --tile:rgba(255,255,255,.07);
+    --label:#F5F6F8; --label-2:rgba(235,238,245,.62); --label-3:rgba(235,238,245,.30);
+    --fill:rgba(255,255,255,.10); --fill-2:rgba(255,255,255,.17); --track:rgba(255,255,255,.18);
+    --blue:#0A84FF; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A;
+    --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --canvas:#07080B;
+  --wash-a:rgba(50,100,220,.30); --wash-b:rgba(190,60,120,.20); --wash-c:rgba(20,150,150,.22);
+  --glass:rgba(38,41,48,.58); --glass-solid:rgba(34,37,44,.88); --glass-hi:rgba(255,255,255,.14);
+  --hairline:rgba(255,255,255,.10); --tile:rgba(255,255,255,.07);
+  --label:#F5F6F8; --label-2:rgba(235,238,245,.62); --label-3:rgba(235,238,245,.30);
+  --fill:rgba(255,255,255,.10); --fill-2:rgba(255,255,255,.17); --track:rgba(255,255,255,.18);
+  --blue:#0A84FF; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A;
+  --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.8);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{
+  -webkit-text-size-adjust:100%;min-height:100%;
+  background-color:var(--canvas);
+  background-image:
+    radial-gradient(58vmax 50vmax at 8% -6%, var(--wash-a), transparent 60%),
+    radial-gradient(50vmax 44vmax at 98% 4%, var(--wash-b), transparent 58%),
+    radial-gradient(64vmax 52vmax at 66% 104%, var(--wash-c), transparent 60%);
+  background-attachment:fixed;background-repeat:no-repeat;
+}
+body{
+  margin:0;min-height:100%;color:var(--label);background:transparent;
+  font:17px/1.45 var(--ui);letter-spacing:-.012em;-webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;letter-spacing:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:4px solid color-mix(in srgb, var(--blue) 50%, transparent);outline-offset:2px;border-radius:10px}
+
+/* Glass material */
+.glass{
+  background:var(--glass);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:.5px solid var(--hairline);
+  box-shadow:var(--lift), inset 0 1px 0 var(--glass-hi);
+}
+@supports (corner-shape: squircle){
+  .glass, .tile, .go, .sizes button, .sizes input, .seg, dialog, .chip{corner-shape:squircle}
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar{position:sticky;top:0;z-index:30;padding:14px 20px 6px}
+.toolbar .bar{
+  max-width:1240px;margin:0 auto;border-radius:var(--r-lg);
+  padding:9px 10px 9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;flex:1 1 auto;min-width:0}
+.picker{position:relative;display:inline-flex}
+.picker select{
+  appearance:none;-webkit-appearance:none;background:var(--fill);border:0;border-radius:11px;
+  padding:8px 34px 8px 14px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.picker::after{content:"";position:absolute;right:13px;top:50%;width:6px;height:6px;pointer-events:none;
+  border-right:2px solid var(--label-2);border-bottom:2px solid var(--label-2);transform:translateY(-70%) rotate(45deg)}
+.tbtn{background:none;border:0;padding:8px 11px;border-radius:11px;color:var(--blue);font-size:15px;font-weight:500;transition:background .18s}
+.tbtn:hover{background:var(--fill)}
+
+/* ---------- Layout ---------- */
+.wrap{max-width:1240px;margin:0 auto;padding:10px 20px 72px}
+.layout{display:grid;grid-template-columns:minmax(0,326px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:1fr}}
+.rail{position:sticky;top:86px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:920px){.rail{position:static}}
+
+.panel{border-radius:var(--r-xl);padding:18px 20px}
+.ptitle{font-size:13px;font-weight:600;color:var(--label-2);margin:0 0 13px;letter-spacing:-.005em}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 13px}
+.phead .ptitle{margin:0}
+.count{font-size:14px;font-weight:600;color:var(--label-2);font-variant-numeric:tabular-nums}
+.note{font-size:13.5px;line-height:1.42;color:var(--label-2);margin:13px 0 0}
+
+/* Segmented */
+.seg{display:flex;background:var(--fill);border-radius:12px;padding:2px;gap:2px}
+.seg button{flex:1 1 0;min-width:0;border:0;background:none;border-radius:10px;padding:8px 6px;
+  font-size:13px;font-weight:500;line-height:1.25;transition:background .2s var(--spring),box-shadow .2s,color .2s}
+.seg button[aria-pressed="true"]{background:var(--glass-solid);font-weight:600;box-shadow:0 2px 7px rgba(16,24,40,.13)}
+
+/* Numbers */
+.sizes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin-top:12px}
+.sizes button,.sizes input{
+  min-width:0;width:100%;height:46px;border-radius:13px;border:0;background:var(--fill);
+  font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;
+  transition:background .2s,color .2s,transform .18s var(--spring)}
+.sizes button:hover{background:var(--fill-2)}
+.sizes button[aria-pressed="true"]{background:var(--blue);color:#fff;transform:scale(1.04)}
+.sizes input{appearance:textfield;-moz-appearance:textfield}
+.sizes input::-webkit-outer-spin-button,.sizes input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sizes input::placeholder{color:var(--label-3);font-weight:500}
+
+/* Toggle rows */
+.rows{margin:16px -20px 0;border-top:.5px solid var(--hairline)}
+.row{display:flex;align-items:center;gap:14px;padding:11px 20px;min-height:48px}
+.row + .row{border-top:.5px solid var(--hairline)}
+.row span{flex:1;font-size:15px;line-height:1.3}
+.sw{appearance:none;-webkit-appearance:none;flex:none;width:50px;height:30px;border-radius:15px;
+  background:var(--track);position:relative;transition:background .25s var(--spring)}
+.sw:checked{background:var(--green)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;
+  background:var(--thumb);box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .25s var(--spring),width .18s}
+.sw:checked::after{transform:translateX(20px)}
+.sw:active::after{width:30px}
+.sw:checked:active::after{transform:translateX(16px)}
+
+.go{display:block;width:100%;margin-top:18px;padding:15px;border:0;border-radius:16px;
+  background:var(--blue);color:#fff;font-size:17px;font-weight:600;
+  box-shadow:0 6px 18px -6px color-mix(in srgb, var(--blue) 70%, transparent), inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .18s var(--spring), filter .2s}
+.go:hover{filter:brightness(1.07)}
+.go:active{transform:scale(.97);filter:brightness(.93)}
+
+/* Roster */
+.roster{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:0;background:var(--fill);border-radius:999px;padding:6px 13px;font-size:14px;font-weight:500;
+  display:inline-flex;align-items:center;gap:7px;transition:background .18s,color .18s,opacity .18s}
+.chip:hover{background:var(--fill-2)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--label-3);flex:none}
+.chip .dot.w{background:var(--g5)} .chip .dot.m{background:var(--g1)}
+.chip[aria-pressed="false"]{background:transparent;box-shadow:inset 0 0 0 1px var(--hairline);color:var(--label-3);text-decoration:line-through}
+.chip[aria-pressed="false"] .dot{background:var(--label-3)}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);font-size:14.5px;font-weight:500}
+.linkbtn:hover{text-decoration:underline}
+.linkrow{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0 0}
+
+/* ---------- Stage ---------- */
+.board{min-height:520px;padding:0}
+.boardbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 2px 18px}
+.boardbar .meta{font-size:26px;font-weight:600;letter-spacing:-.025em}
+.boardbar .meta small{display:block;font-size:13.5px;font-weight:400;color:var(--label-2);letter-spacing:-.005em;margin-top:3px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;border-radius:15px;padding:5px}
+.tools button{background:none;border:0;border-radius:11px;padding:8px 14px;font-size:14px;font-weight:500;transition:background .18s,transform .16s var(--spring)}
+.tools button:hover{background:var(--fill)}
+.tools button:active{transform:scale(.96)}
+.tools button.commit{background:var(--blue);color:#fff;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.tools button.commit:hover{background:var(--blue);filter:brightness(1.07)}
+.tools button.commit:disabled{background:var(--fill);color:var(--label-2);font-weight:500;cursor:default;box-shadow:none;filter:none}
+
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:14px}
+.tile{
+  --hue:var(--g1);
+  border-radius:var(--r-lg);padding:15px 16px 17px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--hue) 13%, var(--tile)), color-mix(in srgb, var(--hue) 6%, var(--tile)));
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:.5px solid color-mix(in srgb, var(--hue) 22%, var(--hairline));
+  box-shadow:var(--lift), inset 0 1px 0 var(--glass-hi);
+}
+.tile h3{margin:0 0 10px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:-.005em}
+.tile h3 b{color:color-mix(in srgb, var(--hue) 82%, var(--label));font-weight:600;flex:1}
+.tile h3 small{color:var(--label-2);font-weight:500;font-variant-numeric:tabular-nums;
+  background:var(--fill);border-radius:999px;padding:1px 8px;font-size:12px}
+.tile ol{list-style:none;margin:0;padding:0}
+.tile li{font-size:17px;font-weight:500;line-height:1.52;display:flex;align-items:center;gap:7px}
+.tile li.rep::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--orange);flex:none}
+
+.empty{display:grid;place-items:center;min-height:420px;text-align:center;padding:30px;color:var(--label-2);border-radius:var(--r-xl)}
+.empty strong{display:block;font-size:21px;font-weight:600;color:var(--label);margin-bottom:7px;letter-spacing:-.02em}
+.empty .orbs{display:flex;gap:9px;justify-content:center;margin-bottom:20px}
+.empty .orbs i{width:16px;height:16px;border-radius:50%;background:var(--o);opacity:.5}
+@media (prefers-reduced-motion:no-preference){
+  .empty .orbs i{animation:breathe 3.4s var(--spring) infinite}
+  @keyframes breathe{0%,100%{transform:translateY(0) scale(1);opacity:.35}50%{transform:translateY(-6px) scale(1.12);opacity:.75}}
+  .tile{animation:rise .5s var(--spring) both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px) scale(.94);filter:blur(4px)}}
+}
+
+/* Beamer */
+.board:fullscreen{padding:3vw 3vw 4vw;overflow:auto;
+  background-color:var(--canvas);
+  background-image:
+    radial-gradient(58vmax 50vmax at 8% -6%, var(--wash-a), transparent 60%),
+    radial-gradient(50vmax 44vmax at 98% 4%, var(--wash-b), transparent 58%),
+    radial-gradient(64vmax 52vmax at 66% 104%, var(--wash-c), transparent 60%);
+  background-repeat:no-repeat}
+.board:fullscreen .boardbar{margin-bottom:2.4vw}
+.board:fullscreen .tools{opacity:.55;transition:opacity .3s}
+.board:fullscreen .tools:hover,.board:fullscreen .tools:focus-within{opacity:1}
+.board:fullscreen .boardbar .meta{font-size:clamp(1.6rem,2.6vw,3.2rem)}
+.board:fullscreen .boardbar .meta small{font-size:clamp(.9rem,1vw,1.3rem)}
+.board:fullscreen .groups{grid-template-columns:repeat(auto-fit,minmax(min(100%,20vw),1fr));gap:1.3vw}
+.board:fullscreen .tile{border-radius:1.5vw;padding:1.5vw 1.7vw 1.8vw}
+.board:fullscreen .tile h3{font-size:clamp(.8rem,1vw,1.3rem);margin-bottom:.8vw}
+.board:fullscreen .tile li{font-size:clamp(1.3rem,2.05vw,2.7rem);line-height:1.4;gap:.5vw}
+.board:fullscreen .tile li.rep::after{width:.5vw;height:.5vw}
+
+/* ---------- Sheet ---------- */
+dialog{border:0;padding:0;color:var(--label);border-radius:24px;width:min(540px,94vw);
+  background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:.5px solid var(--hairline);box-shadow:var(--lift-2), inset 0 1px 0 var(--glass-hi)}
+dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@media (prefers-reduced-motion:no-preference){
+  dialog[open]{animation:sheet .34s var(--spring)}
+  @keyframes sheet{from{opacity:0;transform:translateY(16px) scale(.97)}}
+}
+.sheethead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:.5px solid var(--hairline)}
+.sheethead h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.015em;text-align:center;flex:1}
+.sheethead button{background:none;border:0;color:var(--blue);font-size:16px;padding:4px 2px;flex:none}
+.sheethead button.strong{font-weight:600}
+.sheetbody{padding:18px}
+.field{display:block;margin-bottom:15px}
+.field > span{display:block;font-size:13px;font-weight:500;color:var(--label-2);margin-bottom:7px}
+.field input[type=text],.field select,.sheetbody textarea{
+  width:100%;background:var(--fill);border:0;border-radius:13px;padding:12px 14px;font-size:16px}
+.field select{appearance:none;-webkit-appearance:none;padding-right:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center}
+.sheetbody textarea{min-height:210px;font-size:14px;line-height:1.55;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0}
+.delete{display:block;width:100%;margin-top:18px;padding:13px;border:0;border-radius:14px;
+  background:var(--fill);color:var(--red);font-size:16px;font-weight:500;transition:background .18s}
+.delete:hover{background:var(--fill-2)}
+
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));
+  transform:translate(-50%,10px) scale(.96);
+  background:var(--glass-solid);color:var(--label);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:.5px solid var(--hairline);box-shadow:var(--lift-2), inset 0 1px 0 var(--glass-hi);
+  padding:12px 22px;border-radius:999px;font-size:15px;font-weight:500;
+  opacity:0;pointer-events:none;transition:opacity .26s, transform .34s var(--spring);z-index:60}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+
+@media (max-width:520px){
+  .toolbar{padding:10px 12px 4px}
+  .toolbar .bar{padding:8px 8px 8px 14px;gap:6px}
+  h1{font-size:17px;flex-basis:100%}
+  .wrap{padding:8px 12px 72px}
+  .panel{padding:16px}
+  .rows{margin-left:-16px;margin-right:-16px}
+  .row{padding-left:16px;padding-right:16px}
+  .boardbar .meta{font-size:22px}
+  .groups{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="bar glass">
+    <h1 data-t="title">Gruppen bilden</h1>
+    <span class="picker"><select id="classSel" aria-label="Klasse"></select></span>
+    <button class="tbtn" id="addBtn" data-t="addClass">Klasse hinzufügen</button>
+    <button class="tbtn" id="editBtn" data-t="edit">Bearbeiten</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="layout">
+    <div class="rail">
+      <section class="panel glass">
+        <h2 class="ptitle" data-t="size">Gruppengröße</h2>
+        <div class="seg" role="group">
+          <button id="modeSize" aria-pressed="true" data-t="modeSize">Schüler pro Gruppe</button>
+          <button id="modeCount" aria-pressed="false" data-t="modeCount">Anzahl Gruppen</button>
+        </div>
+        <div class="sizes" id="sizes"></div>
+        <div id="restBox" style="margin-top:12px">
+          <div class="seg" role="group">
+            <button id="restBig" aria-pressed="true" data-t="restBig">Übrige dazusetzen</button>
+            <button id="restSmall" aria-pressed="false" data-t="restSmall">Kleinere Gruppen</button>
+          </div>
+        </div>
+        <p class="note" id="preview"></p>
+        <div class="rows">
+          <label class="row" id="mixRow"><span data-t="mix">Mädchen und Jungen gleichmäßig verteilen</span><input type="checkbox" class="sw" id="mixGender" checked></label>
+          <label class="row"><span data-t="preferNew">Möglichst neue Kombinationen</span><input type="checkbox" class="sw" id="preferNew" checked></label>
+          <label class="row"><span data-t="showLast">Nachnamen anzeigen</span><input type="checkbox" class="sw" id="showLast"></label>
+        </div>
+        <button class="go" id="goBtn" data-t="go">Gruppen bilden</button>
+      </section>
+
+      <section class="panel glass">
+        <div class="phead">
+          <h2 class="ptitle" data-t="present">Heute da</h2>
+          <span class="count" id="count"></span>
+        </div>
+        <div class="roster" id="roster"></div>
+        <p class="note" data-t="tapAbsent">Antippen, wer fehlt.</p>
+        <div class="linkrow"><button class="linkbtn" id="allIn" data-t="allIn">Alle wieder anwesend</button></div>
+      </section>
+
+      <section class="panel glass">
+        <h2 class="ptitle" data-t="history">Verlauf</h2>
+        <p class="note" style="margin:0" id="histInfo"></p>
+        <div class="linkrow">
+          <button class="linkbtn" id="histUndo" hidden data-t="undo">Letzte Runde entfernen</button>
+          <button class="linkbtn" id="histClear" hidden data-t="clear">Verlauf löschen</button>
+        </div>
+      </section>
+
+      <section class="panel glass">
+        <h2 class="ptitle" data-t="backup">Sicherung</h2>
+        <p class="note" style="margin:0" data-t="backupHelp">Klassen und Verlauf als Datei sichern und auf einem anderen Gerät wieder einlesen.</p>
+        <div class="linkrow">
+          <button class="linkbtn" id="expBtn" data-t="export">Sichern</button>
+          <button class="linkbtn" id="impBtn" data-t="import">Einlesen</button>
+          <input type="file" id="impFile" accept="application/json,.json" hidden>
+        </div>
+      </section>
+
+      <section class="panel glass">
+        <h2 class="ptitle" data-t="about">Über Gruppen</h2>
+        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisjulian.github.io/app/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a></p>
+      </section>
+    </div>
+
+    <section class="board" id="board" aria-live="polite">
+      <div class="boardbar">
+        <span class="meta" id="boardMeta"></span>
+        <div class="tools glass">
+          <button id="commitBtn" class="commit" hidden>Übernehmen</button>
+          <button id="againBtn" hidden data-t="again">Neu mischen</button>
+          <button id="copyBtn" hidden data-t="copy">Als Text kopieren</button>
+          <button id="fsBtn">Beamer-Ansicht</button>
+        </div>
+      </div>
+      <div id="groups"></div>
+    </section>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form class="sheet" method="dialog" id="dlgForm">
+    <div class="sheethead">
+      <button type="button" id="dlgCancel" data-t="cancel">Abbrechen</button>
+      <h2 id="dlgTitle">Klasse hinzufügen</h2>
+      <button type="submit" class="strong" id="dlgSave" data-t="save">Sichern</button>
+    </div>
+    <div class="sheetbody">
+      <label class="field"><span data-t="dlgName">Name der Klasse</span><input type="text" id="dlgName" placeholder="7c" required></label>
+      <label class="field"><span data-t="dlgLang">Sprache der Oberfläche</span>
+        <select id="dlgLang"><option value="it">Italiano</option><option value="en">English</option><option value="de">Deutsch</option></select></label>
+      <label class="field"><span data-t="dlgNames">Namen</span>
+        <textarea id="dlgText" placeholder="1 Muster, Anna (w)&#10;2 Beispiel, Ben (m)"></textarea></label>
+      <p class="note" style="margin:0" data-t="dlgHelp">Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.</p>
+      <button type="button" class="delete" id="dlgDelete" hidden data-t="dlgDelete">Klasse löschen</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_CLASSES = {
+  "Beispielklasse": { lang:"de", raw:`1 Albrecht, Mia (w)
+2 Bachmann, Jonas (m)
+3 Brandl, Lea (w)
+4 Demir, Can (m)
+5 Eder, Sophie (w)
+6 Fink, Paul (m)
+7 Graf, Emma (w)
+8 Hauser, Leon (m)
+9 Imhof, Clara (w)
+10 Jung, Felix (m)
+11 Kern, Hannah (w)
+12 Lorenz, Elias (m)
+13 Mayr, Ida (w)
+14 Neumeier, Finn (m)
+15 Ott, Greta (w)
+16 Pohl, Jakob (m)
+17 Reiter, Nele (w)
+18 Seitz, Moritz (m)
+19 Thaler, Paula (w)
+20 Unger, Tim (m)
+21 Vogt, Lina (w)
+22 Walch, Simon (m)
+23 Zeller, Marie (w)
+24 Ziegler, Noah (m)` }
+};
+
+const T = {
+ de:{ title:"Gruppen bilden", addClass:"Klasse hinzufügen", edit:"Bearbeiten", size:"Gruppengröße", modeSize:"Schüler pro Gruppe", modeCount:"Anzahl Gruppen",
+  restBig:"Übrige dazusetzen", restSmall:"Kleinere Gruppen", mix:"Mädchen und Jungen gleichmäßig verteilen", preferNew:"Möglichst neue Kombinationen",
+  showLast:"Nachnamen anzeigen", go:"Gruppen bilden", present:"Heute da", tapAbsent:"Antippen, wer fehlt.", allIn:"Alle wieder anwesend",
+  history:"Verlauf", undo:"Letzte Runde entfernen", clear:"Verlauf löschen", commit:"Übernehmen", committed:"Übernommen", again:"Neu mischen",
+  copy:"Als Text kopieren", fs:"Beamer-Ansicht", fsExit:"Vollbild beenden", group:"Gruppe",
+  backup:"Sicherung", backupHelp:"Klassen und Verlauf als Datei sichern und auf einem anderen Gerät wieder einlesen.", export:"Sichern", import:"Einlesen",
+  emptyH:"Noch keine Gruppen", emptyP:"Größe einstellen und „Gruppen bilden“ drücken.",
+  allNew:"Alle Kombinationen sind neu", repeats:n=>`${n} ${n===1?'Paar gab':'Paare gab'} es schon`,
+  preview:(n,g,parts)=>`${n} Schüler → ${g} ${g===1?'Gruppe':'Gruppen'}: ${parts.map(([c,k])=>`${c}× ${k}er`).join(', ')}`, none:"Keine Schüler ausgewählt.",
+  histN:n=>`${n} ${n===1?'Runde':'Runden'} gespeichert. Neue Gruppen vermeiden Paare, die es schon gab – die letzten Runden zählen dabei am stärksten.`,
+  histNone:"Noch keine Runden gespeichert. Drück nach dem Mischen auf „Übernehmen“, dann merkt sich die Seite, wer schon zusammen war.",
+  tCopied:"Kopiert", tCopyFail:"Kopieren nicht möglich", tSaved:"Runde gespeichert", tUndone:"Letzte Runde entfernt", tFs:"Vollbild nicht verfügbar",
+  tNoNames:"Keine Namen erkannt", tNames:n=>`${n} Namen gespeichert`, tExported:"Sicherung erstellt", tExpFail:"Sichern nicht möglich", tImported:n=>`${n} Klassen eingelesen`, tImpFail:"Datei nicht lesbar",
+  confirmClear:c=>`Verlauf für ${c} löschen?`, confirmDel:c=>`Klasse ${c} wirklich löschen?`, confirmImp:"Vorhandene Klassen mit gleichem Namen werden ersetzt. Fortfahren?",
+  dlgAdd:"Klasse hinzufügen", dlgEdit:c=>`${c} bearbeiten`, dlgName:"Name der Klasse", dlgLang:"Sprache der Oberfläche", dlgNames:"Namen",
+  dlgHelp:"Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.",
+  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppen", aboutText:"Version 1.0 · Alle Daten bleiben auf diesem Gerät." },
+ en:{ title:"Make groups", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
+  restBig:"Add extras to groups", restSmall:"Smaller groups", mix:"Mix girls and boys evenly", preferNew:"New combinations where possible",
+  showLast:"Show surnames", go:"Make groups", present:"Here today", tapAbsent:"Tap anyone who's absent.", allIn:"Everyone's here again",
+  history:"History", undo:"Remove last round", clear:"Clear history", commit:"Use these groups", committed:"Saved", again:"Shuffle again",
+  copy:"Copy as text", fs:"Full screen", fsExit:"Exit full screen", group:"Group",
+  backup:"Backup", backupHelp:"Save your classes and history to a file and load them on another device.", export:"Save to file", import:"Load file",
+  emptyH:"No groups yet", emptyP:"Choose a group size and press “Make groups”.",
+  allNew:"Nobody has worked together before", repeats:n=>`${n} ${n===1?'pair has':'pairs have'} worked together before`,
+  preview:(n,g,parts)=>`${n} students → ${g} ${g===1?'group':'groups'}: ${parts.map(([c,k])=>`${c} of ${k}`).join(', ')}`, none:"No students selected.",
+  histN:n=>`${n} ${n===1?'round':'rounds'} saved. New groups avoid pairs that have already worked together – recent rounds count the most.`,
+  histNone:"No rounds saved yet. Press “Use these groups” after shuffling and the page will remember who has worked together.",
+  tCopied:"Copied", tCopyFail:"Couldn't copy", tSaved:"Round saved", tUndone:"Last round removed", tFs:"Full screen not available",
+  tNoNames:"No names found", tNames:n=>`${n} names saved`, tExported:"Backup created", tExpFail:"Couldn't save the file", tImported:n=>`${n} classes loaded`, tImpFail:"Couldn't read the file",
+  confirmClear:c=>`Clear the history for ${c}?`, confirmDel:c=>`Delete ${c}?`, confirmImp:"Classes with the same name will be replaced. Continue?",
+  dlgAdd:"Add class", dlgEdit:c=>`Edit ${c}`, dlgName:"Class name", dlgLang:"Interface language", dlgNames:"Names",
+  dlgHelp:"One per line. You can paste the whole class list from the PDF – header lines are ignored.",
+  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppen", aboutText:"Version 1.0 · All data stays on this device." },
+ it:{ title:"Formare i gruppi", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
+  restBig:"Aggiungi i restanti", restSmall:"Gruppi più piccoli", mix:"Distribuisci ragazze e ragazzi in modo equilibrato", preferNew:"Possibilmente combinazioni nuove",
+  showLast:"Mostra i cognomi", go:"Forma i gruppi", present:"Presenti oggi", tapAbsent:"Tocca chi è assente.", allIn:"Tutti di nuovo presenti",
+  history:"Cronologia", undo:"Elimina l'ultimo turno", clear:"Cancella la cronologia", commit:"Conferma", committed:"Confermato", again:"Rimescola",
+  copy:"Copia come testo", fs:"Schermo intero", fsExit:"Esci dallo schermo intero", group:"Gruppo",
+  backup:"Backup", backupHelp:"Salva classi e cronologia in un file e caricali su un altro dispositivo.", export:"Salva su file", import:"Carica file",
+  emptyH:"Ancora nessun gruppo", emptyP:"Scegli la dimensione e premi “Forma i gruppi”.",
+  allNew:"Tutte le coppie sono nuove", repeats:n=>`${n} ${n===1?'coppia ha':'coppie hanno'} già lavorato insieme`,
+  preview:(n,g,parts)=>`${n} alunni → ${g} ${g===1?'gruppo':'gruppi'}: ${parts.map(([c,k])=>`${c} da ${k}`).join(', ')}`, none:"Nessun alunno selezionato.",
+  histN:n=>`${n} ${n===1?'turno salvato':'turni salvati'}. I nuovi gruppi evitano le coppie già formate – i turni recenti contano di più.`,
+  histNone:"Nessun turno salvato. Dopo aver mescolato premi “Conferma”: la pagina si ricorderà chi ha già lavorato insieme.",
+  tCopied:"Copiato", tCopyFail:"Impossibile copiare", tSaved:"Turno salvato", tUndone:"Ultimo turno eliminato", tFs:"Schermo intero non disponibile",
+  tNoNames:"Nessun nome riconosciuto", tNames:n=>`${n} nomi salvati`, tExported:"Backup creato", tExpFail:"Impossibile salvare il file", tImported:n=>`${n} classi caricate`, tImpFail:"File non leggibile",
+  confirmClear:c=>`Cancellare la cronologia di ${c}?`, confirmDel:c=>`Eliminare ${c}?`, confirmImp:"Le classi con lo stesso nome verranno sostituite. Continuare?",
+  dlgAdd:"Aggiungi classe", dlgEdit:c=>`Modifica ${c}`, dlgName:"Nome della classe", dlgLang:"Lingua dell'interfaccia", dlgNames:"Nomi",
+  dlgHelp:"Uno per riga. Puoi incollare l'intera lista dal PDF: le intestazioni vengono ignorate.",
+  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppen", aboutText:"Versione 1.0 · Tutti i dati restano su questo dispositivo." }
+};
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+function parseList(text){
+  let lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.some(l => /^\d+[.)]?\s+/.test(l))) lines = lines.filter(l => /^\d+[.)]?\s+/.test(l));
+  const out = [];
+  for (let l of lines){
+    l = l.replace(/^\d+[.)]?\s+/, '');
+    let g = '';
+    const gm = l.match(/\((w|m|d)\)\s*$/i);
+    if (gm){ g = gm[1].toLowerCase(); l = l.replace(/\((w|m|d)\)\s*$/i, '').trim(); }
+    let first, last;
+    if (l.includes(',')){ const parts = l.split(',').map(s => s.trim()); last = parts[0]; first = parts[1]; }
+    else { const p = l.split(/\s+/); first = p.shift(); last = p.join(' '); }
+    if (first) out.push({ first, last: last || '', g });
+  }
+  return out;
+}
+
+let classes = store.get('gb_classes', {}) || {};
+const known = new Set(store.get('gb_seen', Object.keys(classes)));
+for (const [k,v] of Object.entries(DEFAULT_CLASSES)){
+  if (!known.has(k) && !classes[k]) classes[k] = { raw: v.raw, students: parseList(v.raw), lang: v.lang };
+  known.add(k);
+}
+for (const [k,c] of Object.entries(classes)) if (!c.lang) c.lang = (DEFAULT_CLASSES[k] && DEFAULT_CLASSES[k].lang) || 'it';
+store.set('gb_classes', classes); store.set('gb_seen', [...known]);
+
+let settings = Object.assign({ cls: Object.keys(classes)[0], mode:'size', size:3, count:6, rest:'big', mix:true, last:false, prefer:true }, store.get('gb_settings', {}));
+if (!classes[settings.cls]) settings.cls = Object.keys(classes)[0];
+if (settings.prefer === undefined) settings.prefer = true;
+let absent = new Set();
+let lastResult = null;
+let committed = false;
+
+/* ---- Verlauf: wer war schon zusammen? ---- */
+const skey = s => `${s.last}|${s.first}`;
+const histKey = c => 'gb_hist_' + c;
+const getHist = (c = settings.cls) => store.get(histKey(c), []);
+const setHist = (h, c = settings.cls) => store.set(histKey(c), h);
+function pairWeights(){
+  const hist = getHist(), w = new Map(), n = hist.length;
+  hist.forEach((round, r) => {
+    const age = n - 1 - r, wt = age === 0 ? 3 : age === 1 ? 2 : 1;
+    for (const g of round.groups) for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++){
+      const k = g[i] < g[j] ? g[i]+'#'+g[j] : g[j]+'#'+g[i];
+      w.set(k, (w.get(k)||0) + wt);
+    }
+  });
+  return w;
+}
+const pk = (a,b) => { a = skey(a); b = skey(b); return a < b ? a+'#'+b : b+'#'+a; };
+function groupCost(g, w){ let c = 0; for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++){ const x = w.get(pk(g[i],g[j]))||0; c += x*x; } return c; }
+function optimize(groups, w){
+  if (!w.size || groups.length < 2) return groups;
+  const G = groups.map(g => g.slice()); const costs = G.map(g => groupCost(g, w));
+  const rnd = n => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  for (let it = 0; it < 6000; it++){
+    const a = rnd(G.length), b = rnd(G.length); if (a === b) continue;
+    const i = rnd(G[a].length), j = rnd(G[b].length);
+    const sa = G[a][i], sb = G[b][j];
+    if (settings.mix && sa.g !== sb.g) continue;
+    G[a][i] = sb; G[b][j] = sa;
+    const ca = groupCost(G[a], w), cb = groupCost(G[b], w);
+    if (ca + cb <= costs[a] + costs[b]){ costs[a] = ca; costs[b] = cb; }
+    else { G[a][i] = sa; G[b][j] = sb; }
+  }
+  return G;
+}
+function repeatedPairs(groups){
+  const seen = new Set();
+  for (const r of getHist()) for (const g of r.groups) for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) seen.add(g[i]<g[j]?g[i]+'#'+g[j]:g[j]+'#'+g[i]);
+  let n = 0; const who = new Set();
+  for (const g of groups) for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) if (seen.has(pk(g[i],g[j]))){ n++; who.add(g[i]); who.add(g[j]); }
+  return { n, who };
+}
+
+const HUES = ['var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)','var(--g6)','var(--g7)','var(--g8)'];
+const $ = id => document.getElementById(id);
+const lang = () => (classes[settings.cls] && classes[settings.cls].lang) || 'de';
+const t = k => T[lang()][k];
+function applyLang(){
+  document.documentElement.lang = lang();
+  document.title = t('title');
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  $('fsBtn').textContent = document.fullscreenElement ? t('fsExit') : t('fs');
+}
+const save = () => store.set('gb_settings', settings);
+
+function present(){
+  const c = classes[settings.cls]; if (!c) return [];
+  return c.students.filter((s,i) => !absent.has(i));
+}
+function displayName(s, all){
+  if (settings.last) return s.last ? `${s.first} ${s.last}` : s.first;
+  const dup = all.filter(o => o.first === s.first).length > 1;
+  return dup && s.last ? `${s.first} ${s.last[0]}.` : s.first;
+}
+function plan(n){
+  if (n === 0) return 0;
+  if (settings.mode === 'count') return Math.max(1, Math.min(settings.count, n));
+  const k = Math.max(1, settings.size);
+  return settings.rest === 'big' ? Math.max(1, Math.floor(n / k)) : Math.ceil(n / k);
+}
+function sizesFor(n, g){
+  const base = Math.floor(n / g), extra = n % g;
+  return Array.from({length:g}, (_,i) => base + (i < extra ? 1 : 0));
+}
+function describe(n){
+  const g = plan(n); if (!g) return t('none');
+  const tally = {}; sizesFor(n, g).forEach(x => tally[x] = (tally[x]||0)+1);
+  const parts = Object.keys(tally).sort((a,b)=>b-a).map(k => [tally[k], k]);
+  return t('preview')(n, g, parts);
+}
+function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i+1); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+
+function makeGroups(){
+  const list = present(); const n = list.length; const g = plan(n);
+  if (!g) return [];
+  let order;
+  if (settings.mix){
+    const w = shuffle(list.filter(s => s.g === 'w')), m = shuffle(list.filter(s => s.g === 'm')), o = shuffle(list.filter(s => s.g !== 'w' && s.g !== 'm'));
+    const [a, b] = w.length >= m.length ? [w, m] : [m, w];
+    order = [...a, ...o, ...b];
+  } else order = shuffle(list);
+  const groups = Array.from({length:g}, () => []);
+  const off = crypto.getRandomValues(new Uint32Array(1))[0] % g;
+  order.forEach((s,i) => groups[(i + off) % g].push(s));
+  return groups.map(shuffle);
+}
+
+function renderSizes(){
+  const box = $('sizes'); box.innerHTML = '';
+  const isSize = settings.mode === 'size';
+  const vals = isSize ? [2,3,4,5,6] : [2,3,4,5,6,7,8];
+  const cur = isSize ? settings.size : settings.count;
+  for (const v of vals){
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = v;
+    b.setAttribute('aria-pressed', v === cur);
+    b.onclick = () => { if (isSize) settings.size = v; else settings.count = v; save(); renderControls(); };
+    box.appendChild(b);
+  }
+  const inp = document.createElement('input'); inp.type = 'number'; inp.min = 1; inp.max = 40;
+  inp.setAttribute('aria-label', t('custom'));
+  inp.placeholder = 'x'; if (!vals.includes(cur)) inp.value = cur;
+  inp.oninput = () => {
+    const v = parseInt(inp.value,10);
+    if (v > 0){
+      if (isSize) settings.size = v; else settings.count = v; save();
+      [...box.querySelectorAll('button')].forEach(b => b.setAttribute('aria-pressed','false'));
+      $('preview').textContent = describe(present().length);
+    }
+  };
+  box.appendChild(inp);
+}
+
+function renderControls(){
+  $('modeSize').setAttribute('aria-pressed', settings.mode === 'size');
+  $('modeCount').setAttribute('aria-pressed', settings.mode === 'count');
+  $('restBox').hidden = settings.mode !== 'size';
+  $('restBig').setAttribute('aria-pressed', settings.rest === 'big');
+  $('restSmall').setAttribute('aria-pressed', settings.rest === 'small');
+  $('mixGender').checked = settings.mix;
+  const c = classes[settings.cls];
+  $('mixRow').hidden = !(c && c.students.some(s => s.g === 'w' || s.g === 'm'));
+  $('preferNew').checked = settings.prefer;
+  $('showLast').checked = settings.last;
+  renderSizes();
+  $('preview').textContent = describe(present().length);
+}
+
+function renderRoster(){
+  const c = classes[settings.cls]; const box = $('roster'); box.innerHTML = '';
+  if (!c) return;
+  c.students.forEach((s,i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip';
+    b.setAttribute('aria-pressed', !absent.has(i));
+    b.innerHTML = `<span class="dot ${s.g}"></span>`;
+    b.append(s.last ? `${s.first} ${s.last}` : s.first);
+    b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); renderRoster(); $('preview').textContent = describe(present().length); };
+    box.appendChild(b);
+  });
+  $('count').textContent = `${c.students.length - absent.size} / ${c.students.length}`;
+}
+
+function renderClassSel(){
+  const sel = $('classSel'); sel.innerHTML = '';
+  const keys = Object.keys(classes).sort((a,b)=>a.localeCompare(b,'de',{numeric:true}));
+  keys.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
+  sel.value = settings.cls;
+  $('editBtn').hidden = !keys.length;
+}
+
+function renderBoard(){
+  const box = $('groups');
+  const c = classes[settings.cls];
+  $('boardMeta').textContent = c ? settings.cls : '';
+  $('commitBtn').hidden = !lastResult;
+  if (!lastResult){
+    box.innerHTML = `<div class="empty glass"><div>
+      <div class="orbs">${HUES.slice(0,5).map((c,i)=>`<i style="--o:${c};animation-delay:${i*140}ms"></i>`).join('')}</div>
+      <strong>${t('emptyH')}</strong>${t('emptyP')}</div></div>`;
+    $('againBtn').hidden = $('copyBtn').hidden = true;
+    return;
+  }
+  const all = c ? c.students : [];
+  const rep = repeatedPairs(lastResult);
+  if (getHist().length && !committed){
+    const sm = document.createElement('small');
+    sm.textContent = rep.n === 0 ? t('allNew') : t('repeats')(rep.n);
+    $('boardMeta').appendChild(sm);
+  }
+  $('commitBtn').disabled = committed;
+  $('commitBtn').textContent = committed ? t('committed') : t('commit');
+  box.innerHTML = '<div class="groups"></div>';
+  const grid = box.firstChild;
+  lastResult.forEach((grp, i) => {
+    const d = document.createElement('div'); d.className = 'tile';
+    d.style.setProperty('--hue', HUES[i % HUES.length]);
+    d.style.animationDelay = (i*38)+'ms';
+    const h = document.createElement('h3');
+    h.innerHTML = `<b>${t('group')} ${i+1}</b><small>${grp.length}</small>`;
+    const ol = document.createElement('ol');
+    grp.forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = displayName(s, all);
+      if (!committed && getHist().length && rep.who.has(s) && grp.some(o => o !== s && rep.who.has(o))) li.className = 'rep';
+      ol.appendChild(li);
+    });
+    d.append(h, ol); grid.appendChild(d);
+  });
+  $('againBtn').hidden = $('copyBtn').hidden = false;
+}
+
+function build(){
+  let best = null, bestCost = Infinity;
+  const w = settings.prefer ? pairWeights() : new Map();
+  const tries = w.size ? 30 : 1;
+  for (let i = 0; i < tries; i++){
+    const cand = optimize(makeGroups(), w);
+    const c = cand.reduce((s,g) => s + groupCost(g, w), 0);
+    if (c < bestCost){ bestCost = c; best = cand; if (c === 0) break; }
+  }
+  lastResult = best ? best.map(shuffle) : [];
+  committed = false; renderBoard();
+}
+function commit(){
+  if (!lastResult || committed) return;
+  const h = getHist(); h.push({ date: new Date().toISOString(), groups: lastResult.map(g => g.map(skey)) });
+  setHist(h); committed = true; renderBoard(); renderHist(); toast(t('tSaved'));
+}
+function renderHist(){
+  const n = getHist().length;
+  $('histInfo').textContent = n ? t('histN')(n) : t('histNone');
+  $('histUndo').hidden = $('histClear').hidden = !n;
+}
+function toast(msg){ const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove('show'), 1800); }
+
+/* ---- Sicherung ---- */
+async function exportData(){
+  const hist = {};
+  for (const k of Object.keys(classes)){ const h = getHist(k); if (h.length) hist[k] = h; }
+  const text = JSON.stringify({ v:1, classes, hist, settings }, null, 1);
+  const filename = 'gruppen-sicherung-' + new Date().toISOString().slice(0,10) + '.json';
+  if (window.AndroidBridge && window.AndroidBridge.saveFile){ try{ window.AndroidBridge.saveFile(filename, text); }catch(e){ toast(t('tExpFail')); } return; }
+  let api = null;
+  try{ if (window.claude && window.claude.use) api = await window.claude.use('downloads'); }catch(e){}
+  if (api){
+    try{ await api.save({ filename, data: text }); toast(t('tExported')); }
+    catch(err){ if (!err || err.code !== 'declined') toast(t('tExpFail')); }
+    return;
+  }
+  try{
+    const blob = new Blob([text], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    toast(t('tExported'));
+  }catch(e){ toast(t('tExpFail')); }
+}
+function importData(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    let d; try{ d = JSON.parse(fr.result); }catch(e){ return toast(t('tImpFail')); }
+    if (!d || !d.classes) return toast(t('tImpFail'));
+    if (!confirm(t('confirmImp'))) return;
+    let n = 0;
+    for (const [k,c] of Object.entries(d.classes)){
+      if (!c || !c.students) continue;
+      classes[k] = { raw: c.raw || '', students: c.students, lang: c.lang || 'it' }; known.add(k); n++;
+    }
+    if (d.hist) for (const [k,h] of Object.entries(d.hist)) setHist(h, k);
+    store.set('gb_classes', classes); store.set('gb_seen', [...known]);
+    if (!classes[settings.cls]) settings.cls = Object.keys(classes)[0];
+    save(); absent.clear(); lastResult = null; renderAll(); toast(t('tImported')(n));
+  };
+  fr.onerror = () => toast(t('tImpFail'));
+  fr.readAsText(file);
+}
+
+/* ---- Events ---- */
+$('modeSize').onclick = () => { settings.mode='size'; save(); renderControls(); };
+$('modeCount').onclick = () => { settings.mode='count'; save(); renderControls(); };
+$('restBig').onclick = () => { settings.rest='big'; save(); renderControls(); };
+$('restSmall').onclick = () => { settings.rest='small'; save(); renderControls(); };
+$('mixGender').onchange = e => { settings.mix = e.target.checked; save(); };
+$('preferNew').onchange = e => { settings.prefer = e.target.checked; save(); };
+$('showLast').onchange = e => { settings.last = e.target.checked; save(); renderBoard(); };
+$('goBtn').onclick = build;
+$('againBtn').onclick = build;
+$('commitBtn').onclick = commit;
+$('histUndo').onclick = () => { const h = getHist(); h.pop(); setHist(h); committed = false; renderHist(); renderBoard(); toast(t('tUndone')); };
+$('histClear').onclick = () => { if (!confirm(t('confirmClear')(settings.cls))) return; setHist([]); committed = false; renderHist(); renderBoard(); };
+$('allIn').onclick = () => { absent.clear(); renderRoster(); renderControls(); };
+$('classSel').onchange = e => { settings.cls = e.target.value; save(); absent.clear(); lastResult = null; renderAll(); };
+$('expBtn').onclick = exportData;
+$('impBtn').onclick = () => $('impFile').click();
+$('impFile').onchange = e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; };
+$('copyBtn').onclick = async () => {
+  const all = classes[settings.cls].students;
+  const txt = lastResult.map((g,i) => `${t('group')} ${i+1}: ` + g.map(s => displayName(s, all)).join(', ')).join('\n');
+  if (window.AndroidBridge && window.AndroidBridge.copy){ window.AndroidBridge.copy(txt); toast(t('tCopied')); return; }
+  try{ await navigator.clipboard.writeText(txt); toast(t('tCopied')); }catch(e){ toast(t('tCopyFail')); }
+};
+$('fsBtn').onclick = () => {
+  const b = $('board');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (b.requestFullscreen) b.requestFullscreen().catch(()=>toast(t('tFs')));
+};
+document.addEventListener('fullscreenchange', () => { $('fsBtn').textContent = document.fullscreenElement ? t('fsExit') : t('fs'); });
+document.addEventListener('keydown', e => {
+  if (!document.fullscreenElement) return;
+  if (e.code === 'Space'){ e.preventDefault(); build(); }
+  if (e.key === 'Enter'){ e.preventDefault(); commit(); }
+});
+
+/* ---- Sheet ---- */
+let editing = null;
+function openDlg(key){
+  editing = key;
+  $('dlgTitle').textContent = key ? t('dlgEdit')(key) : t('dlgAdd');
+  $('dlgName').value = key || '';
+  $('dlgLang').value = key ? classes[key].lang : 'it';
+  $('dlgText').value = key ? classes[key].raw : '';
+  $('dlgDelete').hidden = !key;
+  $('dlg').showModal();
+}
+$('addBtn').onclick = () => openDlg(null);
+$('editBtn').onclick = () => openDlg(settings.cls);
+$('dlgCancel').onclick = () => $('dlg').close();
+$('dlgDelete').onclick = () => {
+  if (!confirm(t('confirmDel')(editing))) return;
+  delete classes[editing]; store.set('gb_classes', classes);
+  try{ localStorage.removeItem(histKey(editing)); }catch(e){}
+  settings.cls = Object.keys(classes)[0] || ''; save(); lastResult = null; absent.clear();
+  $('dlg').close(); renderAll();
+};
+$('dlgForm').onsubmit = e => {
+  const name = $('dlgName').value.trim(); const raw = $('dlgText').value;
+  const students = parseList(raw);
+  if (!name){ e.preventDefault(); return; }
+  if (!students.length){ e.preventDefault(); toast(t('tNoNames')); return; }
+  if (editing && editing !== name){
+    setHist(getHist(editing), name);
+    try{ localStorage.removeItem(histKey(editing)); }catch(e){}
+    delete classes[editing];
+  }
+  classes[name] = { raw, students, lang: $('dlgLang').value };
+  known.add(name); store.set('gb_classes', classes); store.set('gb_seen', [...known]);
+  settings.cls = name; save(); absent.clear(); lastResult = null;
+  renderAll(); toast(t('tNames')(students.length));
+};
+
+function renderAll(){ applyLang(); renderClassSel(); renderRoster(); renderControls(); renderBoard(); renderHist(); }
+renderAll();
+</script>
+<script>
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.AndroidBridge) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
