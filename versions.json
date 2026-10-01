@@ -1,0 +1,15 @@
+{
+ "libretto": {
+  "version": "0.9.1",
+  "url": "https://theisapps.de/libretto/",
+  "notes": ""
+ },
+ "gruppen": {
+  "version": "1.0.2",
+  "url": "https://theisapps.de/gruppen/"
+ },
+ "viva": {
+  "version": "1.2.4",
+  "url": "https://theisapps.de/viva/"
+ }
+}

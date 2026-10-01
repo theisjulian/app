@@ -78,7 +78,7 @@ section{padding-block:56px}
 .label{font:500 12.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:12px;display:block}
 
 /* App cards */
-.apps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:920px){.apps{grid-template-columns:1fr}}
 .app{position:relative;display:flex;flex-direction:column;gap:14px;padding:26px;border-radius:var(--r-lg);background:var(--card);border:1px solid var(--line);text-decoration:none;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s,border-color .2s;min-width:0}
 .app:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
@@ -200,3 +200,6 @@ footer a:hover{color:var(--ink)}
 .howto summary svg{width:18px;height:18px;color:var(--ink-2)}
 .howto .steps{padding:0 14px 14px}
 .howto .steps li{background:var(--bg)}
+
+.dls.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:900px){.dls.three{grid-template-columns:1fr}}

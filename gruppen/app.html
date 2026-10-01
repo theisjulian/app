@@ -6,7 +6,11 @@
 <meta name="color-scheme" content="light dark">
 <title>Gruppen</title>
 <style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-opsz-normal.woff2) format("woff2")}
-@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}</style>
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}.importBtn{border:0;background:var(--fill,rgba(20,30,50,.07));color:var(--blue,#0071E3);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:500;cursor:pointer}
+.importBtn:hover{filter:brightness(.97)}
+#dlgText.over{outline:2px dashed var(--blue,#0071E3)}
+[hidden]{display:none!important}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1b2240">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -356,7 +360,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
 
       <section class="panel glass">
         <h2 class="ptitle" data-t="about">Über Gruppen</h2>
-        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0.1 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
+        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0.2 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
       </section>
     </div>
 
@@ -388,6 +392,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
         <select id="dlgLang"><option value="it">Italiano</option><option value="en">English</option><option value="de">Deutsch</option></select></label>
       <label class="field"><span data-t="dlgNames">Namen</span>
         <textarea id="dlgText" placeholder="1 Muster, Anna (w)&#10;2 Beispiel, Ben (m)"></textarea></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px"><button type="button" class="importBtn" id="dlgFile" data-t="importFile">Datei einlesen (PDF, Excel, CSV) …</button><button type="button" class="importBtn" id="dlgSwap" data-t="swapNames">Vor- und Nachname tauschen</button><input type="file" id="dlgFileIn" accept=".pdf,.xlsx,.xls,.ods,.csv,.txt" hidden></div>
       <p class="note" style="margin:0" data-t="dlgHelp">Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.</p>
       <button type="button" class="delete" id="dlgDelete" hidden data-t="dlgDelete">Klasse löschen</button>
     </div>
@@ -441,7 +446,7 @@ const T = {
   confirmClear:c=>`Verlauf für ${c} löschen?`, confirmDel:c=>`Klasse ${c} wirklich löschen?`, confirmImp:"Vorhandene Klassen mit gleichem Namen werden ersetzt. Fortfahren?",
   dlgAdd:"Klasse hinzufügen", dlgEdit:c=>`${c} bearbeiten`, dlgName:"Name der Klasse", dlgLang:"Sprache der Oberfläche", dlgNames:"Namen",
   dlgHelp:"Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.",
-  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppen", aboutText:"Version 1.0.1 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos" },
+  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppen", aboutText:"Version 1.0.2 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
  en:{ title:"Make groups", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
   restBig:"Add extras to groups", restSmall:"Smaller groups", mix:"Mix girls and boys evenly", preferNew:"New combinations where possible",
   showLast:"Show surnames", go:"Make groups", present:"Here today", tapAbsent:"Tap anyone who's absent.", allIn:"Everyone's here again",
@@ -458,7 +463,7 @@ const T = {
   confirmClear:c=>`Clear the history for ${c}?`, confirmDel:c=>`Delete ${c}?`, confirmImp:"Classes with the same name will be replaced. Continue?",
   dlgAdd:"Add class", dlgEdit:c=>`Edit ${c}`, dlgName:"Class name", dlgLang:"Interface language", dlgNames:"Names",
   dlgHelp:"One per line. You can paste the whole class list from the PDF – header lines are ignored.",
-  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppen", aboutText:"Version 1.0.1 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free" },
+  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppen", aboutText:"Version 1.0.2 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
  it:{ title:"Formare i gruppi", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
   restBig:"Aggiungi i restanti", restSmall:"Gruppi più piccoli", mix:"Distribuisci ragazze e ragazzi in modo equilibrato", preferNew:"Possibilmente combinazioni nuove",
   showLast:"Mostra i cognomi", go:"Forma i gruppi", present:"Presenti oggi", tapAbsent:"Tocca chi è assente.", allIn:"Tutti di nuovo presenti",
@@ -475,7 +480,7 @@ const T = {
   confirmClear:c=>`Cancellare la cronologia di ${c}?`, confirmDel:c=>`Eliminare ${c}?`, confirmImp:"Le classi con lo stesso nome verranno sostituite. Continuare?",
   dlgAdd:"Aggiungi classe", dlgEdit:c=>`Modifica ${c}`, dlgName:"Nome della classe", dlgLang:"Lingua dell'interfaccia", dlgNames:"Nomi",
   dlgHelp:"Uno per riga. Puoi incollare l'intera lista dal PDF: le intestazioni vengono ignorate.",
-  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppen", aboutText:"Versione 1.0.1 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita" }
+  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppen", aboutText:"Versione 1.0.2 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" }
 };
 
 const store = {
@@ -861,6 +866,169 @@ renderAll();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.AndroidBridge) {
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+</script>
+<script>
+/* Libretto · Klassenlisten einlesen (PDF, Excel, CSV, eingefügter Text) – übernommen aus Viva/Gruppen · © 2026 theis */
+'use strict';
+const Importer = (() => {
+let importHead = [];
+/* PDF → Zeilen; bei Tabellen mit Kopfzeile werden die Spalten über die x-Positionen erkannt */
+async function pdfLines(buf) {
+  const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
+  const allRows = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p); const tc = await page.getTextContent(); const rows = [];
+    for (const it of tc.items) { if (!it.str || !it.str.trim()) continue; const y = it.transform[5], x = it.transform[4];
+      let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.str.trim(), w: it.width || 0 }); }
+    rows.sort((a, b) => b.y - a.y); rows.forEach(r => r.items.sort((a, b) => a.x - b.x)); allRows.push(...rows);
+  }
+  importHead = allRows.slice(0, 3).map(r => r.items.map(i => i.s).join(' '));
+  const isHead = r => r.items.some(i => /^(nach)?name$|^familienname|^vorname|^rufname/i.test(i.s));
+  const hi = allRows.findIndex(isHead);
+  if (hi >= 0) {
+    const data = allRows.slice(hi + 1).filter(r => r.items.length >= 2 && !isHead(r));
+    const xs = data.flatMap(r => r.items.map(i => i.x)).sort((a, b) => a - b); const cl = [];
+    for (const x of xs) { const c = cl[cl.length - 1]; if (c && x - c.max <= 4) { c.max = x; c.n++; } else cl.push({ min: x, max: x, n: 1, end: x }); }
+    const cols = cl.filter(c => c.n >= Math.max(2, data.length * .3));
+    if (cols.length >= 2) {
+      const colOf = x => { let k = 0; cols.forEach((c, i) => { if (c.min <= x + 4) k = i; }); return k; };
+      data.forEach(r => r.items.forEach(i => { const c = cols[colOf(i.x)]; c.end = Math.max(c.end, i.x + i.w); }));
+      const head = cols.map(() => '');
+      for (const h of allRows[hi].items) { const mid = h.x + h.w / 2; let best = 0, bd = Infinity;
+        cols.forEach((c, i) => { const d = mid < c.min ? c.min - mid : mid > c.end ? mid - c.end : 0; if (d < bd) { bd = d; best = i; } });
+        head[best] = (head[best] ? head[best] + ' ' : '') + h.s; }
+      const table = [head, ...data.map(r => { const cells = cols.map(() => ''); r.items.forEach(i => { const k = colOf(i.x); cells[k] = (cells[k] ? cells[k] + ' ' : '') + i.s; }); return cells; })];
+      const viaTable = namesFromRows(table, true);
+      if (viaTable.length) return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`);
+    }
+  }
+  return allRows.map(r => r.items.map(i => i.s).join(' '));
+}
+
+function sheetRows(buf) {
+  const wb = XLSX.read(new Uint8Array(buf), { type: 'array' }); const ws = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+}
+
+/* Tabellen ohne Kopfzeile (ASV-/Kurslisten-Export): Spalte 1 = Nachname, Spalte 2 = Vorname */
+function headerlessTable(rows) {
+  const norm = v => String(v ?? '').trim();
+  const nameLike = v => /^[A-Za-zÀ-ÿĀ-žḀ-ỿ'’.\- ]{2,}$/.test(v) && !/^\d/.test(v);
+  const data = rows.map(r => r.map(norm)).filter(r => r.filter(Boolean).length >= 2);
+  const ok = data.filter(r => nameLike(r[0]) && nameLike(r[1]));
+  if (ok.length < Math.max(2, data.length * .6)) return [];
+  // Geschlechtsspalte: überwiegend M/W
+  let gc = -1;
+  for (let i = 2; i < Math.max(...ok.map(r => r.length)); i++) { const v = ok.map(r => (r[i] || '').toLowerCase()); if (v.filter(x => /^(m|w|d|männlich|weiblich|divers)$/.test(x)).length >= ok.length * .8) { gc = i; break; } }
+  const HEADISH = /belegart|jahrgangsstufe|klasse|kurs|schuljahr|\bstr\b|\bostr\b|\bstd\b|lehrkraft|name/i;
+  const out = [];
+  data.forEach((r, i) => {
+    if (!(nameLike(r[0]) && nameLike(r[1]))) return;
+    if (i === 0 && (HEADISH.test(r.join(' ')) || /\d/.test(r[0]))) return;
+    const gv = gc >= 0 ? (r[gc] || '').toLowerCase() : '';
+    out.push({ last: r[0], first: r[1], g: /^w/.test(gv) ? 'w' : /^m/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+  });
+  return out;
+}
+
+/* Tabellen mit Kopfzeile (Name/Nachname, Vorname, Geschlecht) */
+function namesFromRows(rows, strict) {
+  const norm = v => String(v ?? '').trim();
+  let hi = -1, cL = -1, cF = -1, cG = -1, cFull = -1;
+  for (let i = 0; i < Math.min(rows.length, 40) && hi < 0; i++) {
+    const r = rows[i].map(x => norm(x).toLowerCase());
+    const L = r.findIndex(x => /^(nach)?name$|^familienname|^schüler.*name|^name,? vorname$|^name des schülers/.test(x));
+    const F = r.findIndex(x => /^vorname|^rufname/.test(x));
+    if (L >= 0 || F >= 0) { hi = i; cL = L; cF = F; cG = r.findIndex(x => /^geschl|^g$|^m\/w|^w\/m|^sex/.test(x)); if (L >= 0 && F < 0) cFull = L; }
+  }
+  if (hi < 0) { if (strict) return []; const t = headerlessTable(rows); return t.length ? t : recognizeNames(rows.map(r => r.map(norm).filter(Boolean).join(' '))); }
+  const out = [];
+  for (const r of rows.slice(hi + 1)) {
+    let first = '', last = '';
+    if (cFull >= 0) { const v = norm(r[cFull]); if (v.includes(',')) { [last, first] = v.split(',').map(x => x.trim()); } else { const p = v.split(/\s+/); first = p.pop() || ''; last = p.join(' '); } }
+    else { last = norm(r[cL]); first = norm(r[cF]); }
+    first = first.replace(/\(.*?\)/g, '').trim(); last = last.replace(/^\d+[.)]?\s*/, '').trim();
+    if (!first || !/[A-Za-zÀ-ÿ]/.test(first + last) || /^(summe|gesamt|anzahl)/i.test(last)) continue;
+    const gv = cG >= 0 ? norm(r[cG]).toLowerCase() : '';
+    out.push({ first, last, g: /^w|weibl|^f/.test(gv) ? 'w' : /^m|männ/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+  }
+  return out;
+}
+
+/* Freitext-Zeilen (PDF ohne Kopfzeile, eingefügter Text) */
+function recognizeNames(lines) {
+  const out = [];
+  const HEAD = /\b(klasse|klassenliste|schuljahr|seite|lehrkraft|klassenleit|datum|stand|gymnasium|schule|anzahl|geburtsdatum|konfession|religion|ausbildungsrichtung|nachname|vorname|schüler(innen)?liste)\b/i;
+  const numbered = lines.filter(l => /^\s*\d+[.)]?\s+\S/.test(l)).length >= 3;
+  for (let raw of lines) {
+    let l = String(raw || '').replace(/\s+/g, ' ').trim(); if (!l) continue;
+    if (numbered && !/^\d+[.)]?\s+/.test(l)) continue;
+    l = l.replace(/^\d+[.)]?\s+/, '');
+    if (HEAD.test(l) && !/,/.test(l)) continue;
+    let g = ''; const gm = l.match(/(?:\(|\s|^)(w|m|d|weiblich|männlich|divers)(?:\)|\s|$)/i);
+    if (gm) { const v = gm[1].toLowerCase(); g = v[0] === 'w' ? 'w' : v[0] === 'm' ? 'm' : 'd'; l = l.replace(gm[0], ' '); }
+    l = l.replace(/\b\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})\b/g, ' ').replace(/\b\d+[a-z]?\b/gi, ' ').replace(/\b(ev|rk|ak|eth|isl|ohne|RK|EV|K|E)\b\.?/g, ' ').replace(/[|•·]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!l || !/[A-Za-zÀ-ÿ]{2}/.test(l)) continue;
+    let first, last;
+    if (l.includes(',')) { const p = l.split(',').map(x => x.trim()).filter(Boolean); last = p[0]; first = (p[1] || '').split(' ').filter(Boolean).join(' '); }
+    else { const p = l.split(' '); if (p.length > 5) continue; first = p.shift(); last = p.join(' '); }
+    if (!first || first.length < 2) continue;
+    out.push({ first, last: last || '', g });
+  }
+  return out;
+}
+
+
+/* Klassen- bzw. Kursname aus Kopfzeilen oder Dateiname */
+
+function detectClassName(head, fname) {
+  const txt = head.join('\n');
+  const pats = [/\bKurs:?\s+([0-9]{0,2}[A-Za-zÄÖÜäöü]{1,4}\d{0,2})\b/, /(?:^|\n)\s*((?:[5-9]|1[0-3])\s?[A-Z]{1,3})\s*[,;]/, /(?:^|\n)\s*(\d[a-z]{1,3}\d{1,2})\s*[,;]/i, /\bKlasse:?\s+((?:[5-9]|1[0-3])\s?[A-Z]{1,3})\b/];
+  for (const re of pats) { const m = txt.match(re); if (m) return m[1].replace(/\s+/g, ''); }
+  // Spalte, in der überall dieselbe Klasse steht (z. B. ASV-Export „…;9F;…“)
+  const col = head.map(l => String(l).split(/[;\t]/).map(x => x.trim())).filter(r => r.length > 2);
+  if (col.length) for (let i = 0; i < col[0].length; i++) { const v = col[0][i]; if (/^(?:[5-9]|1[0-3])[A-Z]{1,3}$/.test(v) && col.every(r => r[i] === v)) return v; }
+  const m = fname.match(/(?:^|[_\s-])((?:[5-9]|1[0-3])\s?[A-Za-z]{1,3}|\d[a-z]{1,3}\d{1,2})(?=[_\s.-]|$)/i); if (m) return m[1];
+  return '';
+}
+
+async function readFile(f) {
+  const name = f.name.toLowerCase(); let list = []; importHead = [];
+  if (name.endsWith('.pdf')) list = recognizeNames(await pdfLines(await f.arrayBuffer()));
+  else if (/\.(xlsx|xls|ods)$/.test(name)) { const rows = sheetRows(await f.arrayBuffer()); importHead = rows.slice(0, 3).map(r => r.join(' ; ')); list = namesFromRows(rows); }
+  else { const txt = await f.text(); const lines = txt.split(/\r?\n/); importHead = lines.slice(0, 3); list = /[;\t]/.test(txt) ? namesFromRows(lines.map(l => l.split(/[;\t]/))) : recognizeNames(lines); }
+  return { list, cls: detectClassName(importHead, f.name) };
+}
+return { readFile, recognizeNames, namesFromRows };
+})();
+
+(function(){
+  const loadScript = src => new Promise((res, rej) => { if ((src.includes('pdf') && window.pdfjsLib) || (src.includes('xlsx') && window.XLSX)) return res(); const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+  const ta = document.getElementById('dlgText'), fin = document.getElementById('dlgFileIn');
+  const T = k => (typeof t === 'function' ? t(k) : k);
+  async function readF(f){
+    try {
+      const n = f.name.toLowerCase();
+      if (n.endsWith('.pdf')) await loadScript('pdf.min.js'); else if (/\.(xlsx|xls|ods)$/.test(n)) await loadScript('xlsx.js');
+      const r = await Importer.readFile(f);
+      const lines = r.list.map(x => (x.last ? x.last + ', ' : '') + x.first + (x.g ? ' (' + x.g + ')' : ''));
+      if (!lines.length) { toast(T('importNone')); return; }
+      ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + lines.join('\n');
+      const nm = document.getElementById('dlgName'); if (!nm.value.trim() && r.cls) nm.value = r.cls;
+      const msg = T('importOk'); toast(typeof msg === 'function' ? msg(lines.length) : lines.length + ' ✓');
+    } catch (e) { console.error(e); toast(T('importErr')); }
+  }
+  document.getElementById('dlgFile').onclick = () => fin.click();
+  fin.onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) readF(f); };
+  ta.addEventListener('dragover', e => { e.preventDefault(); ta.classList.add('over'); });
+  ta.addEventListener('dragleave', () => ta.classList.remove('over'));
+  ta.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (!f) return; e.preventDefault(); ta.classList.remove('over'); readF(f); });
+  document.getElementById('dlgSwap').onclick = () => {
+    ta.value = ta.value.split(/\r?\n/).map(l => { const m = l.match(/^(\s*\d+[.)]?\s+)?([^,(]+),\s*([^(]+?)\s*(\([wmd]\))?\s*$/i); return m ? `${m[1] || ''}${m[3].trim()}, ${m[2].trim()}${m[4] ? ' ' + m[4] : ''}` : l; }).join('\n');
+  };
+})();
+
 </script>
 </body>
 </html>
