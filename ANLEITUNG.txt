@@ -1,0 +1,31 @@
+theis – Website-Update 8 (3. Oktober 2026)
+==========================================
+
+Was ist neu?
+- Libretto-Demo im Browser:  https://theisapps.de/libretto/demo/
+  (mit erfundenen Klassen, nichts wird gespeichert)
+- Libretto-Seite: Knopf "Im Browser ausprobieren"
+- Gruppen-Seite: neuer Untertitel ("mit einem Klick – spontan, mitten im Unterricht")
+- Startseite: Text bei Gruppen, Hinweis "Demo im Browser" bei Libretto
+- Für Google: bessere Seitentitel und Beschreibungen, App-Angaben, Demo in der Sitemap
+- Datenschutz: ein Absatz zur Demo (Nr. 4)
+
+So lädst du es hoch (wie immer):
+1. Bei GitHub das Repository "app" öffnen.
+2. "Add file" → "Upload files".
+3. Den Ordner "Website" hier öffnen, ALLES darin markieren (Cmd+A)
+   und in das Upload-Feld ziehen. Also den Inhalt, nicht den Ordner "Website" selbst.
+   Es sind 3 Dateien und 4 Ordner (gruppen, libretto, sportwahl, viva).
+4. Unten "Commit changes" klicken.
+5. Ein paar Minuten warten, dann im PRIVATEN Fenster prüfen:
+   - https://theisapps.de/libretto/        → Knopf "Im Browser ausprobieren" ist da
+   - https://theisapps.de/libretto/demo/   → Demo öffnet sich mit der Klasse 9b
+   - https://theisapps.de/gruppen/         → neuer Untertitel
+
+Danach für Google (Search Console):
+- Oben die Adresse https://theisapps.de/libretto/demo/ eingeben → "Indexierung beantragen".
+- Dasselbe für die Startseite und die vier App-Seiten, weil sich Titel und Texte geändert haben.
+
+Wichtig:
+- An den Downloads (Releases) ändert sich nichts. versions.json ist nicht dabei.
+- Nichts löschen. Die Datei google945685e66e033cb4.html bleibt auf GitHub liegen.
