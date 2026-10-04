@@ -146,6 +146,11 @@ table.grid tbody td{height:46px}
 
 /* Runde 2: Schülerliste, Einzelnoten, Schlüssel, Kalender */
 .stRow.lib{grid-template-columns:28px minmax(0,1fr) minmax(0,1fr) 30px}
+.stRow.lib.withCls{grid-template-columns:28px minmax(0,1fr) minmax(0,1fr) 76px 30px}
+/* Kurse aus mehreren Klassen: Zwischenzeile je Klasse */
+table.grid tbody tr.clsRow td{height:30px;background:var(--fill-2);border-bottom:.5px solid var(--hairline)}
+table.grid tbody tr.clsRow td.nm{padding:0 12px 0 14px;font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--label)}
+table.grid tbody tr.clsRow td.nm small{margin-left:8px;font-weight:500;color:var(--label-2);letter-spacing:0}
 td.ent{padding:0 6px;text-align:left;min-width:120px}
 .ents{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:4px 0}
 .echip{border:0;background:var(--fill-2);border-radius:7px;min-width:26px;height:26px;padding:0 6px;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}

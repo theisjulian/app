@@ -37,6 +37,32 @@ function toast(msg, ms = 2600) { const t = $('#toast'); t.classList.remove('act'
 function toastAction(msg, label, fn, ms = 6000) { const t = $('#toast'); t.innerHTML = `<span>${esc(msg)}</span><button type="button">${esc(label)}</button>`; t.classList.add('show', 'act'); t.querySelector('button').onclick = () => { t.classList.remove('show', 'act'); fn(); }; clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show', 'act'), ms); }
 const course = () => D && D.courses.find(c => c.id === UI.course);
 const upper = c => R.isUpper(c);
+/* Kurse mit Schülern aus mehreren Klassen (z. B. Italienisch aus 8A und 8B): Klasse je Schüler im Feld „cls“.
+   Stehen mindestens zwei verschiedene Klassen im Kurs, wird die Liste nach Klassen unterteilt. */
+const clsKey = s => String((s && s.cls) || '').trim().toUpperCase();
+const cmpCls = (a, b) => (a === '') - (b === '') || (parseInt(a) || 99) - (parseInt(b) || 99) || a.localeCompare(b, 'de');
+const isMixed = list => new Set(list.map(clsKey).filter(Boolean)).size > 1;
+/* Feld „Klasse“ zeigen: bei mehreren Klassen – oder wenn nur ein Teil der Namen eine Klasse hat (sonst bliebe sie unsichtbar) */
+const clsShown = list => isMixed(list) || (list.some(clsKey) && !list.every(clsKey));
+/* Sortieren: bei mehreren Klassen erst nach Klasse, dann nach Namen; gleiche Klasse in gleicher Schreibweise („8b“ → „8B“, wenn die anderen so heißen) */
+const sortList = list => {
+  const sp = {}; list.forEach(x => { const k = clsKey(x); if (k) { const m = sp[k] = sp[k] || {}; m[x.cls.trim()] = (m[x.cls.trim()] || 0) + 1; } });
+  list.forEach(x => { const k = clsKey(x); if (k) x.cls = Object.entries(sp[k]).sort((a, b) => b[1] - a[1])[0][0]; });
+  const mx = isMixed(list); return list.sort((a, b) => (mx ? cmpCls(clsKey(a), clsKey(b)) : 0) || byName(a, b));
+};
+/* Gruppen in Anzeige-Reihenfolge: [{ key, label, students }] – bei Kursen aus einer Klasse genau eine Gruppe ohne Überschrift */
+function groupsOf(c) {
+  if (!isMixed(c.students)) return [{ key: '', label: '', students: c.students }];
+  const out = [];
+  c.students.forEach(s => { const k = clsKey(s); let g = out.find(x => x.key === k); if (!g) out.push(g = { key: k, label: k ? 'Klasse ' + s.cls.trim() : 'Ohne Klasse', students: [] }); g.students.push(s); });
+  return out;
+}
+/* Klassen, für die ein Kurs bei der Terminprüfung (§ 22 GSO) zählt */
+function classesOf(c) { if (upper(c)) return [c.name]; return isMixed(c.students) ? [...new Set(c.students.map(clsKey).filter(Boolean))].sort(cmpCls) : [R.classOf(c.name)]; }
+/* Zeilen für Ausdrucke: je Klasse eine Zwischenüberschrift; die Nummern laufen durch – wie auf dem Notenblatt des Infoportals */
+function groupedRows(c, fn) { let n = 0; return groupsOf(c).flatMap(g => [...(g.label ? [{ group: `${g.label} · ${g.students.length} Schüler` }] : []), ...g.students.map(s => fn(s, n++))]); }
+/* Vorschlag für den Kursnamen aus den Klassen: 8A + 8B → „8AB“ (nur wenn alle Klassen dieselbe Jahrgangsstufe haben) */
+function mixedName(list) { const ks = [...new Set(list.map(clsKey).filter(Boolean))].sort(cmpCls).map(k => /^(\d{1,2})(\D+)$/.exec(k)); return ks.length > 1 && ks.every(m => m && m[1] === ks[0][1]) ? ks[0][1] + ks.map(m => m[2]).join('') : ''; }
 
 /* ---------- Dialoge ---------- */
 function sheet({ title, body, ok = 'Sichern', cancel = 'Abbrechen', wide, small, onOk, onOpen, footer = '', allowRO }) {
@@ -76,10 +102,8 @@ function setupStep(n, ctx = {}) {
     gate(`${ICON}<h2>Willkommen bei Libretto</h2><p>Deine Notenverwaltung für das bayerische Gymnasium – Berechnung nach der GSO, alle Daten verschlüsselt auf diesem Computer.</p>${dots}
       <div class="notice" style="text-align:left"><div class="grow"><b>Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere deine Daten zusätzlich regelmäßig selbst.</div></div>
       <label class="check"><input type="checkbox" id="ackDoc"> <span>Verstanden: Libretto ist meine persönliche Hilfe, nicht die offizielle Dokumentation. Ich übertrage Noten ins Infoportal bzw. Schulprogramm.</span></label>
-      <label class="check"><input type="checkbox" id="ackPriv"> <span>Ich kläre mit meiner Schulleitung, ob ich Noten auf diesem Gerät verarbeiten darf (Genehmigung für private Endgeräte).</span></label>
       <button class="go" id="next" disabled>Weiter</button>`);
-    const upd = () => { $('#next').disabled = !($('#ackDoc').checked && $('#ackPriv').checked); };
-    $('#ackDoc').onchange = upd; $('#ackPriv').onchange = upd; $('#next').onclick = () => setupStep(2);
+    $('#ackDoc').onchange = () => { $('#next').disabled = !$('#ackDoc').checked; }; $('#next').onclick = () => setupStep(2);
   }
   if (n === 2) {
     gate(`${dots}<h2>Über dich</h2><p>Erscheint auf deinen Ausdrucken. Alles freiwillig und später in den Einstellungen änderbar.</p>
@@ -199,7 +223,7 @@ setInterval(() => { if (D && (+D.settings.autoLock || 0) > 0 && Date.now() - las
 function migrate() {
   D.settings = { ...blankData().settings, ...(D.settings || {}) };
   D.courses = D.courses || []; D.classDates = D.classDates || []; D.events = D.events || []; D.settings.hues = D.settings.hues || {}; D.settings.lastTerm = D.settings.lastTerm || {};
-  D.courses.forEach(c => { c.students = (c.students || []).slice().sort(byName); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; });
+  D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; });
 }
 async function enterApp() {
   $('#gate').hidden = true; $('#appRoot').hidden = false;
@@ -337,8 +361,7 @@ function courseView(c) {
   const sorted = c.students;
   const notices = [backupNotice()];
   R.courseWarnings(c).forEach(w => notices.push(`<div class="notice"><div class="grow">${esc(w.text)}</div></div>`));
-  const cls = R.classOf(c.name);
-  const conf = R.dateConflicts(classBigDates(cls));
+  const conf = upper(c) ? [] : classesOf(c).flatMap(cls => R.dateConflicts(classBigDates(cls)).map(cf => classesOf(c).length > 1 ? { ...cf, text: `Klasse ${cls}: ${cf.text}` } : cf));
   conf.forEach(cf => notices.push(`<div class="notice"><div class="grow"><b>Termin prüfen (§ 22 GSO):</b> ${esc(cf.text)}</div></div>`));
   const openN = c.assessments.reduce((n, a) => n + Object.values(a.results || {}).filter(r => r && r.status === 'ent').length, 0);
   if (openN) notices.push(`<div class="notice info"><div class="grow"><b>${openN} Nachtermin(e) offen</b> – mit „E“ markiert. Note einfach überschreiben, sobald nachgeschrieben.</div></div>`);
@@ -350,7 +373,7 @@ function courseView(c) {
     scope = `<div class="scopeBar"><div class="seg"><button data-scope="year" aria-pressed="${UI.scope === 'year'}">Ganzes Schuljahr</button><button data-scope="half" aria-pressed="${UI.scope === 'half'}">Stand Zwischenzeugnis</button><button data-scope="until" aria-pressed="${UI.scope === 'until'}">Stand bis Datum</button></div>
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}</div>`;
   }
-  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe'} ${c.grade} · ${c.students.length} Schüler${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
+  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe'} ${c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
       <div class="headBtns"><button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button><button class="mini" data-act="editCourse">Kurs &amp; Schüler</button><button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
     <div class="notices">${notices.filter(Boolean).join('')}</div>${scope}
     ${sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
@@ -358,7 +381,7 @@ function courseView(c) {
       : `<div class="empty glass" style="min-height:260px"><div><strong>Noch keine Schüler</strong><p>Füge die Namensliste ein oder übernimm sie aus Excel.</p><button class="go" data-act="editCourse">Schüler eintragen</button></div></div>`}`;
 }
 function classBigDates(cls) {
-  const own = D.courses.filter(c => R.classOf(c.name) === cls && !upper(c)).flatMap(c => c.assessments.filter(a => R.isBig(a) && a.date).map(a => ({ date: a.date, label: `${c.subject} (${a.title || R.TYPES[a.type].label})` })));
+  const own = D.courses.filter(c => !upper(c) && classesOf(c).includes(cls)).flatMap(c => c.assessments.filter(a => R.isBig(a) && a.date).map(a => ({ date: a.date, label: `${c.subject} (${a.title || R.TYPES[a.type].label})` })));
   const other = D.classDates.filter(x => x.cls === cls).map(x => ({ date: x.date, label: x.subject + ' (eingetragen)' }));
   return own.concat(other);
 }
@@ -408,6 +431,8 @@ function entCell(c, s) {
   const chips = entriesOf(c, s.id).map(e => `<button class="echip ${e.status ? 'st' : ''}" data-ent="${s.id}" title="${esc(R.TYPES[e.type].label + (e.date ? ' · ' + fdate(e.date) : '') + (e.note ? ' · ' + e.note : ''))}">${esc(R.cellText(e, up))}</button>`).join('');
   return `<td class="ent sep"><div class="ents">${chips}<input class="cell entq" data-eq="${s.id}" placeholder="+" autocomplete="off" title="Note tippen + Enter = neue Einzelnote mit heutigem Datum"></div></td>`;
 }
+/* Zwischenzeile je Klasse (nur bei Kursen aus mehreren Klassen) */
+function clsRow(g, nCols) { return g.label ? `<tr class="clsRow"><td class="nm"><span>${esc(g.label)}</span><small>${g.students.length} Schüler</small></td><td colspan="${nCols}"></td></tr>` : ''; }
 function gridTable(c) {
   const as = visibleAssessments(c), up = upper(c);
   const big = as.filter(a => R.isBig(a)), small = as.filter(a => !R.isBig(a));
@@ -424,7 +449,9 @@ function gridTable(c) {
   }
   const emptyCol = '<th class="sep"><small class="hint" style="padding:0 10px">–</small></th>';
   const head = `<thead>${grp}<tr class="cols">${showBig ? (hdrBig || emptyCol) : ''}${hdrSmall}${sumHead}</tr></thead>`;
-  const rows = c.students.map((s, i) => `<tr data-row="${s.id}"><td class="nm"><button data-stu="${s.id}"><span class="nr">${i + 1}</span>${esc(s.name)}${awayOf(c, s.id) ? `<span class="awayTag" title="${esc(awayText(awayOf(c, s.id)))}">abw.</span>` : ''}</button></td>${showBig ? (big.length ? big.map(a => cellHTML(c, a, s)).join('') : '<td class="sep"></td>') : ''}${small.map(a => cellHTML(c, a, s)).join('')}${entCell(c, s)}${summaryCells(c, s)}</tr>`).join('');
+  const nCols = (showBig ? Math.max(1, big.length) : 0) + small.length + 1 + (up || c.hasSA ? 4 : 3);
+  let nr = 0;
+  const rows = groupsOf(c).map(g => clsRow(g, nCols) + g.students.map(s => `<tr data-row="${s.id}"><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}${awayOf(c, s.id) ? `<span class="awayTag" title="${esc(awayText(awayOf(c, s.id)))}">abw.</span>` : ''}</button></td>${showBig ? (big.length ? big.map(a => cellHTML(c, a, s)).join('') : '<td class="sep"></td>') : ''}${small.map(a => cellHTML(c, a, s)).join('')}${entCell(c, s)}${summaryCells(c, s)}</tr>`).join('')).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
 }
 function upperOverview(c) {
@@ -432,11 +459,12 @@ function upperOverview(c) {
   const sem = c.seminar;
   const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="gSum sep" colspan="${terms.length}">Halbjahresleistungen (Punkte)</th>${sem ? '<th class="gBig sep" colspan="3">Seminararbeit (§ 29 GSO)</th>' : ''}</tr>
     <tr class="cols">${terms.map((t, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 14px">${t}</th>`).join('')}${sem ? '<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Präsentation/<br>Prüfungsgespräch</th><th style="padding:6px 10px">Gesamt (max. 30)</th>' : ''}</tr></thead>`;
-  const rows = c.students.map((s, i) => {
+  let nr = 0;
+  const rows = groupsOf(c).map(g => clsRow(g, terms.length + (sem ? 3 : 0)) + g.students.map(s => {
     const sp = c.seminarPaper[s.id] || {};
-    return `<tr><td class="nm"><button data-stu="${s.id}"><span class="nr">${i + 1}</span>${esc(s.name)}</button></td>${terms.map((t, j) => { const r = R.computeTerm(c, s.id, t); return `<td class="res ${j ? '' : 'sep'}">${pointsBadge(r.points)}${r.zero ? '<span class="flag red" title="0 Punkte – nicht belegt"></span>' : ''}</td>`; }).join('')}
+    return `<tr><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}</button></td>${terms.map((t, j) => { const r = R.computeTerm(c, s.id, t); return `<td class="res ${j ? '' : 'sep'}">${pointsBadge(r.points)}${r.zero ? '<span class="flag red" title="0 Punkte – nicht belegt"></span>' : ''}</td>`; }).join('')}
       ${sem ? `<td class="sep"><input class="cell" data-sp="arbeit" data-s="${s.id}" value="${esc(sp.arbeit ?? '')}"></td><td><input class="cell" data-sp="gespraech" data-s="${s.id}" value="${esc(sp.gespraech ?? '')}"></td><td class="sum main" data-spsum="${s.id}">${R.seminarPaper(sp.arbeit, sp.gespraech) ?? '–'}</td>` : ''}</tr>`;
-  }).join('');
+  }).join('')).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
 }
 
@@ -449,6 +477,7 @@ function bindGrid(c) {
   work.addEventListener('focusin', e => { if (e.target.classList.contains('cell')) e.target.select(); });
   work.addEventListener('change', e => {
     const el = e.target; if (!el.classList.contains('cell')) return;
+    if (el._gone) return; /* Zelle wird gerade neu gezeichnet: das Entfernen löst sonst ein zweites „change“ aus */
     if (READONLY) { el.value = el.defaultValue; return; }
     if (el.dataset.sp) { // Seminararbeit
       const v = el.value.trim(); const n = v === '' ? '' : +v;
@@ -466,7 +495,7 @@ function bindGrid(c) {
       c.entries.push(ne);
       el.value = ''; save();
       toastAction(`Einzelnote ${R.cellText(ne, upper(c))} für ${s.name} eingetragen`, 'Rückgängig', () => { c.entries = (c.entries || []).filter(x => x.id !== ne.id); save(); render(); });
-      const tr = el.closest('tr'), td = el.closest('td'); const tmp = document.createElement('tr'); tmp.innerHTML = entCell(c, s); td.replaceWith(tmp.firstElementChild);
+      const tr = el.closest('tr'), td = el.closest('td'); const tmp = document.createElement('tr'); tmp.innerHTML = entCell(c, s); el._gone = true; td.replaceWith(tmp.firstElementChild);
       $$('td.sum, td.res', tr).forEach(x => x.remove()); tr.insertAdjacentHTML('beforeend', summaryCells(c, s));
       return;
     }
@@ -488,7 +517,7 @@ function bindGrid(c) {
     save();
     const tr = el.closest('tr'), s = c.students.find(x => x.id === sid);
     const td = el.closest('td'); td.outerHTML; // Zelle neu zeichnen
-    const tmp = document.createElement('tr'); tmp.innerHTML = cellHTML(c, a, s); const nc = tmp.firstElementChild; td.replaceWith(nc);
+    const tmp = document.createElement('tr'); tmp.innerHTML = cellHTML(c, a, s); const nc = tmp.firstElementChild; el._gone = true; td.replaceWith(nc);
     $$('td.sum, td.res', tr).forEach(x => x.remove());
     tr.insertAdjacentHTML('beforeend', summaryCells(c, s));
   });
@@ -497,7 +526,7 @@ function bindGrid(c) {
     const el = e.target; if (!el.classList || !el.classList.contains('cell')) return;
     const td = el.closest('td'), tr = td.closest('tr');
     const col = [...tr.children].indexOf(td);
-    const moveRow = d => { let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && !r.children[col]); const n = r && r.children[col] && r.children[col].querySelector('.cell'); if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); }, 0); } };
+    const moveRow = d => { let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col])); const n = r && r.children[col] && r.children[col].querySelector('.cell'); if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); }, 0); } };
     const moveCol = d => { const list = cells().filter(x => x.closest('tr') === tr); const i = list.indexOf(el); const n = list[i + d]; if (n) n.focus(); };
     if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); moveRow(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); moveRow(-1); }
@@ -560,7 +589,8 @@ function courseSheet(c) {
       <input type="file" id="stFile" accept=".pdf,.xlsx,.xls,.ods,.csv,.txt" hidden></div>
     <div id="stPasteBox" hidden style="margin-top:10px">${field('Liste einfügen (eine Zeile pro Person, z. B. „Muster, Anna“)', '<textarea id="stText" rows="5"></textarea>')}<button type="button" class="mini accent" id="stPasteGo">Übernehmen</button></div>
     <div class="stTable" id="stRows" style="margin-top:10px"></div>
-    <div class="panelBtns"><button type="button" class="mini" id="stAdd">+ Schüler/in</button><button type="button" class="mini" id="stSwap">Vor- und Nachname tauschen</button>
+    <p class="hint" id="stClsHint" hidden>Kurs aus mehreren Klassen: Trage bei jedem Namen die Klasse ein (z. B. 8A) – Libretto unterteilt die Liste dann nach Klassen, auch auf der Übertragsliste fürs Infoportal. Steht die Klasse in der eingelesenen Liste, wird sie übernommen.</p>
+    <div class="panelBtns"><button type="button" class="mini" id="stAdd">+ Schüler/in</button><button type="button" class="mini" id="stSwap">Vor- und Nachname tauschen</button><button type="button" class="mini" id="stCls" title="Für Kurse mit Schülern aus mehreren Klassen, z. B. Italienisch aus 8A und 8B">Klassen eintragen</button><button type="button" class="mini" id="stFill" hidden>Fehlende Klassen ausfüllen …</button>
       ${others.length ? `<select class="mini" id="cFrom"><option value="">Aus anderem Kurs übernehmen …</option>${others.map(o => `<option value="${o.id}">${esc(o.name + ' ' + o.subject)} (${o.students.length})</option>`).join('')}</select>` : ''}</div>
     <details class="more" ${isNew ? '' : ''}><summary>Gewichtung der kleinen Leistungsnachweise</summary>
     ${field('Berechnung', `<select id="cSmall"><option value="flat">Gewichteter Durchschnitt aller kleinen LN</option><option value="areas" ${c.smallMode === 'areas' ? 'selected' : ''}>Erst je Bereich (schriftlich / mündlich / praktisch), dann Bereiche gewichten</option></select>`)}
@@ -583,13 +613,13 @@ function courseSheet(c) {
     /* Schüler übernehmen: bestehende behalten ihre ID und damit ihre Noten */
     const seen = new Set(), next = [];
     draft.filter(x => (x.last || '').trim() || (x.first || '').trim()).forEach(x => {
-      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st);
+      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st); const k = Importer.normCls(x.cls) || String(x.cls || '').trim(); if (k) st.cls = k;
       if (seen.has(st.name.toLowerCase())) return; seen.add(st.name.toLowerCase()); next.push(st);
     });
     const ids = new Set(next.map(x => x.id));
     const removed = c.students.filter(s => !ids.has(s.id) && (c.assessments.some(a => a.results && a.results[s.id]) || (c.entries || []).some(e => e.sid === s.id)));
     const finish = () => {
-      next.sort(byName);
+      sortList(next);
       c.students = next; c.entries = (c.entries || []).filter(e => ids.has(e.sid));
       const i = D.courses.findIndex(x => x.id === c.id);
       if (i >= 0) D.courses[i] = c; else D.courses.push(c);
@@ -603,20 +633,37 @@ function courseSheet(c) {
   $$('#cHue button', dlg).forEach(b => b.onclick = () => { hueSel = b.dataset.hue; $$('#cHue button', dlg).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
   if (isNew) dlg.querySelector('#cName').focus();
   /* Entwurf der Schülerliste (Tabelle wie in Viva/Gruppen) */
-  let draft = c.students.map(x => ({ id: x.id, ...splitName(x) }));
+  let draft = c.students.map(x => ({ id: x.id, ...splitName(x), cls: x.cls || '' }));
   const rowsEl = dlg.querySelector('#stRows');
+  /* Spalte „Klasse“: sichtbar, sobald sie gebraucht wird (zwei Klassen im Kurs, Klasse nur bei einem Teil der Namen) oder auf Wunsch */
+  let clsOn = false;
+  const clsSet = () => new Set(draft.map(clsKey).filter(Boolean));
+  const showCls = () => clsOn || clsShown(draft);
   const drawDraft = () => {
-    dlg.querySelector('#stCount').textContent = draft.length ? draft.length + ' Namen' : '';
-    rowsEl.innerHTML = draft.length ? draft.map((x, i) => `<div class="stRow lib" data-i="${i}"><span class="nr">${i + 1}</span><input type="text" data-f="last" value="${esc(x.last)}" placeholder="Nachname"><input type="text" data-f="first" value="${esc(x.first)}" placeholder="Vorname"><button type="button" class="iconbtn" data-rm="${i}" title="Entfernen">✕</button></div>`).join('')
+    const kc = showCls();
+    dlg.querySelector('#stCount').textContent = draft.length ? draft.length + ' Namen' + (clsSet().size > 1 ? ' aus ' + clsSet().size + ' Klassen' : '') : '';
+    dlg.querySelector('#stCls').hidden = kc; dlg.querySelector('#stClsHint').hidden = !kc; dlg.querySelector('#stFill').hidden = !(kc && draft.some(x => !clsKey(x)) && draft.length > 1);
+    rowsEl.innerHTML = draft.length ? draft.map((x, i) => `<div class="stRow lib ${kc ? 'withCls' : ''}" data-i="${i}"><span class="nr">${i + 1}</span><input type="text" data-f="last" value="${esc(x.last)}" placeholder="Nachname"><input type="text" data-f="first" value="${esc(x.first)}" placeholder="Vorname">${kc ? `<input type="text" data-f="cls" value="${esc(x.cls || '')}" placeholder="Klasse" maxlength="6" title="Klasse, z. B. 8A">` : ''}<button type="button" class="iconbtn" data-rm="${i}" title="Entfernen">✕</button></div>`).join('')
       : '<div class="stEmpty">Noch keine Namen – Klassenliste einlesen oder Namen einfügen.</div>';
     $$('.stRow', rowsEl).forEach(r => $$('input', r).forEach(inp => inp.oninput = () => { draft[+r.dataset.i][inp.dataset.f] = inp.value; }));
     $$('[data-rm]', rowsEl).forEach(b => b.onclick = () => { draft.splice(+b.dataset.rm, 1); drawDraft(); });
   };
-  const addDraft = list => { const key = x => (x.last + '|' + x.first).toLowerCase(); const have = new Set(draft.map(key)); let n = 0;
-    list.forEach(x => { const y = { id: uid(), last: (x.last || '').trim(), first: (x.first || '').trim() }; if (!y.last && !y.first) return; if (have.has(key(y))) return; have.add(key(y)); draft.push(y); n++; });
-    draft.sort(byName); drawDraft(); toast(n ? `${n} Namen übernommen – bitte kurz prüfen` : 'Keine neuen Namen erkannt'); };
+  const addDraft = (list, batchCls = '') => { const key = x => (x.last + '|' + x.first).toLowerCase(); const have = new Map(draft.map(x => [key(x), x])); let n = 0, k = 0;
+    list.forEach(x => { const y = { id: uid(), last: (x.last || '').trim(), first: (x.first || '').trim(), cls: Importer.normCls(x.cls) || batchCls }; if (!y.last && !y.first) return;
+      const old = have.get(key(y)); if (old) { if (y.cls && !clsKey(old)) { old.cls = y.cls; k++; } return; } /* schon in der Liste: nur die fehlende Klasse ergänzen */
+      have.set(key(y), y); draft.push(y); n++; });
+    sortList(draft); drawDraft();
+    const kl = clsSet().size > 1 ? ` aus ${clsSet().size} Klassen` : '';
+    toast(n ? `${n} Namen übernommen${kl} – bitte kurz prüfen` : k ? `Klasse bei ${k} Namen ergänzt` : 'Keine neuen Namen erkannt'); };
   drawDraft();
-  const readF = async f => { try { toast('Liste wird gelesen …'); const r = await Importer.readFile(f); addDraft(r.list); const nm = dlg.querySelector('#cName'); if (!nm.value.trim() && r.cls) nm.value = r.cls; } catch (err) { console.error(err); toast('Datei konnte nicht gelesen werden'); } };
+  /* Steht in der Datei nur eine einzelne Klasse (Kopfzeile/Dateiname, z. B. „8A“), gilt sie für alle Namen dieser Datei */
+  const readF = async f => { try { toast('Liste wird gelesen …'); const r = await Importer.readFile(f); const one = /^\d{1,2}[A-Za-zÄÖÜäöü]$/.test(r.cls || '') && !r.list.some(x => x.cls) ? r.cls : ''; addDraft(r.list, one);
+      /* Vorschläge aus der Liste – nur in leere Felder: Kursname (bei mehreren Klassen z. B. „8AB“), Fach (Kopfzeile der Liste), Jahrgangsstufe */
+      const nm = dlg.querySelector('#cName'), sj = dlg.querySelector('#cSubj'), fresh = !nm.value.trim();
+      if (fresh) nm.value = isMixed(draft) ? mixedName(draft) : (r.cls || '');
+      if (!sj.value.trim()) { const hit = (r.head || []).map(h => String(h).trim().toLowerCase()).map(h => R.SUBJECTS.find(x => x.toLowerCase() === h) || (/^evang/.test(h) ? 'Religionslehre (ev.)' : /^kath/.test(h) ? 'Religionslehre (kath.)' : '')).find(Boolean); if (hit && (R.SUBJECTS.includes(hit))) sj.value = hit; }
+      const gm = /^(\d{1,2})/.exec(nm.value.trim()); if (isNew && fresh && gm && +gm[1] >= 5 && +gm[1] <= 13) { dlg.querySelector('#cGrade').value = String(+gm[1]); upd(); }
+    } catch (err) { console.error(err); toast('Datei konnte nicht gelesen werden'); } };
   dlg.querySelector('#stFileBtn').onclick = () => dlg.querySelector('#stFile').click();
   dlg.querySelector('#stFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) readF(f); };
   const dz = dlg.querySelector('#dropImport');
@@ -625,9 +672,16 @@ function courseSheet(c) {
   dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) readF(f); });
   dlg.querySelector('#stPasteBtn').onclick = () => { const b = dlg.querySelector('#stPasteBox'); b.hidden = !b.hidden; if (!b.hidden) dlg.querySelector('#stText').focus(); };
   dlg.querySelector('#stPasteGo').onclick = () => { addDraft(Importer.recognizeNames(dlg.querySelector('#stText').value.split(/\r?\n/))); dlg.querySelector('#stText').value = ''; dlg.querySelector('#stPasteBox').hidden = true; };
-  dlg.querySelector('#stAdd').onclick = () => { draft.push({ id: uid(), last: '', first: '' }); drawDraft(); const ins = $$('input[data-f=last]', rowsEl); ins[ins.length - 1].focus(); };
+  dlg.querySelector('#stCls').onclick = () => { clsOn = true; drawDraft(); const i = rowsEl.querySelector('input[data-f=cls]'); if (i) i.focus(); };
+  dlg.querySelector('#stFill').onclick = () => {
+    const open = draft.filter(x => !clsKey(x)).length;
+    sheet({ title: 'Fehlende Klassen ausfüllen', small: true, ok: 'Eintragen', body: `<p class="prose" style="margin-top:0">${open} Namen haben noch keine Klasse. Welche Klasse soll bei ihnen stehen?</p>${field('Klasse', '<input type="text" id="fillCls" placeholder="z. B. 8B" maxlength="6">')}`,
+      onOpen: d => d.querySelector('#fillCls').focus(),
+      onOk: d => { const v = d.querySelector('#fillCls').value.trim(); if (!v) return false; draft.forEach(x => { if (!clsKey(x)) x.cls = Importer.normCls(v) || v; }); sortList(draft); drawDraft(); } });
+  };
+  dlg.querySelector('#stAdd').onclick = () => { draft.push({ id: uid(), last: '', first: '', cls: !showCls() && clsSet().size === 1 ? draft.find(clsKey).cls : '' }); drawDraft(); const ins = $$('input[data-f=last]', rowsEl); ins[ins.length - 1].focus(); };
   dlg.querySelector('#stSwap').onclick = () => { draft.forEach(x => { [x.first, x.last] = [x.last, x.first]; }); drawDraft(); };
-  const fr = dlg.querySelector('#cFrom'); if (fr) fr.onchange = () => { const o = D.courses.find(x => x.id === fr.value); if (o) addDraft(o.students.map(splitName)); fr.value = ''; };
+  const fr = dlg.querySelector('#cFrom'); if (fr) fr.onchange = () => { const o = D.courses.find(x => x.id === fr.value); if (o) addDraft(o.students.map(x => ({ ...splitName(x), cls: x.cls || '' }))); fr.value = ''; };
   const del = dlg.querySelector('#cDel'); if (del) del.onclick = async () => {
     if (await ask(`Kurs <b>${esc(c.name + ' ' + c.subject)}</b> mit allen Noten löschen? Ältere Sicherungen bleiben erhalten.`, 'Löschen', true)) {
       D.courses = D.courses.filter(x => x.id !== c.id); UI.course = D.courses[0] && D.courses[0].id; save(); close(); render();
@@ -715,7 +769,7 @@ function assessmentSheet(c, a) {
     if (up && a.type === 'sa' && !R.termHasSA(c, a.term)) toast(`Hinweis: In ${a.term} ist für dieses Fach keine Schulaufgabe vorgesehen (§ 29 GSO).`);
     const i = c.assessments.findIndex(x => x.id === a.id);
     if (i >= 0) c.assessments[i] = a; else c.assessments.push(a);
-    if (R.isBig(a) && !up) { const cf = R.dateConflicts(classBigDates(R.classOf(c.name))).filter(x => x.items.some(it => it.date === a.date)); if (cf.length) toast('Achtung: ' + cf[0].text, 5000); }
+    if (R.isBig(a) && !up) { const cf = classesOf(c).flatMap(cls => R.dateConflicts(classBigDates(cls))).filter(x => x.items.some(it => it.date === a.date)); if (cf.length) toast('Achtung: ' + cf[0].text, 5000); }
     save(); render();
   } });
   const upd = () => {
@@ -842,7 +896,7 @@ function studentSheet(c, s) {
   const ov = c.overrides[s.id] || {};
   const aw = (c.away && c.away[s.id]) || {};
   const body = `
-    ${field('Name', `<input type="text" id="sName" value="${esc(s.name)}">`)}
+    ${clsShown(c.students) ? `<div class="grid3">${field('Name', `<input type="text" id="sName" value="${esc(s.name)}">`, 'span2')}${field('Klasse', `<input type="text" id="sCls" value="${esc(s.cls || '')}" placeholder="z. B. 8A" maxlength="6">`)}</div>` : field('Name', `<input type="text" id="sName" value="${esc(s.name)}">`)}
     <div class="stuSum">${sum}</div>
     ${warn.length ? `<div class="notices">${warn.map(w => `<div class="notice ${w.level === 'info' ? 'info' : ''}"><div class="grow">${esc(w.text)}</div></div>`).join('')}</div>` : ''}
     <div class="lnList">${as.length ? as.map(a => { const r = a.results && a.results[s.id]; const big = R.isBig(a); return `<div class="li"><div>${esc(a.title || R.TYPES[a.type].label)}<small>${big ? 'groß' : 'klein'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · ' + a.term : ''}${r && r.status ? ' · ' + esc(R.STATUS[r.status].label) : ''}${!r && isAway(c, s.id, a.date) ? ' · abwesend' : ''}</small></div><div class="hint" style="text-align:right">${r && r.raw != null ? String(r.raw).replace('.', ',') + ' / ' + (a.key ? a.key.max : '') + ' P.' : ''}</div><div class="v">${esc(R.cellText(r, up)) || '–'}</div></div>`; }).join('') : '<div class="li"><div class="hint">Noch keine Leistungsnachweise</div></div>'}</div>
@@ -860,7 +914,8 @@ function studentSheet(c, s) {
     const af = d.querySelector('#sAwF').value, at = d.querySelector('#sAwT').value; c.away = c.away || {};
     if (af && at && at < af) { toast('Abwesenheit: Das Ende liegt vor dem Beginn'); return false; }
     if (af || at) c.away[s.id] = { from: af, to: at, reason: d.querySelector('#sAwR').value.trim() }; else delete c.away[s.id];
-    c.students.sort(byName);
+    const kl = d.querySelector('#sCls'); if (kl) { const v = Importer.normCls(kl.value) || kl.value.trim(); if (v) s.cls = v; else delete s.cls; }
+    sortList(c.students);
     save(); render();
   } });
   dlg.querySelector('#sPdf').onclick = () => exportModel(modelStudents(c, [s]), 'pdf');
@@ -881,7 +936,7 @@ function modelCourse(c) {
   if (up && !UI.term) {
     const terms = R.termsOf(c);
     const head = ['Name', ...terms.map(t => t + ' (Punkte)'), ...(c.seminar ? ['Seminararbeit (max. 30)'] : [])];
-    const rows = c.students.map(s => [s.name, ...terms.map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : String(p); }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
+    const rows = groupedRows(c, s => [s.name, ...terms.map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : String(p); }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
     return { title: `Notenübersicht ${c.name} · ${c.subject}`, subtitle: scopeLabel(c), meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['l'], bold: head.map((_, i) => i).slice(1) } }], landscape: false };
   }
   const as = visibleAssessments(c);
@@ -890,10 +945,10 @@ function modelCourse(c) {
   if (up) {
     const t = scopeOf(c).term;
     head = ['Name', ...big.map(lnName), ...small.map(lnName), 'Einzeln', 'Ø klein', 'Ergebnis', 'Punkte'];
-    rows = c.students.map(s => { const r = R.computeTerm(c, s.id, t); return [s.name, ...big.map(a => ct(c, a, s, true)), ...small.map(a => ct(c, a, s, true)), entTxt(c, s), fmt(r.small), fmt(r.raw), r.points == null ? '–' : String(r.points)]; });
+    rows = groupedRows(c, s => { const r = R.computeTerm(c, s.id, t); return [s.name, ...big.map(a => ct(c, a, s, true)), ...small.map(a => ct(c, a, s, true)), entTxt(c, s), fmt(r.small), fmt(r.raw), r.points == null ? '–' : String(r.points)]; });
   } else {
     head = ['Name', ...(c.hasSA ? big.map(lnName) : []), ...(c.hasSA ? ['Ø groß'] : []), ...small.map(lnName), 'Einzeln', 'Ø klein', 'Ø gesamt', 'Zeugnis'];
-    rows = c.students.map(s => { const r = R.computeLower(c, s.id, scopeOf(c)); return [s.name, ...(c.hasSA ? big.map(a => ct(c, a, s, false)) : []), ...(c.hasSA ? [fmt(r.saAvg)] : []), ...small.map(a => ct(c, a, s, false)), entTxt(c, s), fmt(r.smAvg), fmt(r.total), finalTxt(c, s, r)]; });
+    rows = groupedRows(c, s => { const r = R.computeLower(c, s.id, scopeOf(c)); return [s.name, ...(c.hasSA ? big.map(a => ct(c, a, s, false)) : []), ...(c.hasSA ? [fmt(r.saAvg)] : []), ...small.map(a => ct(c, a, s, false)), entTxt(c, s), fmt(r.smAvg), fmt(r.total), finalTxt(c, s, r)]; });
   }
   const legend = (as.length || (c.entries || []).length ? 'Einzeln = Einzelnoten mit eigenem Datum (z. B. Unterrichtsbeiträge) · ' : '') + as.map(a => `${lnName(a)} = ${a.title || R.TYPES[a.type].label}${R.isBig(a) && a.bigWeight && +a.bigWeight !== 1 ? ' (' + wLabel(a.bigWeight) + ')' : ''}${!R.isBig(a) && R.weightOf(a, c) !== 1 ? ' (Gewicht ' + R.weightOf(a, c) + ')' : ''}`).join(' · ');
   const rule = up ? 'Halbjahresleistung nach § 29 GSO: Schulaufgabe und Durchschnitt der kleinen LN 1:1, gerundet.' : c.hasSA ? `Jahresfortgangsnote nach § 28 GSO: große : kleine LN = ${R.saRatio(c)}:1.` : 'Fach ohne Schulaufgaben: Note aus den kleinen Leistungsnachweisen.';
@@ -903,18 +958,18 @@ function modelCourse(c) {
 function modelTransfer(c) {
   const up = upper(c);
   const head = ['Nr.', 'Name', up ? (UI.term ? 'Punkte ' + UI.term : 'Punkte') : 'Note', 'Bemerkung'];
-  const rows = c.students.map((s, i) => {
+  const rows = groupedRows(c, (s, i) => {
     if (up) { const t = UI.term || R.termsOf(c)[0]; const r = R.computeTerm(c, s.id, t); return [String(i + 1), s.name, r.points == null ? '–' : String(r.points), r.zero ? '0 Punkte – nicht belegt' : r.open.length ? 'Nachtermin offen' : '']; }
     const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; const ng = c.noGrade && c.noGrade[s.id];
     if (ng) return [String(i + 1), s.name, '–', 'ohne Note' + (ng.reason ? ': ' + ng.reason : '') + ' – ggf. Bemerkung (§ 39 Abs. 6 GSO)'];
     return [String(i + 1), s.name, ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–', ov ? (ov.reason || 'von der Lehrkraft festgelegt') : r.suggestion && r.suggestion.grade == null ? 'Grenzfall – Entscheidung nötig' : r.open.length ? 'Nachtermin offen' : ''];
   });
-  return { title: `Übertragsliste ${c.name} · ${c.subject}`, subtitle: scopeLabel(c) + ' – zum Eintragen ins Infoportal', meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l'], big: [2] } }, { p: 'Reihenfolge alphabetisch wie in der Schülerliste. Bitte nach dem Übertragen abhaken.' }] };
+  return { title: `Übertragsliste ${c.name} · ${c.subject}`, subtitle: scopeLabel(c) + ' – zum Eintragen ins Infoportal', meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l'], big: [2] } }, { p: (isMixed(c.students) ? 'Nach Klassen unterteilt, je Klasse alphabetisch – Reihenfolge und Nummern wie auf dem Notenblatt des Infoportals.' : 'Reihenfolge alphabetisch wie in der Schülerliste.') + ' Bitte nach dem Übertragen abhaken.' }] };
 }
 function modelAssessment(c, a) {
   const up = upper(c), dist = R.distribution(a, c.students, up);
   const head = ['Nr.', 'Name', ...(a.usePoints ? ['Punkte'] : []), up ? 'Notenpunkte' : 'Note'];
-  const rows = c.students.map((s, i) => { const r = a.results && a.results[s.id]; return [String(i + 1), s.name, ...(a.usePoints ? [r && r.raw != null ? String(r.raw).replace('.', ',') : ''] : []), R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
+  const rows = groupedRows(c, (s, i) => { const r = a.results && a.results[s.id]; return [String(i + 1), s.name, ...(a.usePoints ? [r && r.raw != null ? String(r.raw).replace('.', ',') : ''] : []), R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
   const blocks = [{ table: { head, rows, align: ['c', 'l'], big: [head.length - 1] } }];
   blocks.push({ h: 'Notenspiegel' });
   blocks.push({ table: { head: up ? Array.from({ length: 16 }, (_, i) => String(15 - i)) : ['1', '2', '3', '4', '5', '6'], rows: [up ? dist.counts.slice().reverse().map(String) : dist.counts.map(String)], bold: [] } });
@@ -923,12 +978,13 @@ function modelAssessment(c, a) {
   blocks.push({ sig: ['Datum, Unterschrift der Lehrkraft'] });
   return { title: `${a.title || R.TYPES[a.type].label} – ${c.name} · ${c.subject}`, subtitle: `${R.TYPES[a.type].label}${R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks };
 }
+const stuSub = (c, s) => `${c.name} · ${c.subject}${isMixed(c.students) && s.cls ? ' · Klasse ' + s.cls : ''} · ${scopeLabel(c)}`;
 function modelStudents(c, list) {
   const up = upper(c);
   const blocks = [];
   list.forEach((s, idx) => {
     const as = c.assessments.concat((c.entries || []).filter(e => e.sid === s.id).map(e => ({ ...e, title: R.TYPES[e.type].label + ' (einzeln)', results: { [s.id]: e } }))).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
-    const head = { title: s.name, subtitle: `${c.name} · ${c.subject} · ${scopeLabel(c)}`, meta: baseMeta(c) };
+    const head = { title: s.name, subtitle: stuSub(c, s), meta: baseMeta(c) };
     if (idx) blocks.push({ pagebreak: true }, { head });
     const rows = as.map(a => { const r = a.results && a.results[s.id]; return [a.title || R.TYPES[a.type].label, R.isBig(a) ? 'groß' + (a.bigWeight && +a.bigWeight !== 1 ? ' ' + wLabel(a.bigWeight) : '') : 'klein', a.date ? fdate(a.date) : '', ...(up ? [a.term] : []), r && r.raw != null ? String(r.raw).replace('.', ',') + (a.key ? ' / ' + String(a.key.max).replace('.', ',') : '') : '', R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
     if (awayOf(c, s.id)) blocks.push({ p: 'Hinweis: ' + awayText(awayOf(c, s.id)) + '.' });
@@ -937,11 +993,11 @@ function modelStudents(c, list) {
     if (up) blocks.push({ table: { head: R.termsOf(c).map(t => 'Halbjahr ' + t), rows: [R.termsOf(c).map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : `${p} Punkte (${R.POINT_LABEL(p)})`; })], bold: [0, 1] } });
     else { const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; blocks.push({ table: { head: [...(c.hasSA ? ['Ø große LN'] : []), 'Ø kleine LN', 'Ø gesamt', 'Zeugnisnote (Vorschlag)'], rows: [[...(c.hasSA ? [fmt(r.saAvg)] : []), fmt(r.smAvg), fmt(r.total), ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–']], big: [c.hasSA ? 3 : 2] } }); }
   });
-  return { title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, subtitle: list.length === 1 ? `${c.name} · ${c.subject} · ${scopeLabel(c)}` : scopeLabel(c), meta: baseMeta(c), blocks };
+  return { title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: baseMeta(c), blocks };
 }
 function modelStudentsAll(c) {
   const m = modelStudents(c, c.students);
-  if (c.students.length) { m.title = c.students[0].name; m.subtitle = `${c.name} · ${c.subject} · ${scopeLabel(c)}`; }
+  if (c.students.length) { m.title = c.students[0].name; m.subtitle = stuSub(c, c.students[0]); }
   return m;
 }
 const fileSafe = s => s.replace(/[^\wäöüÄÖÜß.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
@@ -973,10 +1029,10 @@ function calendarHTML() {
   const now = new Date(); UI.cal = UI.cal || { y: now.getFullYear(), m: now.getMonth() };
   const { y, m } = UI.cal; const t = todayISO();
   const clsOf = c => upper(c) ? c.name : R.classOf(c.name);
-  const classes = [...new Set(D.courses.map(clsOf))].sort((a, b) => (parseInt(a) || 99) - (parseInt(b) || 99) || a.localeCompare(b));
+  const classes = [...new Set(D.courses.flatMap(classesOf))].sort((a, b) => (parseInt(a) || 99) - (parseInt(b) || 99) || a.localeCompare(b));
   const f = UI.calCls || '';
   const ev = {};
-  D.courses.filter(c => !f || clsOf(c) === f).forEach(c => c.assessments.filter(a => a.date && WRITTEN.includes(a.type)).forEach(a => (ev[a.date] = ev[a.date] || []).push({ c, a })));
+  D.courses.filter(c => !f || classesOf(c).includes(f)).forEach(c => c.assessments.filter(a => a.date && WRITTEN.includes(a.type)).forEach(a => (ev[a.date] = ev[a.date] || []).push({ c, a })));
   D.classDates.filter(x => !f || x.cls === f).forEach(x => (ev[x.date] = ev[x.date] || []).push({ other: x }));
   const free = Cal.freeDays(y, m);
   const first = new Date(y, m, 1), start = Cal.add(first, -((first.getDay() + 6) % 7));
@@ -1060,14 +1116,14 @@ function bindCalendar() {
 }
 function renderDates() {
   const t = todayISO();
-  const bigs = D.courses.flatMap(c => c.assessments.filter(a => R.isBig(a)).map(a => ({ c, a, cls: upper(c) ? c.name : R.classOf(c.name) }))).sort((x, y) => (x.a.date || '9999').localeCompare(y.a.date || '9999'));
+  const bigs = D.courses.flatMap(c => c.assessments.filter(a => R.isBig(a)).map(a => ({ c, a, cls: classesOf(c) }))).sort((x, y) => (x.a.date || '9999').localeCompare(y.a.date || '9999'));
   const confKeys = new Set();
-  const classes = [...new Set(D.courses.filter(c => !upper(c)).map(c => R.classOf(c.name)))];
+  const classes = [...new Set(D.courses.filter(c => !upper(c)).flatMap(classesOf))].sort(cmpCls);
   classes.forEach(cls => R.dateConflicts(classBigDates(cls)).forEach(cf => cf.items.forEach(it => confKeys.add(cls + it.date))));
   const open = D.courses.flatMap(c => c.assessments.flatMap(a => Object.entries(a.results || {}).filter(([, r]) => r && r.status === 'ent').map(([sid]) => ({ c, a, s: c.students.find(x => x.id === sid) })))).filter(x => x.s);
   $('#main').innerHTML = `<div class="notices">${backupNotice()}</div>${calendarHTML()}<div class="twoCol">
     <section class="panel glass"><div class="phead"><h2 class="ptitle">Große Leistungsnachweise</h2><span class="count">${bigs.length}</span></div>
-      <div class="tlist">${bigs.length ? bigs.map(({ c, a, cls }) => `<div class="trow ${confKeys.has(cls + a.date) ? 'conf' : ''} ${a.date && a.date < t ? 'past' : ''}"><span class="d">${a.date ? fdate(a.date) : 'ohne Datum'}</span><span>${esc(c.name)} · ${esc(c.subject)}<br><small>${esc(a.title || R.TYPES[a.type].label)}${a.bigWeight && +a.bigWeight !== 1 ? ' · ' + wLabel(a.bigWeight) : ''}</small></span>${confKeys.has(cls + a.date) ? '<span class="pill part">Termin prüfen</span>' : ''}</div>`).join('') : '<p class="hint">Noch keine Schulaufgaben eingetragen.</p>'}</div>
+      <div class="tlist">${bigs.length ? bigs.map(({ c, a, cls }) => ({ c, a, hit: cls.some(k => confKeys.has(k + a.date)) })).map(({ c, a, hit }) => `<div class="trow ${hit ? 'conf' : ''} ${a.date && a.date < t ? 'past' : ''}"><span class="d">${a.date ? fdate(a.date) : 'ohne Datum'}</span><span>${esc(c.name)} · ${esc(c.subject)}<br><small>${esc(a.title || R.TYPES[a.type].label)}${a.bigWeight && +a.bigWeight !== 1 ? ' · ' + wLabel(a.bigWeight) : ''}</small></span>${hit ? '<span class="pill part">Termin prüfen</span>' : ''}</div>`).join('') : '<p class="hint">Noch keine Schulaufgaben eingetragen.</p>'}</div>
       <p class="note">§ 22 GSO: große schriftliche Leistungsnachweise spätestens eine Woche vorher ankündigen; höchstens einer pro Tag und zwei pro Woche je Klasse. Libretto prüft deine eigenen Termine und die unten eingetragenen anderer Fächer.</p></section>
     <div style="display:flex;flex-direction:column;gap:16px">
     <section class="panel glass"><div class="phead"><h2 class="ptitle">Offene Nachtermine (§ 27 GSO)</h2><span class="count">${open.length}</span></div>
@@ -1147,6 +1203,7 @@ function helpSheet() {
     <div class="notice"><div class="grow"><b>Beta · Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere zusätzlich selbst. Fehler oder Wünsche? Schreib an <b>hallo@theisapps.de</b>.</div></div>
     <h3>1 · Kurs anlegen und Klassenliste einlesen</h3>
     <p>Oben „Neuer Kurs“: Klasse (z. B. 9F), Fach und Jahrgangsstufe. Die Klassenliste als <b>PDF, Excel oder CSV</b> hineinziehen oder Text einfügen – Libretto erkennt Vor- und Nachnamen. Stimmt etwas nicht, kannst du jede Zeile bearbeiten, Schüler entfernen oder Vor- und Nachname mit einem Klick tauschen.</p>${fig('kurs', 'Kurs anlegen')}
+    <p><b>Kurs aus mehreren Klassen</b> (z. B. Italienisch aus 8A und 8B, Religion aus 6A bis 6E): Steht die Klasse in der Liste, übernimmt Libretto sie beim Einlesen; sonst „Klassen eintragen“ wählen und die Klasse je Namen ergänzen. Die Notentabelle und die Ausdrucke – auch die Übertragsliste fürs Infoportal – sind dann <b>nach Klassen unterteilt</b>, und die Terminprüfung gilt für jede der Klassen.</p>
     <h3>2 · Noten eintragen</h3>
     <p>Zelle anklicken, Note tippen, <span class="kbd">Enter</span> – weiter zur nächsten Zeile. Tendenzen wie 2+ werden angezeigt, gerechnet wird mit ganzen Noten. Kürzel: <code>E</code> entschuldigt (Nachtermin offen) · <code>B</code> befreit · <code>N</code> Note 6 wegen Versäumnis/Verweigerung · <code>U</code> Unterschleif. Leere Zellen sind kein Problem – gerechnet wird nur mit vorhandenen Noten.</p>${fig('tabelle', 'Notentabelle')}
     <h3>3 · Einzelnoten mit Datum</h3>

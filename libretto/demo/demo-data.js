@@ -19,7 +19,8 @@ window.LibrettoDemoData = function (R, Cal) {
   /* Datum im Schuljahr (Monat, Tag); fällt es auf einen freien Tag, gilt der nächste Schultag */
   const sd = (m, day) => { const d = new Date(m >= 8 ? Y : Y + 1, m - 1, day, 12); let i = 0; while (frei(d) && i++ < 40) d.setDate(d.getDate() + 1); return iso(d); };
 
-  const students = list => list.map(s => { const [last, first] = s.split(', '); return { id: id('s'), last, first, name: `${last}, ${first}`, lvl: clamp(2.9 + gauss() * 0.95, 1.2, 5.3) }; });
+  /* „Nachname, Vorname“ – bei Kursen aus mehreren Klassen mit Klasse: „Nachname, Vorname | 8a“ */
+  const students = list => list.map(s => { const [nm, cls] = s.split(' | '); const [last, first] = nm.split(', '); return { id: id('s'), last, first, name: `${last}, ${first}`, ...(cls ? { cls } : {}), lvl: clamp(2.9 + gauss() * 0.95, 1.2, 5.3) }; });
   const course = (o, list) => Object.assign({ id: id('c'), hours: '', hasSA: true, saPlanned: '', ratio: 'auto', smallMode: 'flat', typeWeights: {}, areaWeights: { schriftlich: 1, 'mündlich': 1, praktisch: 1 },
     lf: false, seminar: false, assessments: [], entries: [], overrides: {}, noGrade: {}, away: {}, notes: {}, seminarPaper: {} }, o, { students: students(list) });
   const grade = (s, spread = 0.75) => clamp(Math.round(s.lvl + gauss() * spread), 1, 6);
@@ -99,7 +100,16 @@ window.LibrettoDemoData = function (R, Cal) {
   ln(q12, { type: 'stex', title: 'Ex', date: sd(5, 20), term: '12/2' }, s => ({ v: points(s) }));
   einzel(q12, 'ub', [sd(3, 10), sd(6, 9)], 0.5, true, '12/2');
 
-  const courses = [e9, e6, g10, q12];
+  /* ---------- 8ab Italienisch: Kurs aus zwei Klassen – die Liste ist nach Klassen unterteilt ---------- */
+  const i8 = course({ name: '8ab', subject: 'Italienisch', grade: 8, hours: '4', saPlanned: '4' },
+    ['Bianchi, Giulia | 8a', 'Demir, Selin | 8a', 'Hofer, Maximilian | 8a', 'Lindner, Johanna | 8a', 'Pfeiffer, Luca | 8a', 'Schubert, Antonia | 8a', 'Wagner, Samuel | 8a',
+      'Bergmann, Mia | 8b', 'Ernst, Julian | 8b', 'Kraus, Helena | 8b', 'Meier, Fabian | 8b', 'Novak, Tereza | 8b', 'Sommer, Valentin | 8b']);
+  const k8 = keyLower(50, 50, 25);
+  ln(i8, { type: 'sa', title: '1. Schulaufgabe', date: sd(11, 5), usePoints: true, key: k8 }, roh(50, k8));
+  ln(i8, { type: 'stex', title: 'Ex Lezione 2', date: sd(12, 3) }, noten(0.9));
+  einzel(i8, 'ub', [sd(10, 14), sd(12, 15)], 0.45);
+
+  const courses = [e9, e6, i8, g10, q12];
   courses.forEach(c => c.students.forEach(s => delete s.lvl));
 
   /* Schulaufgaben anderer Fächer der 9b: zeigt die Terminprüfung nach § 22 GSO (höchstens zwei pro Woche) */

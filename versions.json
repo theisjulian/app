@@ -1,8 +1,8 @@
 {
  "libretto": {
-  "version": "0.9.2",
+  "version": "0.9.3",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Neu: Schultermine einlesen, Noten aus Viva übernehmen, Abwesenheiten, Monatswahl im Kalender.",
+  "notes": "Neu: Kurse aus mehreren Klassen – Liste und Übertragsliste nach Klassen unterteilt.",
   "betaEnd": "2027-09-30",
   "minVersion": null,
   "message": ""

@@ -2,6 +2,17 @@
 'use strict';
 const Importer = (() => {
 let importHead = [];
+/* Klasse je Schüler (Kurse aus mehreren Klassen, z. B. „8A“ und „8B“): „08 a“ → „8a“ */
+let tableCls = new Map();
+const CLS = /^0?(\d{1,2})\s?([A-Za-zÄÖÜäöü]{1,2})$/;
+const normCls = v => { const t = String(v ?? '').trim(); const m = CLS.exec(t); return m ? m[1] + m[2] : ''; };
+const clsKey = (last, first) => (String(last || '') + '|' + String(first || '')).toLowerCase().replace(/\s+/g, ' ');
+/* Spalte, in der fast überall eine Klasse steht (ab Spalte „from“) */
+function classColumn(rows, from) {
+  const n = Math.max(0, ...rows.map(r => r.length));
+  for (let i = from; i < n; i++) { const hit = rows.filter(r => normCls(r[i]) && +CLS.exec(String(r[i]).trim())[1] >= 5 && +CLS.exec(String(r[i]).trim())[1] <= 13).length; if (rows.length >= 2 && hit >= rows.length * .8) return i; }
+  return -1;
+}
 /* PDF → Zeilen; bei Tabellen mit Kopfzeile werden die Spalten über die x-Positionen erkannt */
 async function pdfLines(buf) {
   const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -30,7 +41,7 @@ async function pdfLines(buf) {
         head[best] = (head[best] ? head[best] + ' ' : '') + h.s; }
       const table = [head, ...data.map(r => { const cells = cols.map(() => ''); r.items.forEach(i => { const k = colOf(i.x); cells[k] = (cells[k] ? cells[k] + ' ' : '') + i.s; }); return cells; })];
       const viaTable = namesFromRows(table, true);
-      if (viaTable.length) return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`);
+      if (viaTable.length) { viaTable.forEach(s => { if (s.cls) tableCls.set(clsKey(s.last, s.first), s.cls); }); return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`); }
     }
   }
   return allRows.map(r => r.items.map(i => i.s).join(' '));
@@ -52,12 +63,13 @@ function headerlessTable(rows) {
   let gc = -1;
   for (let i = 2; i < Math.max(...ok.map(r => r.length)); i++) { const v = ok.map(r => (r[i] || '').toLowerCase()); if (v.filter(x => /^(m|w|d|männlich|weiblich|divers)$/.test(x)).length >= ok.length * .8) { gc = i; break; } }
   const HEADISH = /belegart|jahrgangsstufe|klasse|kurs|schuljahr|\bstr\b|\bostr\b|\bstd\b|lehrkraft|name/i;
+  const kc = classColumn(ok, 2);
   const out = [];
   data.forEach((r, i) => {
     if (!(nameLike(r[0]) && nameLike(r[1]))) return;
     if (i === 0 && (HEADISH.test(r.join(' ')) || /\d/.test(r[0]))) return;
     const gv = gc >= 0 ? (r[gc] || '').toLowerCase() : '';
-    out.push({ last: r[0], first: r[1], g: /^w/.test(gv) ? 'w' : /^m/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+    out.push({ last: r[0], first: r[1], g: /^w/.test(gv) ? 'w' : /^m/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '', cls: kc >= 0 ? normCls(r[kc]) : '' });
   });
   return out;
 }
@@ -65,12 +77,12 @@ function headerlessTable(rows) {
 /* Tabellen mit Kopfzeile (Name/Nachname, Vorname, Geschlecht) */
 function namesFromRows(rows, strict) {
   const norm = v => String(v ?? '').trim();
-  let hi = -1, cL = -1, cF = -1, cG = -1, cFull = -1;
+  let hi = -1, cL = -1, cF = -1, cG = -1, cFull = -1, cK = -1;
   for (let i = 0; i < Math.min(rows.length, 40) && hi < 0; i++) {
     const r = rows[i].map(x => norm(x).toLowerCase());
     const L = r.findIndex(x => /^(nach)?name$|^familienname|^schüler.*name|^name,? vorname$|^name des schülers/.test(x));
     const F = r.findIndex(x => /^vorname|^rufname/.test(x));
-    if (L >= 0 || F >= 0) { hi = i; cL = L; cF = F; cG = r.findIndex(x => /^geschl|^g$|^m\/w|^w\/m|^sex/.test(x)); if (L >= 0 && F < 0) cFull = L; }
+    if (L >= 0 || F >= 0) { hi = i; cL = L; cF = F; cG = r.findIndex(x => /^geschl|^g$|^m\/w|^w\/m|^sex/.test(x)); cK = r.findIndex(x => /^(stamm)?klasse$|^kl\.?$|^klasse[ /(-]/.test(x)); if (L >= 0 && F < 0) cFull = L; }
   }
   if (hi < 0) { if (strict) return []; const t = headerlessTable(rows); return t.length ? t : recognizeNames(rows.map(r => r.map(norm).filter(Boolean).join(' '))); }
   const out = [];
@@ -81,7 +93,7 @@ function namesFromRows(rows, strict) {
     first = first.replace(/\(.*?\)/g, '').trim(); last = last.replace(/^\d+[.)]?\s*/, '').trim();
     if (!first || !/[A-Za-zÀ-ÿ]/.test(first + last) || /^(summe|gesamt|anzahl)/i.test(last)) continue;
     const gv = cG >= 0 ? norm(r[cG]).toLowerCase() : '';
-    out.push({ first, last, g: /^w|weibl|^f/.test(gv) ? 'w' : /^m|männ/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+    out.push({ first, last, g: /^w|weibl|^f/.test(gv) ? 'w' : /^m|männ/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '', cls: cK >= 0 ? normCls(r[cK]) : '' });
   }
   return out;
 }
@@ -91,21 +103,28 @@ function recognizeNames(lines) {
   const out = [];
   const HEAD = /\b(klasse|klassenliste|schuljahr|seite|lehrkraft|klassenleit|datum|stand|gymnasium|schule|anzahl|geburtsdatum|konfession|religion|ausbildungsrichtung|nachname|vorname|schüler(innen)?liste)\b/i;
   const numbered = lines.filter(l => /^\s*\d+[.)]?\s+\S/.test(l)).length >= 3;
+  /* Kurslisten des Infoportals: je Klasse ein Abschnitt mit der Zeile „8A, KL: …“ (oder „Klasse 8A“) – gilt für die folgenden Namen */
+  let section = '';
   for (let raw of lines) {
     let l = String(raw || '').replace(/\s+/g, ' ').trim(); if (!l) continue;
+    const sm = l.match(/^(0?(?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü]{1,2}) ?, ?KL\b/) || l.match(/^Klasse:? (0?(?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü]{1,2})$/i);
+    if (sm) { section = normCls(sm[1]); continue; }
     if (numbered && !/^\d+[.)]?\s+/.test(l)) continue;
     l = l.replace(/^\d+[.)]?\s+/, '');
     if (HEAD.test(l) && !/,/.test(l)) continue;
     let g = ''; const gm = l.match(/(?:\(|\s|^)(w|m|d|weiblich|männlich|divers)(?:\)|\s|$)/i);
     if (gm) { const v = gm[1].toLowerCase(); g = v[0] === 'w' ? 'w' : v[0] === 'm' ? 'm' : 'd'; l = l.replace(gm[0], ' '); }
+    /* Klasse in der Zeile („8A“, „10 c“) – zählt nur, wenn sie in fast allen Zeilen steht (siehe unten) */
+    const km = l.match(/(?<![\p{L}\p{N}.])0?((?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü])(?![\p{L}\p{N}])/u); const cls = section || (km ? km[1].replace(' ', '') : '');
     l = l.replace(/\b\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})\b/g, ' ').replace(/\b\d+[a-z]?\b/gi, ' ').replace(/(?<![\p{L}\p{N}])(ev|rk|ak|eth|isl|ohne|RK|EV|K|E)(?![\p{L}\p{N}])\.?/gu, ' ').replace(/[|•·]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!l || !/[A-Za-zÀ-ÿ]{2}/.test(l)) continue;
     let first, last;
     if (l.includes(',')) { const p = l.split(',').map(x => x.trim()).filter(Boolean); last = p[0]; first = (p[1] || '').split(' ').filter(Boolean).join(' '); }
     else { const p = l.split(' '); if (p.length > 5) continue; first = p.shift(); last = p.join(' '); }
     if (!first || first.length < 2) continue;
-    out.push({ first, last: last || '', g });
+    out.push({ first, last: last || '', g, cls });
   }
+  if (out.filter(x => x.cls).length < Math.max(2, out.length * .8)) out.forEach(x => { x.cls = ''; });
   return out;
 }
 
@@ -124,11 +143,12 @@ function detectClassName(head, fname) {
 }
 
 async function readFile(f) {
-  const name = f.name.toLowerCase(); let list = []; importHead = [];
+  const name = f.name.toLowerCase(); let list = []; importHead = []; tableCls = new Map();
   if (name.endsWith('.pdf')) list = recognizeNames(await pdfLines(await f.arrayBuffer()));
   else if (/\.(xlsx|xls|ods)$/.test(name)) { const rows = sheetRows(await f.arrayBuffer()); importHead = rows.slice(0, 3).map(r => r.join(' ; ')); list = namesFromRows(rows); }
   else { const txt = await f.text(); const lines = txt.split(/\r?\n/); importHead = lines.slice(0, 3); list = /[;\t]/.test(txt) ? namesFromRows(lines.map(l => l.split(/[;\t]/))) : recognizeNames(lines); }
-  return { list, cls: detectClassName(importHead, f.name) };
+  if (tableCls.size) list.forEach(x => { if (!x.cls) x.cls = tableCls.get(clsKey(x.last, x.first)) || ''; });
+  return { list, cls: detectClassName(importHead, f.name), head: importHead.slice() };
 }
-return { readFile, recognizeNames, namesFromRows };
+return { readFile, recognizeNames, namesFromRows, normCls };
 })();

@@ -6,7 +6,7 @@ const Print = (() => {
   const today = () => new Date().toLocaleDateString('de-DE');
 
   /* Modell:
-     { title, subtitle, meta: [[Label, Wert], …], blocks: [ {h:'Überschrift'} | {p:'Text'} | {table:{head:[…], rows:[[…]], align:['l','c',…], widths:[…], bold:[colIdx], small:true}} | {pagebreak:true} ], landscape } */
+     { title, subtitle, meta: [[Label, Wert], …], blocks: [ {h:'Überschrift'} | {p:'Text'} | {table:{head:[…], rows:[[…] | {group:'Zwischenüberschrift über die ganze Breite'}], align:['l','c',…], widths:[…], bold:[colIdx], small:true}} | {pagebreak:true} ], landscape } */
 
   /* ---------- HTML / PDF ---------- */
   function html(m, settings) {
@@ -25,6 +25,7 @@ const Print = (() => {
       tr{page-break-inside:avoid} thead{display:table-header-group}
       td.l,th.l{text-align:left} td.b{font-weight:700} td.big{font-size:12pt;font-weight:700}
       tr:nth-child(even) td{background:#fafbfc}
+      tr.grp td{background:#eef0f4;font-weight:700;text-align:left;font-size:8.5pt;padding:4px 6px;break-after:avoid}
       .pb{page-break-after:always;height:0}
       .sig{display:flex;gap:30px;margin-top:28px} .sig div{flex:1;border-top:.5pt solid #16171a;padding-top:3px;font-size:8pt;color:#555}`;
     const who = [settings.school, settings.teacher].filter(Boolean);
@@ -39,7 +40,7 @@ const Print = (() => {
       if (b.table) {
         const t = b.table, al = i => (t.align && t.align[i]) === 'l' ? 'l' : '';
         return `<table class="${t.small ? 'small' : ''}"><thead><tr>${t.head.map((h, i) => `<th class="${al(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
-          t.rows.map(r => `<tr>${r.map((c, i) => `<td class="${al(i)} ${(t.bold || []).includes(i) ? 'b' : ''} ${(t.big || []).includes(i) ? 'big' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+          t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${t.head.length}">${esc(r.group)}</td></tr>` : `<tr>${r.map((c, i) => `<td class="${al(i)} ${(t.bold || []).includes(i) ? 'b' : ''} ${(t.big || []).includes(i) ? 'big' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
       }
       return '';
     };
@@ -98,7 +99,9 @@ const Print = (() => {
           children: [p(t(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: widths, layout: TableLayoutType.FIXED, rows: [
           new TableRow({ tableHeader: true, children: tb.head.map((h, i) => mk(h, i, true)) }),
-          ...tb.rows.map((r, ri) => new TableRow({ cantSplit: true, children: r.map((c, i) => mk(c, i, false, ri)) }))] }));
+          ...tb.rows.map((r, ri) => r.group != null
+            ? new TableRow({ cantSplit: true, children: [new TableCell({ borders: B, columnSpan: n, width: { size: W, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' }, margins: { top: 50, bottom: 50, left: 70, right: 70 }, children: [p(t(r.group, { size: sz, bold: true }), { after: 0, keepNext: true })] })] })
+            : new TableRow({ cantSplit: true, children: r.map((c, i) => mk(c, i, false, ri)) }))] }));
         kids.push(p(t(''), { after: 120 }));
       }
     }
@@ -113,7 +116,7 @@ const Print = (() => {
   function csv(m) {
     const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const lines = [];
-    m.blocks.forEach(b => { if (b.h) lines.push(q(b.h)); if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.map(q).join(';'))); lines.push(''); } });
+    m.blocks.forEach(b => { if (b.h) lines.push(q(b.h)); if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : r.map(q).join(';'))); lines.push(''); } });
     return new TextEncoder().encode('﻿' + lines.join('\r\n'));
   }
   return { html, footer, docx, csv, DISCLAIMER };
