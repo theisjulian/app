@@ -1981,8 +1981,9 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       const doc = PDFKIT.create({ title: 'Sportivo Auswertung' + (P.meta.jahrgang ? ' ' + P.meta.jahrgang : ''), logo: PDFKIT.logoFrom(document.querySelector('.maker .theislogo'), INK, '#2F5BEA') });
       const date = new Date().toLocaleDateString('de-DE'), n = P.students.length;
       // Zahlen
-      let hits = 0, full = 0, incomplete = 0, broken = 0, satSum = 0, satN = 0; const hist = [0, 0, 0, 0, 0]; const stat = {};
-      P.students.forEach(st => { const s = ENGINE.studentStatus(P, st, byId, idx); stat[st.id] = s; hits += s.hits; hist[s.hits]++; if (s.hits === 4) full++; if (s.sat != null) { satSum += s.sat; satN++; } if (!s.complete) incomplete++; else if (!s.ruleOk) broken++; });
+      let hits = 0, full = 0, incomplete = 0, broken = 0, satSum = 0, satN = 0, altUsed = 0; const hist = [0, 0, 0, 0, 0], satB = [0, 0, 0]; const stat = {};
+      P.students.forEach(st => { const s = ENGINE.studentStatus(P, st, byId, idx); stat[st.id] = s; hits += s.hits; hist[s.hits]++; if (s.hits === 4) full++; if (s.sat != null) { satSum += s.sat; satN++; satB[s.sat >= 90 ? 0 : s.sat >= 70 ? 1 : 2]++; } if (!s.complete) incomplete++; else if (!s.ruleOk) broken++;
+        if (s.complete && !(st.rank && st.rank.length) && (st.alt || []).length) { const w = SPW.countBy(st.wishes, x => x), rest = []; s.sp.forEach(x => { if (w[x] > 0) w[x]--; else rest.push(x); }); if (rest.some(x => st.alt.includes(x))) altUsed++; } });
       const pct = n ? Math.round(hits / (4 * n) * 100) : 0, satAvg = satN ? Math.round(satSum / satN) : null;
       const plSum = courses.reduce((a, c) => a + c.cap, 0), belSum = courses.reduce((a, c) => a + c.members.length, 0);
       const over = courses.filter(c => c.members.length > c.cap).length;
@@ -2030,8 +2031,17 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       const seg = [['alle 4 Wünsche', hist[4], GREEN], ['3 von 4', hist[3], GOLD2], ['2 von 4', hist[2], GOLD], ['0 bis 1', hist[1] + hist[0], RED]];
       let sx = rx; seg.forEach(([, v, col]) => { const w = n ? rw * v / n : 0; if (w > 0) doc.rect(sx, y2 + 5, w, 6, { fill: col }); sx += w; });
       seg.forEach(([t, v, col], i) => { const y = y2 + 18 + i * 6.2; doc.rect(rx, y - 2.6, 3, 3, { fill: col }); doc.text(rx + 5, y, t, { size: 9 }); doc.text(R, y, v + ' Schüler (' + (n ? Math.round(v / n * 100) : 0) + ' %)', { size: 9, bold: true, align: 'r' }); });
+      let ny = 238;
+      if (satN) {
+        const sy = y2 + 46; doc.text(rx, sy, 'Zufriedenheit nach Rangliste', { size: 11, bold: true }); doc.text(R, sy, 'Ø ' + satAvg + ' % · ' + satN + ' Schüler', { size: 8.5, color: GR, align: 'r' });
+        const sg = [['ab 90 %', satB[0], GREEN], ['70 bis 89 %', satB[1], GOLD2], ['unter 70 %', satB[2], RED]]; let bx2 = rx;
+        sg.forEach(([, v, col]) => { const w = rw * v / satN; if (w > 0) doc.rect(bx2, sy + 3.5, w, 5, { fill: col }); bx2 += w; });
+        sg.forEach(([t, v, col], i) => { const lx = rx + i * (rw / 3); doc.rect(lx, sy + 11.4, 2.6, 2.6, { fill: col }); doc.text(lx + 4, sy + 13.6, t + ' (' + v + ')', { size: 8, color: GR }); });
+        ny = 244;
+      }
       // Hinweis
       const notes = [];
+      if (altUsed) notes.push(altUsed + ' Schüler haben einen Ersatzwunsch bekommen.');
       const ob = sports.filter(e => e.dem > e.cap).sort((a, b) => (b.dem - b.cap) - (a.dem - a.cap))[0];
       if (ob) notes.push(ob.name + ' ist am stärksten überbucht (' + ob.dem + ' Wünsche auf ' + ob.cap + ' Plätze).');
       const fr = sports.slice().sort((a, b) => (b.cap - b.bel) - (a.cap - a.bel))[0];
@@ -2040,8 +2050,8 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       if (over) notes.push(over + ' Kurs' + (over === 1 ? ' ist' : 'e sind') + ' überfüllt.');
       if (!notes.length) notes.push('Alle Schüler haben einen vollständigen Platz, kein Kurs ist überfüllt.');
       const nl = wrap(notes.join(' '), W - 8, 9); const nh = 8 + nl.length * 4.4;
-      doc.rect(L, 238, W, nh, { fill: '#fff7e8', stroke: '#f1d39a', lw: .25 }); doc.text(L + 4, 244.2, 'Hinweis', { size: 9, bold: true });
-      nl.forEach((t, i) => doc.text(L + 4, 249.4 + i * 4.4 - (i ? 0 : 0), t, { size: 9 })); footer();
+      doc.rect(L, ny, W, nh, { fill: '#fff7e8', stroke: '#f1d39a', lw: .25 }); doc.text(L + 4, ny + 6.2, 'Hinweis', { size: 9, bold: true });
+      nl.forEach((t, i) => doc.text(L + 4, ny + 11.4 + i * 4.4, t, { size: 9 })); footer();
       // ---------- Seite 2
       if (courses.length) {
         doc.page(); head('Kursplanung', sub);
