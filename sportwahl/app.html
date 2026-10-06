@@ -1204,6 +1204,13 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
 
   // ---------- Speichern ----------
   function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) { /* ohne Speicher weiterarbeiten */ } renderHead(); }
+  // Hinweis beim Schließen: nur wenn echte Wahlen da sind und der Stand noch nie als Projektdatei gesichert wurde
+  function markSaved() { try { localStorage.setItem(KEY + '-file', JSON.stringify(P)); } catch (e) { } }
+  function unsaved() {
+    if (!P || P.example || !P.students.length) return false;
+    try { return localStorage.getItem(KEY + '-file') !== JSON.stringify(P); } catch (e) { return false; }
+  }
+  window.addEventListener('beforeunload', e => { if (unsaved()) { e.preventDefault(); e.returnValue = ''; } });
   function load() {
     try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); if (p && p.version === 1) return normalize(p); } } catch (e) { }
     return EXAMPLE.build({ rang: TEST });
@@ -1895,7 +1902,7 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
         <h2>Projekt</h2>
         <p class="muted">Das Projekt enthält Angebot, Wahlen, Kursplanung und Verteilung. Die Datei kann die Oberstufenkoordination hier mit „Projekt öffnen“ laden und weiterbearbeiten.</p>
         <div class="row"><button class="btn" type="button" id="x-save">Projekt speichern</button><button class="btn quiet" type="button" id="x-open">Projekt öffnen</button></div>
-        <p class="small muted">Zwischendurch speichert das Tool automatisch in diesem Browser. Die Projektdatei ist die Sicherung und der Weg zu Kollegen. Sie enthält Schülernamen, also nur dienstlich weitergeben.</p>
+        <p class="small muted">Zwischendurch speichert das Tool automatisch in diesem Browser. Die Projektdatei ist die Sicherung und der Weg zu Kollegen. Beim Schließen des Tabs erinnert dich der Browser, falls sie noch nicht gesichert ist. Sie enthält Schülernamen, also nur dienstlich weitergeben.</p>
       </section></div>`;
     $('x-students').onclick = () => {
       const { idx } = C(); const { byId } = courseState();
@@ -2094,14 +2101,14 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       download(`Sportivo-Auswertung-${slug(P.meta.jahrgang)}.pdf`, auswertungPdf(), 'application/pdf');
       toast('Auswertung als PDF erstellt.');
     };
-    $('x-save').onclick = () => { const p = { ...P, example: P.example, appVersion: SPW.VERSION }; download(`Sportwahl-Projekt-${slug(P.meta.jahrgang)}.json`, JSON.stringify(p, null, 1), 'application/json'); };
+    $('x-save').onclick = () => { markSaved(); const p = { ...P, example: P.example, appVersion: SPW.VERSION }; download(`Sportwahl-Projekt-${slug(P.meta.jahrgang)}.json`, JSON.stringify(p, null, 1), 'application/json'); };
     $('x-open').onclick = () => $('file-project').click();
   }
   $('file-project').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     const rd = new FileReader();
     rd.onload = () => {
-      try { const p = JSON.parse(rd.result); if (!p || p.version !== 1) throw 0; P = normalize(p); save(); go('verteilung'); toast('Projekt geladen.'); }
+      try { const p = JSON.parse(rd.result); if (!p || p.version !== 1) throw 0; P = normalize(p); save(); markSaved(); go('verteilung'); toast('Projekt geladen.'); }
       catch (err) { toast('Diese Datei ist kein Sportwahl-Projekt.'); }
     };
     rd.readAsText(f, 'utf-8'); e.target.value = '';
