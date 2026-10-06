@@ -52,7 +52,7 @@ h1,h2,h3{text-wrap:balance}
 .bar{-webkit-app-region:drag}
 .bar button,.bar select,.bar input,.bar .picker{-webkit-app-region:no-drag}
 .tabs,.tabs *{-webkit-app-region:no-drag}
-.bar{width:100%;max-width:1320px;border-radius:var(--r-lg);padding:8px 10px 8px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar{width:100%;max-width:2400px;border-radius:var(--r-lg);padding:8px 10px 8px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 body.mac .bar{padding-left:84px}
 .brand{flex:1 1 auto;min-width:0}
 h1{margin:0;font:600 18px/1.2 var(--display);letter-spacing:-.02em}
@@ -67,7 +67,8 @@ h1{margin:0;font:600 18px/1.2 var(--display);letter-spacing:-.02em}
 .tabs button:disabled{opacity:.4;cursor:default}
 
 /* Layout */
-.wrap{max-width:1320px;margin:0 auto;padding:10px 20px 80px}
+.wrap{max-width:2400px;margin:0 auto;padding:10px 20px 80px}
+.wrap[data-tab="backup"]{max-width:1120px}  /* Notentabelle und Kalender nutzen die ganze Fensterbreite; die Sicherungsseite bleibt gut lesbar schmal */
 .layout{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:960px){.layout{grid-template-columns:1fr}}
 .rail{position:sticky;top:116px;display:flex;flex-direction:column;gap:14px}

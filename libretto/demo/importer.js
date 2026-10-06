@@ -14,14 +14,22 @@ function classColumn(rows, from) {
   return -1;
 }
 /* PDF → Zeilen; bei Tabellen mit Kopfzeile werden die Spalten über die x-Positionen erkannt */
-async function pdfLines(buf) {
+/* Rohe Textstücke mit Position je Seite (auch für das Notenblatt, siehe notenblatt.js) */
+async function pdfRaw(buf) {
   const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
-  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
-  const allRows = [];
+  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise; const pages = [];
   for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p); const tc = await page.getTextContent(); const rows = [];
-    for (const it of tc.items) { if (!it.str || !it.str.trim()) continue; const y = it.transform[5], x = it.transform[4];
-      let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.str.trim(), w: it.width || 0 }); }
+    const page = await pdf.getPage(p); const tc = await page.getTextContent();
+    pages.push({ items: tc.items.filter(it => it.str && it.str.trim()).map(it => ({ s: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0 })) });
+  }
+  return pages;
+}
+async function pdfLines(pages) {
+  const allRows = [];
+  for (const pg of pages) {
+    const rows = [];
+    for (const it of pg.items) { const y = it.y, x = it.x;
+      let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.s.trim(), w: it.w || 0 }); }
     rows.sort((a, b) => b.y - a.y); rows.forEach(r => r.items.sort((a, b) => a.x - b.x)); allRows.push(...rows);
   }
   importHead = allRows.slice(0, 3).map(r => r.items.map(i => i.s).join(' '));
@@ -144,7 +152,11 @@ function detectClassName(head, fname) {
 
 async function readFile(f) {
   const name = f.name.toLowerCase(); let list = []; importHead = []; tableCls = new Map();
-  if (name.endsWith('.pdf')) list = recognizeNames(await pdfLines(await f.arrayBuffer()));
+  if (name.endsWith('.pdf')) {
+    const pages = await pdfRaw(await f.arrayBuffer());
+    if (window.Notenblatt && Notenblatt.looksLike(pages)) return { notenblatt: pages, list: [], cls: '', head: [] };
+    list = recognizeNames(await pdfLines(pages));
+  }
   else if (/\.(xlsx|xls|ods)$/.test(name)) { const rows = sheetRows(await f.arrayBuffer()); importHead = rows.slice(0, 3).map(r => r.join(' ; ')); list = namesFromRows(rows); }
   else { const txt = await f.text(); const lines = txt.split(/\r?\n/); importHead = lines.slice(0, 3); list = /[;\t]/.test(txt) ? namesFromRows(lines.map(l => l.split(/[;\t]/))) : recognizeNames(lines); }
   if (tableCls.size) list.forEach(x => { if (!x.cls) x.cls = tableCls.get(clsKey(x.last, x.first)) || ''; });

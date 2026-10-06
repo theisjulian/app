@@ -232,3 +232,28 @@ body.readonly dialog .danger, body.readonly [data-cddel], body.readonly #entAdd,
 .evBox summary::-webkit-details-marker{display:none}
 .evBox .tlist{max-height:340px;overflow:auto}
 .evBox .trow .d small{color:var(--label-3);font-weight:400}
+
+/* Übertrag: Markierung am Spaltenkopf, in Zellen und in der Übersicht */
+.colhead{position:relative}
+.colhead .xm{position:absolute;top:1px;right:3px;font-style:normal;font-size:10.5px;font-weight:700;color:var(--green,#2a9d5c);line-height:1}
+.colhead .xm.dot{color:var(--orange);font-size:9px}
+td.xd,td.xc{position:relative}
+td.xd::after,td.xc::after{content:"✓";position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;color:var(--green,#2a9d5c);opacity:.75;pointer-events:none;line-height:1}
+td.xc::after{content:"●";color:var(--orange);font-size:8px;opacity:1}
+.echip.xd{box-shadow:inset 0 -2px 0 var(--green,#2a9d5c)}
+.echip.xc{box-shadow:inset 0 -2px 0 var(--orange)}
+.xtop{display:flex;align-items:center;gap:12px;margin:10px 0 8px;flex-wrap:wrap}
+details.xrow{border:.5px solid var(--hairline);border-radius:12px;margin:6px 0;background:var(--fill-2)}
+details.xrow>summary{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;list-style:none}
+details.xrow>summary::-webkit-details-marker{display:none}
+.xmk{width:18px;text-align:center;font-weight:700;color:var(--green,#2a9d5c)}
+.xmk.dot{color:var(--orange);font-size:11px}
+.xt{color:var(--label-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xbtns{display:flex;gap:8px;padding:0 12px 8px}
+.xlist{padding:0 12px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px 16px}
+label.xi{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:14px;cursor:pointer}
+label.xi .xn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+label.xi .nr{color:var(--label-3);width:22px;text-align:right;font-variant-numeric:tabular-nums}
+label.xi.changed b{color:var(--orange)}
+
+ul.nbList{margin:8px 0;padding-left:18px;display:grid;gap:4px;font-size:14px}

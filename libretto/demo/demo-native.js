@@ -6,7 +6,7 @@
   'use strict';
   let mem = null;                                   // aktueller Stand, nur im Arbeitsspeicher
   let go; const ready = new Promise(r => { go = r; });
-  const X = window.__librettoDemo = { version: '0.9.3', start: go, locked: () => {}, preview: () => {} };
+  const X = window.__librettoDemo = { version: '0.9.4', start: go, locked: () => {}, preview: () => {} };
   const t0 = Date.now(), MIN = 60000, DAY = 864e5;
   const status = () => ({ exists: true, unlocked: !!mem, backupDir: 'USB-Stick „Schule“ (Beispiel)', lastLocal: t0 - 4 * MIN, lastExternal: t0 - 4 * MIN, lastExternalError: null,
     autoLock: 10, created: new Date(t0 - 21 * DAY).toISOString(), updateCheck: true, prevVersion: null });

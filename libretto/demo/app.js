@@ -223,7 +223,7 @@ setInterval(() => { if (D && (+D.settings.autoLock || 0) > 0 && Date.now() - las
 function migrate() {
   D.settings = { ...blankData().settings, ...(D.settings || {}) };
   D.courses = D.courses || []; D.classDates = D.classDates || []; D.events = D.events || []; D.settings.hues = D.settings.hues || {}; D.settings.lastTerm = D.settings.lastTerm || {};
-  D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; });
+  D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; c.xfer = c.xfer || {}; });
 }
 async function enterApp() {
   $('#gate').hidden = true; $('#appRoot').hidden = false;
@@ -264,6 +264,7 @@ function betaNotice() {
 function render() {
   if (!D) return;
   $$('#tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === UI.tab)));
+  $('#main').dataset.tab = UI.tab;
   if (UI.tab === 'grades') renderGrades();
   if (UI.tab === 'dates') renderDates();
   if (UI.tab === 'backup') renderBackup();
@@ -374,7 +375,7 @@ function courseView(c) {
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}</div>`;
   }
   return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe'} ${c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
-      <div class="headBtns"><button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button><button class="mini" data-act="editCourse">Kurs &amp; Schüler</button><button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
+      <div class="headBtns"><button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button><button class="mini" data-act="editCourse">Kurs &amp; Schüler</button><button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button><button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
     <div class="notices">${notices.filter(Boolean).join('')}</div>${scope}
     ${sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
       <div class="legend"><span><b>Enter</b> nächste Zeile</span><span><b>←→↑↓</b> bewegen</span><span><b>E</b> Nachtermin</span><span><b>B</b> befreit</span><span><b>N</b> Note 6 (§ 26 Abs. 4)</span><span><b>U</b> Unterschleif</span><span>Spaltenkopf anklicken = bearbeiten, Notenspiegel, drucken</span></div>`
@@ -386,12 +387,29 @@ function classBigDates(cls) {
   return own.concat(other);
 }
 
+/* ---------- Übertrag (ins Notenprogramm der Schule, z. B. Infoportal) ----------
+   c.xfer = { '<LN-ID>|<Schüler-ID>': '2+', 'e|<Einzelnote-ID>': '3' } merkt sich, welcher Wert übertragen wurde.
+   Ändert sich die Note danach, weicht der Wert ab → „geändert“. Die Noten selbst bleiben unberührt. */
+const xKeyA = (a, sid) => a.id + '|' + sid;
+const xKeyE = e => 'e|' + e.id;
+const xSig = (c, r) => (!r || r.status === 'ent' || r.status === 'bef') ? '' : R.cellText(r, upper(c));
+function xState(c, key, r) { const s = xSig(c, r); if (!s) return null; const x = c.xfer && c.xfer[key]; return x == null ? 'open' : x === s ? 'done' : 'changed'; }
+function xMark(c, key, r) { const s = xSig(c, r); c.xfer = c.xfer || {}; if (s) c.xfer[key] = s; }
+/* Zustand eines Leistungsnachweises: 'done' (alles übertragen) · 'part' (nach dem Übertrag geändert oder ergänzt) · 'open' (noch nichts) · null (keine Noten) */
+function xAssess(c, a) {
+  const st = c.students.map(s => xState(c, xKeyA(a, s.id), a.results && a.results[s.id])).filter(Boolean);
+  if (!st.length) return null;
+  if (st.every(x => x === 'done')) return 'done';
+  return st.every(x => x === 'open') ? 'open' : 'part';
+}
+const xMarkHTML = st => st === 'done' ? '<em class="xm" title="übertragen">✓</em>' : st === 'part' ? '<em class="xm dot" title="nach dem Übertrag geändert oder ergänzt – Nachtrag nötig">●</em>' : '';
+
 /* ---------- Notentabelle ---------- */
 function colHead(c, a, i) {
   const T = R.TYPES[a.type], up = upper(c);
   const big = R.isBig(a);
   const w = big ? (a.bigWeight && +a.bigWeight !== 1 ? wLabel(a.bigWeight) : '') : (R.weightOf(a, c) !== 1 ? '×' + String(R.weightOf(a, c)).replace('.', ',') : '');
-  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${a.usePoints ? '<i>Pkt.</i>' : ''}</button></th>`;
+  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${a.usePoints ? '<i>Pkt.</i>' : ''}${xMarkHTML(xAssess(c, a))}</button></th>`;
 }
 function cellHTML(c, a, s) {
   const r = a.results && a.results[s.id], up = upper(c);
@@ -399,7 +417,8 @@ function cellHTML(c, a, s) {
   const cls = r && r.status ? (r.status === 'n6' || r.status === 'us' ? 'st n6' : 'st') : '';
   const sub = a.usePoints && r && !r.status && r.v != null ? `<span class="rawpts">${up ? r.v + ' P.' : 'Note ' + r.v}</span>` : '';
   const aw = !r && isAway(c, s.id, a.date);
-  return `<td><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}" value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
+  const xs = xState(c, xKeyA(a, s.id), r);
+  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}" value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
 }
 function gradeBadge(sug, ov) {
   if (ov) return `<span class="gb g${ov} ov" title="Von dir festgelegt">${ov}</span>`;
@@ -428,7 +447,7 @@ function entScope(c) { return upper(c) ? { term: scopeOf(c).term } : scopeOf(c);
 function entriesOf(c, sid, sc = entScope(c)) { return (c.entries || []).filter(e => e.sid === sid && R.inScope(e, sc)).sort((a, b) => (a.date || '').localeCompare(b.date || '')); }
 function entCell(c, s) {
   const up = upper(c);
-  const chips = entriesOf(c, s.id).map(e => `<button class="echip ${e.status ? 'st' : ''}" data-ent="${s.id}" title="${esc(R.TYPES[e.type].label + (e.date ? ' · ' + fdate(e.date) : '') + (e.note ? ' · ' + e.note : ''))}">${esc(R.cellText(e, up))}</button>`).join('');
+  const chips = entriesOf(c, s.id).map(e => `<button class="echip ${e.status ? 'st' : ''} ${{ done: 'xd', changed: 'xc' }[xState(c, xKeyE(e), e)] || ''}" data-ent="${s.id}" title="${esc(R.TYPES[e.type].label + (e.date ? ' · ' + fdate(e.date) : '') + (e.note ? ' · ' + e.note : ''))}">${esc(R.cellText(e, up))}</button>`).join('');
   return `<td class="ent sep"><div class="ents">${chips}<input class="cell entq" data-eq="${s.id}" placeholder="+" autocomplete="off" title="Note tippen + Enter = neue Einzelnote mit heutigem Datum"></div></td>`;
 }
 /* Zwischenzeile je Klasse (nur bei Kursen aus mehreren Klassen) */
@@ -520,6 +539,7 @@ function bindGrid(c) {
     const tmp = document.createElement('tr'); tmp.innerHTML = cellHTML(c, a, s); const nc = tmp.firstElementChild; el._gone = true; td.replaceWith(nc);
     $$('td.sum, td.res', tr).forEach(x => x.remove());
     tr.insertAdjacentHTML('beforeend', summaryCells(c, s));
+    const hb = work.querySelector(`.colhead[data-edit="${a.id}"]`); if (hb) { const o = hb.querySelector('.xm'); if (o) o.remove(); hb.insertAdjacentHTML('beforeend', xMarkHTML(xAssess(c, a))); } /* Haken/Punkt am Spaltenkopf nachziehen */
   });
   function bad(el, msg) { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast(msg); el.select(); }
   work.addEventListener('keydown', e => {
@@ -547,6 +567,7 @@ document.addEventListener('click', async e => {
     if (a === 'newCourse') courseSheet();
     if (a === 'editCourse') courseSheet(course());
     if (a === 'newAssessment') assessmentSheet(course());
+    if (a === 'transfer') transferSheet(course());
     if (a === 'print') printSheet(course());
     if (a === 'pickDir') { ST = await N.chooseBackupDir(); render(); }
     if (a === 'backupNow') { const r = await N.backupNow(); ST = await N.status(); toast(r.external ? 'Gesichert – auch im Sicherungsordner' : 'Auf diesem Computer gesichert'); render(); }
@@ -584,7 +605,7 @@ function courseSheet(c) {
       <p class="hint">§ 29 GSO: Halbjahresleistung = Durchschnitt aus Schulaufgabe und Schnitt der kleinen LN, gerundet; eine Aufrundung auf 1 Punkt ist nicht zulässig. In 13/2 schreiben nur Deutsch, Mathematik und das Leistungsfach eine Schulaufgabe.</p>
     </div>
     <div class="subhead">Schülerinnen und Schüler <span class="count" id="stCount" style="float:right;text-transform:none;letter-spacing:0"></span></div>
-    <div class="importBox" id="dropImport"><div><b>Klassenliste einlesen</b><p class="hint">PDF, Excel oder CSV hierher ziehen oder auswählen – danach kurz prüfen. Vor- und Nachname vertauscht? Einfach „Tauschen“.</p></div>
+    <div class="importBox" id="dropImport"><div><b>Klassenliste oder Notenblatt einlesen</b><p class="hint">PDF, Excel oder CSV hierher ziehen oder auswählen – danach kurz prüfen. Vor- und Nachname vertauscht? Einfach „Tauschen“. <b>Mitten im Schuljahr?</b> Das Notenblatt (PDF) mit Noten aus dem Infoportal geht auch – Libretto übernimmt Schüler und Noten.</p></div>
       <div class="panelBtns" style="margin:0"><button type="button" class="mini accent" id="stFileBtn">Datei wählen …</button><button type="button" class="mini" id="stPasteBtn">Text einfügen</button></div>
       <input type="file" id="stFile" accept=".pdf,.xlsx,.xls,.ods,.csv,.txt" hidden></div>
     <div id="stPasteBox" hidden style="margin-top:10px">${field('Liste einfügen (eine Zeile pro Person, z. B. „Muster, Anna“)', '<textarea id="stText" rows="5"></textarea>')}<button type="button" class="mini accent" id="stPasteGo">Übernehmen</button></div>
@@ -657,7 +678,36 @@ function courseSheet(c) {
     toast(n ? `${n} Namen übernommen${kl} – bitte kurz prüfen` : k ? `Klasse bei ${k} Namen ergänzt` : 'Keine neuen Namen erkannt'); };
   drawDraft();
   /* Steht in der Datei nur eine einzelne Klasse (Kopfzeile/Dateiname, z. B. „8A“), gilt sie für alle Namen dieser Datei */
-  const readF = async f => { try { toast('Liste wird gelesen …'); const r = await Importer.readFile(f); const one = /^\d{1,2}[A-Za-zÄÖÜäöü]$/.test(r.cls || '') && !r.list.some(x => x.cls) ? r.cls : ''; addDraft(r.list, one);
+/* Notenblatt (PDF) aus dem Infoportal: Schüler und Noten für den Einstieg mitten im Schuljahr */
+  const nbPreview = pages => {
+    const p = Notenblatt.parse(pages);
+    if (!p.ok) { sheet({ title: 'Notenblatt einlesen', small: true, ok: '', cancel: 'Schließen', body: `<p class="prose" style="margin:0">${esc(p.error)}</p>` }); return; }
+    const probe = { ...c, grade: +dlg.querySelector('#cGrade').value || c.grade, students: draft.filter(x => (x.last || '').trim() || (x.first || '').trim()).map(x => ({ id: x.id, last: x.last.trim(), first: x.first.trim(), cls: x.cls })), assessments: c.assessments, entries: c.entries || [] };
+    const pl = Notenblatt.plan(p, probe, { R, uid });
+    const rep = pl.rep;
+    if (rep.error) { sheet({ title: 'Notenblatt einlesen', small: true, ok: '', cancel: 'Schließen', body: `<p class="prose" style="margin:0">${esc(rep.error)}</p>` }); return; }
+    const dd = iso => iso ? sdate(iso) : '';
+    const list = rep.assessments.map(a => `<li><b>${esc(a.label)} ${dd(a.date)}</b>${a.factor != null && a.factor !== 1 ? ` · Faktor ${String(a.factor).replace('.', ',')}` : ''} – ${a.n ? a.n + (a.n === 1 ? ' Note' : ' Noten') : 'noch ohne Noten (geplant)'}</li>`).join('');
+    const body = `<p class="prose" style="margin-top:0"><b>${esc([p.year && 'Schuljahr ' + p.year, p.cls, p.subject].filter(Boolean).join(' · '))}</b>${p.date ? ' · Stand ' + fdate(p.date) : ''}</p>
+      <ul class="nbList"><li><b>${p.students.length} Schüler</b> – ${rep.matched} schon in der Liste${rep.newStudents.length ? `, <b>${rep.newStudents.length} neu</b> (werden zur Liste hinzugefügt)` : ''}</li>${list}
+      ${rep.entries ? `<li><b>${rep.entries} mündliche Einzelnoten</b> mit Datum (UB, RA, Ref., Praktisch; weitere Kürzel wie GR, WZ als „Sonstiger kleiner LN“ mit Notiz)</li>` : ''}</ul>
+      ${rep.skipped.length ? `<p class="hint">Schon in Libretto, bleibt unverändert: ${rep.skipped.map(esc).join(' · ')}.</p>` : ''}
+      ${rep.nachtermin ? `<p class="hint">„N“ (Nachschrift) bei ${rep.nachtermin} Schüler(n) wurde als Nachtermin „E“ übernommen.</p>` : ''}
+      ${rep.unknown.length ? `<div class="notice"><div class="grow"><b>Nicht erkannt (wird nicht übernommen):</b> ${rep.unknown.slice(0, 8).map(esc).join(' · ')}${rep.unknown.length > 8 ? ' …' : ''}</div></div>` : ''}
+      ${rep.warnings.length ? `<div class="notice"><div class="grow">${rep.warnings.map(esc).join('<br>')}</div></div>` : ''}
+      <p class="hint">Die übernommenen Noten gelten als <b>übertragen</b> (✓), denn sie stehen ja schon im Notenprogramm der Schule. Bitte vergleiche kurz stichprobenartig mit dem Notenblatt. Gespeichert wird erst mit „Sichern“ im Kurs-Fenster.</p>`;
+    sheet({ title: 'Notenblatt einlesen', ok: 'Übernehmen', body, onOk: () => {
+      pl.students.forEach(s => draft.push({ id: s.id, last: s.last, first: s.first, cls: Importer.normCls(s.cls) || s.cls || '' }));
+      sortList(draft);
+      c.assessments = c.assessments.concat(pl.assessments); c.entries = (c.entries || []).concat(pl.entries); c.xfer = { ...(c.xfer || {}), ...pl.xfer };
+      const nm = dlg.querySelector('#cName'), sj = dlg.querySelector('#cSubj'), fresh = !nm.value.trim();
+      if (fresh) nm.value = /^\d{1,2}[A-Za-zÄÖÜäöü]$/.test(p.cls) && !isMixed(draft) ? p.cls : isMixed(draft) ? mixedName(draft) : p.cls;
+      if (!sj.value.trim() && R.SUBJECTS.includes(p.subject)) sj.value = p.subject;
+      const gm = /^(\d{1,2})/.exec(nm.value.trim()); if (isNew && fresh && gm && +gm[1] >= 5 && +gm[1] <= 11) { dlg.querySelector('#cGrade').value = String(+gm[1]); upd(); }
+      drawDraft(); toast(`Notenblatt übernommen: ${pl.assessments.length} Leistungsnachweise, ${pl.entries.length} Einzelnoten – mit „Sichern“ speichern`, 5000);
+    } });
+  };
+  const readF = async f => { try { toast('Liste wird gelesen …'); const r = await Importer.readFile(f); if (r.notenblatt) return nbPreview(r.notenblatt); const one = /^\d{1,2}[A-Za-zÄÖÜäöü]$/.test(r.cls || '') && !r.list.some(x => x.cls) ? r.cls : ''; addDraft(r.list, one);
       /* Vorschläge aus der Liste – nur in leere Felder: Kursname (bei mehreren Klassen z. B. „8AB“), Fach (Kopfzeile der Liste), Jahrgangsstufe */
       const nm = dlg.querySelector('#cName'), sj = dlg.querySelector('#cSubj'), fresh = !nm.value.trim();
       if (fresh) nm.value = isMixed(draft) ? mixedName(draft) : (r.cls || '');
@@ -925,6 +975,56 @@ function studentSheet(c, s) {
 /* ======================================================================
    Drucken & Export
    ====================================================================== */
+/* ---------- Übertrag-Übersicht ---------- */
+function transferSheet(c) {
+  const up = upper(c);
+  const open = new Set();
+  const numbered = () => { let n = 0; return groupsOf(c).flatMap(g => g.students.map(st => ({ n: ++n, s: st }))); };
+  const stateText = (st, n) => st === 'done' ? 'alles übertragen' : st === 'open' ? 'noch nichts übertragen' : st === 'part' ? `${n} offen oder geändert` : 'keine Noten';
+  const mk = st => st === 'done' ? '<span class="xmk ok">✓</span>' : st === 'part' ? '<span class="xmk dot">●</span>' : '<span class="xmk"></span>';
+  const stLabel = x => x === 'done' ? 'übertragen' : x === 'changed' ? 'geändert' : 'noch offen';
+  const items = a => numbered().map(({ n, s }) => ({ n, s, r: a.results && a.results[s.id], key: xKeyA(a, s.id) })).filter(x => xSig(c, x.r));
+  const body = () => {
+    const as = visibleAssessments(c).filter(a => xAssess(c, a));
+    const ents = (c.entries || []).filter(e => R.inScope(e, entScope(c)) && xSig(c, e)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const nm = id => (c.students.find(x => x.id === id) || {}).name || '';
+    const rowsA = as.map(a => {
+      const its = items(a), st = xAssess(c, a), todo = its.filter(x => xState(c, x.key, x.r) !== 'done').length;
+      const any = its.some(x => xState(c, x.key, x.r) !== 'open');
+      return `<details class="xrow" data-d="${a.id}" ${open.has(a.id) ? 'open' : ''}><summary>${mk(st)}<b>${esc(a.short || R.TYPES[a.type].short)}${a.date ? ' ' + sdate(a.date) : ''}</b><span class="xt">${esc(a.title || R.TYPES[a.type].label)}</span><span class="hint">${stateText(st, todo)}</span></summary>
+        <div class="xbtns">${st !== 'done' ? `<button type="button" class="mini accent" data-all="${a.id}">Alle als übertragen markieren</button>` : ''}${any ? `<button type="button" class="mini" data-none="${a.id}">Übertrag zurücknehmen</button>` : ''}</div>
+        <div class="xlist">${its.map(x => { const xs = xState(c, x.key, x.r); return `<label class="xi ${xs}"><input type="checkbox" data-k="${x.key}" ${xs === 'done' ? 'checked' : ''}><span class="nr">${x.n}</span><span class="xn">${esc(x.s.name)}</span><b>${esc(xSig(c, x.r))}</b><span class="hint">${stLabel(xs)}</span></label>`; }).join('')}</div></details>`;
+    }).join('');
+    const stE = ents.length ? (ents.every(e => xState(c, xKeyE(e), e) === 'done') ? 'done' : ents.every(e => xState(c, xKeyE(e), e) === 'open') ? 'open' : 'part') : null;
+    const rowsE = ents.length ? `<details class="xrow" data-d="ent" ${open.has('ent') ? 'open' : ''}><summary>${mk(stE)}<b>Einzelnoten</b><span class="xt">z. B. Unterrichtsbeiträge</span><span class="hint">${stateText(stE, ents.filter(e => xState(c, xKeyE(e), e) !== 'done').length)}</span></summary>
+        <div class="xbtns">${stE !== 'done' ? '<button type="button" class="mini accent" data-all="ent">Alle als übertragen markieren</button>' : ''}${ents.some(e => xState(c, xKeyE(e), e) !== 'open') ? '<button type="button" class="mini" data-none="ent">Übertrag zurücknehmen</button>' : ''}</div>
+        <div class="xlist">${ents.map(e => { const xs = xState(c, xKeyE(e), e); return `<label class="xi ${xs}"><input type="checkbox" data-k="${xKeyE(e)}" ${xs === 'done' ? 'checked' : ''}><span class="xn">${esc(nm(e.sid))}</span><span class="hint">${esc(R.TYPES[e.type].short)}${e.date ? ' ' + sdate(e.date) : ''}</span><b>${esc(xSig(c, e))}</b><span class="hint">${stLabel(xs)}</span></label>`; }).join('')}</div></details>` : '';
+    return `<p class="hint">Hier merkst du dir, was du schon ins Notenprogramm der Schule (z. B. Infoportal) übertragen hast. <b>✓</b> alles übertragen · <b style="color:var(--orange)">●</b> nach dem Übertrag geändert oder ergänzt (Nachtrag nötig) · ohne Zeichen: noch nicht übertragen. Libretto schickt nichts weg – es ist nur deine Merkhilfe.</p>
+      ${rowsA || rowsE ? `<div class="xtop"><button type="button" class="mini accent" data-allall>Alles Angezeigte als übertragen markieren</button><span class="hint">${esc(scopeLabel(c))}</span></div>${rowsA}${rowsE}` : '<div class="empty" style="min-height:120px"><div><strong>Noch keine Noten</strong><p>Sobald Noten eingetragen sind, siehst du hier, was noch zu übertragen ist.</p></div></div>'}`;
+  };
+  const { dlg } = sheet({ title: 'Übertrag', ok: '', cancel: 'Fertig', wide: true, body: body() });
+  const root = dlg.querySelector('.sheetbody');
+  const refresh = () => { root.querySelectorAll('details[data-d]').forEach(d => d.open ? open.add(d.dataset.d) : open.delete(d.dataset.d)); root.innerHTML = body(); save(); renderGrades(); };
+  const asById = id => c.assessments.find(a => a.id === id);
+  const markAll = id => { if (id === 'ent') (c.entries || []).filter(e => R.inScope(e, entScope(c))).forEach(e => xMark(c, xKeyE(e), e)); else { const a = asById(id); if (a) items(a).forEach(x => xMark(c, x.key, x.r)); } };
+  const clearAll = id => { const keys = id === 'ent' ? (c.entries || []).filter(e => R.inScope(e, entScope(c))).map(xKeyE) : items(asById(id) || { results: {} }).map(x => x.key); keys.forEach(k => delete c.xfer[k]); };
+  root.addEventListener('click', e => {
+    if (READONLY) return;
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.all) { markAll(b.dataset.all); refresh(); }
+    else if (b.dataset.none) { clearAll(b.dataset.none); refresh(); }
+    else if ('allall' in b.dataset) { visibleAssessments(c).forEach(a => markAll(a.id)); markAll('ent'); refresh(); }
+  });
+  root.addEventListener('change', e => {
+    const i = e.target.closest('input[data-k]'); if (!i) return;
+    if (READONLY) { i.checked = !i.checked; return; }
+    const k = i.dataset.k;
+    if (i.checked) { let r = null; if (k.startsWith('e|')) r = (c.entries || []).find(x => xKeyE(x) === k); else { const [aid, sid] = k.split('|'); const a = asById(aid); r = a && a.results && a.results[sid]; } xMark(c, k, r); }
+    else delete c.xfer[k];
+    refresh();
+  });
+}
+
 function scopeLabel(c) { if (upper(c)) return UI.term ? 'Halbjahr ' + UI.term : 'Qualifikationsphase ' + c.grade; return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
 function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
@@ -1214,6 +1314,10 @@ function helpSheet() {
     <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. Ein Klick auf den Monatsnamen öffnet die Monats- und Jahreswahl. Mit <b>„Schultermine einlesen“</b> übernimmst du den Terminkalender deiner Schule: im Infoportal unter Termine „als CSV exportieren“ und die Datei hier auswählen (auch ICS-Kalenderdateien funktionieren). Die Schultermine erscheinen grau im Kalender und als Liste darunter. Außerdem: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen.</p>${fig('kalender', 'Kalender')}
     <h3>6 · Drucken, Sicherung, Sperre</h3>
     <p>„Drucken &amp; Export“: Kursübersicht, Übertragsliste fürs Infoportal, Schülerblätter – als PDF, Word oder Excel. Unter „Sicherung“ wählst du einen Sicherungsordner (z. B. USB-Stick); Libretto sichert dann automatisch und verschlüsselt. Nach einigen Minuten ohne Eingabe sperrt sich Libretto.</p>${fig('sicherung', 'Sicherung')}
+    <h3>Übertrag ins Notenprogramm der Schule</h3>
+    <p>Mit „Übertrag“ (oben im Kurs) merkst du dir, welche Noten du schon ins Notenprogramm deiner Schule (z. B. Infoportal) übertragen hast – für ganze Leistungsnachweise oder einzelne Noten. <b>✓</b> am Spaltenkopf: alles übertragen. <b style="color:var(--orange)">●</b>: nach dem Übertrag geändert oder ergänzt, ein Nachtrag ist nötig (z. B. nach einem Nachtermin). Ohne Zeichen: noch nicht übertragen. Libretto schickt nichts ab – es ist nur deine Merkhilfe.</p>
+    <h3>Einstieg mitten im Schuljahr: Notenblatt einlesen</h3>
+    <p>Im Infoportal das Notenblatt als PDF speichern (PDF-Symbol über dem Notenblatt) und im Fenster „Neuer Kurs“ in das Einlesefeld ziehen. Libretto zeigt eine Vorschau: Schüler, Schulaufgaben, Stegreifaufgaben/Kurzarbeiten (mit Faktor) und mündliche Einzelnoten mit Datum. Mit „Übernehmen“ landen sie im Kurs und gelten als übertragen. Kürzel: RA, UB, RF (Referat) und PN (Praktisch) passen zu Librettos Arten; GR, WZ, WS, EP, PF, LN und KSL werden „Sonstiger kleiner LN“ mit dem Kürzel als Notiz. „N“ (Nachschrift) wird als Nachtermin „E“ übernommen. Bestehende Noten überschreibt Libretto nie.</p>
     <h3>Noten aus Viva übernehmen</h3>
     <p>Nach einer mündlichen Schulaufgabe in <b>Viva</b>: dort unter „Ergebnisse &amp; Bögen“ die „Notenliste (CSV)“ speichern. In Libretto den Leistungsnachweis anlegen oder öffnen und unter „Noten aus Datei übernehmen“ die Datei wählen – die Noten werden über die Namen zugeordnet.</p>
     <h3>Auslandsaufenthalt, längere Abwesenheit</h3>

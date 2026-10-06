@@ -1,14 +1,14 @@
 {
  "libretto": {
-  "version": "0.9.3",
+  "version": "0.9.4",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Neu: Kurse aus mehreren Klassen – Liste und Übertragsliste nach Klassen unterteilt.",
+  "notes": "Neu: Übertrag-Markierung, Notenblatt einlesen (Einstieg mitten im Schuljahr), volle Bildschirmbreite.",
   "betaEnd": "2027-09-30",
   "minVersion": null,
   "message": ""
  },
  "gruppen": {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "url": "https://theisapps.de/gruppen/"
  },
  "sportwahl": {

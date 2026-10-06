@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Gruppen</title>
+<title>Gruppi</title>
 <style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-opsz-normal.woff2) format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}.importBtn{border:0;background:var(--fill,rgba(20,30,50,.07));color:var(--blue,#0071E3);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:500;cursor:pointer}
 .importBtn:hover{filter:brightness(.97)}
@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Gruppen">
+<meta name="apple-mobile-web-app-title" content="Gruppi">
 <style>
 :root{
   /* System colours */
@@ -106,7 +106,7 @@ button{cursor:pointer}
 /* ---------- Toolbar ---------- */
 .toolbar{position:sticky;top:0;z-index:30;padding:14px 20px 6px}
 .toolbar .bar{
-  max-width:1240px;margin:0 auto;border-radius:var(--r-lg);
+  max-width:2200px;margin:0 auto;border-radius:var(--r-lg);
   padding:9px 10px 9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;flex:1 1 auto;min-width:0}
 .picker{position:relative;display:inline-flex}
@@ -119,7 +119,7 @@ h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;flex:1 1 auto;m
 .tbtn:hover{background:var(--fill)}
 
 /* ---------- Layout ---------- */
-.wrap{max-width:1240px;margin:0 auto;padding:10px 20px 72px}
+.wrap{max-width:2200px;margin:0 auto;padding:10px 20px 72px}
 .layout{display:grid;grid-template-columns:minmax(0,326px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:920px){.layout{grid-template-columns:1fr}}
 .rail{position:sticky;top:86px;display:flex;flex-direction:column;gap:16px}
@@ -244,6 +244,52 @@ h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;flex:1 1 auto;m
 .board:fullscreen .tile li{font-size:clamp(1.3rem,2.05vw,2.7rem);line-height:1.4;gap:.5vw}
 .board:fullscreen .tile li.rep::after{width:.5vw;height:.5vw}
 
+/* Beamer-Ersatz (Browser ohne Vollbild für Elemente, z. B. iPhone): gleiche Darstellung, Fenster ausfüllen */
+.board.pfs{padding:3vw 3vw 4vw;overflow:auto;
+  background-color:var(--canvas);
+  background-image:
+    radial-gradient(58vmax 50vmax at 8% -6%, var(--wash-a), transparent 60%),
+    radial-gradient(50vmax 44vmax at 98% 4%, var(--wash-b), transparent 58%),
+    radial-gradient(64vmax 52vmax at 66% 104%, var(--wash-c), transparent 60%);
+  background-repeat:no-repeat}
+.board.pfs .boardbar{margin-bottom:2.4vw}
+.board.pfs .tools{opacity:.55;transition:opacity .3s}
+.board.pfs .tools:hover,.board.pfs .tools:focus-within{opacity:1}
+.board.pfs .boardbar .meta{font-size:clamp(1.6rem,2.6vw,3.2rem)}
+.board.pfs .boardbar .meta small{font-size:clamp(.9rem,1vw,1.3rem)}
+.board.pfs .groups{grid-template-columns:repeat(auto-fit,minmax(min(100%,20vw),1fr));gap:1.3vw}
+.board.pfs .tile{border-radius:1.5vw;padding:1.5vw 1.7vw 1.8vw}
+.board.pfs .tile h3{font-size:clamp(.8rem,1vw,1.3rem);margin-bottom:.8vw}
+.board.pfs .tile li{font-size:clamp(1.3rem,2.05vw,2.7rem);line-height:1.4;gap:.5vw}
+.board.pfs .tile li.rep::after{width:.5vw;height:.5vw}
+
+.board.pfs{position:fixed;inset:0;z-index:50;height:100vh;height:100dvh;
+  padding:max(3vw,env(safe-area-inset-top)) max(3vw,env(safe-area-inset-right)) max(4vw,env(safe-area-inset-bottom)) max(3vw,env(safe-area-inset-left))}
+body.pfs-on{overflow:hidden}
+.board:fullscreen .hint,.board.pfs .hint{display:none}
+@media (max-width:700px){
+  .board.pfs .groups{grid-template-columns:repeat(auto-fit,minmax(min(100%,44vw),1fr));gap:3vw}
+  .board.pfs .tile{border-radius:4vw;padding:3.5vw 4vw 4vw}
+  .board.pfs .tile h3{font-size:.85rem;margin-bottom:2vw}
+  .board.pfs .tile li{font-size:1.25rem;gap:1.5vw}
+  .board.pfs .boardbar .meta{font-size:1.5rem}
+}
+/* Ziehen und Fixieren */
+.tile li{cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:9px;padding:0 6px;margin:0 -6px;transition:background .15s}
+.tile li:hover{background:color-mix(in srgb, var(--hue) 10%, transparent)}
+.tile li.dragging{opacity:.3}
+.tile li.swap{background:color-mix(in srgb, var(--hue) 22%, transparent);box-shadow:inset 0 0 0 2px var(--hue)}
+.tile.drop{box-shadow:var(--lift), 0 0 0 3px var(--hue)}
+.groups.still .tile{animation:none}
+.dragghost{position:fixed;left:0;top:0;z-index:100;pointer-events:none;padding:7px 16px;border-radius:999px;
+  background:var(--glass-solid);color:var(--label);border:.5px solid var(--hairline);box-shadow:var(--lift-2);
+  font-size:17px;font-weight:600;will-change:transform}
+.lockbtn{border:0;background:none;padding:3px;border-radius:8px;color:var(--label-3);line-height:0;flex:none;transition:color .15s,background .15s}
+.lockbtn:hover{background:var(--fill);color:var(--label-2)}
+.lockbtn[aria-pressed="true"]{color:color-mix(in srgb, var(--hue) 82%, var(--label))}
+.lockbtn svg{width:16px;height:16px;display:block}
+.board:fullscreen .lockbtn,.board.pfs .lockbtn{display:none}
+.hint{margin:18px 4px 0;font-size:13px;color:var(--label-2)}
 /* ---------- Sheet ---------- */
 dialog{border:0;padding:0;color:var(--label);border-radius:24px;width:min(540px,94vw);
   background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
@@ -297,7 +343,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
 
 <div class="toolbar">
   <div class="bar glass">
-    <h1 data-t="title">Gruppen bilden</h1>
+    <h1 data-t="title">Gruppi</h1>
     <span class="picker"><select id="classSel" aria-label="Klasse"></select></span>
     <button class="tbtn" id="addBtn" data-t="addClass">Klasse hinzufügen</button>
     <button class="tbtn" id="editBtn" data-t="edit">Bearbeiten</button>
@@ -356,11 +402,13 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
           <button class="linkbtn" id="impBtn" data-t="import">Einlesen</button>
           <input type="file" id="impFile" accept="application/json,.json" hidden>
         </div>
+        <p class="note" id="autoNote" hidden data-t="autoNote">Automatische Sicherheitskopie auf diesem Computer.</p>
+        <div class="linkrow" id="autoRow" hidden><button class="linkbtn" id="folderBtn" data-t="folder">Ordner zeigen</button></div>
       </section>
 
       <section class="panel glass">
-        <h2 class="ptitle" data-t="about">Über Gruppen</h2>
-        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0.2 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
+        <h2 class="ptitle" data-t="about">Über Gruppi</h2>
+        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0.3 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
       </section>
     </div>
 
@@ -375,6 +423,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
         </div>
       </div>
       <div id="groups"></div>
+      <p class="hint" id="dragHint" hidden></p>
     </section>
   </div>
 </div>
@@ -389,7 +438,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
     <div class="sheetbody">
       <label class="field"><span data-t="dlgName">Name der Klasse</span><input type="text" id="dlgName" placeholder="7c" required></label>
       <label class="field"><span data-t="dlgLang">Sprache der Oberfläche</span>
-        <select id="dlgLang"><option value="it">Italiano</option><option value="en">English</option><option value="de">Deutsch</option></select></label>
+        <select id="dlgLang"><option value="it">Italiano</option><option value="en">English</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="es">Español</option></select></label>
       <label class="field"><span data-t="dlgNames">Namen</span>
         <textarea id="dlgText" placeholder="1 Muster, Anna (w)&#10;2 Beispiel, Ben (m)"></textarea></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px"><button type="button" class="importBtn" id="dlgFile" data-t="importFile">Datei einlesen (PDF, Excel, CSV) …</button><button type="button" class="importBtn" id="dlgSwap" data-t="swapNames">Vor- und Nachname tauschen</button><input type="file" id="dlgFileIn" accept=".pdf,.xlsx,.xls,.ods,.csv,.txt" hidden></div>
@@ -430,11 +479,11 @@ const DEFAULT_CLASSES = {
 };
 
 const T = {
- de:{ title:"Gruppen bilden", addClass:"Klasse hinzufügen", edit:"Bearbeiten", size:"Gruppengröße", modeSize:"Schüler pro Gruppe", modeCount:"Anzahl Gruppen",
+ de:{ title:"Gruppi", addClass:"Klasse hinzufügen", edit:"Bearbeiten", size:"Gruppengröße", modeSize:"Schüler pro Gruppe", modeCount:"Anzahl Gruppen",
   restBig:"Übrige dazusetzen", restSmall:"Kleinere Gruppen", mix:"Mädchen und Jungen gleichmäßig verteilen", preferNew:"Möglichst neue Kombinationen",
   showLast:"Nachnamen anzeigen", go:"Gruppen bilden", present:"Heute da", tapAbsent:"Antippen, wer fehlt.", allIn:"Alle wieder anwesend",
   history:"Verlauf", undo:"Letzte Runde entfernen", clear:"Verlauf löschen", commit:"Übernehmen", committed:"Übernommen", again:"Neu mischen",
-  copy:"Als Text kopieren", fs:"Beamer-Ansicht", fsExit:"Vollbild beenden", group:"Gruppe",
+  copy:"Als Text kopieren", fs:"Beamer-Ansicht", fsExit:"Vollbild beenden", group:"Gruppe", lockT:"Gruppe fixieren", unlockT:"Fixierung lösen", hintDrag:"Tipp: Namen zwischen den Gruppen ziehen. Geänderte Gruppen werden fixiert und bleiben beim Neu-Mischen erhalten.", autoNote:"Automatische Sicherheitskopie auf diesem Computer.", folder:"Ordner zeigen",
   backup:"Sicherung", backupHelp:"Klassen und Verlauf als Datei sichern und auf einem anderen Gerät wieder einlesen.", export:"Sichern", import:"Einlesen",
   emptyH:"Noch keine Gruppen", emptyP:"Größe einstellen und „Gruppen bilden“ drücken.",
   allNew:"Alle Kombinationen sind neu", repeats:n=>`${n} ${n===1?'Paar gab':'Paare gab'} es schon`,
@@ -446,12 +495,12 @@ const T = {
   confirmClear:c=>`Verlauf für ${c} löschen?`, confirmDel:c=>`Klasse ${c} wirklich löschen?`, confirmImp:"Vorhandene Klassen mit gleichem Namen werden ersetzt. Fortfahren?",
   dlgAdd:"Klasse hinzufügen", dlgEdit:c=>`${c} bearbeiten`, dlgName:"Name der Klasse", dlgLang:"Sprache der Oberfläche", dlgNames:"Namen",
   dlgHelp:"Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.",
-  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppen", aboutText:"Version 1.0.2 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
- en:{ title:"Make groups", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
+  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppi", aboutText:"Version 1.0.3 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
+ en:{ title:"Gruppi", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
   restBig:"Add extras to groups", restSmall:"Smaller groups", mix:"Mix girls and boys evenly", preferNew:"New combinations where possible",
   showLast:"Show surnames", go:"Make groups", present:"Here today", tapAbsent:"Tap anyone who's absent.", allIn:"Everyone's here again",
   history:"History", undo:"Remove last round", clear:"Clear history", commit:"Use these groups", committed:"Saved", again:"Shuffle again",
-  copy:"Copy as text", fs:"Full screen", fsExit:"Exit full screen", group:"Group",
+  copy:"Copy as text", fs:"Full screen", fsExit:"Exit full screen", group:"Group", lockT:"Lock group", unlockT:"Unlock group", hintDrag:"Tip: drag names between groups. Changed groups are locked and stay as they are when you shuffle again.", autoNote:"Automatic backup on this computer.", folder:"Show folder",
   backup:"Backup", backupHelp:"Save your classes and history to a file and load them on another device.", export:"Save to file", import:"Load file",
   emptyH:"No groups yet", emptyP:"Choose a group size and press “Make groups”.",
   allNew:"Nobody has worked together before", repeats:n=>`${n} ${n===1?'pair has':'pairs have'} worked together before`,
@@ -463,12 +512,12 @@ const T = {
   confirmClear:c=>`Clear the history for ${c}?`, confirmDel:c=>`Delete ${c}?`, confirmImp:"Classes with the same name will be replaced. Continue?",
   dlgAdd:"Add class", dlgEdit:c=>`Edit ${c}`, dlgName:"Class name", dlgLang:"Interface language", dlgNames:"Names",
   dlgHelp:"One per line. You can paste the whole class list from the PDF – header lines are ignored.",
-  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppen", aboutText:"Version 1.0.2 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
- it:{ title:"Formare i gruppi", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
+  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppi", aboutText:"Version 1.0.3 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
+ it:{ title:"Gruppi", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
   restBig:"Aggiungi i restanti", restSmall:"Gruppi più piccoli", mix:"Distribuisci ragazze e ragazzi in modo equilibrato", preferNew:"Possibilmente combinazioni nuove",
   showLast:"Mostra i cognomi", go:"Forma i gruppi", present:"Presenti oggi", tapAbsent:"Tocca chi è assente.", allIn:"Tutti di nuovo presenti",
   history:"Cronologia", undo:"Elimina l'ultimo turno", clear:"Cancella la cronologia", commit:"Conferma", committed:"Confermato", again:"Rimescola",
-  copy:"Copia come testo", fs:"Schermo intero", fsExit:"Esci dallo schermo intero", group:"Gruppo",
+  copy:"Copia come testo", fs:"Schermo intero", fsExit:"Esci dallo schermo intero", group:"Gruppo", lockT:"Blocca gruppo", unlockT:"Sblocca gruppo", hintDrag:"Suggerimento: trascina i nomi tra i gruppi. I gruppi modificati vengono bloccati e restano invariati quando rimescoli.", autoNote:"Copia di sicurezza automatica su questo computer.", folder:"Mostra cartella",
   backup:"Backup", backupHelp:"Salva classi e cronologia in un file e caricali su un altro dispositivo.", export:"Salva su file", import:"Carica file",
   emptyH:"Ancora nessun gruppo", emptyP:"Scegli la dimensione e premi “Forma i gruppi”.",
   allNew:"Tutte le coppie sono nuove", repeats:n=>`${n} ${n===1?'coppia ha':'coppie hanno'} già lavorato insieme`,
@@ -480,13 +529,80 @@ const T = {
   confirmClear:c=>`Cancellare la cronologia di ${c}?`, confirmDel:c=>`Eliminare ${c}?`, confirmImp:"Le classi con lo stesso nome verranno sostituite. Continuare?",
   dlgAdd:"Aggiungi classe", dlgEdit:c=>`Modifica ${c}`, dlgName:"Nome della classe", dlgLang:"Lingua dell'interfaccia", dlgNames:"Nomi",
   dlgHelp:"Uno per riga. Puoi incollare l'intera lista dal PDF: le intestazioni vengono ignorate.",
-  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppen", aboutText:"Versione 1.0.2 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" }
+  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppi", aboutText:"Versione 1.0.3 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" },
+ fr:{ title:"Gruppi", addClass:"Ajouter une classe", edit:"Modifier", size:"Taille des groupes", modeSize:"Élèves par groupe", modeCount:"Nombre de groupes",
+  restBig:"Répartir les restes", restSmall:"Groupes plus petits", mix:"Répartir filles et garçons de façon équilibrée", preferNew:"De préférence de nouvelles combinaisons",
+  showLast:"Afficher les noms de famille", go:"Former les groupes", present:"Présents aujourd’hui", tapAbsent:"Touchez les élèves absents.", allIn:"Tous de nouveau présents",
+  history:"Historique", undo:"Supprimer le dernier tour", clear:"Effacer l’historique", commit:"Valider", committed:"Validé", again:"Mélanger à nouveau",
+  copy:"Copier comme texte", fs:"Plein écran", fsExit:"Quitter le plein écran", group:"Groupe",
+  lockT:"Verrouiller le groupe", unlockT:"Déverrouiller le groupe", hintDrag:"Astuce : faites glisser les noms d’un groupe à l’autre. Les groupes modifiés sont verrouillés et restent identiques quand vous mélangez à nouveau.", autoNote:"Copie de sauvegarde automatique sur cet ordinateur.", folder:"Afficher le dossier",
+  backup:"Sauvegarde", backupHelp:"Enregistrez vos classes et l’historique dans un fichier pour les charger sur un autre appareil.", export:"Enregistrer", import:"Charger un fichier",
+  emptyH:"Pas encore de groupes", emptyP:"Choisissez la taille et appuyez sur « Former les groupes ».",
+  allNew:"Toutes les paires sont nouvelles", repeats:n=>`${n} ${n===1?'paire a':'paires ont'} déjà travaillé ensemble`,
+  preview:(n,g,parts)=>`${n} élèves → ${g} ${g===1?'groupe':'groupes'} : ${parts.map(([c,k])=>`${c} de ${k}`).join(', ')}`, none:"Aucun élève sélectionné.",
+  histN:n=>`${n} ${n===1?'tour enregistré':'tours enregistrés'}. Les nouveaux groupes évitent les paires déjà formées – les derniers tours comptent le plus.`,
+  histNone:"Aucun tour enregistré. Après avoir mélangé, appuyez sur « Valider » : la page se souviendra de qui a déjà travaillé ensemble.",
+  tCopied:"Copié", tCopyFail:"Copie impossible", tSaved:"Tour enregistré", tUndone:"Dernier tour supprimé", tFs:"Plein écran indisponible",
+  tNoNames:"Aucun nom reconnu", tNames:n=>`${n} noms enregistrés`, tExported:"Sauvegarde créée", tExpFail:"Enregistrement impossible", tImported:n=>`${n} classes chargées`, tImpFail:"Fichier illisible",
+  confirmClear:c=>`Effacer l’historique de ${c} ?`, confirmDel:c=>`Supprimer ${c} ?`, confirmImp:"Les classes portant le même nom seront remplacées. Continuer ?",
+  dlgAdd:"Ajouter une classe", dlgEdit:c=>`Modifier ${c}`, dlgName:"Nom de la classe", dlgLang:"Langue de l’interface", dlgNames:"Noms",
+  dlgHelp:"Un par ligne. Vous pouvez coller toute la liste du PDF : les en-têtes sont ignorés.",
+  dlgDelete:"Supprimer la classe", cancel:"Annuler", save:"Enregistrer", custom:"Nombre au choix",
+  about:"À propos de Gruppi", aboutText:"Version 1.0.3 · Toutes les données restent sur cet appareil.", support:"Offrir un café", supportNote:"· facultatif, l’application reste gratuite",
+  importFile:"Importer un fichier (PDF, Excel, CSV) …", swapNames:"Inverser prénom et nom", importOk:n=>`${n} noms ajoutés – à vérifier`, importNone:"Aucun nom trouvé", importErr:"Impossible de lire le fichier" },
+ es:{ title:"Gruppi", addClass:"Añadir clase", edit:"Editar", size:"Tamaño de los grupos", modeSize:"Alumnos por grupo", modeCount:"Número de grupos",
+  restBig:"Añadir los sobrantes", restSmall:"Grupos más pequeños", mix:"Repartir chicas y chicos de forma equilibrada", preferNew:"Si es posible, combinaciones nuevas",
+  showLast:"Mostrar apellidos", go:"Formar grupos", present:"Presentes hoy", tapAbsent:"Toca a quien falte.", allIn:"Todos presentes de nuevo",
+  history:"Historial", undo:"Quitar la última ronda", clear:"Borrar el historial", commit:"Confirmar", committed:"Confirmado", again:"Volver a mezclar",
+  copy:"Copiar como texto", fs:"Pantalla completa", fsExit:"Salir de pantalla completa", group:"Grupo",
+  lockT:"Fijar grupo", unlockT:"Quitar la fijación", hintDrag:"Consejo: arrastra los nombres de un grupo a otro. Los grupos modificados quedan fijados y no cambian al volver a mezclar.", autoNote:"Copia de seguridad automática en este ordenador.", folder:"Mostrar carpeta",
+  backup:"Copia de seguridad", backupHelp:"Guarda las clases y el historial en un archivo y cárgalos en otro dispositivo.", export:"Guardar en archivo", import:"Cargar archivo",
+  emptyH:"Aún no hay grupos", emptyP:"Elige el tamaño y pulsa «Formar grupos».",
+  allNew:"Todas las parejas son nuevas", repeats:n=>`${n} ${n===1?'pareja ya trabajó':'parejas ya trabajaron'} junta${n===1?'':'s'}`,
+  preview:(n,g,parts)=>`${n} alumnos → ${g} ${g===1?'grupo':'grupos'}: ${parts.map(([c,k])=>`${c} de ${k}`).join(', ')}`, none:"Ningún alumno seleccionado.",
+  histN:n=>`${n} ${n===1?'ronda guardada':'rondas guardadas'}. Los nuevos grupos evitan las parejas que ya se formaron; las últimas rondas cuentan más.`,
+  histNone:"Aún no hay rondas guardadas. Después de mezclar, pulsa «Confirmar» y la página recordará quién ya trabajó junto.",
+  tCopied:"Copiado", tCopyFail:"No se pudo copiar", tSaved:"Ronda guardada", tUndone:"Última ronda eliminada", tFs:"Pantalla completa no disponible",
+  tNoNames:"No se reconoció ningún nombre", tNames:n=>`${n} nombres guardados`, tExported:"Copia creada", tExpFail:"No se pudo guardar el archivo", tImported:n=>`${n} clases cargadas`, tImpFail:"Archivo ilegible",
+  confirmClear:c=>`¿Borrar el historial de ${c}?`, confirmDel:c=>`¿Eliminar ${c}?`, confirmImp:"Las clases con el mismo nombre se sustituirán. ¿Continuar?",
+  dlgAdd:"Añadir clase", dlgEdit:c=>`Editar ${c}`, dlgName:"Nombre de la clase", dlgLang:"Idioma de la interfaz", dlgNames:"Nombres",
+  dlgHelp:"Uno por línea. Puedes pegar la lista completa del PDF: se ignoran los encabezados.",
+  dlgDelete:"Eliminar clase", cancel:"Cancelar", save:"Guardar", custom:"Otro número",
+  about:"Acerca de Gruppi", aboutText:"Versión 1.0.3 · Todos los datos permanecen en este dispositivo.", support:"Invítame a un café", supportNote:"· voluntario, la app sigue siendo gratuita",
+  importFile:"Importar archivo (PDF, Excel, CSV) …", swapNames:"Intercambiar nombre y apellido", importOk:n=>`${n} nombres añadidos: revísalos`, importNone:"No se encontró ningún nombre", importErr:"No se pudo leer el archivo" }
 };
 
+/* Mac/Windows-App: zusätzlich eine Sicherheitskopie als Datei (Ordner theis/Gruppen im Benutzerordner), unabhängig vom Browser-Speicher der App */
+const native = window.gbNative || null;
+let syncT = null;
+function snapshot(){
+  const hist = {};
+  for (const k of Object.keys(classes)){ const h = getHist(k); if (h.length) hist[k] = h; }
+  return { v:1, classes, hist, settings, seen:[...known] };
+}
+function flushNative(){ if (!native) return; clearTimeout(syncT); try{ native.save(JSON.stringify(snapshot())); }catch(e){} }
+function scheduleSync(){ if (!native) return; clearTimeout(syncT); syncT = setTimeout(flushNative, 600); }
+addEventListener('pagehide', flushNative);
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
-  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} scheduleSync(); },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} scheduleSync(); }
 };
+/* Start mit leerem Browser-Speicher, aber vorhandener Sicherheitskopie: Daten zurückholen */
+if (native){
+  try{
+    if (localStorage.getItem('gb_classes') === null){
+      const txt = native.loadSync();
+      const d = txt && JSON.parse(txt);
+      if (d && d.classes && Object.keys(d.classes).length){
+        localStorage.setItem('gb_classes', JSON.stringify(d.classes));
+        localStorage.setItem('gb_seen', JSON.stringify([...new Set([...(d.seen || []), ...Object.keys(d.classes), ...Object.keys(DEFAULT_CLASSES)])]));
+        if (d.settings) localStorage.setItem('gb_settings', JSON.stringify(d.settings));
+        for (const [k,h] of Object.entries(d.hist || {})) localStorage.setItem('gb_hist_' + k, JSON.stringify(h));
+      }
+    }
+  }catch(e){}
+}
 
 function parseList(text){
   let lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -520,6 +636,7 @@ if (settings.prefer === undefined) settings.prefer = true;
 let absent = new Set();
 let lastResult = null;
 let committed = false;
+let locked = new Set();   /* Nummern der fixierten Gruppen (von Hand geändert oder angeklickt) */
 
 /* ---- Verlauf: wer war schon zusammen? ---- */
 const skey = s => `${s.last}|${s.first}`;
@@ -566,12 +683,13 @@ function repeatedPairs(groups){
 const HUES = ['var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)','var(--g6)','var(--g7)','var(--g8)'];
 const $ = id => document.getElementById(id);
 const lang = () => (classes[settings.cls] && classes[settings.cls].lang) || 'de';
-const t = k => T[lang()][k];
+const t = k => (T[lang()] || T.de)[k];
 function applyLang(){
   document.documentElement.lang = lang();
   document.title = t('title');
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
-  $('fsBtn').textContent = document.fullscreenElement ? t('fsExit') : t('fs');
+  $('fsBtn').textContent = isFs() ? t('fsExit') : t('fs');
+  $('dragHint').textContent = t('hintDrag');
 }
 const save = () => store.set('gb_settings', settings);
 
@@ -602,8 +720,8 @@ function describe(n){
 }
 function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i+1); [a[i],a[j]] = [a[j],a[i]]; } return a; }
 
-function makeGroups(){
-  const list = present(); const n = list.length; const g = plan(n);
+function makeGroups(list = present(), gOverride){
+  const n = list.length; const g = gOverride != null ? gOverride : plan(n);
   if (!g) return [];
   let order;
   if (settings.mix){
@@ -679,12 +797,14 @@ function renderClassSel(){
   $('editBtn').hidden = !keys.length;
 }
 
-function renderBoard(){
+function renderBoard(still){
   const box = $('groups');
   const c = classes[settings.cls];
   $('boardMeta').textContent = c ? settings.cls : '';
   $('commitBtn').hidden = !lastResult;
+  $('dragHint').hidden = !lastResult;
   if (!lastResult){
+    locked.clear();
     box.innerHTML = `<div class="empty glass"><div>
       <div class="orbs">${HUES.slice(0,5).map((c,i)=>`<i style="--o:${c};animation-delay:${i*140}ms"></i>`).join('')}</div>
       <strong>${t('emptyH')}</strong>${t('emptyP')}</div></div>`;
@@ -701,16 +821,25 @@ function renderBoard(){
   $('commitBtn').disabled = committed;
   $('commitBtn').textContent = committed ? t('committed') : t('commit');
   box.innerHTML = '<div class="groups"></div>';
-  const grid = box.firstChild;
+  const grid = box.firstChild; if (still) grid.classList.add('still');
   lastResult.forEach((grp, i) => {
-    const d = document.createElement('div'); d.className = 'tile';
+    const d = document.createElement('div'); d.className = 'tile'; d.dataset.gi = i;
     d.style.setProperty('--hue', HUES[i % HUES.length]);
     d.style.animationDelay = (i*38)+'ms';
     const h = document.createElement('h3');
     h.innerHTML = `<b>${t('group')} ${i+1}</b><small>${grp.length}</small>`;
+    const lb = document.createElement('button'); lb.type = 'button'; lb.className = 'lockbtn';
+    const isL = locked.has(i);
+    lb.setAttribute('aria-pressed', isL); lb.title = lb.ariaLabel = isL ? t('unlockT') : t('lockT');
+    lb.innerHTML = isL
+      ? '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5A3.5 3.5 0 0 0 4.5 5v1.6H4a1.5 1.5 0 0 0-1.5 1.5v4.9A1.5 1.5 0 0 0 4 14.5h8a1.5 1.5 0 0 0 1.5-1.5V8.1A1.5 1.5 0 0 0 12 6.6h-.5V5A3.5 3.5 0 0 0 8 1.5Zm2 5.1H6V5a2 2 0 1 1 4 0v1.6Z"/></svg>'
+      : '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.75" y="6.75" width="10.5" height="7.5" rx="1.5"/><path d="M5 6.75V5a3 3 0 0 1 5.6-1.5"/></svg>';
+    lb.onclick = () => { locked.has(i) ? locked.delete(i) : locked.add(i); renderBoard(true); };
+    h.appendChild(lb);
     const ol = document.createElement('ol');
     grp.forEach(s => {
       const li = document.createElement('li');
+      li.dataset.gi = i; li._s = s;
       li.textContent = displayName(s, all);
       if (!committed && getHist().length && rep.who.has(s) && grp.some(o => o !== s && rep.who.has(o))) li.className = 'rep';
       ol.appendChild(li);
@@ -720,16 +849,36 @@ function renderBoard(){
   $('againBtn').hidden = $('copyBtn').hidden = false;
 }
 
-function build(){
+function build(keepLocks){
+  if (!keepLocks) locked.clear();
+  /* Fixierte Gruppen bleiben (ohne Schüler, die inzwischen fehlen) */
+  const pres = new Set(present());
+  const fixed = [];
+  if (keepLocks && lastResult) [...locked].sort((x,y)=>x-y).forEach(i => { const g = (lastResult[i] || []).filter(x => pres.has(x)); if (g.length) fixed.push([i, g]); });
+  const inFixed = new Set(fixed.flatMap(([,g]) => g));
+  const pool = present().filter(x => !inFixed.has(x));
+  let gFresh;
+  if (!fixed.length) gFresh = null;
+  else if (!pool.length) gFresh = 0;
+  else if (settings.mode === 'count') gFresh = Math.max(1, Math.min(settings.count - fixed.length, pool.length));
+  else gFresh = plan(pool.length);
   let best = null, bestCost = Infinity;
   const w = settings.prefer ? pairWeights() : new Map();
   const tries = w.size ? 30 : 1;
   for (let i = 0; i < tries; i++){
-    const cand = optimize(makeGroups(), w);
+    const cand = optimize(makeGroups(pool, gFresh == null ? undefined : gFresh), w);
     const c = cand.reduce((s,g) => s + groupCost(g, w), 0);
     if (c < bestCost){ bestCost = c; best = cand; if (c === 0) break; }
   }
-  lastResult = best ? best.map(shuffle) : [];
+  const fresh = best ? best.map(shuffle) : [];
+  if (!fixed.length) lastResult = fresh;
+  else {
+    const total = fixed.length + fresh.length;
+    const out = new Array(total).fill(null), displaced = [], fixedSet = new Set();
+    fixed.forEach(([i,g]) => { fixedSet.add(g); if (i < total && !out[i]) out[i] = g; else displaced.push(g); });
+    for (let k = 0; k < total; k++) if (!out[k]) out[k] = displaced.length ? displaced.shift() : fresh.shift();
+    lastResult = out; locked = new Set(); out.forEach((g,k) => { if (fixedSet.has(g)) locked.add(k); });
+  }
   committed = false; renderBoard();
 }
 function commit(){
@@ -746,10 +895,8 @@ function toast(msg){ const el = $('toast'); el.textContent = msg; el.classList.a
 
 /* ---- Sicherung ---- */
 async function exportData(){
-  const hist = {};
-  for (const k of Object.keys(classes)){ const h = getHist(k); if (h.length) hist[k] = h; }
-  const text = JSON.stringify({ v:1, classes, hist, settings }, null, 1);
-  const filename = 'gruppen-sicherung-' + new Date().toISOString().slice(0,10) + '.json';
+  const text = JSON.stringify(snapshot(), null, 1);
+  const filename = 'gruppi-sicherung-' + new Date().toISOString().slice(0,10) + '.json';
   if (window.AndroidBridge && window.AndroidBridge.saveFile){ try{ window.AndroidBridge.saveFile(filename, text); }catch(e){ toast(t('tExpFail')); } return; }
   let api = null;
   try{ if (window.claude && window.claude.use) api = await window.claude.use('downloads'); }catch(e){}
@@ -794,14 +941,15 @@ $('restSmall').onclick = () => { settings.rest='small'; save(); renderControls()
 $('mixGender').onchange = e => { settings.mix = e.target.checked; save(); };
 $('preferNew').onchange = e => { settings.prefer = e.target.checked; save(); };
 $('showLast').onchange = e => { settings.last = e.target.checked; save(); renderBoard(); };
-$('goBtn').onclick = build;
-$('againBtn').onclick = build;
+$('goBtn').onclick = () => build(false);
+$('againBtn').onclick = () => build(true);
 $('commitBtn').onclick = commit;
 $('histUndo').onclick = () => { const h = getHist(); h.pop(); setHist(h); committed = false; renderHist(); renderBoard(); toast(t('tUndone')); };
 $('histClear').onclick = () => { if (!confirm(t('confirmClear')(settings.cls))) return; setHist([]); committed = false; renderHist(); renderBoard(); };
 $('allIn').onclick = () => { absent.clear(); renderRoster(); renderControls(); };
 $('classSel').onchange = e => { settings.cls = e.target.value; save(); absent.clear(); lastResult = null; renderAll(); };
 $('expBtn').onclick = exportData;
+$('folderBtn').onclick = () => { try{ native.showFolder(); }catch(e){} };
 $('impBtn').onclick = () => $('impFile').click();
 $('impFile').onchange = e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; };
 $('copyBtn').onclick = async () => {
@@ -810,17 +958,94 @@ $('copyBtn').onclick = async () => {
   if (window.AndroidBridge && window.AndroidBridge.copy){ window.AndroidBridge.copy(txt); toast(t('tCopied')); return; }
   try{ await navigator.clipboard.writeText(txt); toast(t('tCopied')); }catch(e){ toast(t('tCopyFail')); }
 };
+let pfs = false;
+const isFs = () => !!document.fullscreenElement || pfs;
+function setPfs(on){ pfs = on; $('board').classList.toggle('pfs', on); document.body.classList.toggle('pfs-on', on); $('fsBtn').textContent = isFs() ? t('fsExit') : t('fs'); }
 $('fsBtn').onclick = () => {
   const b = $('board');
   if (document.fullscreenElement) document.exitFullscreen();
-  else if (b.requestFullscreen) b.requestFullscreen().catch(()=>toast(t('tFs')));
+  else if (pfs) setPfs(false);
+  else if (b.requestFullscreen) b.requestFullscreen().catch(() => setPfs(true));
+  else setPfs(true);   /* z. B. iPhone: Safari kennt kein Vollbild für Elemente → Ersatzansicht */
 };
-document.addEventListener('fullscreenchange', () => { $('fsBtn').textContent = document.fullscreenElement ? t('fsExit') : t('fs'); });
+document.addEventListener('fullscreenchange', () => { $('fsBtn').textContent = isFs() ? t('fsExit') : t('fs'); });
 document.addEventListener('keydown', e => {
-  if (!document.fullscreenElement) return;
-  if (e.code === 'Space'){ e.preventDefault(); build(); }
+  if (!isFs()) return;
+  if (e.key === 'Escape' && pfs){ setPfs(false); return; }
+  if (e.code === 'Space'){ e.preventDefault(); build(true); }
   if (e.key === 'Enter'){ e.preventDefault(); commit(); }
 });
+
+
+/* ---- Schüler zwischen Gruppen ziehen: auf eine Gruppe = verschieben, auf einen Namen = tauschen ---- */
+let drag = null;
+function clearDrop(){ document.querySelectorAll('.tile.drop,li.swap').forEach(el => el.classList.remove('drop','swap')); }
+function startDrag(x, y){
+  if (!drag || drag.active) return;
+  drag.active = true; drag.li.classList.add('dragging');
+  const g = document.createElement('div'); g.className = 'dragghost'; g.textContent = drag.li.textContent;
+  $('board').appendChild(g); drag.ghost = g; moveDrag(x, y);
+}
+function moveDrag(x, y){
+  drag.ghost.style.transform = `translate(${x + 14}px, ${y + 10}px)`;
+  clearDrop();
+  const el = document.elementFromPoint(x, y);
+  const li = el && el.closest && el.closest('li[data-gi]'), tile = el && el.closest && el.closest('.tile');
+  drag.target = null;
+  if (li && li !== drag.li && +li.dataset.gi !== drag.gi){ li.classList.add('swap'); drag.target = { li }; }
+  else if (tile && +tile.dataset.gi !== drag.gi){ tile.classList.add('drop'); drag.target = { tile }; }
+  const sc = document.fullscreenElement || (pfs ? $('board') : null);
+  const r = sc ? sc.getBoundingClientRect() : { top:0, bottom:innerHeight };
+  const dy = y < r.top + 56 ? -14 : y > r.bottom - 56 ? 14 : 0;
+  if (dy) (sc || window).scrollBy(0, dy);
+}
+function endDrag(drop){
+  if (!drag) return;
+  clearTimeout(drag.timer);
+  const d = drag; drag = null;
+  if (!d.active) return;
+  d.li.classList.remove('dragging'); d.ghost.remove(); clearDrop();
+  if (!drop || !d.target) return;
+  const src = lastResult[d.gi]; if (!src) return;
+  let dst;
+  if (d.target.li){
+    dst = lastResult[+d.target.li.dataset.gi];
+    const o = d.target.li._s, a = src.indexOf(d.s), b = dst.indexOf(o);
+    if (a < 0 || b < 0) return;
+    src[a] = o; dst[b] = d.s;
+  } else {
+    dst = lastResult[+d.target.tile.dataset.gi];
+    src.splice(src.indexOf(d.s), 1); dst.push(d.s);
+  }
+  locked.add(lastResult.indexOf(src)); locked.add(lastResult.indexOf(dst));
+  if (!src.length){   /* leere Gruppe entfernen, Nummern der fixierten nachziehen */
+    const k = lastResult.indexOf(src); lastResult.splice(k, 1);
+    locked = new Set([...locked].filter(i => i !== k).map(i => i > k ? i - 1 : i));
+  }
+  if (committed){ const h = getHist(); if (h.length){ h[h.length - 1].groups = lastResult.map(g => g.map(skey)); setHist(h); } }
+  renderBoard(true);
+}
+$('groups').addEventListener('pointerdown', e => {
+  if (e.button > 0 || !e.isPrimary) return;
+  const li = e.target.closest && e.target.closest('li[data-gi]'); if (!li) return;
+  drag = { li, s: li._s, gi: +li.dataset.gi, x: e.clientX, y: e.clientY, active: false, touch: e.pointerType === 'touch', lx: e.clientX, ly: e.clientY };
+  if (drag.touch) drag.timer = setTimeout(() => startDrag(drag.lx, drag.ly), 320);   /* Finger: kurz halten, sonst wird gescrollt */
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.lx = e.clientX; drag.ly = e.clientY;
+  if (!drag.active){
+    const far = Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > (drag.touch ? 10 : 5);
+    if (!far) return;
+    if (drag.touch){ clearTimeout(drag.timer); drag = null; return; }
+    startDrag(e.clientX, e.clientY);
+  }
+  moveDrag(e.clientX, e.clientY);
+});
+document.addEventListener('pointerup', e => { if (drag) endDrag(e.button <= 0); });
+document.addEventListener('pointercancel', () => endDrag(false));
+document.addEventListener('touchmove', e => { if (drag && drag.active) e.preventDefault(); }, { passive:false });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && drag) endDrag(false); });
 
 /* ---- Sheet ---- */
 let editing = null;
@@ -839,7 +1064,7 @@ $('dlgCancel').onclick = () => $('dlg').close();
 $('dlgDelete').onclick = () => {
   if (!confirm(t('confirmDel')(editing))) return;
   delete classes[editing]; store.set('gb_classes', classes);
-  try{ localStorage.removeItem(histKey(editing)); }catch(e){}
+  store.del(histKey(editing));
   settings.cls = Object.keys(classes)[0] || ''; save(); lastResult = null; absent.clear();
   $('dlg').close(); renderAll();
 };
@@ -850,7 +1075,7 @@ $('dlgForm').onsubmit = e => {
   if (!students.length){ e.preventDefault(); toast(t('tNoNames')); return; }
   if (editing && editing !== name){
     setHist(getHist(editing), name);
-    try{ localStorage.removeItem(histKey(editing)); }catch(e){}
+    store.del(histKey(editing));
     delete classes[editing];
   }
   classes[name] = { raw, students, lang: $('dlgLang').value };
@@ -859,7 +1084,7 @@ $('dlgForm').onsubmit = e => {
   renderAll(); toast(t('tNames')(students.length));
 };
 
-function renderAll(){ applyLang(); renderClassSel(); renderRoster(); renderControls(); renderBoard(); renderHist(); }
+function renderAll(){ $('autoNote').hidden = $('autoRow').hidden = !native; applyLang(); renderClassSel(); renderRoster(); renderControls(); renderBoard(); renderHist(); }
 renderAll();
 </script>
 <script>
@@ -872,15 +1097,34 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !wind
 'use strict';
 const Importer = (() => {
 let importHead = [];
+/* Klasse je Schüler (Kurse aus mehreren Klassen, z. B. „8A“ und „8B“): „08 a“ → „8a“ */
+let tableCls = new Map();
+const CLS = /^0?(\d{1,2})\s?([A-Za-zÄÖÜäöü]{1,2})$/;
+const normCls = v => { const t = String(v ?? '').trim(); const m = CLS.exec(t); return m ? m[1] + m[2] : ''; };
+const clsKey = (last, first) => (String(last || '') + '|' + String(first || '')).toLowerCase().replace(/\s+/g, ' ');
+/* Spalte, in der fast überall eine Klasse steht (ab Spalte „from“) */
+function classColumn(rows, from) {
+  const n = Math.max(0, ...rows.map(r => r.length));
+  for (let i = from; i < n; i++) { const hit = rows.filter(r => normCls(r[i]) && +CLS.exec(String(r[i]).trim())[1] >= 5 && +CLS.exec(String(r[i]).trim())[1] <= 13).length; if (rows.length >= 2 && hit >= rows.length * .8) return i; }
+  return -1;
+}
 /* PDF → Zeilen; bei Tabellen mit Kopfzeile werden die Spalten über die x-Positionen erkannt */
-async function pdfLines(buf) {
+/* Rohe Textstücke mit Position je Seite (auch für das Notenblatt, siehe notenblatt.js) */
+async function pdfRaw(buf) {
   const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
-  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
-  const allRows = [];
+  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise; const pages = [];
   for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p); const tc = await page.getTextContent(); const rows = [];
-    for (const it of tc.items) { if (!it.str || !it.str.trim()) continue; const y = it.transform[5], x = it.transform[4];
-      let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.str.trim(), w: it.width || 0 }); }
+    const page = await pdf.getPage(p); const tc = await page.getTextContent();
+    pages.push({ items: tc.items.filter(it => it.str && it.str.trim()).map(it => ({ s: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0 })) });
+  }
+  return pages;
+}
+async function pdfLines(pages) {
+  const allRows = [];
+  for (const pg of pages) {
+    const rows = [];
+    for (const it of pg.items) { const y = it.y, x = it.x;
+      let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.s.trim(), w: it.w || 0 }); }
     rows.sort((a, b) => b.y - a.y); rows.forEach(r => r.items.sort((a, b) => a.x - b.x)); allRows.push(...rows);
   }
   importHead = allRows.slice(0, 3).map(r => r.items.map(i => i.s).join(' '));
@@ -900,7 +1144,7 @@ async function pdfLines(buf) {
         head[best] = (head[best] ? head[best] + ' ' : '') + h.s; }
       const table = [head, ...data.map(r => { const cells = cols.map(() => ''); r.items.forEach(i => { const k = colOf(i.x); cells[k] = (cells[k] ? cells[k] + ' ' : '') + i.s; }); return cells; })];
       const viaTable = namesFromRows(table, true);
-      if (viaTable.length) return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`);
+      if (viaTable.length) { viaTable.forEach(s => { if (s.cls) tableCls.set(clsKey(s.last, s.first), s.cls); }); return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`); }
     }
   }
   return allRows.map(r => r.items.map(i => i.s).join(' '));
@@ -922,12 +1166,13 @@ function headerlessTable(rows) {
   let gc = -1;
   for (let i = 2; i < Math.max(...ok.map(r => r.length)); i++) { const v = ok.map(r => (r[i] || '').toLowerCase()); if (v.filter(x => /^(m|w|d|männlich|weiblich|divers)$/.test(x)).length >= ok.length * .8) { gc = i; break; } }
   const HEADISH = /belegart|jahrgangsstufe|klasse|kurs|schuljahr|\bstr\b|\bostr\b|\bstd\b|lehrkraft|name/i;
+  const kc = classColumn(ok, 2);
   const out = [];
   data.forEach((r, i) => {
     if (!(nameLike(r[0]) && nameLike(r[1]))) return;
     if (i === 0 && (HEADISH.test(r.join(' ')) || /\d/.test(r[0]))) return;
     const gv = gc >= 0 ? (r[gc] || '').toLowerCase() : '';
-    out.push({ last: r[0], first: r[1], g: /^w/.test(gv) ? 'w' : /^m/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+    out.push({ last: r[0], first: r[1], g: /^w/.test(gv) ? 'w' : /^m/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '', cls: kc >= 0 ? normCls(r[kc]) : '' });
   });
   return out;
 }
@@ -935,12 +1180,12 @@ function headerlessTable(rows) {
 /* Tabellen mit Kopfzeile (Name/Nachname, Vorname, Geschlecht) */
 function namesFromRows(rows, strict) {
   const norm = v => String(v ?? '').trim();
-  let hi = -1, cL = -1, cF = -1, cG = -1, cFull = -1;
+  let hi = -1, cL = -1, cF = -1, cG = -1, cFull = -1, cK = -1;
   for (let i = 0; i < Math.min(rows.length, 40) && hi < 0; i++) {
     const r = rows[i].map(x => norm(x).toLowerCase());
     const L = r.findIndex(x => /^(nach)?name$|^familienname|^schüler.*name|^name,? vorname$|^name des schülers/.test(x));
     const F = r.findIndex(x => /^vorname|^rufname/.test(x));
-    if (L >= 0 || F >= 0) { hi = i; cL = L; cF = F; cG = r.findIndex(x => /^geschl|^g$|^m\/w|^w\/m|^sex/.test(x)); if (L >= 0 && F < 0) cFull = L; }
+    if (L >= 0 || F >= 0) { hi = i; cL = L; cF = F; cG = r.findIndex(x => /^geschl|^g$|^m\/w|^w\/m|^sex/.test(x)); cK = r.findIndex(x => /^(stamm)?klasse$|^kl\.?$|^klasse[ /(-]/.test(x)); if (L >= 0 && F < 0) cFull = L; }
   }
   if (hi < 0) { if (strict) return []; const t = headerlessTable(rows); return t.length ? t : recognizeNames(rows.map(r => r.map(norm).filter(Boolean).join(' '))); }
   const out = [];
@@ -951,7 +1196,7 @@ function namesFromRows(rows, strict) {
     first = first.replace(/\(.*?\)/g, '').trim(); last = last.replace(/^\d+[.)]?\s*/, '').trim();
     if (!first || !/[A-Za-zÀ-ÿ]/.test(first + last) || /^(summe|gesamt|anzahl)/i.test(last)) continue;
     const gv = cG >= 0 ? norm(r[cG]).toLowerCase() : '';
-    out.push({ first, last, g: /^w|weibl|^f/.test(gv) ? 'w' : /^m|männ/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '' });
+    out.push({ first, last, g: /^w|weibl|^f/.test(gv) ? 'w' : /^m|männ/.test(gv) ? 'm' : /^d/.test(gv) ? 'd' : '', cls: cK >= 0 ? normCls(r[cK]) : '' });
   }
   return out;
 }
@@ -961,21 +1206,28 @@ function recognizeNames(lines) {
   const out = [];
   const HEAD = /\b(klasse|klassenliste|schuljahr|seite|lehrkraft|klassenleit|datum|stand|gymnasium|schule|anzahl|geburtsdatum|konfession|religion|ausbildungsrichtung|nachname|vorname|schüler(innen)?liste)\b/i;
   const numbered = lines.filter(l => /^\s*\d+[.)]?\s+\S/.test(l)).length >= 3;
+  /* Kurslisten des Infoportals: je Klasse ein Abschnitt mit der Zeile „8A, KL: …“ (oder „Klasse 8A“) – gilt für die folgenden Namen */
+  let section = '';
   for (let raw of lines) {
     let l = String(raw || '').replace(/\s+/g, ' ').trim(); if (!l) continue;
+    const sm = l.match(/^(0?(?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü]{1,2}) ?, ?KL\b/) || l.match(/^Klasse:? (0?(?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü]{1,2})$/i);
+    if (sm) { section = normCls(sm[1]); continue; }
     if (numbered && !/^\d+[.)]?\s+/.test(l)) continue;
     l = l.replace(/^\d+[.)]?\s+/, '');
     if (HEAD.test(l) && !/,/.test(l)) continue;
     let g = ''; const gm = l.match(/(?:\(|\s|^)(w|m|d|weiblich|männlich|divers)(?:\)|\s|$)/i);
     if (gm) { const v = gm[1].toLowerCase(); g = v[0] === 'w' ? 'w' : v[0] === 'm' ? 'm' : 'd'; l = l.replace(gm[0], ' '); }
+    /* Klasse in der Zeile („8A“, „10 c“) – zählt nur, wenn sie in fast allen Zeilen steht (siehe unten) */
+    const km = l.match(/(?<![\p{L}\p{N}.])0?((?:[5-9]|1[0-3]) ?[A-Za-zÄÖÜäöü])(?![\p{L}\p{N}])/u); const cls = section || (km ? km[1].replace(' ', '') : '');
     l = l.replace(/\b\d{1,2}\.\d{1,2}\.(\d{2}|\d{4})\b/g, ' ').replace(/\b\d+[a-z]?\b/gi, ' ').replace(/(?<![\p{L}\p{N}])(ev|rk|ak|eth|isl|ohne|RK|EV|K|E)(?![\p{L}\p{N}])\.?/gu, ' ').replace(/[|•·]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!l || !/[A-Za-zÀ-ÿ]{2}/.test(l)) continue;
     let first, last;
     if (l.includes(',')) { const p = l.split(',').map(x => x.trim()).filter(Boolean); last = p[0]; first = (p[1] || '').split(' ').filter(Boolean).join(' '); }
     else { const p = l.split(' '); if (p.length > 5) continue; first = p.shift(); last = p.join(' '); }
     if (!first || first.length < 2) continue;
-    out.push({ first, last: last || '', g });
+    out.push({ first, last: last || '', g, cls });
   }
+  if (out.filter(x => x.cls).length < Math.max(2, out.length * .8)) out.forEach(x => { x.cls = ''; });
   return out;
 }
 
@@ -994,13 +1246,18 @@ function detectClassName(head, fname) {
 }
 
 async function readFile(f) {
-  const name = f.name.toLowerCase(); let list = []; importHead = [];
-  if (name.endsWith('.pdf')) list = recognizeNames(await pdfLines(await f.arrayBuffer()));
+  const name = f.name.toLowerCase(); let list = []; importHead = []; tableCls = new Map();
+  if (name.endsWith('.pdf')) {
+    const pages = await pdfRaw(await f.arrayBuffer());
+    if (window.Notenblatt && Notenblatt.looksLike(pages)) return { notenblatt: pages, list: [], cls: '', head: [] };
+    list = recognizeNames(await pdfLines(pages));
+  }
   else if (/\.(xlsx|xls|ods)$/.test(name)) { const rows = sheetRows(await f.arrayBuffer()); importHead = rows.slice(0, 3).map(r => r.join(' ; ')); list = namesFromRows(rows); }
   else { const txt = await f.text(); const lines = txt.split(/\r?\n/); importHead = lines.slice(0, 3); list = /[;\t]/.test(txt) ? namesFromRows(lines.map(l => l.split(/[;\t]/))) : recognizeNames(lines); }
-  return { list, cls: detectClassName(importHead, f.name) };
+  if (tableCls.size) list.forEach(x => { if (!x.cls) x.cls = tableCls.get(clsKey(x.last, x.first)) || ''; });
+  return { list, cls: detectClassName(importHead, f.name), head: importHead.slice() };
 }
-return { readFile, recognizeNames, namesFromRows };
+return { readFile, recognizeNames, namesFromRows, normCls };
 })();
 
 (function(){
