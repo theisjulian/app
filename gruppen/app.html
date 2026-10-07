@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Gruppi</title>
+<title>Gruppo</title>
 <style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-opsz-normal.woff2) format("woff2")}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}.importBtn{border:0;background:var(--fill,rgba(20,30,50,.07));color:var(--blue,#0071E3);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:500;cursor:pointer}
 .importBtn:hover{filter:brightness(.97)}
@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Gruppi">
+<meta name="apple-mobile-web-app-title" content="Gruppo">
 <style>
 :root{
   /* System colours */
@@ -290,6 +290,10 @@ body.pfs-on{overflow:hidden}
 .lockbtn svg{width:16px;height:16px;display:block}
 .board:fullscreen .lockbtn,.board.pfs .lockbtn{display:none}
 .hint{margin:18px 4px 0;font-size:13px;color:var(--label-2)}
+.updnote{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 14px;padding:12px 16px;border-radius:var(--r-xl);font-size:14.5px}
+.updnote .grow{flex:1;min-width:200px}
+.updnote a{color:var(--blue);font-weight:600;text-decoration:none}
+.updnote button{background:none;border:0;color:var(--label-2);font-size:18px;line-height:1;padding:2px 6px}
 /* ---------- Sheet ---------- */
 dialog{border:0;padding:0;color:var(--label);border-radius:24px;width:min(540px,94vw);
   background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
@@ -343,7 +347,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
 
 <div class="toolbar">
   <div class="bar glass">
-    <h1 data-t="title">Gruppi</h1>
+    <h1 data-t="title">Gruppo</h1>
     <span class="picker"><select id="classSel" aria-label="Klasse"></select></span>
     <button class="tbtn" id="addBtn" data-t="addClass">Klasse hinzufügen</button>
     <button class="tbtn" id="editBtn" data-t="edit">Bearbeiten</button>
@@ -351,6 +355,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
 </div>
 
 <div class="wrap">
+  <div class="updnote glass" id="updNote" hidden><span class="grow" id="updTxt"></span><a id="updGet" href="#" target="_blank" rel="noopener"></a><button id="updX" aria-label="×">×</button></div>
   <div class="layout">
     <div class="rail">
       <section class="panel glass">
@@ -404,10 +409,12 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
         </div>
         <p class="note" id="autoNote" hidden data-t="autoNote">Automatische Sicherheitskopie auf diesem Computer.</p>
         <div class="linkrow" id="autoRow" hidden><button class="linkbtn" id="folderBtn" data-t="folder">Ordner zeigen</button></div>
+        <label class="row" id="updRow" hidden style="margin-top:14px"><span data-t="updChk">Beim Start nach neuer Version suchen</span><input type="checkbox" class="sw" id="updChk" checked></label>
+        <p class="note" id="updHelp" hidden data-t="updHelp" style="margin:6px 0 0">Fragt beim Start nur die Versionsnummer ab; dabei sieht der Server technisch deine IP-Adresse.</p>
       </section>
 
       <section class="panel glass">
-        <h2 class="ptitle" data-t="about">Über Gruppi</h2>
+        <h2 class="ptitle" data-t="about">Über Gruppo</h2>
         <p class="note" style="margin:0"><span data-t="aboutText">Version 1.0.3 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – Apps für die Schule</a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
       </section>
     </div>
@@ -479,7 +486,8 @@ const DEFAULT_CLASSES = {
 };
 
 const T = {
- de:{ title:"Gruppi", addClass:"Klasse hinzufügen", edit:"Bearbeiten", size:"Gruppengröße", modeSize:"Schüler pro Gruppe", modeCount:"Anzahl Gruppen",
+ de:{ title:"Gruppo", addClass:"Klasse hinzufügen", edit:"Bearbeiten", size:"Gruppengröße", modeSize:"Schüler pro Gruppe", modeCount:"Anzahl Gruppen",
+  updChk:"Beim Start nach neuer Version suchen", updHelp:"Fragt beim Start nur die Versionsnummer ab; dabei sieht der Server technisch deine IP-Adresse.", updNew:v=>`Neue Version ${v} verfügbar. Deine Klassen bleiben beim Aktualisieren erhalten.`, updGet:"Jetzt laden",
   restBig:"Übrige dazusetzen", restSmall:"Kleinere Gruppen", mix:"Mädchen und Jungen gleichmäßig verteilen", preferNew:"Möglichst neue Kombinationen",
   showLast:"Nachnamen anzeigen", go:"Gruppen bilden", present:"Heute da", tapAbsent:"Antippen, wer fehlt.", allIn:"Alle wieder anwesend",
   history:"Verlauf", undo:"Letzte Runde entfernen", clear:"Verlauf löschen", commit:"Übernehmen", committed:"Übernommen", again:"Neu mischen",
@@ -495,8 +503,9 @@ const T = {
   confirmClear:c=>`Verlauf für ${c} löschen?`, confirmDel:c=>`Klasse ${c} wirklich löschen?`, confirmImp:"Vorhandene Klassen mit gleichem Namen werden ersetzt. Fortfahren?",
   dlgAdd:"Klasse hinzufügen", dlgEdit:c=>`${c} bearbeiten`, dlgName:"Name der Klasse", dlgLang:"Sprache der Oberfläche", dlgNames:"Namen",
   dlgHelp:"Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.",
-  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppi", aboutText:"Version 1.0.3 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
- en:{ title:"Gruppi", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
+  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppo", aboutText:"Version 1.0.3 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
+ en:{ title:"Gruppo", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
+  updChk:"Check for a new version at startup", updHelp:"Only asks for the version number at startup; the server technically sees your IP address.", updNew:v=>`New version ${v} available. Your classes are kept when you update.`, updGet:"Download",
   restBig:"Add extras to groups", restSmall:"Smaller groups", mix:"Mix girls and boys evenly", preferNew:"New combinations where possible",
   showLast:"Show surnames", go:"Make groups", present:"Here today", tapAbsent:"Tap anyone who's absent.", allIn:"Everyone's here again",
   history:"History", undo:"Remove last round", clear:"Clear history", commit:"Use these groups", committed:"Saved", again:"Shuffle again",
@@ -512,8 +521,9 @@ const T = {
   confirmClear:c=>`Clear the history for ${c}?`, confirmDel:c=>`Delete ${c}?`, confirmImp:"Classes with the same name will be replaced. Continue?",
   dlgAdd:"Add class", dlgEdit:c=>`Edit ${c}`, dlgName:"Class name", dlgLang:"Interface language", dlgNames:"Names",
   dlgHelp:"One per line. You can paste the whole class list from the PDF – header lines are ignored.",
-  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppi", aboutText:"Version 1.0.3 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
- it:{ title:"Gruppi", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
+  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppo", aboutText:"Version 1.0.3 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
+ it:{ title:"Gruppo", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
+  updChk:"Cerca nuove versioni all’avvio", updHelp:"All’avvio richiede solo il numero di versione; il server vede tecnicamente il tuo indirizzo IP.", updNew:v=>`Nuova versione ${v} disponibile. Le tue classi restano dopo l’aggiornamento.`, updGet:"Scarica",
   restBig:"Aggiungi i restanti", restSmall:"Gruppi più piccoli", mix:"Distribuisci ragazze e ragazzi in modo equilibrato", preferNew:"Possibilmente combinazioni nuove",
   showLast:"Mostra i cognomi", go:"Forma i gruppi", present:"Presenti oggi", tapAbsent:"Tocca chi è assente.", allIn:"Tutti di nuovo presenti",
   history:"Cronologia", undo:"Elimina l'ultimo turno", clear:"Cancella la cronologia", commit:"Conferma", committed:"Confermato", again:"Rimescola",
@@ -529,8 +539,9 @@ const T = {
   confirmClear:c=>`Cancellare la cronologia di ${c}?`, confirmDel:c=>`Eliminare ${c}?`, confirmImp:"Le classi con lo stesso nome verranno sostituite. Continuare?",
   dlgAdd:"Aggiungi classe", dlgEdit:c=>`Modifica ${c}`, dlgName:"Nome della classe", dlgLang:"Lingua dell'interfaccia", dlgNames:"Nomi",
   dlgHelp:"Uno per riga. Puoi incollare l'intera lista dal PDF: le intestazioni vengono ignorate.",
-  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppi", aboutText:"Versione 1.0.3 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" },
- fr:{ title:"Gruppi", addClass:"Ajouter une classe", edit:"Modifier", size:"Taille des groupes", modeSize:"Élèves par groupe", modeCount:"Nombre de groupes",
+  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppo", aboutText:"Versione 1.0.3 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" },
+ fr:{ title:"Gruppo", addClass:"Ajouter une classe", edit:"Modifier", size:"Taille des groupes", modeSize:"Élèves par groupe", modeCount:"Nombre de groupes",
+  updChk:"Rechercher une nouvelle version au démarrage", updHelp:"Ne demande que le numéro de version au démarrage ; le serveur voit techniquement votre adresse IP.", updNew:v=>`Nouvelle version ${v} disponible. Vos classes sont conservées lors de la mise à jour.`, updGet:"Télécharger",
   restBig:"Répartir les restes", restSmall:"Groupes plus petits", mix:"Répartir filles et garçons de façon équilibrée", preferNew:"De préférence de nouvelles combinaisons",
   showLast:"Afficher les noms de famille", go:"Former les groupes", present:"Présents aujourd’hui", tapAbsent:"Touchez les élèves absents.", allIn:"Tous de nouveau présents",
   history:"Historique", undo:"Supprimer le dernier tour", clear:"Effacer l’historique", commit:"Valider", committed:"Validé", again:"Mélanger à nouveau",
@@ -548,9 +559,10 @@ const T = {
   dlgAdd:"Ajouter une classe", dlgEdit:c=>`Modifier ${c}`, dlgName:"Nom de la classe", dlgLang:"Langue de l’interface", dlgNames:"Noms",
   dlgHelp:"Un par ligne. Vous pouvez coller toute la liste du PDF : les en-têtes sont ignorés.",
   dlgDelete:"Supprimer la classe", cancel:"Annuler", save:"Enregistrer", custom:"Nombre au choix",
-  about:"À propos de Gruppi", aboutText:"Version 1.0.3 · Toutes les données restent sur cet appareil.", support:"Offrir un café", supportNote:"· facultatif, l’application reste gratuite",
+  about:"À propos de Gruppo", aboutText:"Version 1.0.3 · Toutes les données restent sur cet appareil.", support:"Offrir un café", supportNote:"· facultatif, l’application reste gratuite",
   importFile:"Importer un fichier (PDF, Excel, CSV) …", swapNames:"Inverser prénom et nom", importOk:n=>`${n} noms ajoutés – à vérifier`, importNone:"Aucun nom trouvé", importErr:"Impossible de lire le fichier" },
- es:{ title:"Gruppi", addClass:"Añadir clase", edit:"Editar", size:"Tamaño de los grupos", modeSize:"Alumnos por grupo", modeCount:"Número de grupos",
+ es:{ title:"Gruppo", addClass:"Añadir clase", edit:"Editar", size:"Tamaño de los grupos", modeSize:"Alumnos por grupo", modeCount:"Número de grupos",
+  updChk:"Buscar nueva versión al iniciar", updHelp:"Solo consulta el número de versión al iniciar; el servidor ve técnicamente tu dirección IP.", updNew:v=>`Nueva versión ${v} disponible. Tus clases se conservan al actualizar.`, updGet:"Descargar",
   restBig:"Añadir los sobrantes", restSmall:"Grupos más pequeños", mix:"Repartir chicas y chicos de forma equilibrada", preferNew:"Si es posible, combinaciones nuevas",
   showLast:"Mostrar apellidos", go:"Formar grupos", present:"Presentes hoy", tapAbsent:"Toca a quien falte.", allIn:"Todos presentes de nuevo",
   history:"Historial", undo:"Quitar la última ronda", clear:"Borrar el historial", commit:"Confirmar", committed:"Confirmado", again:"Volver a mezclar",
@@ -568,7 +580,7 @@ const T = {
   dlgAdd:"Añadir clase", dlgEdit:c=>`Editar ${c}`, dlgName:"Nombre de la clase", dlgLang:"Idioma de la interfaz", dlgNames:"Nombres",
   dlgHelp:"Uno por línea. Puedes pegar la lista completa del PDF: se ignoran los encabezados.",
   dlgDelete:"Eliminar clase", cancel:"Cancelar", save:"Guardar", custom:"Otro número",
-  about:"Acerca de Gruppi", aboutText:"Versión 1.0.3 · Todos los datos permanecen en este dispositivo.", support:"Invítame a un café", supportNote:"· voluntario, la app sigue siendo gratuita",
+  about:"Acerca de Gruppo", aboutText:"Versión 1.0.3 · Todos los datos permanecen en este dispositivo.", support:"Invítame a un café", supportNote:"· voluntario, la app sigue siendo gratuita",
   importFile:"Importar archivo (PDF, Excel, CSV) …", swapNames:"Intercambiar nombre y apellido", importOk:n=>`${n} nombres añadidos: revísalos`, importNone:"No se encontró ningún nombre", importErr:"No se pudo leer el archivo" }
 };
 
@@ -896,7 +908,7 @@ function toast(msg){ const el = $('toast'); el.textContent = msg; el.classList.a
 /* ---- Sicherung ---- */
 async function exportData(){
   const text = JSON.stringify(snapshot(), null, 1);
-  const filename = 'gruppi-sicherung-' + new Date().toISOString().slice(0,10) + '.json';
+  const filename = 'gruppo-sicherung-' + new Date().toISOString().slice(0,10) + '.json';
   if (window.AndroidBridge && window.AndroidBridge.saveFile){ try{ window.AndroidBridge.saveFile(filename, text); }catch(e){ toast(t('tExpFail')); } return; }
   let api = null;
   try{ if (window.claude && window.claude.use) api = await window.claude.use('downloads'); }catch(e){}
@@ -940,6 +952,8 @@ $('restBig').onclick = () => { settings.rest='big'; save(); renderControls(); };
 $('restSmall').onclick = () => { settings.rest='small'; save(); renderControls(); };
 $('mixGender').onchange = e => { settings.mix = e.target.checked; save(); };
 $('preferNew').onchange = e => { settings.prefer = e.target.checked; save(); };
+$('updChk').onchange = e => { settings.updateCheck = e.target.checked; save(); if (!e.target.checked){ window._upd = null; renderUpd(); } else checkUpd(); };
+$('updX').onclick = () => { window._upd = null; renderUpd(); };
 $('showLast').onchange = e => { settings.last = e.target.checked; save(); renderBoard(); };
 $('goBtn').onclick = () => build(false);
 $('againBtn').onclick = () => build(true);
@@ -1084,8 +1098,11 @@ $('dlgForm').onsubmit = e => {
   renderAll(); toast(t('tNames')(students.length));
 };
 
-function renderAll(){ $('autoNote').hidden = $('autoRow').hidden = !native; applyLang(); renderClassSel(); renderRoster(); renderControls(); renderBoard(); renderHist(); }
-renderAll();
+const canUpd = !!(native && native.checkUpdate);
+function renderUpd(){ $('updRow').hidden = $('updHelp').hidden = !canUpd; $('updChk').checked = settings.updateCheck !== false; const u = window._upd; $('updNote').hidden = !u; if (u){ $('updTxt').textContent = t('updNew')(u.version); const a=$('updGet'); a.textContent = t('updGet'); a.href = u.url; } }
+function checkUpd(){ if (!canUpd || settings.updateCheck === false) return; native.checkUpdate().then(u => { if (u && u.version){ window._upd = u; renderUpd(); } }).catch(()=>{}); }
+function renderAll(){ renderUpd(); $('autoNote').hidden = $('autoRow').hidden = !native; applyLang(); renderClassSel(); renderRoster(); renderControls(); renderBoard(); renderHist(); }
+renderAll(); checkUpd();
 </script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !window.AndroidBridge) {
