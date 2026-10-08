@@ -1,8 +1,8 @@
 {
  "libretto": {
-  "version": "0.9.4",
+  "version": "0.9.5",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Neu: Übertrag-Markierung, Notenblatt einlesen (Einstieg mitten im Schuljahr), volle Bildschirmbreite.",
+  "notes": "Neu: Klassen austauschen (theis-Klassen), Tab-Taste wie im Infoportal, Notenspiegel als Diagramm, Punkteverteilung im Ausdruck, Klasse auf dem Schülerblatt, Dateinamen mit Datum; dazu Übertrag-Markierung, Notenblatt einlesen, volle Bildschirmbreite.",
   "betaEnd": "2027-09-30",
   "minVersion": null,
   "message": ""

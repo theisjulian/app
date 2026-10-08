@@ -97,7 +97,7 @@
     function readStudent(num, blk) {
       const st = { n: num, last: '', first: '', cls: '', cells: {}, orals: [], bad: [] };
       const nameIt = blk.filter(i => i.x < firstDataX - 2);
-      const text = rowsOf(nameIt).map(r => r.items.map(i => i.s).join(' ')).join(' ').replace(/\s+/g, ' ').trim();
+      const text = rowsOf(nameIt).map(r => r.items.map(i => i.s).join(' ')).join(' ').replace(/(\p{L})\s*([-‐‑])\s+(?=\p{L})/gu, '$1$2').replace(/(\p{L})\s+([-‐‑])(?=\p{L})/gu, '$1$2').replace(/(^|[\s-])(\p{L})(['’])\s+(?=\p{L})/gu, '$1$2$3').replace(/\s+/g, ' ').trim();
       const cm = /\(([^)]{1,12})\)\s*$/.exec(text); if (cm) st.cls = cm[1].trim();
       const base = text.replace(/\(([^)]{1,12})\)\s*$/, '').trim();
       const ci = base.indexOf(',');

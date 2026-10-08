@@ -9,6 +9,20 @@ const Print = (() => {
      { title, subtitle, meta: [[Label, Wert], …], blocks: [ {h:'Überschrift'} | {p:'Text'} | {table:{head:[…], rows:[[…] | {group:'Zwischenüberschrift über die ganze Breite'}], align:['l','c',…], widths:[…], bold:[colIdx], small:true}} | {pagebreak:true} ], landscape } */
 
   /* ---------- HTML / PDF ---------- */
+
+  /* Säulendiagramm (Notenspiegel): schlicht, Zahlen über den Säulen, schwarz-weiß-tauglich. b = {labels, values, avg} */
+  function barsSvg(b, w, h) {
+    const n = b.labels.length, max = Math.max(1, ...b.values), padL = 22, padR = 8, padT = 22, padB = 24, bw = (w - padL - padR) / n;
+    let o = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="Helvetica,Arial,sans-serif">`;
+    o += `<line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#16171a" stroke-width="1"/>`;
+    b.values.forEach((v, i) => {
+      const bh = (h - padT - padB) * v / max, x = padL + i * bw + bw * .18, y = h - padB - bh;
+      if (v) o += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${bh.toFixed(1)}" fill="#4a5568"/>`;
+      o += `<text x="${(x + bw * .32).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="#16171a">${v || 0}</text>`;
+      o += `<text x="${(x + bw * .32).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="11" fill="#16171a">${esc(b.labels[i])}</text>`;
+    });
+    return o + '</svg>';
+  }
   function html(m, settings) {
     const css = `
       *{box-sizing:border-box} body{margin:0;font:10pt/1.4 -apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;color:#16171a}
@@ -27,6 +41,7 @@ const Print = (() => {
       tr:nth-child(even) td{background:#fafbfc}
       tr.grp td{background:#eef0f4;font-weight:700;text-align:left;font-size:8.5pt;padding:4px 6px;break-after:avoid}
       .pb{page-break-after:always;height:0}
+      .bars{margin:4px 0 8px;break-inside:avoid}
       .sig{display:flex;gap:30px;margin-top:28px} .sig div{flex:1;border-top:.5pt solid #16171a;padding-top:3px;font-size:8pt;color:#555}`;
     const who = [settings.school, settings.teacher].filter(Boolean);
     const head = (mm) => `<div class="hd"><div><h1>${esc(mm.title)}</h1>${mm.subtitle ? `<div class="sub">${esc(mm.subtitle)}</div>` : ''}</div>${who.length ? `<div class="who">${who.map(esc).join('<br>')}</div>` : ''}</div>
@@ -35,6 +50,7 @@ const Print = (() => {
       if (b.h) return `<h2>${esc(b.h)}</h2>`;
       if (b.p) return `<p>${esc(b.p)}</p>`;
       if (b.pagebreak) return '<div class="pb"></div>';
+      if (b.bars) return `<div class="bars">${barsSvg(b.bars, b.bars.labels.length > 8 ? 420 : 320, 130)}</div>`;
       if (b.head) return head(b.head);
       if (b.sig) return `<div class="sig">${b.sig.map(s => `<div>${esc(s)}</div>`).join('')}</div>`;
       if (b.table) {
@@ -57,6 +73,15 @@ const Print = (() => {
   }
 
   /* ---------- Word ---------- */
+  /* SVG → PNG (Canvas), doppelte Auflösung für scharfen Druck; null, wenn nicht möglich */
+  async function barsPng(b, w, h) {
+    try {
+      const svg = barsSvg(b, w, h), img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+      const cv = document.createElement('canvas'); cv.width = w * 2; cv.height = h * 2; const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+      const bin = atob(cv.toDataURL('image/png').split(',')[1]); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out;
+    } catch (e) { return null; }
+  }
   async function docx(m, settings) {
     const X = window.docx;
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ShadingType, ImageRun, PageBreak, TableLayoutType, Footer, PageOrientation, VerticalAlign } = X;
@@ -84,6 +109,7 @@ const Print = (() => {
       if (b.h) kids.push(p(t(b.h, { size: 22, bold: true }), { before: 220, after: 80, keepNext: true }));
       else if (b.p) kids.push(p(t(b.p)));
       else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
+      else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
       else if (b.sig) kids.push(p(t(''), { after: 500 }), p(b.sig.map((s, i) => t((i ? '                              ' : '') + '______________________________')), {}), p(b.sig.map((s, i) => t((i ? '                                                       ' : '') + s, { size: 15, color: '555555' }))));
       else if (b.table) {
@@ -119,5 +145,5 @@ const Print = (() => {
     m.blocks.forEach(b => { if (b.h) lines.push(q(b.h)); if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : r.map(q).join(';'))); lines.push(''); } });
     return new TextEncoder().encode('﻿' + lines.join('\r\n'));
   }
-  return { html, footer, docx, csv, DISCLAIMER };
+  return { html, footer, docx, csv, DISCLAIMER, barsSvg };
 })();

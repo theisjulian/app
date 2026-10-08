@@ -36,6 +36,8 @@ addEventListener('beforeunload', () => { if (D) { clearTimeout(saveT); N.saveSyn
 function toast(msg, ms = 2600) { const t = $('#toast'); t.classList.remove('act'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
 function toastAction(msg, label, fn, ms = 6000) { const t = $('#toast'); t.innerHTML = `<span>${esc(msg)}</span><button type="button">${esc(label)}</button>`; t.classList.add('show', 'act'); t.querySelector('button').onclick = () => { t.classList.remove('show', 'act'); fn(); }; clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show', 'act'), ms); }
 const course = () => D && D.courses.find(c => c.id === UI.course);
+/* Zuletzt geöffneten Kurs merken (nur die Kennung, in der Konfiguration – nicht in den Noten) */
+const rememberCourse = () => { if (UI.course && ST) { ST.lastCourse = UI.course; try { N.setCfg({ lastCourse: UI.course }); } catch (e) {} } };
 const upper = c => R.isUpper(c);
 /* Kurse mit Schülern aus mehreren Klassen (z. B. Italienisch aus 8A und 8B): Klasse je Schüler im Feld „cls“.
    Stehen mindestens zwei verschiedene Klassen im Kurs, wird die Liste nach Klassen unterteilt. */
@@ -148,7 +150,7 @@ function setupStep(n, ctx = {}) {
       <div class="rows"><div class="row"><span id="dirTxt">Noch kein Sicherungsordner gewählt</span><button class="mini accent" id="pick">Ordner wählen …</button></div></div>
       <p class="hint">Die Sicherungen sind verschlüsselt – auch in der Cloud kann sie niemand ohne dein Passwort lesen. Ob Cloud-Speicher an deiner Schule erlaubt ist, entscheidet die Schulleitung.</p>
       <button class="go" id="next">Los geht's</button><div class="gateLinks"><button id="later">Später einrichten</button></div>`);
-    $('#pick').onclick = async () => { ST = await N.chooseBackupDir(); if (ST.backupDir) { $('#dirTxt').textContent = ST.backupDir; toast('Erste Sicherung angelegt'); } };
+    $('#pick').onclick = async () => { ST = await N.chooseBackupDir(); if (ST.backupDir) { $('#dirTxt').textContent = ST.backupDir; toast(ST.lastExternalError ? '⚠ In diesem Ordner konnte nicht gesichert werden: ' + ST.lastExternalError : 'Erste Sicherung angelegt', ST.lastExternalError ? 6000 : 2600); } };
     const done = () => enterApp(); $('#next').onclick = done; $('#later').onclick = done;
   }
 }
@@ -228,7 +230,7 @@ function migrate() {
 async function enterApp() {
   $('#gate').hidden = true; $('#appRoot').hidden = false;
   ST = await N.status();
-  if (!UI.course && D.courses[0]) UI.course = D.courses[0].id;
+  if (!UI.course && D.courses[0]) UI.course = (ST.lastCourse && D.courses.some(x => x.id === ST.lastCourse)) ? ST.lastCourse : D.courses[0].id;   /* zuletzt geöffneter Kurs */
   $('#brandSub').textContent = `Notenverwaltung · Beta · Schuljahr ${D.settings.year}`;
   render();
   applyPolicy(await N.policy());
@@ -279,7 +281,16 @@ function updateNotice() { return UPDATE ? `<div class="notice info"><div class="
 function backupNotice() {
   return betaNotice() + updateNotice() + backupNotice0();
 }
+/* Meldung nach „Jetzt sichern“: „Gesichert“ nur, wenn wirklich eine Datei geschrieben wurde */
+function bkMsg(r) {
+  if (!r || !r.ok) return '⚠ Sicherung fehlgeschlagen' + (r && (r.localError || r.externalError) ? ' (' + (r.localError || r.externalError) + ')' : '') + ' – bitte Speicherplatz und Sicherungsordner prüfen.';
+  if (r.external && r.local) return 'Gesichert – auch im Sicherungsordner';
+  if (r.external) return 'Nur im Sicherungsordner gesichert – auf diesem Computer ging es nicht' + (r.localError ? ' (' + r.localError + ')' : '') + '.';
+  if (r.externalError) return '⚠ Nur auf diesem Computer gesichert – Sicherungsordner: ' + r.externalError;
+  return 'Auf diesem Computer gesichert';
+}
 function backupNotice0() {
+  if (ST.lastLocalError) return `<div class="notice"><div class="grow"><b>Sicherung auf diesem Computer fehlgeschlagen</b> (${esc(ST.lastLocalError)}). Bitte Speicherplatz prüfen und unter „Sicherung“ erneut sichern.</div></div>`;
   const days = ST.lastExternal ? (Date.now() - ST.lastExternal) / 864e5 : null;
   if (!ST.backupDir) return `<div class="notice"><div class="grow"><b>Noch kein externer Sicherungsordner.</b> Libretto sichert bisher nur auf diesem Computer. Wähle einen USB-Stick oder Cloud-Ordner – und übertrage Noten zeitnah ins Infoportal.</div><button class="mini" data-act="pickDir">Ordner wählen</button></div>`;
   if (ST.lastExternalError) return `<div class="notice"><div class="grow"><b>Sicherungsordner nicht erreichbar</b> (${esc(ST.lastExternalError)}). Ist der USB-Stick angeschlossen?</div><button class="mini" data-act="backupNow">Erneut sichern</button></div>`;
@@ -321,7 +332,7 @@ function renderGrades() {
   main.innerHTML = `<div class="layout">
     <aside class="rail">
       <section class="panel glass"><div class="phead"><h2 class="ptitle">Klassen und Kurse</h2><span class="count">${D.courses.length}</span></div><div class="courses">${list}</div>
-        <div class="panelBtns"><button class="mini" data-act="newCourse">+ Kurs</button></div></section>
+        <div class="panelBtns"><button class="mini" data-act="newCourse">+ Kurs</button><button class="mini" data-act="klassen" title="Klassen und Kurse mit anderen theis-Apps austauschen (Voce, Gruppo)">Klassen austauschen …</button></div></section>
       <section class="panel glass">${infoPanel(c)}</section>
     </aside>
     <section id="work">${courseView(c)}</section></div>`;
@@ -378,7 +389,7 @@ function courseView(c) {
       <div class="headBtns"><button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button><button class="mini" data-act="editCourse">Kurs &amp; Schüler</button><button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button><button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
     <div class="notices">${notices.filter(Boolean).join('')}</div>${scope}
     ${sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
-      <div class="legend"><span><b>Enter</b> nächste Zeile</span><span><b>←→↑↓</b> bewegen</span><span><b>E</b> Nachtermin</span><span><b>B</b> befreit</span><span><b>N</b> Note 6 (§ 26 Abs. 4)</span><span><b>U</b> Unterschleif</span><span>Spaltenkopf anklicken = bearbeiten, Notenspiegel, drucken</span></div>`
+      <div class="legend"><span><b>Enter</b> / <b>Tab</b> nächste Zeile</span><span><b>←→↑↓</b> bewegen</span><span><b>E</b> Nachtermin</span><span><b>B</b> befreit</span><span><b>N</b> Note 6 (§ 26 Abs. 4)</span><span><b>U</b> Unterschleif</span><span>Spaltenkopf anklicken = bearbeiten, Notenspiegel, drucken</span></div>`
       : `<div class="empty glass" style="min-height:260px"><div><strong>Noch keine Schüler</strong><p>Füge die Namensliste ein oder übernimm sie aus Excel.</p><button class="go" data-act="editCourse">Schüler eintragen</button></div></div>`}`;
 }
 function classBigDates(cls) {
@@ -548,7 +559,21 @@ function bindGrid(c) {
     const col = [...tr.children].indexOf(td);
     const moveRow = d => { let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col])); const n = r && r.children[col] && r.children[col].querySelector('.cell'); if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); }, 0); } };
     const moveCol = d => { const list = cells().filter(x => x.closest('tr') === tr); const i = list.indexOf(el); const n = list[i + d]; if (n) n.focus(); };
-    if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); moveRow(1); }
+    /* Tab wie im Infoportal: Tab = eine Zeile nach unten, Shift+Tab = nach oben; am Spaltenende in die nächste (vorherige) Spalte; ganz am Ende verlässt Tab die Tabelle wie gewohnt */
+    const tabMove = back => {
+      const d = back ? -1 : 1;
+      let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col]));
+      const n = r && r.children[col] && r.children[col].querySelector('.cell:not(.entq)');
+      if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); t.select && t.select(); }, 0); return true; }
+      const all = cells().filter(x => !x.classList.contains('entq') && x.dataset.a);
+      const keys = [...new Set(all.map(x => x.dataset.a))], k = keys.indexOf(el.dataset.a) + d;
+      if (k < 0 || k >= keys.length) return false;
+      const colCells = all.filter(x => x.dataset.a === keys[k]); const t0 = d > 0 ? colCells[0] : colCells[colCells.length - 1];
+      if (!t0) return false;
+      el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${t0.dataset.a}"][data-s="${t0.dataset.s}"]`) || t0; t.focus(); t.select && t.select(); }, 0); return true;
+    };
+    if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey && !el.classList.contains('entq') && el.dataset.a) { if (tabMove(e.shiftKey)) e.preventDefault(); }
+    else if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); moveRow(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); moveRow(-1); }
     else if (e.key === 'ArrowRight' && el.selectionStart === el.value.length) { e.preventDefault(); moveCol(1); }
     else if (e.key === 'ArrowLeft' && el.selectionStart === 0) { e.preventDefault(); moveCol(-1); }
@@ -565,22 +590,24 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (b) {
     const a = b.dataset.act;
     if (a === 'newCourse') courseSheet();
+    if (a === 'klassen') klassenSheet();
     if (a === 'editCourse') courseSheet(course());
     if (a === 'newAssessment') assessmentSheet(course());
     if (a === 'transfer') transferSheet(course());
     if (a === 'print') printSheet(course());
     if (a === 'pickDir') { ST = await N.chooseBackupDir(); render(); }
-    if (a === 'backupNow') { const r = await N.backupNow(); ST = await N.status(); toast(r.external ? 'Gesichert – auch im Sicherungsordner' : 'Auf diesem Computer gesichert'); render(); }
+    if (a === 'backupNow') { const r = await N.backupNow(); ST = await N.status(); toast(bkMsg(r)); render(); }
   }
-  const ci = e.target.closest('[data-course]'); if (ci) { UI.course = ci.dataset.course; UI.termFor = null; renderGrades(); }
+  const ci = e.target.closest('[data-course]'); if (ci) { UI.course = ci.dataset.course; UI.termFor = null; rememberCourse(); renderGrades(); }
 });
 
 /* ======================================================================
    Kurs anlegen / bearbeiten
    ====================================================================== */
-function courseSheet(c) {
+function courseSheet(c, pre) {
   const isNew = !c;
   c = c ? JSON.parse(JSON.stringify(c)) : { id: uid(), name: '', subject: '', grade: 9, hours: '', hasSA: true, saPlanned: '', ratio: 'auto', smallMode: 'flat', typeWeights: {}, areaWeights: { schriftlich: 1, 'mündlich': 1, praktisch: 1 }, lf: false, seminar: false, students: [], assessments: [], overrides: {}, notes: {}, seminarPaper: {} };
+  if (isNew && pre) { Object.assign(c, pre.fields || {}); c.students = pre.students || []; } /* neuer Kurs aus einer theis-Klassen-Datei: Name, Fach, Namen vorbelegt, Rest wie bei „Neuer Kurs“ */
   const smallTypes = Object.entries(R.TYPES).filter(([k]) => k !== 'sa');
   const others = D.courses.filter(x => x.id !== c.id && x.students.length);
   let hueSel = (D.settings.hues || {})[subjKey(c.subject)] || '';
@@ -634,7 +661,7 @@ function courseSheet(c) {
     /* Schüler übernehmen: bestehende behalten ihre ID und damit ihre Noten */
     const seen = new Set(), next = [];
     draft.filter(x => (x.last || '').trim() || (x.first || '').trim()).forEach(x => {
-      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st); const k = Importer.normCls(x.cls) || String(x.cls || '').trim(); if (k) st.cls = k;
+      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st); const was = c.students.find(o => o.id === x.id); if (was) ['xid', 'ext', 'g'].forEach(k => { if (was[k] != null) st[k] = was[k]; }); const k = Importer.normCls(x.cls) || String(x.cls || '').trim(); if (k) st.cls = k;
       if (seen.has(st.name.toLowerCase())) return; seen.add(st.name.toLowerCase()); next.push(st);
     });
     const ids = new Set(next.map(x => x.id));
@@ -644,11 +671,12 @@ function courseSheet(c) {
       c.students = next; c.entries = (c.entries || []).filter(e => ids.has(e.sid));
       const i = D.courses.findIndex(x => x.id === c.id);
       if (i >= 0) D.courses[i] = c; else D.courses.push(c);
-      UI.course = c.id; save(); close(); render();
+      UI.course = c.id; rememberCourse(); save(); close(); render();
     };
     if (removed.length) { ask(`${removed.length} Schüler mit eingetragenen Noten würden entfernt (${removed.map(s => esc(s.name)).join(', ')}). Ihre Noten gehen dabei verloren.`, 'Entfernen', true).then(ok => { if (ok) finish(); }); return false; }
     finish(); return false;
   } });
+  if (pre && pre.next) dlg.addEventListener('close', pre.next, { once: true });
   const upd = () => { const g = +dlg.querySelector('#cGrade').value; dlg.querySelector('#lowerOpts').hidden = g >= 12; dlg.querySelector('#upperOpts').hidden = g < 12; dlg.querySelector('#areaW').hidden = dlg.querySelector('#cSmall').value !== 'areas'; };
   dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; upd();
   $$('#cHue button', dlg).forEach(b => b.onclick = () => { hueSel = b.dataset.hue; $$('#cHue button', dlg).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
@@ -1027,6 +1055,8 @@ function transferSheet(c) {
 
 function scopeLabel(c) { if (upper(c)) return UI.term ? 'Halbjahr ' + UI.term : 'Qualifikationsphase ' + c.grade; return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
 function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
+/* Kopfdaten eines Schülerblatts: bei gemischten Kursen (8A+8B) steht die tatsächliche Klasse der Person extra */
+function studMeta(c, s) { const m = baseMeta(c); if (isMixed(c.students) && s.cls) m.splice(1, 0, ['Klasse', s.cls]); return m; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
 function lnName(a) { return (a.short || R.TYPES[a.type].short) + (a.date ? ' ' + sdate(a.date) : ''); }
 function entTxt(c, s) { return entriesOf(c, s.id).map(e => R.cellText(e, upper(c))).join(' ') || ''; }
@@ -1037,7 +1067,7 @@ function modelCourse(c) {
     const terms = R.termsOf(c);
     const head = ['Name', ...terms.map(t => t + ' (Punkte)'), ...(c.seminar ? ['Seminararbeit (max. 30)'] : [])];
     const rows = groupedRows(c, s => [s.name, ...terms.map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : String(p); }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
-    return { title: `Notenübersicht ${c.name} · ${c.subject}`, subtitle: scopeLabel(c), meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['l'], bold: head.map((_, i) => i).slice(1) } }], landscape: false };
+    return { title: `Notenübersicht ${c.name} · ${c.subject}`, file: fileName('Notenübersicht', c), subtitle: scopeLabel(c), meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['l'], bold: head.map((_, i) => i).slice(1) } }], landscape: false };
   }
   const as = visibleAssessments(c);
   const big = as.filter(a => R.isBig(a)), small = as.filter(a => !R.isBig(a));
@@ -1052,7 +1082,7 @@ function modelCourse(c) {
   }
   const legend = (as.length || (c.entries || []).length ? 'Einzeln = Einzelnoten mit eigenem Datum (z. B. Unterrichtsbeiträge) · ' : '') + as.map(a => `${lnName(a)} = ${a.title || R.TYPES[a.type].label}${R.isBig(a) && a.bigWeight && +a.bigWeight !== 1 ? ' (' + wLabel(a.bigWeight) + ')' : ''}${!R.isBig(a) && R.weightOf(a, c) !== 1 ? ' (Gewicht ' + R.weightOf(a, c) + ')' : ''}`).join(' · ');
   const rule = up ? 'Halbjahresleistung nach § 29 GSO: Schulaufgabe und Durchschnitt der kleinen LN 1:1, gerundet.' : c.hasSA ? `Jahresfortgangsnote nach § 28 GSO: große : kleine LN = ${R.saRatio(c)}:1.` : 'Fach ohne Schulaufgaben: Note aus den kleinen Leistungsnachweisen.';
-  return { title: `Notenübersicht ${c.name} · ${c.subject}`, subtitle: scopeLabel(c), meta: baseMeta(c), landscape: head.length > 11,
+  return { title: `Notenübersicht ${c.name} · ${c.subject}`, file: fileName('Notenübersicht', c), subtitle: scopeLabel(c), meta: baseMeta(c), landscape: head.length > 11,
     blocks: [{ table: { head, rows, align: ['l'], bold: [head.length - 1], small: head.length > 16 } }, { p: rule + ' Kürzel: E = entschuldigt (Nachtermin), B = befreit, 6* = versäumt/verweigert (§ 26 Abs. 4 GSO), U = Unterschleif' + (Object.keys(c.away || {}).length ? ', abw. = längere Abwesenheit' : '') + '.' }, ...(legend ? [{ p: legend }] : [])] };
 }
 function modelTransfer(c) {
@@ -1064,7 +1094,7 @@ function modelTransfer(c) {
     if (ng) return [String(i + 1), s.name, '–', 'ohne Note' + (ng.reason ? ': ' + ng.reason : '') + ' – ggf. Bemerkung (§ 39 Abs. 6 GSO)'];
     return [String(i + 1), s.name, ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–', ov ? (ov.reason || 'von der Lehrkraft festgelegt') : r.suggestion && r.suggestion.grade == null ? 'Grenzfall – Entscheidung nötig' : r.open.length ? 'Nachtermin offen' : ''];
   });
-  return { title: `Übertragsliste ${c.name} · ${c.subject}`, subtitle: scopeLabel(c) + ' – zum Eintragen ins Infoportal', meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l'], big: [2] } }, { p: (isMixed(c.students) ? 'Nach Klassen unterteilt, je Klasse alphabetisch – Reihenfolge und Nummern wie auf dem Notenblatt des Infoportals.' : 'Reihenfolge alphabetisch wie in der Schülerliste.') + ' Bitte nach dem Übertragen abhaken.' }] };
+  return { title: `Übertragsliste ${c.name} · ${c.subject}`, file: fileName('Übertragsliste', c), subtitle: scopeLabel(c) + ' – zum Eintragen ins Infoportal', meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l'], big: [2] } }, { p: (isMixed(c.students) ? 'Nach Klassen unterteilt, je Klasse alphabetisch – Reihenfolge und Nummern wie auf dem Notenblatt des Infoportals.' : 'Reihenfolge alphabetisch wie in der Schülerliste.') + ' Bitte nach dem Übertragen abhaken.' }] };
 }
 function modelAssessment(c, a) {
   const up = upper(c), dist = R.distribution(a, c.students, up);
@@ -1072,11 +1102,27 @@ function modelAssessment(c, a) {
   const rows = groupedRows(c, (s, i) => { const r = a.results && a.results[s.id]; return [String(i + 1), s.name, ...(a.usePoints ? [r && r.raw != null ? String(r.raw).replace('.', ',') : ''] : []), R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
   const blocks = [{ table: { head, rows, align: ['c', 'l'], big: [head.length - 1] } }];
   blocks.push({ h: 'Notenspiegel' });
-  blocks.push({ table: { head: up ? Array.from({ length: 16 }, (_, i) => String(15 - i)) : ['1', '2', '3', '4', '5', '6'], rows: [up ? dist.counts.slice().reverse().map(String) : dist.counts.map(String)], bold: [] } });
+  const labels = up ? Array.from({ length: 16 }, (_, i) => String(15 - i)) : ['1', '2', '3', '4', '5', '6'];
+  const counts = up ? dist.counts.slice().reverse() : dist.counts.slice();
+  blocks.push({ table: { head: labels, rows: [counts.map(String)], bold: [] } });
+  if (dist.n) blocks.push({ bars: { labels, values: counts, avg: dist.avg, unit: up ? 'Notenpunkte' : 'Note' } });
   blocks.push({ p: `Teilnehmer: ${dist.n} · Durchschnitt: ${fmt(dist.avg, 2)} · ${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: ${dist.weak} (${Math.round(dist.weakShare * 100)} %)` });
-  if (a.usePoints && a.key) blocks.push({ h: 'Notenschlüssel' }, { table: up ? { head: Array.from({ length: 15 }, (_, i) => (15 - i) + ' P.'), rows: [a.key.pointThresholds.map(x => 'ab ' + String(x).replace('.', ','))], small: true } : { head: ['Note 1', 'Note 2', 'Note 3', 'Note 4', 'Note 5', 'Note 6'], rows: [[...a.key.thresholds.map(x => 'ab ' + String(x).replace('.', ',')), 'darunter']] } }, { p: `Erreichbar: ${String(a.key.max).replace('.', ',')} Punkte` });
+  /* Rohpunkte (nur wenn mit Punkten gearbeitet wurde): Statistik und Verteilung je Note – wichtig für Fachschaft und Notenschlüssel */
+  if (a.usePoints) {
+    const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && r.raw != null && isFinite(+r.raw) && r.raw !== '').map(r => +r.raw).sort((x, y) => x - y);
+    const f1 = x => String(Math.round(x * 100) / 100).replace('.', ',');
+    if (raws.length) {
+      const med = raws.length % 2 ? raws[(raws.length - 1) / 2] : (raws[raws.length / 2 - 1] + raws[raws.length / 2]) / 2;
+      blocks.push({ h: 'Punkte' }, { p: `Ø ${f1(raws.reduce((x, y) => x + y, 0) / raws.length)} · Median ${f1(med)} · höchste ${f1(raws[raws.length - 1])} · niedrigste ${f1(raws[0])}` + (a.key ? ` · erreichbar ${f1(a.key.max)}` : '') + ` (${raws.length} Teilnehmer)` });
+    }
+    if (a.key) {
+      blocks.push({ h: 'Notenschlüssel und Verteilung' });
+      if (up) blocks.push({ table: { head: ['', ...Array.from({ length: 15 }, (_, i) => (15 - i) + ' P.'), '0 P.'], rows: [['Punkte ab', ...a.key.pointThresholds.map(x => f1(x)), 'darunter'], ['Anzahl', ...counts.map(String)]], align: ['l'], small: true } });
+      else blocks.push({ table: { head: ['', 'Note 1', 'Note 2', 'Note 3', 'Note 4', 'Note 5', 'Note 6'], rows: [['Punkte ab', ...a.key.thresholds.map(x => f1(x)), 'darunter'], ['Anzahl', ...counts.map(String)]], align: ['l'] } });
+    }
+  }
   blocks.push({ sig: ['Datum, Unterschrift der Lehrkraft'] });
-  return { title: `${a.title || R.TYPES[a.type].label} – ${c.name} · ${c.subject}`, subtitle: `${R.TYPES[a.type].label}${R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks };
+  return { title: `${a.title || R.TYPES[a.type].label} – ${c.name} · ${c.subject}`, file: fileName(a.title || R.TYPES[a.type].label, c, a.date), subtitle: `${R.TYPES[a.type].label}${R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks };
 }
 const stuSub = (c, s) => `${c.name} · ${c.subject}${isMixed(c.students) && s.cls ? ' · Klasse ' + s.cls : ''} · ${scopeLabel(c)}`;
 function modelStudents(c, list) {
@@ -1084,7 +1130,7 @@ function modelStudents(c, list) {
   const blocks = [];
   list.forEach((s, idx) => {
     const as = c.assessments.concat((c.entries || []).filter(e => e.sid === s.id).map(e => ({ ...e, title: R.TYPES[e.type].label + ' (einzeln)', results: { [s.id]: e } }))).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
-    const head = { title: s.name, subtitle: stuSub(c, s), meta: baseMeta(c) };
+    const head = { title: s.name, subtitle: stuSub(c, s), meta: studMeta(c, s) };
     if (idx) blocks.push({ pagebreak: true }, { head });
     const rows = as.map(a => { const r = a.results && a.results[s.id]; return [a.title || R.TYPES[a.type].label, R.isBig(a) ? 'groß' + (a.bigWeight && +a.bigWeight !== 1 ? ' ' + wLabel(a.bigWeight) : '') : 'klein', a.date ? fdate(a.date) : '', ...(up ? [a.term] : []), r && r.raw != null ? String(r.raw).replace('.', ',') + (a.key ? ' / ' + String(a.key.max).replace('.', ',') : '') : '', R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
     if (awayOf(c, s.id)) blocks.push({ p: 'Hinweis: ' + awayText(awayOf(c, s.id)) + '.' });
@@ -1093,16 +1139,18 @@ function modelStudents(c, list) {
     if (up) blocks.push({ table: { head: R.termsOf(c).map(t => 'Halbjahr ' + t), rows: [R.termsOf(c).map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : `${p} Punkte (${R.POINT_LABEL(p)})`; })], bold: [0, 1] } });
     else { const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; blocks.push({ table: { head: [...(c.hasSA ? ['Ø große LN'] : []), 'Ø kleine LN', 'Ø gesamt', 'Zeugnisnote (Vorschlag)'], rows: [[...(c.hasSA ? [fmt(r.saAvg)] : []), fmt(r.smAvg), fmt(r.total), ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–']], big: [c.hasSA ? 3 : 2] } }); }
   });
-  return { title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: baseMeta(c), blocks };
+  return { title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, file: list.length === 1 ? fileSafe(`${todayISO()} Schülerblatt ${list[0].name} ${c.name} ${c.subject}`) : fileName('Schülerblätter', c), subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: list.length && list[0] ? studMeta(c, list[0]) : baseMeta(c), blocks };
 }
 function modelStudentsAll(c) {
   const m = modelStudents(c, c.students);
-  if (c.students.length) { m.title = c.students[0].name; m.subtitle = stuSub(c, c.students[0]); }
+  if (c.students.length) { m.title = c.students[0].name; m.subtitle = stuSub(c, c.students[0]); m.meta = studMeta(c, c.students[0]); m.file = fileName('Schülerblätter', c); }
   return m;
 }
-const fileSafe = s => s.replace(/[^\wäöüÄÖÜß.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+const fileSafe = s => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').replace(/\s+/g, ' ').replace(/-{2,}/g, '-').replace(/^[\s.-]+|[\s.-]+$/g, '');
+/* Dateiname: Datum zuerst (sortiert sich von selbst nach Zeit), dann Art, Kurs, Fach – z. B. „2026-10-06 Stehgreifaufgabe 8AB Italienisch“ */
+const fileName = (kind, c, date) => fileSafe(`${date || todayISO()} ${kind} ${c.name} ${c.subject}`);
 async function exportModel(m, kind) {
-  const base = fileSafe(m.title);
+  const base = m.file ? fileSafe(m.file) : fileSafe(m.title);
   try {
     if (kind === 'pdf') await N.savePdf(base + '.pdf', Print.html(m, D.settings), m.landscape, Print.footer(D.settings));
     if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, D.settings), 'docx');
@@ -1236,7 +1284,7 @@ function renderDates() {
     </div></div>`;
   const f = $('#cdForm'); f.onsubmit = e => { e.preventDefault(); const s = $('#cdSubj').value.trim(), d = $('#cdDate').value; if (!s || !d) return toast('Fach und Datum angeben'); D.classDates.push({ id: uid(), cls: $('#cdCls').value, subject: s, date: d }); save(); renderDates(); };
   $$('[data-cddel]').forEach(b => b.onclick = () => { if (READONLY) return; D.classDates = D.classDates.filter(x => x.id !== b.dataset.cddel); save(); renderDates(); });
-  $$('[data-goto]').forEach(b => b.onclick = () => { UI.course = b.dataset.goto; UI.tab = 'grades'; render(); });
+  $$('[data-goto]').forEach(b => b.onclick = () => { UI.course = b.dataset.goto; rememberCourse(); UI.tab = 'grades'; render(); });
   bindCalendar();
 }
 
@@ -1270,7 +1318,7 @@ async function renderBackup() {
   $('#bkPick').onclick = async () => { ST = await N.chooseBackupDir(); renderBackup(); };
   if ($('#bkOpenExt')) $('#bkOpenExt').onclick = () => N.openBackupDir('external');
   $('#bkOpenLoc').onclick = () => N.openBackupDir('local');
-  $('#bkNow').onclick = async () => { await flush(); const r = await N.backupNow(); toast(r.external ? 'Gesichert – auch im Sicherungsordner' : r.externalError ? 'Nur lokal gesichert: ' + r.externalError : 'Auf diesem Computer gesichert'); renderBackup(); };
+  $('#bkNow').onclick = async () => { await flush(); const r = await N.backupNow(); toast(bkMsg(r)); renderBackup(); };
   $('#bkRestore').onclick = async () => { if (await ask('Eine Sicherung ersetzt den aktuellen Stand. Der aktuelle Stand wird vorher noch einmal gesichert.', 'Sicherung wählen …')) { await flush(); restoreFlow(false); } };
   $('#pwChange').onclick = () => sheet({ title: 'Passwort ändern', small: true, allowRO: true, body: `${field('Bisheriges Passwort', '<input type="password" id="o">')}${field('Neues Passwort (mind. 8 Zeichen)', '<input type="password" id="n1">')}${field('Wiederholen', '<input type="password" id="n2">')}<p class="gateErr" id="e"></p><p class="hint">Ältere Sicherungen behalten ihr damaliges Passwort.</p>`,
     onOk: async d => { const o = d.querySelector('#o').value, a = d.querySelector('#n1').value, b = d.querySelector('#n2').value; const e = d.querySelector('#e');
@@ -1284,6 +1332,148 @@ async function renderBackup() {
 /* ======================================================================
    Einstellungen & Hilfe
    ====================================================================== */
+/* ======================================================================
+   Klassen austauschen (theis-Klassen) – gemeinsames Format von Voce, Libretto, Gruppo
+   Nichts wird geändert, bevor im Abgleich „Übernehmen“ gedrückt wird; vorher entsteht automatisch eine Sicherung.
+   ====================================================================== */
+const KL = { plan: [], meta: null };
+const klCls = v => String(Importer.normCls(v) || v || '').trim().toUpperCase();
+const klAway = (c, sid) => { const a = awayOf(c, sid); return a ? { from: a.from || '', to: a.to || '', reason: a.reason || '' } : null; };
+const klWrap = (c, s) => ({ id: s.id, xid: s.xid || null, last: s.last || '', first: s.first || '', g: s.g || '', cls: klCls(s.cls), away: klAway(c, s.id) });
+const klName = s => [s.last, s.first].filter(Boolean).join(', ');
+function klassenSheet() {
+  sheet({ title: 'Klassen austauschen', small: true, ok: '', cancel: 'Schließen', body: `<p class="prose" style="margin-top:0">Klassen und Kurse mit den anderen theis-Apps austauschen (Voce, später Gruppo) – einmal anlegen, überall nutzen. <b>Nur Namen</b>, keine Noten.</p>
+    <div class="panelBtns" style="flex-direction:column;align-items:stretch;gap:8px"><button type="button" class="mini accent" id="klExp">Klassen exportieren …</button>${READONLY ? '' : '<button type="button" class="mini" id="klImp">Klassen einlesen und abgleichen …</button>'}</div>
+    <p class="hint">Beim Einlesen siehst du erst eine Liste: <b>neu</b>, <b>geändert</b>, <b>nicht mehr in der Datei</b>. Es wird nur übernommen, was angehakt ist. Kurse aus mehreren Klassen (z. B. 8AB) bleiben dabei unverändert – die Klasse je Person steht mit in der Datei.</p>`,
+    onOpen: (d, close) => { d.querySelector('#klExp').onclick = () => { close(); klExport(); }; const im = d.querySelector('#klImp'); if (im) im.onclick = () => { close(); klImport(); }; } });
+}
+async function klBuild() {
+  const rnd = () => TheisKlassen.rid('k-');
+  const classes = D.courses.map(c => { c.xid = c.xid || rnd();
+    return { id: c.xid, name: c.name, subject: c.subject, grade: String(c.grade || ''), students: c.students.map(s => { s.xid = s.xid || TheisKlassen.rid('s-'); return { id: s.xid, last: s.last || '', first: s.first || '', g: s.g || '', cls: s.cls || '', away: klAway(c, s.id) || undefined, rest: s.ext || {} }; }) }; });
+  save();
+  const v = await N.version();
+  return TheisKlassen.build({ app: 'Libretto ' + v, schoolYear: D.settings.year || '', classes });
+}
+async function klExport() {
+  if (!D.courses.length) return toast('Noch keine Kurse vorhanden');
+  const data = await klBuild();
+  const r = await N.saveFile(`theis-Klassen-${todayISO()}.json`, new TextEncoder().encode(JSON.stringify(data, null, 1)), 'json');
+  if (r && r.ok) toast('Klassen exportiert');
+}
+function klImport() {
+  if (window.__librettoDemo) return toast('Das Einlesen von Dateien gibt es in der installierten App.', 4000);
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    let txt; try { txt = await f.text(); } catch (e) { return toast('Die Datei ist nicht lesbar.', 4500); }
+    let raw = null; try { raw = JSON.parse(txt); } catch (e) {}
+    if (raw && !raw.format && (raw.cards || raw.exams || raw.classes)) return toast('Das ist eine Sicherung einer anderen App, keine Klassen-Datei. Bitte in der App „Klassen exportieren“ wählen.', 6500);
+    let d; try { d = TheisKlassen.parse(txt); } catch (e) { return toast(e.message, 4500); }
+    klPlan(d);
+  };
+  inp.click();
+}
+function klMatch(c) {
+  const byX = c.id ? D.courses.filter(k => k.xid === c.id) : [];
+  if (byX.length === 1) return byX[0];
+  const nm = D.courses.filter(k => TheisKlassen.norm(k.name) === TheisKlassen.norm(c.name));
+  const sub = c.subject ? nm.filter(k => TheisKlassen.norm(k.subject) === TheisKlassen.norm(c.subject)) : nm;
+  return sub.length === 1 ? sub[0] : null;   /* uneindeutig → lieber als neuer Kurs anbieten als in den falschen zu schreiben */
+}
+function klPlan(d) {
+  KL.meta = d;
+  KL.plan = d.classes.map(c => {
+    const inc = c.students.map(s => ({ ...s, cls: klCls(s.cls) }));
+    const course = klMatch(c);
+    if (!course) return { c: { ...c, students: inc }, isNew: true, on: true };
+    const df = TheisKlassen.diff(course.students.map(s => klWrap(course, s)), inc);
+    df.added.forEach(x => x.on = true); df.changed.forEach(x => x.on = true); df.removed.forEach(x => x.on = false);
+    return { c: { ...c, students: inc }, course, d: df };
+  });
+  if (!KL.plan.length) return toast('Die Datei enthält keine Klassen');
+  const none = KL.plan.every(p => !p.isNew && !p.d.added.length && !p.d.removed.length && !p.d.changed.some(x => !x.silent));
+  if (none) { klApply(true); return toast('Alles schon auf dem gleichen Stand – nichts zu ändern'); }
+  klDialog();
+}
+const klFieldTxt = x => x.fields.map(f => f === 'name' ? `Name: ${klName(x.cur)} → ${klName(x.inc)}` : f === 'g' ? `Geschlecht: ${x.cur.g || '–'} → ${x.inc.g || '–'}` : f === 'cls' ? `Klasse: ${x.cur.cls || '–'} → ${x.inc.cls || '–'}` : 'Abwesenheit geändert').join(' · ');
+const klHasGrades = (c, sid) => c.assessments.some(a => a.results && a.results[sid]) || (c.entries || []).some(e => e.sid === sid);
+function klDialog() {
+  const m = KL.meta;
+  const cards = KL.plan.map((p, pi) => {
+    if (p.isNew) return `<div class="klCard"><label class="klHead"><input type="checkbox" data-kn="${pi}" ${p.on ? 'checked' : ''}><span><b>${esc(p.c.name)}</b>${p.c.subject ? ' · ' + esc(p.c.subject) : ''} <small>neuer Kurs · ${p.c.students.length} Namen</small></span></label><p class="hint" style="margin:4px 0 0 28px">Nach „Übernehmen“ öffnet sich „Neuer Kurs“ mit diesen Namen – dort ergänzt du Fach, Stufe und Wochenstunden.</p></div>`;
+    const d = p.d, real = d.changed.filter(x => !x.silent);
+    const sec = (t, kind, arr, txt) => arr.length ? `<div class="klSec"><h4>${t} <small>${arr.length}</small></h4>${arr.map((x, i) => `<label class="klRow"><input type="checkbox" data-pi="${pi}" data-kind="${kind}" data-i="${i}" ${x.on ? 'checked' : ''}><span>${esc(txt(x))}</span></label>`).join('')}</div>` : '';
+    return `<div class="klCard"><div class="klHead"><span><b>${esc(p.course.name)}</b> · ${esc(p.course.subject)} <small>${d.same} unverändert</small></span></div>
+      ${sec('Neu', 'add', d.added, x => klName(x.inc) + (x.inc.cls ? ` (${x.inc.cls})` : ''))}
+      ${sec('Geändert', 'chg', real, x => klName(x.cur) + ' – ' + klFieldTxt(x))}
+      ${sec('Nicht mehr in der Datei', 'rem', d.removed, x => klName(x.cur) + (klHasGrades(p.course, x.cur.id) ? ' – hat eingetragene Noten' : ''))}
+      ${!d.added.length && !real.length && !d.removed.length ? '<p class="hint" style="margin:6px 0 0">Keine Unterschiede.</p>' : ''}
+      ${d.removed.length ? '<p class="hint" style="margin:6px 0 0">„Nicht mehr in der Datei“: Nur wenn du ein Häkchen setzt, wird die Person aus dem Kurs entfernt – mit ihren Noten. Ohne Häkchen bleibt alles bestehen.</p>' : ''}</div>`;
+  }).join('');
+  sheet({ title: 'Klassen abgleichen', wide: true, ok: 'Übernehmen', body: `<p class="hint" style="margin:0 0 8px">Datei aus ${esc(m.app || 'einer theis-App')}${m.exported ? ' vom ' + esc(new Date(m.exported).toLocaleDateString('de-DE')) : ''}${m.schoolYear ? ' · Schuljahr ' + esc(m.schoolYear) : ''}. Nichts wird geändert, bevor du „Übernehmen“ drückst; vorher legt Libretto eine Sicherung an.</p><div id="klPlan">${cards}</div>`,
+    onOpen: d => {
+      d.querySelectorAll('input[data-kn]').forEach(c => c.onchange = () => { KL.plan[+c.dataset.kn].on = c.checked; });
+      d.querySelectorAll('input[data-kind]').forEach(c => c.onchange = () => { const p = KL.plan[+c.dataset.pi]; const arr = { add: p.d.added, chg: p.d.changed.filter(x => !x.silent), rem: p.d.removed }[c.dataset.kind]; arr[+c.dataset.i].on = c.checked; });
+    },
+    onOk: async () => {
+      const dropping = KL.plan.filter(p => !p.isNew).flatMap(p => p.d.removed.filter(x => x.on && klHasGrades(p.course, x.cur.id)).map(x => x.cur.name || klName(x.cur)));
+      if (dropping.length && !(await ask(`${dropping.length} Person(en) mit eingetragenen Noten würden entfernt (${dropping.map(esc).join('; ')}). Die Noten gehen dabei verloren.`, 'Entfernen', true))) return false;
+      await klApply(false); return true;
+    } });
+}
+async function klApply(silent) {
+  const touches = KL.plan.some(p => p.isNew ? p.on : (p.d.added.some(x => x.on) || p.d.removed.some(x => x.on) || p.d.changed.some(x => !x.silent && x.on)));
+  if (touches) { /* Sicherheitskopie vor jeder echten Änderung */
+    await flush(); const b = await N.backupNow();
+    if (!b || !b.ok) { if (!(await ask('Die automatische Sicherung vor dem Abgleich ist fehlgeschlagen. Trotzdem fortfahren?', 'Trotzdem übernehmen', true))) return; }
+  }
+  const sum = { nc: 0, na: 0, nch: 0, nr: 0 }, fresh = [];
+  for (const p of KL.plan) {
+    if (p.isNew) { if (p.on) fresh.push(p.c); continue; }
+    const c = p.course; if (p.c.id && !c.xid) c.xid = p.c.id;
+    const rem = new Set();
+    for (const x of p.d.changed) {
+      const s = c.students.find(o => o.id === x.cur.id); if (!s) continue;
+      if (x.inc.id && !s.xid) s.xid = x.inc.id;
+      if (x.silent || !x.on) continue;
+      if (x.fields.includes('name')) { s.last = x.inc.last; s.first = x.inc.first; s.name = fullName(s); }
+      if (x.fields.includes('g')) { if (x.inc.g) s.g = x.inc.g; else delete s.g; }
+      if (x.fields.includes('cls')) { if (x.inc.cls) s.cls = Importer.normCls(x.inc.cls) || x.inc.cls; else delete s.cls; }
+      if (x.fields.includes('away')) { c.away = c.away || {}; if (x.inc.away) c.away[s.id] = { ...x.inc.away }; else delete c.away[s.id]; }
+      sum.nch++;
+    }
+    for (const x of p.d.removed) if (x.on) rem.add(x.cur.id);
+    if (rem.size) {
+      c.students = c.students.filter(s => !rem.has(s.id)); c.entries = (c.entries || []).filter(e => !rem.has(e.sid));
+      const del = (o, id) => { if (o && typeof o === 'object') delete o[id]; };
+      rem.forEach(id => ['away', 'overrides', 'notes', 'seminarPaper', 'noGrade'].forEach(k => del(c[k], id)));
+      c.assessments.forEach(a => { if (a.results) rem.forEach(id => delete a.results[id]); });
+      Object.keys(c.xfer || {}).forEach(k => { const sid = k.startsWith('e|') ? null : k.split('|')[1]; if (sid && rem.has(sid)) delete c.xfer[k]; });
+      sum.nr += rem.size;
+    }
+    for (const x of p.d.added) if (x.on) {
+      const st = { id: uid(), last: x.inc.last, first: x.inc.first }; st.name = fullName(st);
+      if (x.inc.id) st.xid = x.inc.id; if (x.inc.cls) st.cls = Importer.normCls(x.inc.cls) || x.inc.cls; if (x.inc.g) st.g = x.inc.g; if (x.inc.rest && Object.keys(x.inc.rest).length) st.ext = x.inc.rest;
+      c.students.push(st); if (x.inc.away) { c.away = c.away || {}; c.away[st.id] = { ...x.inc.away }; } sum.na++;
+    }
+    if (rem.size || p.d.added.some(x => x.on)) sortList(c.students);
+  }
+  save(); render();
+  if (silent) return;
+  toast(`Übernommen: ${sum.na} neu, ${sum.nch} geändert, ${sum.nr} entfernt${fresh.length ? ' · ' + fresh.length + ' neuer Kurs folgt' : ''}`, 4000);
+  /* neue Kurse: nacheinander in „Neuer Kurs“ öffnen, damit Fach und Stufe ergänzt werden können */
+  const queue = fresh.slice();
+  const openNext = () => { const k = queue.shift(); if (!k) return; courseSheet(null, { fields: { name: k.name, subject: k.subject || '', grade: +k.grade || 9, xid: k.id || TheisKlassen.rid('k-') }, students: k.students.map(s => { const st = { id: uid(), last: s.last, first: s.first, xid: s.id || TheisKlassen.rid('s-') }; st.name = fullName(st); if (s.cls) st.cls = Importer.normCls(s.cls) || s.cls; if (s.g) st.g = s.g; if (s.rest && Object.keys(s.rest).length) st.ext = s.rest; return st; }), next: () => setTimeout(openNext, 50) }); };
+  setTimeout(openNext, 300);
+}
+
+async function openLicenses() {
+  let txt = 'Lizenzen werden in der Desktop-App angezeigt.';
+  try { if (N && N.licenses) txt = await N.licenses(); } catch (e) {}
+  sheet({ title: 'Lizenzen', wide: true, ok: '', cancel: 'Fertig', body: `<pre class="lic">${esc(txt)}</pre><div class="linkrow"><button type="button" class="mini" id="licChromium">Lizenzen der Chromium-Komponenten öffnen</button></div>`,
+    onOpen: d => { d.querySelector('#licChromium').onclick = () => { if (N && N.openDoc) N.openDoc('chromium'); }; } });
+}
 async function settingsSheet() {
   const s = D.settings, v = await N.version();
   const LOGO = window.THEIS_LOGO.replace('<svg ', '<svg class="theislogo" ').replace('fill="#16171a"', 'fill="currentColor"').replace(/fill="#16171a"/g, 'fill="currentColor"').replace('fill="#2F5BEA"', 'class="dot" fill="#2F5BEA"');
@@ -1293,8 +1483,11 @@ async function settingsSheet() {
       ${field('Nach Updates suchen', `<select id="sU"><option value="1" ${ST.updateCheck !== false ? 'selected' : ''}>Beim Start (nur Versionsnummer abfragen)</option><option value="0" ${ST.updateCheck === false ? 'selected' : ''}>Nie</option></select>`)}
       ${field('Automatisch sperren nach', `<select id="sL">${[[5, '5 Minuten'], [10, '10 Minuten'], [15, '15 Minuten'], [30, '30 Minuten'], [60, '60 Minuten']].map(([m, l]) => `<option value="${m}" ${+s.autoLock === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
     <p class="hint">Der Stichtag steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die automatische Sperre gehört zu den Sicherheitsstandards für dienstliche Daten auf privaten Geräten.</p>
+    <div class="about"><img src="icon.png" alt="" width="64" height="64"><div><b>Libretto</b> · Notenverwaltung · Gymnasium Bayern<br>Version ${esc(v)}</div></div>
     <div class="maker"><span class="by">Eine App von</span>${LOGO}<div class="mk-meta">Apps für die Schule · <a href="https://theisapps.de/" target="_blank" rel="noopener">theisapps.de</a><br>Libretto ${esc(v)} · © 2026 theis. Alle Rechte vorbehalten.<br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div></div>
-    <p class="hint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>`,
+    <p class="hint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>
+    <div class="linkrow"><button type="button" class="mini" id="licBtn">Lizenzen der verwendeten Open-Source-Software</button></div>`,
+    onOpen: d => { d.querySelector('#licBtn').onclick = openLicenses; },
     onOk: d => { s.teacher = d.querySelector('#sT').value.trim(); s.school = d.querySelector('#sS').value.trim(); s.year = d.querySelector('#sY').value.trim() || s.year; s.half1End = d.querySelector('#sH').value; s.autoLock = +d.querySelector('#sL').value; N.setCfg({ updateCheck: d.querySelector('#sU').value === '1' }).then(x => { ST = x; }); save(); $('#brandSub').textContent = `Notenverwaltung · Beta · Schuljahr ${s.year}`; render(); } });
 }
 function helpSheet() {
@@ -1305,7 +1498,7 @@ function helpSheet() {
     <p>Oben „Neuer Kurs“: Klasse (z. B. 9F), Fach und Jahrgangsstufe. Die Klassenliste als <b>PDF, Excel oder CSV</b> hineinziehen oder Text einfügen – Libretto erkennt Vor- und Nachnamen. Stimmt etwas nicht, kannst du jede Zeile bearbeiten, Schüler entfernen oder Vor- und Nachname mit einem Klick tauschen.</p>${fig('kurs', 'Kurs anlegen')}
     <p><b>Kurs aus mehreren Klassen</b> (z. B. Italienisch aus 8A und 8B, Religion aus 6A bis 6E): Steht die Klasse in der Liste, übernimmt Libretto sie beim Einlesen; sonst „Klassen eintragen“ wählen und die Klasse je Namen ergänzen. Die Notentabelle und die Ausdrucke – auch die Übertragsliste fürs Infoportal – sind dann <b>nach Klassen unterteilt</b>, und die Terminprüfung gilt für jede der Klassen.</p>
     <h3>2 · Noten eintragen</h3>
-    <p>Zelle anklicken, Note tippen, <span class="kbd">Enter</span> – weiter zur nächsten Zeile. Tendenzen wie 2+ werden angezeigt, gerechnet wird mit ganzen Noten. Kürzel: <code>E</code> entschuldigt (Nachtermin offen) · <code>B</code> befreit · <code>N</code> Note 6 wegen Versäumnis/Verweigerung · <code>U</code> Unterschleif. Leere Zellen sind kein Problem – gerechnet wird nur mit vorhandenen Noten.</p>${fig('tabelle', 'Notentabelle')}
+    <p>Zelle anklicken, Note tippen, <span class="kbd">Enter</span> oder <span class="kbd">Tab</span> – weiter zur nächsten Zeile (<span class="kbd">Shift</span>+<span class="kbd">Tab</span> zurück; am Spaltenende geht es oben in der nächsten Spalte weiter, wie im Infoportal). Die Zeile der Person, in der du gerade schreibst, ist farbig hervorgehoben. Tendenzen wie 2+ werden angezeigt, gerechnet wird mit ganzen Noten. Kürzel: <code>E</code> entschuldigt (Nachtermin offen) · <code>B</code> befreit · <code>N</code> Note 6 wegen Versäumnis/Verweigerung · <code>U</code> Unterschleif. Leere Zellen sind kein Problem – gerechnet wird nur mit vorhandenen Noten.</p>${fig('tabelle', 'Notentabelle')}
     <h3>3 · Einzelnoten mit Datum</h3>
     <p>Unterrichtsbeiträge oder Rechenschaftsablagen bekommt meist nicht die ganze Klasse am selben Tag. Dafür gibt es die Spalte <b>„Einzeln“</b>: Note ins Feld „+“ tippen und Enter – gespeichert mit dem heutigen Datum. Vertippt? Direkt nach der Eingabe erscheint unten „Rückgängig“. Ein Klick auf eine Note öffnet die Liste: Datum, Art und Notiz ändern oder die Note <b>löschen</b>. Die Art für die schnelle Eingabe stellst du über den Spaltenkopf ein.</p>${fig('einzeln', 'Einzelnoten')}
     <h3>4 · Leistungsnachweise und Notenschlüssel</h3>
@@ -1313,7 +1506,8 @@ function helpSheet() {
     <h3>5 · Kalender und Termine</h3>
     <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. Ein Klick auf den Monatsnamen öffnet die Monats- und Jahreswahl. Mit <b>„Schultermine einlesen“</b> übernimmst du den Terminkalender deiner Schule: im Infoportal unter Termine „als CSV exportieren“ und die Datei hier auswählen (auch ICS-Kalenderdateien funktionieren). Die Schultermine erscheinen grau im Kalender und als Liste darunter. Außerdem: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen.</p>${fig('kalender', 'Kalender')}
     <h3>6 · Drucken, Sicherung, Sperre</h3>
-    <p>„Drucken &amp; Export“: Kursübersicht, Übertragsliste fürs Infoportal, Schülerblätter – als PDF, Word oder Excel. Unter „Sicherung“ wählst du einen Sicherungsordner (z. B. USB-Stick); Libretto sichert dann automatisch und verschlüsselt. Nach einigen Minuten ohne Eingabe sperrt sich Libretto.</p>${fig('sicherung', 'Sicherung')}
+    <p>„Drucken &amp; Export“: Kursübersicht, Übertragsliste fürs Infoportal, Schülerblätter – als PDF, Word oder Excel. Unter „Sicherung“ wählst du einen Sicherungsordner (z. B. USB-Stick); Libretto sichert dann automatisch und verschlüsselt. Nach einigen Minuten ohne Eingabe sperrt sich Libretto.</p>
+    <p><b>Klassen austauschen:</b> Unter „Klassen und Kurse“ → „Klassen austauschen …“ exportierst du deine Kurse (nur Namen, Klassen, keine Noten) als theis-Klassen-Datei – etwa für Voce – oder liest eine solche Datei ein. Beim Einlesen zeigt Libretto zuerst, was neu, geändert oder nicht mehr in der Datei ist; übernommen wird nur, was du anhakst. Personen entfernst du nur mit eigenem Häkchen und Rückfrage. Vorher legt Libretto automatisch eine Sicherung an. Libretto öffnet beim Start wieder den zuletzt geöffneten Kurs.</p>${fig('sicherung', 'Sicherung')}
     <h3>Übertrag ins Notenprogramm der Schule</h3>
     <p>Mit „Übertrag“ (oben im Kurs) merkst du dir, welche Noten du schon ins Notenprogramm deiner Schule (z. B. Infoportal) übertragen hast – für ganze Leistungsnachweise oder einzelne Noten. <b>✓</b> am Spaltenkopf: alles übertragen. <b style="color:var(--orange)">●</b>: nach dem Übertrag geändert oder ergänzt, ein Nachtrag ist nötig (z. B. nach einem Nachtermin). Ohne Zeichen: noch nicht übertragen. Libretto schickt nichts ab – es ist nur deine Merkhilfe.</p>
     <h3>Einstieg mitten im Schuljahr: Notenblatt einlesen</h3>
@@ -1344,7 +1538,8 @@ N.onMenu(cmd => {
   if (cmd === 'newAssessment') assessmentSheet(course());
   if (cmd === 'pdf' && course()) exportModel(modelCourse(course()), 'pdf');
   if (cmd === 'csv' && course()) exportModel(modelCourse(course()), 'csv');
-  if (cmd === 'backup') { flush().then(() => N.backupNow()).then(r => toast(r.external ? 'Gesichert – auch im Sicherungsordner' : 'Auf diesem Computer gesichert')); }
+  if (cmd === 'licenses') openLicenses();
+  if (cmd === 'backup') { flush().then(() => N.backupNow()).then(r => toast(bkMsg(r), r.ok ? 2600 : 6000)); }
   if (cmd === 'lock') lockNow();
   if (cmd === 'settings') settingsSheet();
   if (cmd === 'help') helpSheet();

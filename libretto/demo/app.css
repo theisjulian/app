@@ -91,6 +91,10 @@ td.res{padding:4px 10px}
 .flag.warn{background:var(--orange)} .flag.red{background:var(--red)} .flag.info{background:var(--blue)}
 tr:hover td{background:color-mix(in srgb, var(--fill) 60%, transparent)}
 tr:hover td.nm{background:var(--glass-solid)}
+/* Person, in deren Zeile gerade geschrieben wird: ganze Zeile inkl. Namenszelle (nur Farbe, nichts springt) */
+table.grid tbody tr:focus-within td{background:color-mix(in srgb, var(--blue) 11%, transparent)}
+table.grid tbody tr:focus-within td.nm{background-color:var(--glass-solid);background-image:linear-gradient(color-mix(in srgb, var(--blue) 14%, transparent),color-mix(in srgb, var(--blue) 14%, transparent));box-shadow:inset 3px 0 0 var(--blue)}
+table.grid tbody tr:focus-within td.nm button{font-weight:600}
 .addCol{border:0;background:var(--fill);color:var(--blue);border-radius:9px;width:34px;height:30px;font-size:18px;font-weight:500;margin:0 6px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--label-2);margin:10px 4px 0}
 .legend b{color:var(--label);font-family:var(--mono)}
@@ -257,3 +261,13 @@ label.xi .nr{color:var(--label-3);width:22px;text-align:right;font-variant-numer
 label.xi.changed b{color:var(--orange)}
 
 ul.nbList{margin:8px 0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+
+.lic{white-space:pre-wrap;font:12px/1.45 var(--mono,ui-monospace,Menlo,Consolas,monospace);background:var(--fill);border-radius:12px;padding:12px 14px;max-height:52vh;overflow:auto;margin:0;user-select:text}
+.linkrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.about{margin:12px 0 4px}
+.klCard{background:var(--fill);border-radius:14px;padding:10px 12px;margin-top:10px}
+.klHead{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.klSec h4{margin:10px 0 4px;font-size:13px;font-weight:600}
+.klSec h4 small{font-weight:400;color:var(--label-2)}
+.klRow{display:flex;align-items:flex-start;gap:9px;padding:4px 0;font-size:13.5px;line-height:1.35}
+.klRow input,.klHead input{margin-top:3px;flex:none}

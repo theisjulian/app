@@ -5,6 +5,10 @@ let importHead = [];
 /* Klasse je Schüler (Kurse aus mehreren Klassen, z. B. „8A“ und „8B“): „08 a“ → „8a“ */
 let tableCls = new Map();
 const CLS = /^0?(\d{1,2})\s?([A-Za-zÄÖÜäöü]{1,2})$/;
+/* Namen unverändert lassen: Doppelnamen („Öztürk-Winter“, „Anna-Lena“) und Apostroph („D’Amico“) nicht durch Leerzeichen zerreißen; Leerzeichen zusammenfassen */
+const fixNm = v => String(v ?? '').replace(/(\p{L})\s*([-‐‑])\s+(?=\p{L})/gu, '$1$2').replace(/(\p{L})\s+([-‐‑])(?=\p{L})/gu, '$1$2').replace(/(^|[\s-])(\p{L})(['’])\s+(?=\p{L})/gu, '$1$2$3').replace(/\s+/g, ' ').trim();
+/* Textstücke einer PDF-Zeile zusammensetzen: nach einem Bindestrich am Stückende ohne Leerzeichen anfügen */
+const joinTxt = (a, b) => !a ? b : /[-‐‑]$/.test(a) ? a + b : a + ' ' + b;
 const normCls = v => { const t = String(v ?? '').trim(); const m = CLS.exec(t); return m ? m[1] + m[2] : ''; };
 const clsKey = (last, first) => (String(last || '') + '|' + String(first || '')).toLowerCase().replace(/\s+/g, ' ');
 /* Spalte, in der fast überall eine Klasse steht (ab Spalte „from“) */
@@ -32,7 +36,7 @@ async function pdfLines(pages) {
       let row = rows.find(r => Math.abs(r.y - y) < 3); if (!row) { row = { y, items: [] }; rows.push(row); } row.items.push({ x, s: it.s.trim(), w: it.w || 0 }); }
     rows.sort((a, b) => b.y - a.y); rows.forEach(r => r.items.sort((a, b) => a.x - b.x)); allRows.push(...rows);
   }
-  importHead = allRows.slice(0, 3).map(r => r.items.map(i => i.s).join(' '));
+  importHead = allRows.slice(0, 3).map(r => r.items.map(i => i.s).reduce(joinTxt, ''));
   const isHead = r => r.items.some(i => /^(nach)?name$|^familienname|^vorname|^rufname/i.test(i.s));
   const hi = allRows.findIndex(isHead);
   if (hi >= 0) {
@@ -47,12 +51,12 @@ async function pdfLines(pages) {
       for (const h of allRows[hi].items) { const mid = h.x + h.w / 2; let best = 0, bd = Infinity;
         cols.forEach((c, i) => { const d = mid < c.min ? c.min - mid : mid > c.end ? mid - c.end : 0; if (d < bd) { bd = d; best = i; } });
         head[best] = (head[best] ? head[best] + ' ' : '') + h.s; }
-      const table = [head, ...data.map(r => { const cells = cols.map(() => ''); r.items.forEach(i => { const k = colOf(i.x); cells[k] = (cells[k] ? cells[k] + ' ' : '') + i.s; }); return cells; })];
+      const table = [head, ...data.map(r => { const cells = cols.map(() => ''); r.items.forEach(i => { const k = colOf(i.x); cells[k] = joinTxt(cells[k], i.s); }); return cells; })];
       const viaTable = namesFromRows(table, true);
       if (viaTable.length) { viaTable.forEach(s => { if (s.cls) tableCls.set(clsKey(s.last, s.first), s.cls); }); return viaTable.map(s => `${s.last}, ${s.first}${s.g ? ` (${s.g})` : ''}`); }
     }
   }
-  return allRows.map(r => r.items.map(i => i.s).join(' '));
+  return allRows.map(r => r.items.map(i => i.s).reduce(joinTxt, ''));
 }
 
 function sheetRows(buf) {
@@ -159,8 +163,10 @@ async function readFile(f) {
   }
   else if (/\.(xlsx|xls|ods)$/.test(name)) { const rows = sheetRows(await f.arrayBuffer()); importHead = rows.slice(0, 3).map(r => r.join(' ; ')); list = namesFromRows(rows); }
   else { const txt = await f.text(); const lines = txt.split(/\r?\n/); importHead = lines.slice(0, 3); list = /[;\t]/.test(txt) ? namesFromRows(lines.map(l => l.split(/[;\t]/))) : recognizeNames(lines); }
+  list.forEach(x => { x.first = fixNm(x.first); x.last = fixNm(x.last); });
   if (tableCls.size) list.forEach(x => { if (!x.cls) x.cls = tableCls.get(clsKey(x.last, x.first)) || ''; });
   return { list, cls: detectClassName(importHead, f.name), head: importHead.slice() };
 }
-return { readFile, recognizeNames, namesFromRows, normCls };
+const fixList = l => { (l || []).forEach(x => { x.first = fixNm(x.first); x.last = fixNm(x.last); }); return l; };
+return { readFile, recognizeNames: (...a) => fixList(recognizeNames(...a)), namesFromRows: (...a) => fixList(namesFromRows(...a)), normCls, fixNm };
 })();

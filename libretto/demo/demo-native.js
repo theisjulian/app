@@ -6,7 +6,7 @@
   'use strict';
   let mem = null;                                   // aktueller Stand, nur im Arbeitsspeicher
   let go; const ready = new Promise(r => { go = r; });
-  const X = window.__librettoDemo = { version: '0.9.4', start: go, locked: () => {}, preview: () => {} };
+  const X = window.__librettoDemo = { version: '0.9.5', start: go, locked: () => {}, preview: () => {} };
   const t0 = Date.now(), MIN = 60000, DAY = 864e5;
   const status = () => ({ exists: true, unlocked: !!mem, backupDir: 'USB-Stick „Schule“ (Beispiel)', lastLocal: t0 - 4 * MIN, lastExternal: t0 - 4 * MIN, lastExternalError: null,
     autoLock: 10, created: new Date(t0 - 21 * DAY).toISOString(), updateCheck: true, prevVersion: null });
@@ -35,9 +35,11 @@
     pickBackup: async () => { X.locked('Das Wiederherstellen einer Sicherung'); return null; },
     restore: async () => ({ ok: false, error: 'In der Demo nicht verfügbar.' }),
     setCfg: async () => status(),
-    saveFile: async name => { X.locked(/\.docx$/.test(name) ? 'Der Word-Export' : 'Der Excel-Export'); return { ok: false }; },
+    saveFile: async name => { X.locked(/\.docx$/.test(name) ? 'Der Word-Export' : /\.json$/.test(name) ? 'Der Klassen-Export' : 'Der Excel-Export'); return { ok: false }; },
     savePdf: async (name, html, landscape) => { X.preview(name, html, landscape); return { ok: false }; },
     version: async () => X.version,
+    openDoc: async () => true,
+    licenses: async () => 'Die Lizenzen der verwendeten Open-Source-Software stehen in der installierten App.',
     checkUpdate: async () => ({ update: null, policy: policy() }),
     policy: async () => policy(),
     platform: () => ready.then(() => 'web'),                    // wartet, bis demo.js geladen ist
