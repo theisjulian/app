@@ -1,6 +1,6 @@
 {
-  "name": "Gruppi",
-  "short_name": "Gruppi",
+  "name": "Gruppo",
+  "short_name": "Gruppo",
   "description": "Zufällige, ausgewogene Gruppen für den Unterricht – von theis.",
   "lang": "de",
   "start_url": "./app.html",
