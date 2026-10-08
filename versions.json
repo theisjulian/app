@@ -1,8 +1,8 @@
 {
  "libretto": {
-  "version": "0.9.5",
+  "version": "0.9.7",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Neu: Klassen austauschen (theis-Klassen), Tab-Taste wie im Infoportal, Notenspiegel als Diagramm, Punkteverteilung im Ausdruck, Klasse auf dem Schülerblatt, Dateinamen mit Datum; dazu Übertrag-Markierung, Notenblatt einlesen, volle Bildschirmbreite.",
+  "notes": "Neu: Kursliste in drei Ansichten (nach Jahrgangsstufe, nach Fach, als Karten), Doppelklick auf einen Kurs öffnet die Kurseinstellungen. Davor: W-Seminar mit Betreuungskarten, Protokollen, Dateien und Seminararbeit; Papierkorb für Gelöschtes; noch mehr Schutz vor Datenverlust. Dazu Klassen austauschen (theis-Klassen), Tab-Taste wie im Infoportal, Notenspiegel als Diagramm, Dateinamen mit Datum.",
   "betaEnd": "2027-09-30",
   "minVersion": null,
   "message": ""
@@ -16,7 +16,7 @@
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "url": "https://theisapps.de/voce/"
  }
 }

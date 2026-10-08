@@ -109,7 +109,30 @@ window.LibrettoDemoData = function (R, Cal) {
   ln(i8, { type: 'stex', title: 'Ex Lezione 2', date: sd(12, 3) }, noten(0.9));
   einzel(i8, 'ub', [sd(10, 14), sd(12, 15)], 0.45);
 
-  const courses = [e9, e6, i8, g10, q12];
+  /* ---------- W-Seminar (Q13, begonnen im Vorjahr): Betreuung, Termine mit Dateien, Abgabe ---------- */
+  const sdp = (m, day) => { const x = sd(m, day); return (+x.slice(0, 4) - 1) + x.slice(4); };   /* Datum im Vorjahr (12/1, 12/2) */
+  const w = course({ name: 'W-Sem 1', subject: 'W-Seminar', grade: 13, hasSA: false, seminar: true },
+    ['Albers, Lea', 'Brunner, Konstantin', 'Ceylan, Defne', 'Dvořák, Ella', 'Eckert, Moritz', 'Ferrari, Chiara', 'Gerber, Luis', 'Hauser, Nina', 'Ilić, Marko', 'Jäger, Rosa', 'Kurz, Valentin', 'Ludwig, Hanna']);
+  const nov = R.secondSchoolDayNov(Y, d => { const [yy, mm] = d.split('-'); return Cal ? !!Cal.freeDays(+yy, +mm - 1)[d] : false; });
+  w.sem = { start: Y - 1, leit: 'Englisch', rahmen: 'Utopias and Dystopias', deadline: nov, deadlineTime: '12:00', st: {} };
+  ln(w, { type: 'ref', title: 'Kurzreferat', date: sdp(11, 12), term: '12/1' }, s => ({ v: points(s, 1.4) }));
+  ln(w, { type: 'proj', title: 'Literaturrecherche', date: sdp(1, 21), term: '12/1' }, s => ({ v: points(s, 1.4) }));
+  ln(w, { type: 'ref', title: 'Zwischenpräsentation', date: sdp(4, 29), term: '12/2' }, s => ({ v: points(s, 1.2) }));
+  ln(w, { type: 'sonst', title: 'Exposé', date: sdp(6, 17), term: '12/2' }, s => ({ v: points(s, 1.5) }));
+  const themen = ['Surveillance in Orwell’s “Nineteen Eighty-Four” and Today’s Social Media', 'Climate Fiction as a Warning: Two Novels Compared', 'Utopian Communities in 19th-Century America',
+    'Artificial Intelligence in Dystopian Film', 'The Role of Language in Dystopian Societies', 'Feminist Dystopias since 1985', 'Utopia in Architecture: Garden Cities', 'Young Adult Dystopias and Their Readers',
+    'Thomas More’s “Utopia” – a Satire?', 'Dystopian Elements in Video Games', '', 'Eco-Utopias in Contemporary Fiction'];
+  w.students.forEach((s, i) => {
+    const st = w.sem.st[s.id] = { termine: [] };
+    if (themen[i]) { st.thema = themen[i]; st.themaAm = sdp(1, 28 + (i % 3)); }
+    st.termine.push({ id: id('t'), date: sdp(12, 2 + (i % 5)), term: '12/1', kind: 'beratung', inhalt: 'Themenideen besprochen, Fragestellung eingegrenzt.', vereinbart: 'Drei Quellen recherchieren, Arbeitstitel formulieren.', signed: true, files: [] });
+    if (i !== 10) st.termine.push({ id: id('t'), date: sdp(5, 6 + (i % 6)), term: '12/2', kind: 'beratung', inhalt: 'Gliederungsentwurf und Zeitplan besprochen.', vereinbart: 'Gliederung überarbeiten, Kapitel 2 bis Ende Juli.', signed: true,
+      files: [{ id: 'demo' + i + 'a', name: `Gliederung ${s.last}.pdf`, size: 96000 + i * 3100, added: sdp(5, 6) }] });
+    if (i < 7) st.termine.push({ id: id('t'), date: sd(9, 22 + (i % 6)), term: '13/1', kind: i < 3 ? 'zwischen' : 'kurz', inhalt: 'Stand der Arbeit: Hauptteil weitgehend fertig; Zitierweise geprüft.', vereinbart: 'Fazit schreiben, Erklärung nicht vergessen.', next: sd(10, 20), files: i < 2 ? [{ id: 'demo' + i + 'b', name: `Entwurf Kapitel 1–3 ${s.last}.docx`, size: 412000 + i * 9000, added: sd(9, 22) }] : [] });
+  });
+  w.notes[w.students[10].id] = 'Thema noch offen – Gespräch mit Oberstufenkoordination vereinbart.';
+
+  const courses = [e9, e6, i8, g10, q12, w];
   courses.forEach(c => c.students.forEach(s => delete s.lvl));
 
   /* Schulaufgaben anderer Fächer der 9b: zeigt die Terminprüfung nach § 22 GSO (höchstens zwei pro Woche) */

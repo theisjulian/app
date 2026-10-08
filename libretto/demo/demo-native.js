@@ -6,7 +6,7 @@
   'use strict';
   let mem = null;                                   // aktueller Stand, nur im Arbeitsspeicher
   let go; const ready = new Promise(r => { go = r; });
-  const X = window.__librettoDemo = { version: '0.9.5', start: go, locked: () => {}, preview: () => {} };
+  const X = window.__librettoDemo = { version: '0.9.7', start: go, locked: () => {}, preview: () => {} };
   const t0 = Date.now(), MIN = 60000, DAY = 864e5;
   const status = () => ({ exists: true, unlocked: !!mem, backupDir: 'USB-Stick „Schule“ (Beispiel)', lastLocal: t0 - 4 * MIN, lastExternal: t0 - 4 * MIN, lastExternalError: null,
     autoLock: 10, created: new Date(t0 - 21 * DAY).toISOString(), updateCheck: true, prevVersion: null });
@@ -40,6 +40,12 @@
     version: async () => X.version,
     openDoc: async () => true,
     licenses: async () => 'Die Lizenzen der verwendeten Open-Source-Software stehen in der installierten App.',
+    attPick: async () => { X.locked('Das Anhängen von Dateien'); return { added: [], skipped: [] }; },
+    attAdd: async () => { X.locked('Das Anhängen von Dateien'); return { added: [], skipped: [] }; },
+    attOpen: async () => { X.locked('Das Öffnen von Dateien'); return { ok: false }; },
+    attSave: async () => { X.locked('Das Speichern von Dateien'); return { ok: false }; },
+    attMissing: async () => [],
+    attGc: async () => 0,
     checkUpdate: async () => ({ update: null, policy: policy() }),
     policy: async () => policy(),
     platform: () => ready.then(() => 'web'),                    // wartet, bis demo.js geladen ist

@@ -206,7 +206,16 @@
   }
 
   /* ---------- Berechnung 12/13 ---------- */
-  function termsOf(course) { return +course.grade === 12 ? ['12/1', '12/2'] : ['13/1', '13/2']; }
+  /* W-Seminar (§ 20, § 29 Abs. 2 GSO): Halbjahresleistungen nur in 12/1 und 12/2 – unabhängig von der eingestellten Jahrgangsstufe.
+     Ältere Einträge in 13/1 oder 13/2 (aus Libretto ≤ 0.9.5) bleiben sichtbar, damit nichts verschwindet. */
+  function termsOf(course) {
+    if (course.seminar) {
+      const base = ['12/1', '12/2'];
+      const used = new Set([...(course.assessments || []).map(a => a.term), ...(course.entries || []).map(e => e.term)]);
+      return base.concat(['13/1', '13/2'].filter(t => used.has(t)));
+    }
+    return +course.grade === 12 ? ['12/1', '12/2'] : ['13/1', '13/2'];
+  }
   /* Gibt es in diesem Halbjahr eine Schulaufgabe? (§ 29 GSO; 13/2: nur Deutsch, Mathematik, Leistungsfach) */
   function termHasSA(course, term) {
     if (course.seminar) return false;
@@ -236,6 +245,69 @@
   function seminarPaper(arbeit, gespraech) {
     if (arbeit == null || gespraech == null || arbeit === '' || gespraech === '') return null;
     return Math.round(((+arbeit) * 2 + (+gespraech)) * 2 / 3);
+  }
+
+  /* ---------- W-Seminar (Wissenschaftspropädeutisches Seminar) ----------
+     § 20 GSO: belegt in 12/1 bis 13/1, mit Seminararbeit · § 21 Abs. 3: in 12/1 und 12/2 je mindestens zwei kleine LN
+     § 24: Thema bis Ende 12/1; Abgabe spätestens am zweiten Unterrichtstag im November der Jgst. 13 (Uhrzeit und Verlängerung legt die Schule fest)
+     § 29 Abs. 2: Halbjahresleistung 12/1, 12/2 = Durchschnitt der kleinen LN, gerundet, keine Aufrundung auf 1 Punkt
+     § 29 Abs. 6: Gesamtleistung Seminararbeit = (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet (höchstens 30 Punkte)
+     § 44 Abs. 2: Zulassung nur, wenn abgegeben, weder Arbeit noch Prüfungsgespräch 0 Punkte und Gesamtleistung mindestens 9 Punkte;
+     § 44 Abs. 1: unter 9 Punkten schriftliche Information bis Ende 13/1. Libretto dokumentiert nur – über die Zulassung entscheidet die Schule. */
+  const SEM_MID = '02-15';   /* Halbjahreswechsel, falls kein Stichtag eingestellt ist (nur für Vorschläge und Hinweise) */
+  const pad2 = n => String(n).padStart(2, '0');
+  /* Ausbildungsabschnitt zu einem Datum; start = Kalenderjahr, in dem die Jgst. 12 beginnt */
+  function semTermAt(start, date, mid = SEM_MID) {
+    start = +start; if (!start || !date) return '12/1';
+    if (date < `${start + 1}-${mid}`) return '12/1';
+    if (date < `${start + 1}-08-01`) return '12/2';
+    if (date < `${start + 2}-${mid}`) return '13/1';
+    return '13/2';
+  }
+  /* Ist ein Abschnitt (12/1, 12/2, 13/1) am Tag „today“ schon vorbei? */
+  function semTermOver(start, term, today, mid = SEM_MID) {
+    start = +start; if (!start || !today) return false;
+    const end = { '12/1': `${start + 1}-${mid}`, '12/2': `${start + 1}-08-01`, '13/1': `${start + 2}-${mid}` }[term];
+    return !!end && today >= end;
+  }
+  /* Vorschlag Abgabetermin: zweiter Unterrichtstag im November (§ 24 Abs. 2 GSO). isFree(iso) = Ferien/Feiertag */
+  function secondSchoolDayNov(year, isFree = () => false) {
+    let n = 0;
+    for (let d = 1; d <= 30; d++) {
+      const iso = `${year}-11-${pad2(d)}`, wd = new Date(Date.UTC(year, 10, d)).getUTCDay();
+      if (wd === 0 || wd === 6 || isFree(iso)) continue;
+      if (++n === 2) return iso;
+    }
+    return null;
+  }
+  const semNum = v => v === '' || v == null || isNaN(+v) ? null : +v;
+  /* Zahl der kleinen LN mit Wert eines Schülers in einem Halbjahr (Nachtermin offen und befreit zählen nicht) */
+  function countSmall(course, sid, term) {
+    const as = (course.assessments || []).filter(a => a.term === term && TYPES[a.type] && !isBig(a));
+    const n1 = as.filter(a => valueOf(a.results && a.results[sid], true) != null).length;
+    const n2 = (course.entries || []).filter(e => e.sid === sid && e.term === term && valueOf(e, true) != null).length;
+    return n1 + n2;
+  }
+  /* Stand eines Schülers im W-Seminar: Gesamtleistung und Hinweise (level: red | warn | info) */
+  function semStatus(course, sid, today, mid = SEM_MID) {
+    const cfg = course.sem || {}, st = (cfg.st || {})[sid] || {}, sp = (course.seminarPaper || {})[sid] || {};
+    const a = semNum(sp.arbeit), p = semNum(sp.gespraech), g = seminarPaper(sp.arbeit, sp.gespraech);
+    const out = [];
+    if (a === 0 || p === 0) out.push({ level: 'red', key: 'zero', text: `${a === 0 ? 'Seminararbeit' : 'Prüfungsgespräch'} mit 0 Punkten – damit ist keine Zulassung zur Abiturprüfung möglich (§ 44 Abs. 2 Nr. 6 GSO).` });
+    if (g != null && g < 9) out.push({ level: 'red', key: 'u9', text: `Gesamtleistung ${g} von 30 Punkten – mindestens 9 Punkte sind für die Zulassung nötig (§ 44 Abs. 2 Nr. 3 GSO). Schriftliche Information bis Ende 13/1 (§ 44 Abs. 1 GSO).` });
+    const due = st.verl || cfg.deadline;
+    if (!st.abgabe && due && today && today > due) out.push({ level: 'red', key: 'late', text: `Seminararbeit nicht als abgegeben vermerkt – Frist ${fmtDate(due)}${st.verl ? ' (verlängert)' : ''}. Abgabe ist Voraussetzung für die Zulassung (§ 44 Abs. 2 Nr. 6 GSO).` });
+    else if (st.abgabe && due && st.abgabe > due) out.push({ level: 'warn', key: 'after', text: `Abgegeben am ${fmtDate(st.abgabe)} – nach der Frist (${fmtDate(due)}). Über die Folgen entscheidet die Schule.` });
+    if (!(st.thema || '').trim() && (cfg.themeDue ? today > cfg.themeDue : semTermOver(cfg.start, '12/1', today, mid))) out.push({ level: 'warn', key: 'thema', text: 'Thema noch nicht eingetragen – es ist bis zum Ende von 12/1 festzulegen (§ 24 Abs. 1 GSO).' });
+    ['12/1', '12/2'].forEach(t => {
+      const r = computeTerm(course, sid, t);
+      if (r.zero) out.push({ level: 'red', key: 'hj0', text: `Halbjahresleistung ${t}: 0 Punkte.` });
+      if (semTermOver(cfg.start, t, today, mid)) { const n = countSmall(course, sid, t); if (n < 2) out.push({ level: 'info', key: 'n' + t, text: `${t}: ${n === 0 ? 'kein' : 'nur ein'} kleiner Leistungsnachweis eingetragen – vorgeschrieben sind mindestens zwei (§ 21 Abs. 3 GSO).` }); }
+    });
+    ['12/1', '12/2', '13/1'].forEach(t => {
+      if (semTermOver(cfg.start, t, today, mid) && !(st.termine || []).some(x => x.term === t)) out.push({ level: 'info', key: 'b' + t, text: `${t}: kein Betreuungstermin vermerkt (Empfehlung des ISB: mindestens ein Beratungsgespräch je Halbjahr).` });
+    });
+    return { arbeit: a, gespraech: p, gesamt: g, flags: out, worst: out.some(f => f.level === 'red') ? 'red' : out.some(f => f.level === 'warn') ? 'warn' : out.length ? 'info' : '' };
   }
 
   /* ---------- Warnungen ---------- */
@@ -291,6 +363,6 @@
 
   return { entryItems, pctFromAnchors, pct15FromAnchors, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
     keyGrade, suggestKey, keyPoints, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
-    roundPoints, computeLower, termsOf, termHasSA, computeTerm, seminarPaper, courseWarnings, studentWarnings, dateConflicts, isoWeek,
+    roundPoints, computeLower, termsOf, termHasSA, computeTerm, seminarPaper, semTermAt, semTermOver, secondSchoolDayNov, countSmall, semStatus, SEM_MID, courseWarnings, studentWarnings, dateConflicts, isoWeek,
     fmtDate, classOf, distribution, schoolYearOf, inScope };
 });

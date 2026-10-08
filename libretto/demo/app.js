@@ -29,8 +29,19 @@ function blankData() {
 }
 let saveT = null;
 let READONLY = false, POLICY = null;
-function save() { if (READONLY) return; clearTimeout(saveT); saveT = setTimeout(() => { if (D) N.save(D).catch(e => toast('Speichern fehlgeschlagen: ' + e.message)); }, 400); }
-function flush() { clearTimeout(saveT); if (D) return N.save(D); return Promise.resolve(); }
+/* Speichern: Schlägt es fehl, bleibt ein roter Hinweis stehen, bis es wieder klappt (Libretto versucht es alle 20 Sekunden erneut) */
+let SAVE_ERR = null, saveRetry = null;
+function saveState(err) {
+  SAVE_ERR = err || null; let b = document.getElementById('saveErr');
+  if (!SAVE_ERR) { if (b) { b.remove(); toast('Wieder gespeichert'); } clearInterval(saveRetry); saveRetry = null; return; }
+  if (!b) { b = document.createElement('div'); b.id = 'saveErr'; b.className = 'saveErr'; document.body.appendChild(b); }
+  b.innerHTML = `<b>Speichern fehlgeschlagen</b> – ${esc(SAVE_ERR)}. Libretto versucht es weiter. Bitte Libretto nicht beenden und Speicherplatz prüfen; die zuletzt gespeicherten Daten und alle Sicherungen bleiben unverändert. <button type="button" class="mini">Erneut versuchen</button>`;
+  b.querySelector('button').onclick = () => flush().catch(() => {});
+  if (!saveRetry) saveRetry = setInterval(() => { if (D && SAVE_ERR) flush().catch(() => {}); }, 20000);
+}
+function doSave() { if (!D) return Promise.resolve(); const snap = D; return N.save(snap).then(r => { if (SAVE_ERR) saveState(null); return r; }, e => { saveState(e && e.message || String(e)); throw e; }); }
+function save() { if (READONLY) return; clearTimeout(saveT); saveT = setTimeout(() => { doSave().catch(() => {}); }, 400); }
+function flush() { clearTimeout(saveT); return doSave(); }
 addEventListener('beforeunload', () => { if (D) { clearTimeout(saveT); N.saveSync(D); } });
 
 function toast(msg, ms = 2600) { const t = $('#toast'); t.classList.remove('act'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
@@ -176,6 +187,7 @@ function renderLock(mode = 'pw', info = '') {
     const r = await N.unlock(v, code);
     if (!r.ok) { $('#err').textContent = r.error; $('#open').disabled = false; $('#open').textContent = 'Öffnen'; $('#pw').select(); return; }
     D = r.data; migrate();
+    if (r.recovered) setTimeout(() => sheet({ title: 'Letzter Stand geöffnet', small: true, ok: '', cancel: 'Verstanden', body: `<p class="prose" style="margin:0">Die Datei mit deinen Daten war beim letzten Speichern beschädigt worden (z. B. durch einen Absturz oder Stromausfall). Libretto hat deshalb den <b>vorherigen gespeicherten Stand</b>${typeof r.recovered === 'string' ? ' vom ' + esc(new Date(r.recovered).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })) : ''} geöffnet. Die beschädigte Datei liegt bei den Sicherungen. Bitte prüfe die zuletzt eingetragenen Noten.</p>` }), 400);
     if (code) return newPasswordAfterCode();
     enterApp();
   };
@@ -214,7 +226,8 @@ async function restoreFlow(fromLock) {
 }
 async function lockNow() {
   if (!D) return;
-  await flush(); await N.lock(); D = null;
+  try { await flush(); } catch (e) { toast('Nicht gesperrt: Die Daten konnten nicht gespeichert werden.', 5000); return; }
+  await N.lock(); D = null;
   $('#main').innerHTML = ''; $$('dialog').forEach(d => d.remove()); document.body.classList.remove('modal');
   renderLock();
 }
@@ -225,7 +238,25 @@ setInterval(() => { if (D && (+D.settings.autoLock || 0) > 0 && Date.now() - las
 function migrate() {
   D.settings = { ...blankData().settings, ...(D.settings || {}) };
   D.courses = D.courses || []; D.classDates = D.classDates || []; D.events = D.events || []; D.settings.hues = D.settings.hues || {}; D.settings.lastTerm = D.settings.lastTerm || {};
-  D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; c.xfer = c.xfer || {}; });
+  D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; c.xfer = c.xfer || {}; c.typeWeights = c.typeWeights || {}; c.areaWeights = c.areaWeights || { schriftlich: 1, 'mündlich': 1, praktisch: 1 }; if (c.seminar) semCfg(c); });
+  D.attTrash = D.attTrash || {};
+  D.trash = (D.trash || []).filter(x => x && x.when && Date.now() - new Date(x.when) < TRASH_DAYS * 864e5);
+}
+/* ---------- Papierkorb: Gelöschtes bleibt 60 Tage wiederherstellbar (Kurse, Leistungsnachweise, Betreuungstermine, Stand vor dem Entfernen von Personen) ---------- */
+const TRASH_DAYS = 60;
+function toTrash(kind, label, data, extra = {}) { if (!data) return; D.trash = D.trash || []; D.trash.unshift({ id: uid(), kind, label, when: new Date().toISOString(), ...extra, data: JSON.parse(JSON.stringify(data)) }); }
+function restoreTrash(x) {
+  const d = JSON.parse(JSON.stringify(x.data)), when = new Date(x.when).toLocaleDateString('de-DE');
+  if (x.kind === 'course' || x.kind === 'snapshot') {
+    if (x.kind === 'snapshot' || D.courses.some(c => c.id === d.id)) { d.id = uid(); delete d.xid; (d.students || []).forEach(s => delete s.xid); d.name = d.name + (x.kind === 'snapshot' ? ` (Stand ${when})` : ' (wiederhergestellt)'); }
+    D.courses.push(d); UI.course = d.id; UI.termFor = null;
+  } else {
+    const c = D.courses.find(k => k.id === x.courseId);
+    if (!c) { toast('Den Kurs gibt es nicht mehr – bitte zuerst den Kurs wiederherstellen.', 5000); return false; }
+    if (x.kind === 'assessment') { if (c.assessments.some(a => a.id === d.id)) d.id = uid(); c.assessments.push(d); }
+    if (x.kind === 'termin') { if (!c.students.some(s => s.id === x.sid)) { toast('Die Person ist nicht mehr im Kurs.', 5000); return false; } const o = semSt(c, x.sid); o.termine = o.termine || []; if (o.termine.some(t => t.id === d.id)) d.id = uid(); o.termine.push(d); o.termine.sort((a, b) => (a.date || '').localeCompare(b.date || '')); }
+  }
+  D.trash = D.trash.filter(y => y.id !== x.id); migrate(); save(); attHousekeeping(); return true;
 }
 async function enterApp() {
   $('#gate').hidden = true; $('#appRoot').hidden = false;
@@ -234,6 +265,7 @@ async function enterApp() {
   $('#brandSub').textContent = `Notenverwaltung · Beta · Schuljahr ${D.settings.year}`;
   render();
   applyPolicy(await N.policy());
+  attHousekeeping();
   if (!enterApp.checked) { enterApp.checked = true; N.checkUpdate().then(r => { if (r && r.update) UPDATE = r.update; if (r && r.policy) applyPolicy(r.policy); render(); }).catch(() => {}); }
 }
 let UPDATE = null;
@@ -301,15 +333,54 @@ function backupNotice0() {
 function courseLabel(c) { return upper(c) ? c.name : `${c.name}`; }
 /* Oberstufe: zuletzt geöffnetes Halbjahr je Kurs merken; sonst das laufende Halbjahr */
 function defaultTerm(c) {
+  if (c.seminar) { const x = semTermNow(c); return x === '12/1' || x === '12/2' ? x : SEM_TAB; }   /* ab 13/1: gleich die Seminararbeit */
   const ts = R.termsOf(c), t = todayISO(), h = D.settings.half1End, mo = +t.slice(5, 7), day = +t.slice(8, 10);
   const second = h ? t > h : (mo >= 3 && mo <= 8) || (mo === 2 && day >= 20);
   return ts[second ? 1 : 0] || ts[0];
 }
-function pickTerm(c) { const last = D.settings.lastTerm && D.settings.lastTerm[c.id]; return R.termsOf(c).includes(last) ? last : defaultTerm(c); }
+function pickTerm(c) { const last = D.settings.lastTerm && D.settings.lastTerm[c.id]; return R.termsOf(c).includes(last) || (c.seminar && last === SEM_TAB) ? last : defaultTerm(c); }
 /* Abwesenheit (z. B. Auslandsaufenthalt): Zeitraum je Schüler */
 function awayOf(c, sid) { const a = c.away && c.away[sid]; return a && (a.from || a.to) ? a : null; }
 function isAway(c, sid, date) { const a = awayOf(c, sid); return !!(a && date && (!a.from || date >= a.from) && (!a.to || date <= a.to)); }
 function awayText(a) { return `abwesend ${a.from ? 'ab ' + fdate(a.from) : ''}${a.to ? ' bis ' + fdate(a.to) : ''}${a.reason ? ' (' + a.reason + ')' : ''}`.replace(/\s+/g, ' '); }
+/* ---- Kursliste: drei Ansichten (nur Darstellung; gespeichert wird allein die Wahl) ---- */
+function courseViewMode() { const v = D.settings.courseView; return v === 'c' || v === 'e' ? v : 'b'; }
+function courseLabel(x) { return upper(x) ? (x.seminar ? 'W-Seminar · Abitur ' + semAbi(x) : 'Oberstufe ' + x.grade) : 'Jgst. ' + x.grade; }
+function courseCmp(a, b) { return (+a.grade || 0) - (+b.grade || 0) || a.name.localeCompare(b.name, 'de', { numeric: true }); }
+/* Eingetragene Ergebnisse bis heute: reine Zählung (Leistungsnachweise ab morgen und abwesende Schüler zählen nicht) */
+function courseFill(x) {
+  const t = todayISO(); let have = 0, all = 0;
+  x.assessments.forEach(a => {
+    if (a.date && a.date > t) return;
+    x.students.forEach(s => { if (isAway(x, s.id, a.date)) return; all++; if (a.results && a.results[s.id]) have++; });
+  });
+  return { have, all };
+}
+function courseListHtml(cv) {
+  const warnDot = x => R.courseWarnings(x).length > 0 ? '<span class="warnDot" title="Hinweis"></span>' : '';
+  const hint = 'Doppelklick: Kurs bearbeiten · Rechtsklick: Menü';
+  const subj = x => (x.subject || 'Ohne Fach').trim();
+  const attrs = x => `data-course="${x.id}" aria-current="${x.id === UI.course}" title="${hint}" style="--hue:var(${hueOf(x.subject)})"`;
+  if (cv === 'c') {
+    const subjects = [...new Set(D.courses.map(subj))].sort((a, b) => a.localeCompare(b, 'de'));
+    if (UI.csubj && !subjects.includes(UI.csubj)) UI.csubj = null;
+    const tabs = `<div class="ctabs">${['', ...subjects].map(s => `<button class="ctab${(UI.csubj || '') === s ? ' on' : ''}" data-csubj="${esc(s)}">${s ? esc(s) : 'Alle'}</button>`).join('')}</div>`;
+    return tabs + D.courses.filter(x => !UI.csubj || subj(x) === UI.csubj).sort(courseCmp)
+      .map(x => `<button class="citem plain" ${attrs(x)}><span class="t">${esc(x.name)}<small>${esc(courseLabel(x))} · ${x.students.length} Schüler</small></span>${warnDot(x)}</button>`).join('');
+  }
+  if (cv === 'e') {
+    return `<div class="ccards">` + D.courses.slice().sort(courseCmp).map(x => {
+      const f = courseFill(x), p = f.all ? Math.round(100 * f.have / f.all) : 0;
+      const tip = f.all ? `${f.have} von ${f.all} Ergebnissen bis heute eingetragen` : 'Noch keine Leistungsnachweise bis heute';
+      return `<button class="citem card" ${attrs(x)}><span class="t">${esc(x.name)}${warnDot(x)}<small>${esc(subj(x))} · ${x.students.length} Schüler</small></span><span class="fill" title="${tip}"><i style="width:${p}%"></i></span></button>`;
+    }).join('') + `</div>`;
+  }
+  const grp = [['Unter- und Mittelstufe', x => !upper(x)], ['Oberstufe', x => upper(x) && !x.seminar], ['Seminare', x => !!x.seminar]];
+  return grp.map(([g, f]) => { const cs = D.courses.filter(f).sort(courseCmp); return cs.length ? `<div class="cgroup">${g}</div>` + cs.map(x => {
+    const b = x.seminar ? 'WS' : upper(x) ? 'Q' + x.grade : String(x.grade);
+    return `<button class="citem stripe" ${attrs(x)}><span class="badge neu">${esc(b)}</span><span class="t">${esc(x.name)}<small>${esc(subj(x))}${x.seminar ? ' · Abitur ' + semAbi(x) : ''} · ${x.students.length} Schüler</small></span>${warnDot(x)}</button>`;
+  }).join('') : ''; }).join('');
+}
 function renderGrades() {
   const main = $('#main');
   if (!D.courses.length) {
@@ -321,17 +392,13 @@ function renderGrades() {
   /* Kursliste gruppiert */
   if (upper(c) && UI.termFor !== c.id) { UI.term = pickTerm(c); UI.termFor = c.id; }
   /* Kursliste: nach Fach, darunter die Klassen aufsteigend, Oberstufe zuletzt */
-  const groups = {};
-  D.courses.forEach(x => { const g = (x.subject || 'Ohne Fach').trim(); (groups[g] = groups[g] || []).push(x); });
-  const order = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'de'));
-  const list = order.map(g => `<div class="cgroup">${esc(g)}</div>` + groups[g].slice().sort((a, b) => (+a.grade || 0) - (+b.grade || 0) || a.name.localeCompare(b.name, 'de', { numeric: true })).map(x => {
-    const warn = R.courseWarnings(x).length > 0;
-    return `<button class="citem" data-course="${x.id}" aria-current="${x.id === UI.course}" style="--hue:var(${hueOf(x.subject)})"><span class="badge">${esc((x.subject || '?').slice(0, 2))}</span><span class="t">${esc(x.name)}<small>${upper(x) ? 'Oberstufe ' + x.grade : 'Jgst. ' + x.grade} · ${x.students.length} Schüler</small></span>${warn ? '<span class="warnDot" title="Hinweis"></span>' : ''}</button>`;
-  }).join('')).join('');
+  const cv = courseViewMode();
+  const list = courseListHtml(cv);
+  const sw = [['b', 'Nach Jahrgangsstufe', '☷'], ['c', 'Nach Fach', '≡'], ['e', 'Karten', '▦']].map(([k, t, i]) => `<button class="vsw${cv === k ? ' on' : ''}" data-cview="${k}" title="${t}" aria-label="${t}" aria-pressed="${cv === k}">${i}</button>`).join('');
 
   main.innerHTML = `<div class="layout">
     <aside class="rail">
-      <section class="panel glass"><div class="phead"><h2 class="ptitle">Klassen und Kurse</h2><span class="count">${D.courses.length}</span></div><div class="courses">${list}</div>
+      <section class="panel glass"><div class="phead"><h2 class="ptitle">Klassen und Kurse</h2><span class="vswBox">${sw}</span><span class="count">${D.courses.length}</span></div><div class="courses cv-${cv}">${list}</div>
         <div class="panelBtns"><button class="mini" data-act="newCourse">+ Kurs</button><button class="mini" data-act="klassen" title="Klassen und Kurse mit anderen theis-Apps austauschen (Voce, Gruppo)">Klassen austauschen …</button></div></section>
       <section class="panel glass">${infoPanel(c)}</section>
     </aside>
@@ -347,10 +414,18 @@ function infoPanel(c) {
       lines.push(['Schulaufgaben', `${nSA} eingetragen${c.saPlanned ? ' · ' + c.saPlanned + ' geplant' : ''}${m ? ' · mind. ' + m : ''}`]);
       const r = R.saRatio(c); lines.push(['Gewichtung', `groß : klein = ${r}:1 ${c.ratio && c.ratio !== 'auto' ? '(manuell)' : '(§ 28 GSO)'}`]);
     } else lines.push(['Schulaufgaben', 'keine – Note nur aus kleinen LN']);
+    if (isPSem(c)) lines.push(['P-Seminar', 'mind. zwei kleine LN, v. a. individuelle Projektbeiträge (§ 21 Abs. 2 GSO); Note = Jahresfortgangsnote (§ 20 GSO)']);
     lines.push(['Kleine LN', c.smallMode === 'areas' ? 'nach Bereichen (schriftlich/mündlich/praktisch)' : 'gewichteter Durchschnitt']);
   } else {
-    lines.push(['Stufe', `Qualifikationsphase ${c.grade}`]);
-    lines.push(['Art', c.seminar ? 'Seminar – nur kleine LN' : c.lf ? 'Leistungsfach / mit Schulaufgabe in 13/2' : 'Halbjahresleistung: SA und Ø kleine LN 1:1']);
+    if (c.seminar) {
+      const cf = semCfg(c);
+      lines.push(['Kurs', `W-Seminar 12/1 bis 13/1 · Abitur ${semAbi(c)}`]);
+      if (cf.rahmen) lines.push(['Rahmenthema', cf.rahmen]);
+      lines.push(['12/1 und 12/2', 'Halbjahresleistung = Ø der kleinen LN, mindestens zwei je Halbjahr, keine Schulaufgabe (§ 21, § 29 GSO)']);
+      lines.push(['Seminararbeit', '(2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet, max. 30 Punkte (§ 29 Abs. 6 GSO)']);
+      lines.push(['Abgabe', cf.deadline ? wdate(cf.deadline) + (cf.deadlineTime ? ', ' + cf.deadlineTime + ' Uhr' : '') : 'noch nicht eingetragen (spätestens 2. Unterrichtstag im November, Jgst. 13)']);
+    } else lines.push(['Stufe', `Qualifikationsphase ${c.grade}`]);
+    if (!c.seminar) lines.push(['Art', c.lf ? 'Leistungsfach / mit Schulaufgabe in 13/2' : 'Halbjahresleistung: SA und Ø kleine LN 1:1']);
     if (+c.grade === 13 && !c.seminar) lines.push(['13/2', R.termHasSA(c, '13/2') ? 'mit Schulaufgabe' : 'nur kleine LN (§ 29 GSO)']);
   }
   return `<h2 class="ptitle">Regeln für diesen Kurs</h2><div class="meta" style="flex-direction:column;gap:6px">${lines.map(([k, v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join('')}</div>
@@ -380,15 +455,17 @@ function courseView(c) {
   let scope = '';
   if (upper(c)) {
     const terms = R.termsOf(c), cur = UI.term && terms.includes(UI.term) ? UI.term : null;
-    scope = `<div class="scopeBar"><div class="seg">${terms.map(t => `<button data-term="${t}" aria-pressed="${cur === t}">${t}</button>`).join('')}<button data-term="" aria-pressed="${!cur}">Übersicht</button></div></div>`;
+    const semB = c.seminar ? `<button data-term="${SEM_TAB}" aria-pressed="${isSemTab(c)}">Seminararbeit</button>` : '';
+    scope = `<div class="scopeBar"><div class="seg">${terms.map(t => `<button data-term="${t}" aria-pressed="${cur === t}">${t}</button>`).join('')}${semB}<button data-term="" aria-pressed="${!cur && !isSemTab(c)}">Übersicht</button></div></div>`;
   } else {
     scope = `<div class="scopeBar"><div class="seg"><button data-scope="year" aria-pressed="${UI.scope === 'year'}">Ganzes Schuljahr</button><button data-scope="half" aria-pressed="${UI.scope === 'half'}">Stand Zwischenzeugnis</button><button data-scope="until" aria-pressed="${UI.scope === 'until'}">Stand bis Datum</button></div>
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}</div>`;
   }
-  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe'} ${c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
-      <div class="headBtns"><button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button><button class="mini" data-act="editCourse">Kurs &amp; Schüler</button><button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button><button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
+  const semT = isSemTab(c);
+  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : (upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe') + ' ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
+      <div class="headBtns">${semT ? '' : '<button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button>'}<button class="mini" data-act="editCourse">Kurs &amp; Schüler</button>${semT ? '' : '<button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button>'}<button class="mini" data-act="print">Drucken &amp; Export</button></div></div>
     <div class="notices">${notices.filter(Boolean).join('')}</div>${scope}
-    ${sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
+    ${sorted.length && semT ? semView(c) : sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
       <div class="legend"><span><b>Enter</b> / <b>Tab</b> nächste Zeile</span><span><b>←→↑↓</b> bewegen</span><span><b>E</b> Nachtermin</span><span><b>B</b> befreit</span><span><b>N</b> Note 6 (§ 26 Abs. 4)</span><span><b>U</b> Unterschleif</span><span>Spaltenkopf anklicken = bearbeiten, Notenspiegel, drucken</span></div>`
       : `<div class="empty glass" style="min-height:260px"><div><strong>Noch keine Schüler</strong><p>Füge die Namensliste ein oder übernimm sie aus Excel.</p><button class="go" data-act="editCourse">Schüler eintragen</button></div></div>`}`;
 }
@@ -511,9 +588,11 @@ function bindGrid(c) {
     if (READONLY) { el.value = el.defaultValue; return; }
     if (el.dataset.sp) { // Seminararbeit
       const v = el.value.trim(); const n = v === '' ? '' : +v;
-      if (v !== '' && (!/^\d{1,2}$/.test(v) || n > 15)) { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast('Punkte 0–15'); return; }
+      if (v !== '' && (!/^\d{1,2}$/.test(v) || n > 15)) { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast('Punkte 0–15'); el.value = ((c.seminarPaper[el.dataset.s] || {})[el.dataset.sp]) ?? ''; el.select(); return; }
       const sp = c.seminarPaper[el.dataset.s] = c.seminarPaper[el.dataset.s] || {}; sp[el.dataset.sp] = n; save();
-      const td = work.querySelector(`[data-spsum="${el.dataset.s}"]`); if (td) td.textContent = R.seminarPaper(sp.arbeit, sp.gespraech) ?? '–';
+      const td = work.querySelector(`[data-spsum="${el.dataset.s}"]`), stu = c.students.find(x => x.id === el.dataset.s);
+      if (td) { if (td.closest('.semTbl')) td.innerHTML = semBadge(c, stu); else td.textContent = R.seminarPaper(sp.arbeit, sp.gespraech) ?? '–'; }
+      const sc = work.querySelector(`[data-spstat="${el.dataset.s}"]`); if (sc) { const tmp = document.createElement('tr'); tmp.innerHTML = semStatusCell(c, stu); sc.replaceWith(tmp.firstElementChild); }
       return;
     }
     if (el.dataset.eq) { // neue Einzelnote
@@ -583,6 +662,8 @@ function bindGrid(c) {
   work.querySelectorAll('[data-stu]').forEach(b => b.onclick = () => studentSheet(c, c.students.find(s => s.id === b.dataset.stu)));
   work.addEventListener('click', e => { const ch = e.target.closest('[data-ent]'); if (ch) entrySheet(c, c.students.find(s => s.id === ch.dataset.ent)); });
   const ec = work.querySelector('[data-entcfg]'); if (ec) ec.onclick = () => entryCfgSheet(c);
+  work.addEventListener('click', e => { const b = e.target.closest('[data-semcard]'); if (b) semCard(c, c.students.find(s => s.id === b.dataset.semcard)); });
+  const sc = work.querySelector('[data-semcfg]'); if (sc) sc.onclick = () => courseSheet(c);
 }
 
 /* Allgemeine Aktionen */
@@ -598,8 +679,34 @@ document.addEventListener('click', async e => {
     if (a === 'pickDir') { ST = await N.chooseBackupDir(); render(); }
     if (a === 'backupNow') { const r = await N.backupNow(); ST = await N.status(); toast(bkMsg(r)); render(); }
   }
-  const ci = e.target.closest('[data-course]'); if (ci) { UI.course = ci.dataset.course; UI.termFor = null; rememberCourse(); renderGrades(); }
+  closeCtx();
+  const vw = e.target.closest('[data-cview]'); if (vw) { D.settings.courseView = vw.dataset.cview; save(); renderGrades(); return; }
+  const ts = e.target.closest('[data-csubj]'); if (ts) { UI.csubj = ts.dataset.csubj || null; renderGrades(); return; }
+  const ci = e.target.closest('[data-course]'); if (ci && ci.dataset.course !== UI.course) { UI.course = ci.dataset.course; UI.termFor = null; rememberCourse(); renderGrades(); }
 });
+/* Doppelklick auf einen Kurs: Kurs & Schüler öffnen. Rechtsklick: kleines Menü. */
+function pickCourse(id) { if (id !== UI.course) { UI.course = id; UI.termFor = null; rememberCourse(); renderGrades(); } }
+function closeCtx() { const m = document.getElementById('ctxMenu'); if (m) m.remove(); }
+document.addEventListener('dblclick', e => {
+  const ci = e.target.closest('.citem[data-course]'); if (!ci) return;
+  pickCourse(ci.dataset.course); courseSheet(course());
+});
+document.addEventListener('contextmenu', e => {
+  const ci = e.target.closest('.citem[data-course]'); if (!ci) return;
+  e.preventDefault(); closeCtx(); pickCourse(ci.dataset.course);
+  const m = document.createElement('div'); m.id = 'ctxMenu'; m.className = 'ctx'; m.setAttribute('role', 'menu');
+  m.innerHTML = '<button role="menuitem" data-ctx="edit">Kurs bearbeiten …</button><button role="menuitem" data-ctx="rename">Umbenennen …</button>';
+  document.body.appendChild(m);
+  m.style.left = Math.max(4, Math.min(e.clientX, innerWidth - m.offsetWidth - 4)) + 'px';
+  m.style.top = Math.max(4, Math.min(e.clientY, innerHeight - m.offsetHeight - 4)) + 'px';
+  m.onclick = ev => {
+    const b = ev.target.closest('[data-ctx]'); if (!b) return; ev.stopPropagation(); closeCtx();
+    courseSheet(course());
+    if (b.dataset.ctx === 'rename') setTimeout(() => { const i = document.getElementById('cName'); if (i) { i.focus(); i.select(); } }, 60);
+  };
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCtx(); });
+window.addEventListener('blur', closeCtx);
 
 /* ======================================================================
    Kurs anlegen / bearbeiten
@@ -609,6 +716,7 @@ function courseSheet(c, pre) {
   c = c ? JSON.parse(JSON.stringify(c)) : { id: uid(), name: '', subject: '', grade: 9, hours: '', hasSA: true, saPlanned: '', ratio: 'auto', smallMode: 'flat', typeWeights: {}, areaWeights: { schriftlich: 1, 'mündlich': 1, praktisch: 1 }, lf: false, seminar: false, students: [], assessments: [], overrides: {}, notes: {}, seminarPaper: {} };
   if (isNew && pre) { Object.assign(c, pre.fields || {}); c.students = pre.students || []; } /* neuer Kurs aus einer theis-Klassen-Datei: Name, Fach, Namen vorbelegt, Rest wie bei „Neuer Kurs“ */
   const smallTypes = Object.entries(R.TYPES).filter(([k]) => k !== 'sa');
+  const semC = c.sem || {}, semStart0 = +semC.start || (yearStart() - (+c.grade === 13 ? 1 : 0));
   const others = D.courses.filter(x => x.id !== c.id && x.students.length);
   let hueSel = (D.settings.hues || {})[subjKey(c.subject)] || '';
   const body = `
@@ -625,11 +733,26 @@ function courseSheet(c, pre) {
         ${field('Verhältnis groß : klein', `<select id="cRatio"><option value="auto">automatisch (§ 28 GSO)</option><option value="1:1" ${c.ratio === '1:1' ? 'selected' : ''}>1 : 1</option><option value="2:1" ${c.ratio === '2:1' ? 'selected' : ''}>2 : 1</option></select>`)}
       </div>
       <div class="rows">${sw('cHasSA', c.hasSA, 'Fach mit Schulaufgaben')}</div>
+      <p class="hint" id="pHint" hidden><b>P-Seminar (Jahrgangsstufe 11):</b> keine Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge (§ 21 Abs. 2 GSO). Die Note gilt als Jahresfortgangsnote (§ 20 GSO) – Libretto rechnet sie wie ein Fach ohne Schulaufgaben.</p>
       <p class="hint">§ 28 GSO: bei zwei Schulaufgaben zählen große und kleine Leistungsnachweise 1:1, bei mehr als zwei 2:1. Mindestzahlen nach § 22 GSO prüft Libretto für Deutsch, Mathematik und Fremdsprachen.</p>
     </div>
     <div id="upperOpts">
-      <div class="rows">${sw('cLf', c.lf, 'Leistungsfach (Schulaufgabe auch in 13/2)')}${sw('cSem', c.seminar, 'Seminar (nur kleine Leistungsnachweise, mit Seminararbeit)')}</div>
-      <p class="hint">§ 29 GSO: Halbjahresleistung = Durchschnitt aus Schulaufgabe und Schnitt der kleinen LN, gerundet; eine Aufrundung auf 1 Punkt ist nicht zulässig. In 13/2 schreiben nur Deutsch, Mathematik und das Leistungsfach eine Schulaufgabe.</p>
+      ${field('Art des Kurses', `<select id="cKind"><option value="n">Kurs mit Schulaufgabe (in 13/2 nur Deutsch und Mathematik)</option><option value="lf" ${c.lf && !c.seminar ? 'selected' : ''}>Leistungsfach (Schulaufgabe auch in 13/2)</option><option value="w" ${c.seminar ? 'selected' : ''}>W-Seminar (mit Seminararbeit)</option></select>`)}
+      <p class="hint" id="kindHintN">§ 29 GSO: Halbjahresleistung = Durchschnitt aus Schulaufgabe und Schnitt der kleinen LN, gerundet; eine Aufrundung auf 1 Punkt ist nicht zulässig. In 13/2 schreiben nur Deutsch, Mathematik und das Leistungsfach eine Schulaufgabe. Profilfächer wie fremdsprachige Konversation rechnen genauso – dort ist die „Schulaufgabe“ die Konversationsübung (§ 22 Abs. 3 GSO).</p>
+      <div id="semOpts">
+        <div class="grid3">
+          ${field('Beginn der Jahrgangsstufe 12', `<select id="cSemStart">${[-2, -1, 0, 1].map(k => yearStart() + k).map(y => `<option value="${y}" ${+semStart0 === y ? 'selected' : ''}>Schuljahr ${y}/${String((y + 1) % 100).padStart(2, '0')} · Abitur ${y + 2}</option>`).join('')}</select>`)}
+          ${field('Leitfach (optional)', `<input type="text" id="cSemLeit" list="subjList" value="${esc(semC.leit || '')}" placeholder="z. B. Englisch">`)}
+          ${field('Rahmenthema (optional)', `<input type="text" id="cSemRahmen" value="${esc(semC.rahmen || '')}">`)}
+        </div>
+        <div class="grid3">
+          ${field('Thema festlegen bis', `<input type="date" id="cSemThema" value="${esc(semC.themeDue || '')}">`)}
+          ${field('Abgabe der Seminararbeit', `<input type="date" id="cSemDue" value="${esc(semC.deadline || '')}">`)}
+          ${field('Uhrzeit der Abgabe (optional)', `<input type="time" id="cSemTime" value="${esc(semC.deadlineTime || '')}">`)}
+        </div>
+        <div class="panelBtns" style="margin-top:0"><button type="button" class="mini" id="cSemSug">Vorschlag: 2. Unterrichtstag im November</button><span class="hint" id="cSemSugTxt"></span></div>
+        <p class="hint">§ 24 GSO: Das Thema wird bis zum Ende von 12/1 im Einvernehmen mit der Kursleitung gewählt. Die Seminararbeit ist in der Jahrgangsstufe 13 spätestens am <b>zweiten Unterrichtstag im November</b> abzugeben; die Schule kann eine Uhrzeit festlegen und in besonderen Fällen die Frist verlängern. Trage den Termin ein, den deine Schule festgelegt hat. In 12/1 und 12/2 gibt es keine Schulaufgabe – die Halbjahresleistung ist der Durchschnitt der kleinen Leistungsnachweise, mindestens zwei je Halbjahr (§ 21 Abs. 3, § 29 Abs. 2 GSO).</p>
+      </div>
     </div>
     <div class="subhead">Schülerinnen und Schüler <span class="count" id="stCount" style="float:right;text-transform:none;letter-spacing:0"></span></div>
     <div class="importBox" id="dropImport"><div><b>Klassenliste oder Notenblatt einlesen</b><p class="hint">PDF, Excel oder CSV hierher ziehen oder auswählen – danach kurz prüfen. Vor- und Nachname vertauscht? Einfach „Tauschen“. <b>Mitten im Schuljahr?</b> Das Notenblatt (PDF) mit Noten aus dem Infoportal geht auch – Libretto übernimmt Schüler und Noten.</p></div>
@@ -652,8 +775,15 @@ function courseSheet(c, pre) {
     c.name = d.querySelector('#cName').value.trim(); c.subject = d.querySelector('#cSubj').value.trim(); c.grade = g;
     if (!c.name || !c.subject) { toast('Bitte Klasse/Kurs und Fach angeben'); return false; }
     c.hours = d.querySelector('#cHours').value; c.saPlanned = d.querySelector('#cPlanned').value; c.ratio = d.querySelector('#cRatio').value;
-    c.hasSA = g >= 12 ? !d.querySelector('#cSem').checked : d.querySelector('#cHasSA').checked;
-    c.lf = d.querySelector('#cLf').checked; c.seminar = d.querySelector('#cSem').checked;
+    const kind = d.querySelector('#cKind').value;
+    if (g >= 12) { c.lf = kind === 'lf'; c.seminar = kind === 'w'; } else c.seminar = false;
+    c.hasSA = g >= 12 ? !c.seminar : d.querySelector('#cHasSA').checked;
+    if (c.seminar) {   /* W-Seminar: Fristen und Angaben; vorhandene Betreuungsdaten (c.sem.st) bleiben unberührt */
+      c.sem = c.sem || {}; c.sem.st = c.sem.st || {};
+      c.sem.start = +d.querySelector('#cSemStart').value;
+      const setS = (k, sel) => { const v = d.querySelector(sel).value.trim(); if (v) c.sem[k] = v; else delete c.sem[k]; };
+      setS('leit', '#cSemLeit'); setS('rahmen', '#cSemRahmen'); setS('themeDue', '#cSemThema'); setS('deadline', '#cSemDue'); setS('deadlineTime', '#cSemTime');
+    }
     c.smallMode = d.querySelector('#cSmall').value;
     D.settings.hues = D.settings.hues || {}; if (hueSel) D.settings.hues[subjKey(c.subject)] = hueSel; else delete D.settings.hues[subjKey(c.subject)];
     $$('[data-area]', d).forEach(i => c.areaWeights[i.dataset.area] = +i.value || 0);
@@ -665,20 +795,34 @@ function courseSheet(c, pre) {
       if (seen.has(st.name.toLowerCase())) return; seen.add(st.name.toLowerCase()); next.push(st);
     });
     const ids = new Set(next.map(x => x.id));
-    const removed = c.students.filter(s => !ids.has(s.id) && (c.assessments.some(a => a.results && a.results[s.id]) || (c.entries || []).some(e => e.sid === s.id)));
+    const removed = c.students.filter(s => !ids.has(s.id) && (c.assessments.some(a => a.results && a.results[s.id]) || (c.entries || []).some(e => e.sid === s.id) || semHasData(c, s.id)));
     const finish = () => {
+      if (removed.length) toTrash('snapshot', `${c.name} · ${c.subject}: Stand vor dem Entfernen von ${removed.map(s => s.name).join(', ')}`, D.courses.find(x => x.id === c.id));
       sortList(next);
+      c.students.filter(s => !ids.has(s.id)).forEach(s => semDrop(c, s.id));   /* Betreuungsdaten entfernter Personen (Dateien erst nach 120 Tagen endgültig weg) */
       c.students = next; c.entries = (c.entries || []).filter(e => ids.has(e.sid));
       const i = D.courses.findIndex(x => x.id === c.id);
       if (i >= 0) D.courses[i] = c; else D.courses.push(c);
       UI.course = c.id; rememberCourse(); save(); close(); render();
     };
-    if (removed.length) { ask(`${removed.length} Schüler mit eingetragenen Noten würden entfernt (${removed.map(s => esc(s.name)).join(', ')}). Ihre Noten gehen dabei verloren.`, 'Entfernen', true).then(ok => { if (ok) finish(); }); return false; }
+    if (removed.length) { ask(`${removed.length} Schüler mit eingetragenen Noten${c.seminar ? ' bzw. Seminar-Dokumentation' : ''} würden entfernt (${removed.map(s => esc(s.name)).join(', ')}). Ihre Noten gehen dabei verloren.`, 'Entfernen', true).then(ok => { if (ok) finish(); }); return false; }
     finish(); return false;
   } });
   if (pre && pre.next) dlg.addEventListener('close', pre.next, { once: true });
-  const upd = () => { const g = +dlg.querySelector('#cGrade').value; dlg.querySelector('#lowerOpts').hidden = g >= 12; dlg.querySelector('#upperOpts').hidden = g < 12; dlg.querySelector('#areaW').hidden = dlg.querySelector('#cSmall').value !== 'areas'; };
-  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; upd();
+  const upd = () => { const g = +dlg.querySelector('#cGrade').value; dlg.querySelector('#lowerOpts').hidden = g >= 12; dlg.querySelector('#upperOpts').hidden = g < 12; dlg.querySelector('#areaW').hidden = dlg.querySelector('#cSmall').value !== 'areas';
+    const w = dlg.querySelector('#cKind').value === 'w'; dlg.querySelector('#semOpts').hidden = !w; dlg.querySelector('#kindHintN').hidden = w;
+    dlg.querySelector('#pHint').hidden = !isPSem({ subject: dlg.querySelector('#cSubj').value }); };
+  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; dlg.querySelector('#cKind').onchange = upd; upd();
+  /* Fach „W-Seminar“ / „P-Seminar“: passende Einstellungen vorschlagen */
+  dlg.querySelector('#cSubj').addEventListener('change', () => {
+    const v = dlg.querySelector('#cSubj').value, gs = dlg.querySelector('#cGrade');
+    if (isWSemName(v)) { if (+gs.value < 12) gs.value = '12'; dlg.querySelector('#cKind').value = 'w'; }
+    if (isPSem({ subject: v })) { if (isNew && +gs.value !== 11) gs.value = '11'; dlg.querySelector('#cHasSA').checked = false; }
+    upd();
+  });
+  const sugTxt = () => { const x = semDeadlineSuggest(+dlg.querySelector('#cSemStart').value); dlg.querySelector('#cSemSugTxt').textContent = x ? 'laut Ferienkalender Bayern: ' + wdate(x) : ''; return x; };
+  dlg.querySelector('#cSemStart').onchange = sugTxt; sugTxt();
+  dlg.querySelector('#cSemSug').onclick = () => { const x = sugTxt(); if (x) dlg.querySelector('#cSemDue').value = x; else toast('Für dieses Schuljahr kennt Libretto die Ferien noch nicht – bitte Termin selbst eintragen'); };
   $$('#cHue button', dlg).forEach(b => b.onclick = () => { hueSel = b.dataset.hue; $$('#cHue button', dlg).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
   if (isNew) dlg.querySelector('#cName').focus();
   /* Entwurf der Schülerliste (Tabelle wie in Viva/Gruppen) */
@@ -761,8 +905,9 @@ function courseSheet(c, pre) {
   dlg.querySelector('#stSwap').onclick = () => { draft.forEach(x => { [x.first, x.last] = [x.last, x.first]; }); drawDraft(); };
   const fr = dlg.querySelector('#cFrom'); if (fr) fr.onchange = () => { const o = D.courses.find(x => x.id === fr.value); if (o) addDraft(o.students.map(x => ({ ...splitName(x), cls: x.cls || '' }))); fr.value = ''; };
   const del = dlg.querySelector('#cDel'); if (del) del.onclick = async () => {
-    if (await ask(`Kurs <b>${esc(c.name + ' ' + c.subject)}</b> mit allen Noten löschen? Ältere Sicherungen bleiben erhalten.`, 'Löschen', true)) {
-      D.courses = D.courses.filter(x => x.id !== c.id); UI.course = D.courses[0] && D.courses[0].id; save(); close(); render();
+    if (await ask(`Kurs <b>${esc(c.name + ' ' + c.subject)}</b> mit allen Noten löschen? Du kannst ihn 60 Tage lang unter „Sicherung“ wiederherstellen.`, 'Löschen', true)) {
+      toTrash('course', `Kurs ${c.name} · ${c.subject}`, D.courses.find(x => x.id === c.id));
+      D.courses = D.courses.filter(x => x.id !== c.id); UI.course = D.courses[0] && D.courses[0].id; save(); close(); render(); toast('Kurs gelöscht – 60 Tage lang unter „Sicherung“ wiederherstellbar', 4500);
     }
   };
 }
@@ -777,9 +922,10 @@ function assessmentSheet(c, a) {
   if (!c) return;
   const isNew = !a, up = upper(c);
   const nSA = c.assessments.filter(x => x.type === 'sa').length;
-  const defTerm = up ? (UI.term || R.termsOf(c)[0]) : null;
+  const tl = R.termsOf(c), semNow = c.seminar ? semTermNow(c) : null;
+  const defTerm = up ? (tl.includes(UI.term) ? UI.term : c.seminar ? (tl.includes(semNow) ? semNow : '12/2') : tl[0]) : null;
   a = a ? JSON.parse(JSON.stringify(a)) : { id: uid(), type: (c.hasSA && !c.seminar && (up ? R.termHasSA(c, defTerm) && !c.assessments.some(x => x.type === 'sa' && x.term === defTerm) : nSA < (+c.saPlanned || 0))) ? 'sa' : 'stex', title: '', date: todayISO(), term: defTerm, results: {} };
-  const types = Object.entries(R.TYPES).filter(([k]) => k !== 'sa' || c.hasSA || up);
+  const types = Object.entries(R.TYPES).filter(([k]) => k !== 'sa' || a.type === 'sa' || (up ? !c.seminar : c.hasSA));   /* W-Seminar: keine Schulaufgabe (§ 29 Abs. 2 GSO) */
   const dist = !isNew ? R.distribution(a, c.students, up) : null;
   /* Notenschlüssel-Vorgaben: je Fach gemerkt (Fachschaften legen z. B. „Note 4 ab 50 %, Note 5 ab 33 %“ fest) */
   const pKey = (c.subject || '').toLowerCase() + (up ? '|Q' : '');
@@ -882,7 +1028,7 @@ function assessmentSheet(c, a) {
   dlg.querySelector('#aMax').addEventListener('input', showPct); $$('[data-k]', dlg).forEach(i => i.addEventListener('input', showPct)); showPct();
   const del = dlg.querySelector('#aDel'); if (del) del.onclick = async () => {
     const n = Object.keys(a.results || {}).length;
-    if (await ask(`„${esc(a.title || R.TYPES[a.type].label)}“ ${n ? `mit ${n} eingetragenen Ergebnissen ` : ''}löschen?`, 'Löschen', true)) { c.assessments = c.assessments.filter(x => x.id !== a.id); save(); close(); render(); }
+    if (await ask(`„${esc(a.title || R.TYPES[a.type].label)}“ ${n ? `mit ${n} eingetragenen Ergebnissen ` : ''}löschen?`, 'Löschen', true)) { toTrash('assessment', `${a.title || R.TYPES[a.type].label}${a.date ? ' vom ' + fdate(a.date) : ''} · ${c.name} ${c.subject}`, c.assessments.find(x => x.id === a.id), { courseId: c.id }); c.assessments = c.assessments.filter(x => x.id !== a.id); save(); close(); render(); toast('Gelöscht – 60 Tage lang unter „Sicherung“ wiederherstellbar', 4000); }
   };
   const pr = dlg.querySelector('#aPrint'); if (pr) { pr.onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'pdf'); dlg.querySelector('#aWord').onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'docx'); }
 }
@@ -983,8 +1129,8 @@ function studentSheet(c, s) {
     <div class="grid3">${field('Abwesend von', `<input type="date" id="sAwF" value="${esc(aw.from || '')}">`)}${field('bis', `<input type="date" id="sAwT" value="${esc(aw.to || '')}">`)}${field('Grund (optional)', `<input type="text" id="sAwR" value="${esc(aw.reason || '')}" placeholder="z. B. Auslandsaufenthalt">`)}</div>
     <p class="hint">Z. B. für ein Halbjahr im Ausland: Leistungsnachweise in diesem Zeitraum werden in der Tabelle und auf Ausdrucken mit „abw.“ gekennzeichnet. Gerechnet wird wie immer nur mit den vorhandenen Noten.</p>
     ${field('Notizen (nur für dich)', `<textarea id="sNote" rows="3">${esc(c.notes[s.id] || '')}</textarea>`)}
-    <div class="panelBtns"><button type="button" class="mini" id="sPdf">Schülerblatt drucken (PDF)</button><button type="button" class="mini" id="sDoc">als Word</button></div>`;
-  const { dlg } = sheet({ title: s.name, wide: true, body, onOk: d => {
+    <div class="panelBtns">${c.seminar ? '<button type="button" class="mini accent" id="sSem">Betreuung &amp; Seminararbeit …</button>' : ''}<button type="button" class="mini" id="sPdf">Schülerblatt drucken (PDF)</button><button type="button" class="mini" id="sDoc">als Word</button></div>`;
+  const { dlg, close: closeStu } = sheet({ title: s.name, wide: true, body, onOk: d => {
     const n = d.querySelector('#sName').value.trim(); if (n && n !== s.name) { Object.assign(s, splitName({ name: n })); s.name = fullName(s); }
     if (!up) { c.noGrade = c.noGrade || {}; if (d.querySelector('#sNg').checked) c.noGrade[s.id] = { reason: d.querySelector('#sOvR').value.trim() }; else delete c.noGrade[s.id]; }
     if (!up) { const g = d.querySelector('#sOv').value; if (g) c.overrides[s.id] = { grade: +g, reason: d.querySelector('#sOvR').value.trim() }; else delete c.overrides[s.id]; }
@@ -996,8 +1142,286 @@ function studentSheet(c, s) {
     sortList(c.students);
     save(); render();
   } });
+  const semB = dlg.querySelector('#sSem'); if (semB) semB.onclick = () => { closeStu(); semCard(c, s); };
   dlg.querySelector('#sPdf').onclick = () => exportModel(modelStudents(c, [s]), 'pdf');
   dlg.querySelector('#sDoc').onclick = () => exportModel(modelStudents(c, [s]), 'docx');
+}
+
+/* ======================================================================
+   W-Seminar: Seminararbeit, Betreuung, Dateien
+   Daten (nur ergänzt, nichts Bestehendes geändert):
+     c.seminar = true                       W-Seminar (wie bisher)
+     c.seminarPaper[sid] = {arbeit, gespraech}   Punkte (wie bisher)
+     c.sem = { start, leit, rahmen, themeDue, deadline, deadlineTime, st: { sid: { thema, themaAm, abgabe, abgabeZeit, erkl, verl, verlGrund, wett, wettText, pgAm, bem, files:[…], termine:[…] } } }
+     Termin = { id, date, term, kind, inhalt, vereinbart, next, signed, files:[{id, name, size, added}] }
+     D.attTrash = { Datei-Kennung: Datum der Entfernung }   (aufgeräumt wird erst nach 120 Tagen)
+   ====================================================================== */
+const SEM_TAB = 'W';
+const isPSem = c => /^(p[\s-]?seminar|projekt-?seminar)/i.test(String(c.subject || '').trim());
+const isWSemName = x => /^(w[\s-]?seminar|wissenschaftsprop)/i.test(String(x || '').trim());
+const isSemTab = c => !!(c && c.seminar && UI.term === SEM_TAB);
+const yearStart = () => { const m = /^(\d{4})/.exec(String(D.settings.year || '')); return m ? +m[1] : +R.schoolYearOf().slice(0, 4); };
+const semMid = () => (/^\d{4}-\d{2}-\d{2}$/.test(D.settings.half1End || '') ? D.settings.half1End.slice(5) : R.SEM_MID);
+function semCfg(c) { c.sem = c.sem || {}; c.sem.st = c.sem.st || {}; if (!+c.sem.start) c.sem.start = yearStart() - (+c.grade === 13 ? 1 : 0); return c.sem; }
+const semGet = (c, sid) => ((c.sem || {}).st || {})[sid] || {};
+function semSt(c, sid) { const cf = semCfg(c); return (cf.st[sid] = cf.st[sid] || {}); }
+const semAbi = c => +semCfg(c).start + 2;
+const semTermNow = c => R.semTermAt(semCfg(c).start, todayISO(), semMid());
+const semToday = () => todayISO();
+const semStatusOf = (c, sid) => R.semStatus(c, sid, semToday(), semMid());
+const isFreeDay = iso => { const [y, m] = iso.split('-'); return !!Cal.freeDays(+y, +m - 1)[iso]; };
+const semDeadlineSuggest = start => R.secondSchoolDayNov(+start + 1, isFreeDay);
+const SEM_KINDS = [['beratung', 'Beratungsgespräch'], ['zwischen', 'Zwischenstand / Zwischenpräsentation'], ['kurz', 'Kurze Rücksprache'], ['pruefung', 'Präsentation mit Prüfungsgespräch'], ['sonst', 'Sonstiges']];
+const semKind = k => (SEM_KINDS.find(x => x[0] === k) || SEM_KINDS[4])[1];
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const wdate = d => d ? WD[new Date(d + 'T12:00').getDay()] + ', ' + fdate(d) : '';
+/* Sprache der Arbeit (§ 24 Abs. 1 GSO) nach dem Leitfach */
+function semLangHint(c) {
+  const f = String(semCfg(c).leit || c.subject || '').trim();
+  if (/^englisch/i.test(f)) return 'Leitfach Englisch: Die Seminararbeit wird auf Englisch verfasst, das Prüfungsgespräch auf Englisch geführt (§ 24 GSO).';
+  if (R.isLang(f) && !/^(latein|griechisch)/i.test(f)) return `Leitfach ${f}: Die Arbeit wird auf ${f} oder auf Deutsch verfasst; das Prüfungsgespräch wird auf ${f} geführt (§ 24 GSO).`;
+  return '';
+}
+function semHasData(c, sid) {
+  const st = semGet(c, sid), sp = (c.seminarPaper || {})[sid] || {};
+  return !!((st.thema || '').trim() || (st.termine || []).length || (st.files || []).length || st.abgabe || (sp.arbeit !== '' && sp.arbeit != null) || (sp.gespraech !== '' && sp.gespraech != null));
+}
+/* Alle Datei-Kennungen eines Schülers bzw. aller Kurse */
+const semFilesOf = st => [...(st.files || []), ...(st.termine || []).flatMap(t => t.files || [])];
+const usedAttIds = () => D.courses.flatMap(c => Object.values((c.sem || {}).st || {}).flatMap(semFilesOf)).map(f => f.id);
+function trashAtt(list) { D.attTrash = D.attTrash || {}; (list || []).forEach(f => { if (f && f.id) D.attTrash[f.id] = todayISO(); }); }
+/* Schüler aus einem Kurs entfernt: Seminar-Daten mit entfernen, Dateien in den Papierkorb (endgültig erst nach 120 Tagen) */
+function semDrop(c, sid) { const st = (c.sem && c.sem.st) ? c.sem.st[sid] : null; if (st) { trashAtt(semFilesOf(st)); delete c.sem.st[sid]; } }
+async function attHousekeeping() {
+  try {
+    D.attTrash = D.attTrash || {}; const used = new Set(usedAttIds());
+    let ch = false; Object.keys(D.attTrash).forEach(id => { if (used.has(id)) { delete D.attTrash[id]; ch = true; } });
+    if (!Object.keys(D.attTrash).length) { if (ch) save(); return; }
+    await N.attGc([...used], D.attTrash);
+    const lim = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10);
+    Object.entries(D.attTrash).forEach(([id, d]) => { if (d < lim) { delete D.attTrash[id]; ch = true; } });
+    if (ch) save();
+  } catch (e) {}
+}
+
+/* ---------- Ansicht „Seminararbeit“ (ein Reiter neben 12/1 und 12/2) ---------- */
+function semBadge(c, s) { const r = semStatusOf(c, s.id); return r.gesamt == null ? '<span class="hint">–</span>' : `<span class="gb ${r.gesamt < 9 ? 'g6' : 'g' + R.POINT_GRADE(Math.round(r.gesamt / 2))}" title="Gesamtleistung Seminararbeit (max. 30)">${r.gesamt}</span>`; }
+function semStatusCell(c, s) {
+  const r = semStatusOf(c, s.id);
+  const txt = r.flags.map(f => f.text).join('\n');
+  return `<td class="semSt" data-spstat="${s.id}">${r.worst ? `<button class="semFlag ${r.worst}" data-semcard="${s.id}" title="${esc(txt)}">${r.flags.length}</button>` : '<span class="semOk" title="Keine offenen Punkte">✓</span>'}</td>`;
+}
+function semView(c) {
+  const cf = semCfg(c), t = semToday(), n = c.students.length;
+  const due = cf.deadline;
+  const days = due ? Math.round((new Date(due + 'T12:00') - new Date(t + 'T12:00')) / 864e5) : null;
+  const cnt = f => c.students.filter(f).length;
+  const nThema = cnt(s => (semGet(c, s.id).thema || '').trim()), nAbg = cnt(s => semGet(c, s.id).abgabe), nBew = cnt(s => semStatusOf(c, s.id).gesamt != null);
+  const bar = `<div class="semBar glass">
+      <div class="semDue ${due && days < 0 ? 'past' : due && days <= 14 ? 'soon' : ''}"><small>Abgabe der Seminararbeit</small>${due ? `<b>${esc(wdate(due))}${cf.deadlineTime ? ', ' + esc(cf.deadlineTime) + ' Uhr' : ''}</b><span>${days > 1 ? `noch ${days} Tage` : days === 1 ? 'morgen' : days === 0 ? 'heute' : 'Frist vorbei'}</span>` : '<b>noch nicht eingetragen</b><span>laut GSO spätestens am 2. Unterrichtstag im November (Jgst. 13)</span>'}</div>
+      <div class="semCnt"><b>${nThema}<i>/${n}</i></b><small>Themen</small></div>
+      <div class="semCnt"><b>${nAbg}<i>/${n}</i></b><small>abgegeben</small></div>
+      <div class="semCnt"><b>${nBew}<i>/${n}</i></b><small>bewertet</small></div>
+      <button class="mini" data-semcfg="1" title="Abgabetermin, Themenfrist, Rahmenthema">Fristen …</button></div>`;
+  const terms = ['12/1', '12/2', '13/1'];
+  const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="sep" rowspan="2" style="text-align:left;padding-left:12px">Thema</th><th class="gSmall sep" colspan="3">Betreuungstermine</th><th class="sep" rowspan="2">Abgabe</th><th class="gBig sep" colspan="3">Bewertung (§ 29 Abs. 6 GSO)</th><th class="sep" rowspan="2">Hinweise</th></tr>
+    <tr class="cols">${terms.map((x, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 10px">${x}</th>`).join('')}<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Prüfungs-<br>gespräch</th><th style="padding:6px 10px">Gesamt<br><small>max. 30</small></th></tr></thead>`;
+  let nr = 0;
+  const rows = groupsOf(c).map(g => clsRow(g, 10) + g.students.map(s => {
+    const st = semGet(c, s.id), sp = c.seminarPaper[s.id] || {};
+    const ter = terms.map((x, i) => { const k = (st.termine || []).filter(y => y.term === x).length; const miss = !k && R.semTermOver(cf.start, x, t, semMid()); return `<td class="${i ? '' : 'sep'} semN ${miss ? 'miss' : ''}">${k || '–'}</td>`; }).join('');
+    const eff = st.verl || cf.deadline;
+    const abg = st.abgabe ? `<span class="semAbg ${eff && st.abgabe > eff ? 'late' : 'ok'}">${sdate(st.abgabe)}</span>` : eff && t > eff ? '<span class="semAbg miss">fehlt</span>' : '<span class="hint">offen</span>';
+    const th = (st.thema || '').trim();
+    return `<tr data-row="${s.id}"><td class="nm"><button data-semcard="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}</button></td>
+      <td class="sep semThema"><button data-semcard="${s.id}" title="${esc(th || 'Thema eintragen')}">${th ? esc(th) : '<span class="hint">Thema eintragen …</span>'}</button></td>${ter}
+      <td class="sep">${abg}${(st.files || []).length ? ' <span class="hint" title="Dateien der Arbeit">📎</span>' : ''}</td>
+      <td class="sep"><input class="cell" data-sp="arbeit" data-s="${s.id}" value="${esc(sp.arbeit ?? '')}" autocomplete="off" inputmode="numeric" title="Punkte der Arbeit (0–15)"></td><td><input class="cell" data-sp="gespraech" data-s="${s.id}" value="${esc(sp.gespraech ?? '')}" autocomplete="off" inputmode="numeric" title="Punkte des Prüfungsgesprächs (0–15)"></td>
+      <td class="res" data-spsum="${s.id}">${semBadge(c, s)}</td>${semStatusCell(c, s)}</tr>`;
+  }).join('')).join('');
+  return `${bar}<div class="gridWrap glass"><table class="grid semTbl">${head}<tbody>${rows}</tbody></table></div>
+    <div class="legend"><span>Name oder Thema anklicken: <b>Betreuungskarte</b> – Thema, Termine mit Protokoll und Dateien, Abgabe, Bewertung</span><span>Gesamtleistung = (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet</span><span>Zulassung: abgegeben, keine 0 Punkte, mindestens 9 Punkte (§ 44 GSO)</span></div>`;
+}
+
+/* ---------- Dateien (Anhänge) ---------- */
+function attChips(list) {
+  return (list || []).map(f => `<span class="att" data-att="${esc(f.id)}"><button type="button" class="attName" data-attopen="${esc(f.id)}" title="Öffnen">${esc(f.name)}</button><small>${fmtSize(f.size || 0)}</small><button type="button" class="iconbtn" data-attsave="${esc(f.id)}" title="Speichern unter …">⤓</button><button type="button" class="iconbtn" data-attrm="${esc(f.id)}" title="Entfernen">✕</button></span>`).join('');
+}
+function attBoxHTML(list, label = 'Dateien') {
+  return `<div class="attBox"><div class="attList">${attChips(list)}</div><div class="attDrop"><span>${esc(label)} hierher ziehen oder</span><button type="button" class="mini" data-attpick="1">Dateien wählen …</button></div></div>`;
+}
+/* Verhalten einer Dateiliste: get() liefert die Liste, set(list) speichert sie; onRemove(f) für Papierkorb */
+function bindAtt(box, get, set, onRemove) {
+  const draw = () => { box.querySelector('.attList').innerHTML = attChips(get()); mark(); };
+  const mark = async () => { const ids = get().map(f => f.id); if (!ids.length) return; try { const miss = new Set(await N.attMissing(ids)); box.querySelectorAll('.att').forEach(el => { if (miss.has(el.dataset.att)) { el.classList.add('gone'); el.title = 'Diese Datei ist auf diesem Computer nicht vorhanden (Sicherung aus dem Sicherungsordner wiederherstellen).'; } }); } catch (e) {} };
+  const take = r => { if (!r) return; if (r.added && r.added.length) { set(get().concat(r.added)); draw(); toast(r.added.length === 1 ? `„${r.added[0].name}“ angehängt` : `${r.added.length} Dateien angehängt`); }
+    if (r.skipped && r.skipped.length) toast('Nicht angehängt: ' + r.skipped.map(x => `${x.name} (${x.reason})`).join('; '), 6000); };
+  box.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.attpick) { if (READONLY) return; take(await N.attPick()); }
+    else if (b.dataset.attopen) { const f = get().find(x => x.id === b.dataset.attopen); if (f) { const r = await N.attOpen(f.id, f.name); if (r && r.ok === false && r.error) toast(r.error, 5000); } }
+    else if (b.dataset.attsave) { const f = get().find(x => x.id === b.dataset.attsave); if (f) { const r = await N.attSave(f.id, f.name); if (r && r.ok === false && r.error) toast(r.error, 5000); } }
+    else if (b.dataset.attrm) { if (READONLY) return; const f = get().find(x => x.id === b.dataset.attrm); if (f && await ask(`„${esc(f.name)}“ aus der Liste entfernen?`, 'Entfernen', true)) { set(get().filter(x => x.id !== f.id)); onRemove && onRemove(f); draw(); } }
+  });
+  const dz = box.querySelector('.attDrop');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', async e => { e.preventDefault(); dz.classList.remove('over'); if (READONLY) return;
+    for (const f of [...e.dataTransfer.files]) { try { take(await N.attAdd(f.name, new Uint8Array(await f.arrayBuffer()))); } catch (err) { toast('Datei konnte nicht gelesen werden: ' + f.name); } } });
+  mark();
+}
+
+/* ---------- Betreuungskarte (je Schüler) – speichert jede Änderung sofort ---------- */
+function semCard(c, s) {
+  const cf = semCfg(c);
+  const st = () => semSt(c, s.id);
+  const sp = () => (c.seminarPaper[s.id] = c.seminarPaper[s.id] || {});
+  const v = semGet(c, s.id), p0 = c.seminarPaper[s.id] || {};
+  const lh = semLangHint(c);
+  const stats = () => { const r = semStatusOf(c, s.id), x = semGet(c, s.id);
+    const hj = t => { const q = R.computeTerm(c, s.id, t).points; return q == null ? '–' : q; };
+    return `<div class="stat"><div class="v">${r.gesamt ?? '–'}</div><div class="l">Seminararbeit (max. 30)</div></div><div class="stat"><div class="v">${hj('12/1')}</div><div class="l">Halbjahr 12/1</div></div><div class="stat"><div class="v">${hj('12/2')}</div><div class="l">Halbjahr 12/2</div></div><div class="stat"><div class="v">${(x.termine || []).length}</div><div class="l">Betreuungstermine</div></div><div class="stat"><div class="v">${x.abgabe ? sdate(x.abgabe) : '–'}</div><div class="l">abgegeben</div></div>`; };
+  const flags = () => semStatusOf(c, s.id).flags.map(f => `<div class="notice ${f.level === 'info' ? 'info' : ''} ${f.level === 'red' ? 'red' : ''}"><div class="grow">${esc(f.text)}</div></div>`).join('');
+  const terminList = () => { const ts = (semGet(c, s.id).termine || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    return ts.length ? ts.map(t => `<div class="tmRow"><span class="d">${t.date ? sdate(t.date) + String(t.date).slice(2, 4) : '–'}<small>${esc(t.term || '')}</small></span><span class="tx"><b>${esc(semKind(t.kind))}</b>${t.signed ? ' <em class="ok" title="Protokoll unterschrieben">✓ unterschrieben</em>' : ''}<small>${esc(((t.inhalt || '').split(/\n/)[0] || 'ohne Notiz').slice(0, 140))}</small></span><span class="hint">${(t.files || []).length ? '📎 ' + t.files.length : ''}</span><span class="tmBtns"><button type="button" class="mini" data-tmedit="${t.id}">Öffnen</button><button type="button" class="mini" data-tmpdf="${t.id}" title="Protokoll als PDF">PDF</button></span></div>`).join('')
+      : '<div class="stEmpty">Noch keine Termine. Nach jedem Gespräch kurz festhalten, was besprochen und vereinbart wurde – Libretto druckt daraus das Protokoll zum Unterschreiben.</div>'; };
+  const body = `<div class="stuSum" id="smStats">${stats()}</div><div class="notices" id="smFlags">${flags()}</div>
+    <div class="subhead">Thema</div>
+    ${field('Thema der Seminararbeit', `<textarea id="smThema" rows="2" placeholder="Arbeitstitel – endgültig bis Ende 12/1 (§ 24 Abs. 1 GSO)">${esc(v.thema || '')}</textarea>`)}
+    <div class="grid3">${field('Thema festgelegt am', `<input type="date" id="smThemaAm" value="${esc(v.themaAm || '')}">`)}<div class="span2 hint" style="align-self:end;margin-bottom:12px">${esc(lh || 'Das Thema wählt die Schülerin bzw. der Schüler bis Ende 12/1 im Einvernehmen mit der Kursleitung (§ 24 Abs. 1 GSO).')}</div></div>
+    <div class="subhead">Betreuungstermine <button type="button" class="mini accent" id="smTmAdd" style="float:right">+ Termin</button></div>
+    <div class="tmList" id="smTm">${terminList()}</div>
+    <div class="subhead">Abgabe</div>
+    <div class="grid3">${field('Abgegeben am', `<input type="date" id="smAbg" value="${esc(v.abgabe || '')}">`)}${field('Uhrzeit (optional)', `<input type="time" id="smAbgZ" value="${esc(v.abgabeZeit || '')}">`)}
+      <label class="check" style="margin-top:22px"><input type="checkbox" id="smErkl" ${v.erkl ? 'checked' : ''}> <span>Erklärung zur selbstständigen Anfertigung liegt vor</span></label></div>
+    <div class="grid3">${field('Frist verlängert bis', `<input type="date" id="smVerl" value="${esc(v.verl || '')}">`)}${field('Grund (Entscheidung der Schule)', `<input type="text" id="smVerlG" value="${esc(v.verlGrund || '')}" placeholder="z. B. längere Erkrankung">`, 'span2')}</div>
+    <label class="check"><input type="checkbox" id="smWett" ${v.wett ? 'checked' : ''}> <span>Ersetzt durch einen gleichwertigen Wettbewerbsbeitrag (§ 24 GSO)</span></label>
+    <div id="smWettBox" ${v.wett ? '' : 'hidden'}>${field('Wettbewerb / Beitrag', `<input type="text" id="smWettT" value="${esc(v.wettText || '')}">`)}</div>
+    <div class="field"><span>Dateien der Arbeit (z. B. abgegebene Seminararbeit als PDF)</span><div id="smFiles">${attBoxHTML(v.files, 'Dateien')}</div></div>
+    <div class="subhead">Bewertung</div>
+    <div class="grid3">${field('Seminararbeit (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smA" value="${esc(p0.arbeit ?? '')}" maxlength="2">`)}${field('Präsentation mit Prüfungsgespräch (0–15)', `<input type="text" inputmode="numeric" id="smP" value="${esc(p0.gespraech ?? '')}" maxlength="2">`)}
+      <div class="field"><span>Gesamtleistung (max. 30)</span><div class="semSum" id="smG">${R.seminarPaper(p0.arbeit, p0.gespraech) ?? '–'}</div></div></div>
+    <div class="grid3">${field('Prüfungsgespräch am', `<input type="date" id="smPgAm" value="${esc(v.pgAm || '')}">`)}${field('Bemerkung zur Bewertung (nur für dich)', `<input type="text" id="smBem" value="${esc(v.bem || '')}">`, 'span2')}</div>
+    <p class="hint">§ 29 Abs. 6 GSO: Die Punkte der Arbeit zählen doppelt, dazu die Punkte von Präsentation und Prüfungsgespräch; die Summe wird mit 2/3 multipliziert und gerundet. Für die Zulassung zur Abiturprüfung sind mindestens 9 Punkte nötig, und weder Arbeit noch Prüfungsgespräch dürfen mit 0 Punkten bewertet sein (§ 44 GSO). ${lh ? esc(lh) : ''}</p>
+    ${field('Notizen (nur für dich)', `<textarea id="smNote" rows="2">${esc(c.notes[s.id] || '')}</textarea>`)}
+    <div class="panelBtns"><button type="button" class="mini" id="smDocPdf">Betreuungsdokumentation (PDF)</button><button type="button" class="mini" id="smDocWord">als Word</button><button type="button" class="mini" id="smGrades">Noten 12/1 und 12/2 …</button></div>
+    <p class="hint">Alles wird sofort gespeichert. Libretto dokumentiert nur – über Zulassung, Fristverlängerung und Folgen entscheidet die Schule.</p>`;
+  const { dlg, close } = sheet({ title: s.name + ' · W-Seminar', wide: true, ok: '', cancel: 'Fertig', body });
+  dlg.addEventListener('close', () => renderGrades(), { once: true });
+  const q = id => dlg.querySelector(id);
+  const refresh = () => { q('#smStats').innerHTML = stats(); q('#smFlags').innerHTML = flags(); };
+  const put = (k, val) => { if (READONLY) return; const o = st(); if (val === '' || val === false || val == null) delete o[k]; else o[k] = val; save(); refresh(); };
+  [['#smThema', 'thema'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
+    .forEach(([sel, k]) => { const el = q(sel); el.addEventListener('change', () => put(k, el.value.trim())); });
+  q('#smThema').addEventListener('input', () => { if (!READONLY) { const o = st(); const x = q('#smThema').value.trim(); if (x) o.thema = x; else delete o.thema; save(); } });
+  q('#smErkl').onchange = () => put('erkl', q('#smErkl').checked);
+  q('#smWett').onchange = () => { put('wett', q('#smWett').checked); q('#smWettBox').hidden = !q('#smWett').checked; };
+  q('#smNote').addEventListener('change', () => { if (READONLY) return; const x = q('#smNote').value.trim(); if (x) c.notes[s.id] = x; else delete c.notes[s.id]; save(); });
+  const pts = (sel, k) => { const el = q(sel); el.addEventListener('change', () => {
+    if (READONLY) return; const x = el.value.trim();
+    if (x !== '' && (!/^\d{1,2}$/.test(x) || +x > 15)) { toast('Punkte 0–15'); el.select(); return; }
+    sp()[k] = x === '' ? '' : +x; save(); q('#smG').textContent = R.seminarPaper(sp().arbeit, sp().gespraech) ?? '–'; refresh(); }); };
+  pts('#smA', 'arbeit'); pts('#smP', 'gespraech');
+  bindAtt(q('#smFiles'), () => semGet(c, s.id).files || [], list => { st().files = list; save(); }, f => { trashAtt([f]); save(); });
+  const redrawTm = () => { q('#smTm').innerHTML = terminList(); refresh(); };
+  q('#smTmAdd').onclick = () => { if (READONLY) return; semTerminSheet(c, s, null, redrawTm); };
+  q('#smTm').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const t = (semGet(c, s.id).termine || []).find(x => x.id === (b.dataset.tmedit || b.dataset.tmpdf)); if (!t) return;
+    if (b.dataset.tmedit) semTerminSheet(c, s, t, redrawTm); else exportModel(modelSemProtocol(c, s, t), 'pdf'); });
+  q('#smDocPdf').onclick = () => exportModel(modelSemDossier(c, [s]), 'pdf');
+  q('#smDocWord').onclick = () => exportModel(modelSemDossier(c, [s]), 'docx');
+  q('#smGrades').onclick = () => { close(); studentSheet(c, s); };
+  if (!(v.thema || '').trim()) q('#smThema').focus();
+}
+
+/* ---------- Betreuungstermin ---------- */
+function semTerminSheet(c, s, t0, done) {
+  const isNew = !t0, cf = semCfg(c);
+  const t = t0 ? JSON.parse(JSON.stringify(t0)) : { id: uid(), date: todayISO(), term: '', kind: 'beratung', files: [] };
+  if (!t.term) t.term = ['12/1', '12/2', '13/1'].includes(R.semTermAt(cf.start, t.date, semMid())) ? R.semTermAt(cf.start, t.date, semMid()) : '13/1';
+  t.files = t.files || [];
+  const added = [];   /* in diesem Fenster angehängt – bei „Abbrechen“ wieder weg */
+  let saved = false, termTouched = !isNew;
+  const body = `<div class="grid3">${field('Datum', `<input type="date" id="tmD" value="${esc(t.date || '')}">`)}${field('Halbjahr', `<select id="tmT">${['12/1', '12/2', '13/1'].map(x => `<option ${t.term === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`)}${field('Art', `<select id="tmK">${SEM_KINDS.map(([k, l]) => `<option value="${k}" ${t.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
+    ${field('Besprochen (Stand der Arbeit, Fragen, Rückmeldung)', `<textarea id="tmI" rows="5">${esc(t.inhalt || '')}</textarea>`)}
+    ${field('Vereinbart / nächste Schritte', `<textarea id="tmV" rows="3">${esc(t.vereinbart || '')}</textarea>`)}
+    <div class="grid3">${field('Nächster Termin', `<input type="date" id="tmN" value="${esc(t.next || '')}">`)}<label class="check span2" style="margin-top:22px"><input type="checkbox" id="tmS" ${t.signed ? 'checked' : ''}> <span>Protokoll ist von der Schülerin / dem Schüler unterschrieben</span></label></div>
+    <div class="field"><span>Dateien zu diesem Termin (z. B. Exposé, Gliederung, Literaturliste, Entwurf)</span><div id="tmF">${attBoxHTML(t.files, 'Dateien')}</div></div>
+    <div class="panelBtns"><button type="button" class="mini" id="tmPdf">Protokoll drucken (PDF)</button><button type="button" class="mini" id="tmWord">als Word</button></div>
+    ${isNew ? '' : '<button type="button" class="danger" id="tmDel">Termin löschen</button>'}`;
+  const read = d => { t.date = d.querySelector('#tmD').value; t.term = d.querySelector('#tmT').value; t.kind = d.querySelector('#tmK').value; t.inhalt = d.querySelector('#tmI').value.trim(); t.vereinbart = d.querySelector('#tmV').value.trim(); t.next = d.querySelector('#tmN').value; t.signed = d.querySelector('#tmS').checked; ['inhalt', 'vereinbart', 'next'].forEach(k => { if (!t[k]) delete t[k]; }); if (!t.signed) delete t.signed; };
+  const { dlg, close } = sheet({ title: (isNew ? 'Neuer Betreuungstermin' : 'Betreuungstermin') + ' · ' + s.name, wide: true, body, onOk: d => {
+    read(d); if (!t.date) { toast('Bitte ein Datum eintragen'); return false; }
+    const o = semSt(c, s.id); o.termine = (o.termine || []).filter(x => x.id !== t.id).concat([t]).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    trashAtt([...(t0 ? t0.files || [] : []), ...added].filter(f => !t.files.some(x => x.id === f.id)));
+    saved = true; save(); done && done();
+  } });
+  dlg.addEventListener('close', () => { if (!saved && added.length) { trashAtt(added); save(); } }, { once: true });
+  const q = id => dlg.querySelector(id);
+  q('#tmD').addEventListener('change', () => { if (!termTouched) { const x = R.semTermAt(cf.start, q('#tmD').value, semMid()); q('#tmT').value = ['12/1', '12/2', '13/1'].includes(x) ? x : '13/1'; } });
+  q('#tmT').addEventListener('change', () => { termTouched = true; });
+  bindAtt(q('#tmF'), () => t.files, list => { list.filter(f => !t.files.some(x => x.id === f.id)).forEach(f => added.push(f)); t.files = list; });
+  q('#tmPdf').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'pdf'); };
+  q('#tmWord').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'docx'); };
+  const del = q('#tmDel'); if (del) del.onclick = async () => {
+    if (await ask(`Termin vom ${esc(fdate(t0.date))} löschen? Er lässt sich 60 Tage lang unter „Sicherung“ wiederherstellen.`, 'Löschen', true)) {
+      toTrash('termin', `Betreuungstermin ${fdate(t0.date)} · ${s.name} · ${c.name}`, t0, { courseId: c.id, sid: s.id });
+      const o = semSt(c, s.id); o.termine = (o.termine || []).filter(x => x.id !== t0.id); trashAtt(t0.files); trashAtt(added); saved = true; save(); close(); done && done(); }
+  };
+  if (isNew) q('#tmI').focus();
+}
+
+/* ---------- Ausdrucke W-Seminar ---------- */
+function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.subject}`], ...(cf.leit && cf.leit !== c.subject ? [['Leitfach', cf.leit]] : []), ...(cf.rahmen ? [['Rahmenthema', cf.rahmen]] : []), ['Abiturjahrgang', String(semAbi(c))], ...(D.settings.teacher ? [['Kursleitung', D.settings.teacher]] : [])]; }
+const filesTxt = list => (list || []).map(f => f.name).join('\n');
+function modelSemProtocol(c, s, t) {
+  const st = semGet(c, s.id);
+  return { title: 'Betreuungsprotokoll W-Seminar', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Betreuungsprotokoll ${s.name} ${c.name}`), meta: semMeta(c),
+    blocks: [{ kv: [['Schülerin / Schüler', s.name + (isMixed(c.students) && s.cls ? ' (' + s.cls + ')' : '')], ['Thema der Seminararbeit', st.thema || '–'], ['Datum', wdate(t.date)], ['Ausbildungsabschnitt', t.term || ''], ['Art', semKind(t.kind)],
+      ['Besprochen', t.inhalt || ''], ['Vereinbart / nächste Schritte', t.vereinbart || ''], ['Nächster Termin', t.next ? wdate(t.next) : ''], ['Vorgelegte Unterlagen', filesTxt(t.files) || '–']] },
+      { sig: ['Datum, Unterschrift Schülerin / Schüler', 'Datum, Unterschrift Kursleitung'] }] };
+}
+function modelSemDossier(c, list) {
+  const blocks = [];
+  list.forEach((s, i) => {
+    const st = semGet(c, s.id), r = semStatusOf(c, s.id), sp = c.seminarPaper[s.id] || {};
+    if (i) blocks.push({ pagebreak: true }, { head: { title: s.name, subtitle: `Betreuungsdokumentation W-Seminar · ${c.name}`, meta: semMeta(c) } });
+    const due = st.verl || semCfg(c).deadline;
+    blocks.push({ kv: [['Thema der Seminararbeit', st.thema || '–'], ['Thema festgelegt am', st.themaAm ? fdate(st.themaAm) : '–'],
+      ['Abgabe', (st.abgabe ? `abgegeben am ${fdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}` : 'noch nicht abgegeben') + (due ? ` · Frist ${fdate(due)}${st.verl ? ' (verlängert' + (st.verlGrund ? ': ' + st.verlGrund : '') + ')' : ''}` : '')],
+      ['Erklärung zur selbstständigen Anfertigung', st.erkl ? 'liegt vor' : '–'], ...(st.wett ? [['Ersatz durch Wettbewerbsbeitrag', st.wettText || 'ja']] : []), ...((st.files || []).length ? [['Dateien der Arbeit', filesTxt(st.files)]] : [])] });
+    const ts = (st.termine || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    blocks.push({ h: `Betreuungstermine (${ts.length})` });
+    if (!ts.length) blocks.push({ p: 'Noch keine Termine dokumentiert.' });
+    ts.forEach(t => blocks.push({ kv: [[`${fdate(t.date)} · ${t.term || ''}`, semKind(t.kind) + (t.signed ? ' · Protokoll unterschrieben' : '')], ...(t.inhalt ? [['Besprochen', t.inhalt]] : []), ...(t.vereinbart ? [['Vereinbart', t.vereinbart]] : []), ...(t.next ? [['Nächster Termin', fdate(t.next)]] : []), ...((t.files || []).length ? [['Unterlagen', filesTxt(t.files)]] : [])] }));
+    blocks.push({ h: 'Leistungen' });
+    const hj = x => { const q = R.computeTerm(c, s.id, x).points; return q == null ? '–' : String(q); };
+    blocks.push({ table: { head: ['Halbjahr 12/1', 'Halbjahr 12/2', 'Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt)]], big: [4] } });
+    if (st.pgAm) blocks.push({ p: `Präsentation mit Prüfungsgespräch am ${fdate(st.pgAm)}.` });
+    if (r.flags.length) blocks.push({ p: 'Hinweise: ' + r.flags.map(f => f.text).join(' ') });
+    blocks.push({ sig: ['Datum, Unterschrift Kursleitung'] });
+  });
+  const one = list.length === 1 ? list[0] : null;
+  return { title: one ? one.name : `Betreuungsdokumentation ${c.name}`, subtitle: one ? `Betreuungsdokumentation W-Seminar · ${c.name}` : 'W-Seminar', file: one ? fileSafe(`${todayISO()} Betreuungsdokumentation ${one.name} ${c.name}`) : fileName('Betreuungsdokumentation', c), meta: semMeta(c),
+    blocks };
+}
+function modelSemDossierAll(c) { const m = modelSemDossier(c, c.students); if (c.students.length) { m.title = c.students[0].name; m.subtitle = `Betreuungsdokumentation W-Seminar · ${c.name}`; } return m; }
+function modelSemOverview(c) {
+  const cf = semCfg(c);
+  const rows = groupedRows(c, (s, i) => { const st = semGet(c, s.id); const k = x => String((st.termine || []).filter(y => y.term === x).length || '–');
+    return [String(i + 1), s.name, st.thema || '–', st.themaAm ? fdate(st.themaAm) : '', k('12/1'), k('12/2'), k('13/1'), st.abgabe ? fdate(st.abgabe) : '']; });
+  return { title: `Seminararbeiten ${c.name}`, subtitle: `Themen, Betreuung und Abgabe · Abitur ${semAbi(c)}`, file: fileName('Übersicht Seminararbeiten', c), meta: semMeta(c), landscape: true,
+    blocks: [{ table: { head: ['Nr.', 'Name', 'Thema', 'festgelegt', 'Termine 12/1', '12/2', '13/1', 'abgegeben'], rows, align: ['c', 'l', 'l'], widths: [4, 18, 42, 9, 7, 5, 5, 10] } },
+      { p: `Abgabe laut Kurs: ${cf.deadline ? wdate(cf.deadline) + (cf.deadlineTime ? ', ' + cf.deadlineTime + ' Uhr' : '') : 'noch nicht festgelegt'} (§ 24 GSO: spätestens am zweiten Unterrichtstag im November der Jahrgangsstufe 13). Ohne Noten.` }] };
+}
+function modelSemResults(c) {
+  const rows = groupedRows(c, (s, i) => { const r = semStatusOf(c, s.id), sp = c.seminarPaper[s.id] || {}, st = semGet(c, s.id); const hj = x => { const q = R.computeTerm(c, s.id, x).points; return q == null ? '–' : String(q); };
+    const note = [...['12/1', '12/2'].filter(x => R.computeTerm(c, s.id, x).zero).map(x => x + ': 0 Punkte'), r.arbeit === 0 || r.gespraech === 0 ? 'Arbeit/Gespräch 0 Punkte' : '', r.gesamt != null && r.gesamt < 9 ? 'unter 9 Punkten' : '', !st.abgabe && r.flags.some(f => f.key === 'late') ? 'nicht abgegeben' : ''].filter(Boolean).join(', ');
+    return [String(i + 1), s.name, hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt), note]; });
+  return { title: `Ergebnisse W-Seminar ${c.name}`, subtitle: `Halbjahresleistungen und Seminararbeit · Abitur ${semAbi(c)}`, file: fileName('Ergebnisse W-Seminar', c), meta: semMeta(c),
+    blocks: [{ table: { head: ['Nr.', 'Name', '12/1', '12/2', 'Arbeit', 'Prüfungs­gespräch', 'Gesamtleistung (max. 30)', 'Hinweis'], rows, align: ['c', 'l', 'c', 'c', 'c', 'c', 'c', 'l'], big: [6], widths: [4, 24, 7, 7, 7, 10, 12, 20] } },
+      { p: 'Halbjahresleistung 12/1 und 12/2: Durchschnitt der kleinen Leistungsnachweise, gerundet, keine Aufrundung auf 1 Punkt (§ 29 Abs. 2 GSO). Gesamtleistung der Seminararbeit: (2 × Arbeit + Präsentation mit Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO). Zulassung zur Abiturprüfung u. a. nur, wenn die Arbeit abgegeben ist, weder Arbeit noch Prüfungsgespräch 0 Punkte haben und die Gesamtleistung mindestens 9 Punkte beträgt (§ 44 Abs. 2 GSO).' },
+      { sig: ['Datum, Unterschrift Kursleitung'] }] };
 }
 
 /* ======================================================================
@@ -1053,8 +1477,8 @@ function transferSheet(c) {
   });
 }
 
-function scopeLabel(c) { if (upper(c)) return UI.term ? 'Halbjahr ' + UI.term : 'Qualifikationsphase ' + c.grade; return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
-function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
+function scopeLabel(c) { if (isSemTab(c)) return 'W-Seminar · Seminararbeit'; if (upper(c)) { const t = scopeOf(c).term; return t ? 'Halbjahr ' + t : c.seminar ? 'W-Seminar · Übersicht' : 'Qualifikationsphase ' + c.grade; } return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
+function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', c.seminar ? `W-Seminar, Abitur ${semAbi(c)}` : String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
 /* Kopfdaten eines Schülerblatts: bei gemischten Kursen (8A+8B) steht die tatsächliche Klasse der Person extra */
 function studMeta(c, s) { const m = baseMeta(c); if (isMixed(c.students) && s.cls) m.splice(1, 0, ['Klasse', s.cls]); return m; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
@@ -1063,7 +1487,7 @@ function entTxt(c, s) { return entriesOf(c, s.id).map(e => R.cellText(e, upper(c
 function finalTxt(c, s, r) { const ng = c.noGrade && c.noGrade[s.id]; if (ng) return 'ohne Note'; const ov = c.overrides[s.id]; return ov ? ov.grade + ' (festgelegt)' : r.suggestion ? r.suggestion.text : '–'; }
 function modelCourse(c) {
   const up = upper(c);
-  if (up && !UI.term) {
+  if (up && !scopeOf(c).term) {
     const terms = R.termsOf(c);
     const head = ['Name', ...terms.map(t => t + ' (Punkte)'), ...(c.seminar ? ['Seminararbeit (max. 30)'] : [])];
     const rows = groupedRows(c, s => [s.name, ...terms.map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : String(p); }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
@@ -1086,10 +1510,11 @@ function modelCourse(c) {
     blocks: [{ table: { head, rows, align: ['l'], bold: [head.length - 1], small: head.length > 16 } }, { p: rule + ' Kürzel: E = entschuldigt (Nachtermin), B = befreit, 6* = versäumt/verweigert (§ 26 Abs. 4 GSO), U = Unterschleif' + (Object.keys(c.away || {}).length ? ', abw. = längere Abwesenheit' : '') + '.' }, ...(legend ? [{ p: legend }] : [])] };
 }
 function modelTransfer(c) {
+  if (isSemTab(c)) return modelSemResults(c);
   const up = upper(c);
-  const head = ['Nr.', 'Name', up ? (UI.term ? 'Punkte ' + UI.term : 'Punkte') : 'Note', 'Bemerkung'];
+  const head = ['Nr.', 'Name', up ? 'Punkte ' + (scopeOf(c).term || R.termsOf(c)[0]) : 'Note', 'Bemerkung'];
   const rows = groupedRows(c, (s, i) => {
-    if (up) { const t = UI.term || R.termsOf(c)[0]; const r = R.computeTerm(c, s.id, t); return [String(i + 1), s.name, r.points == null ? '–' : String(r.points), r.zero ? '0 Punkte – nicht belegt' : r.open.length ? 'Nachtermin offen' : '']; }
+    if (up) { const t = scopeOf(c).term || R.termsOf(c)[0]; const r = R.computeTerm(c, s.id, t); return [String(i + 1), s.name, r.points == null ? '–' : String(r.points), r.zero ? '0 Punkte – nicht belegt' : r.open.length ? 'Nachtermin offen' : '']; }
     const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; const ng = c.noGrade && c.noGrade[s.id];
     if (ng) return [String(i + 1), s.name, '–', 'ohne Note' + (ng.reason ? ': ' + ng.reason : '') + ' – ggf. Bemerkung (§ 39 Abs. 6 GSO)'];
     return [String(i + 1), s.name, ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–', ov ? (ov.reason || 'von der Lehrkraft festgelegt') : r.suggestion && r.suggestion.grade == null ? 'Grenzfall – Entscheidung nötig' : r.open.length ? 'Nachtermin offen' : ''];
@@ -1137,6 +1562,7 @@ function modelStudents(c, list) {
     blocks.push({ h: 'Leistungsnachweise' }, { table: { head: ['Leistungsnachweis', 'Art', 'Datum', ...(up ? ['Halbjahr'] : []), 'Punkte', up ? 'Notenpunkte' : 'Note'], rows: rows.length ? rows : [['Noch keine Einträge', '', '', ...(up ? [''] : []), '', '']], align: ['l'], bold: [up ? 5 : 4] } });
     blocks.push({ h: 'Ergebnis' });
     if (up) blocks.push({ table: { head: R.termsOf(c).map(t => 'Halbjahr ' + t), rows: [R.termsOf(c).map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : `${p} Punkte (${R.POINT_LABEL(p)})`; })], bold: [0, 1] } });
+    if (c.seminar) { const sp = c.seminarPaper[s.id] || {}, g = R.seminarPaper(sp.arbeit, sp.gespraech); const pv = x => x === '' || x == null ? '–' : String(x); blocks.push({ table: { head: ['Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[pv(sp.arbeit), pv(sp.gespraech), g == null ? '–' : String(g)]], big: [2] } }); }
     else { const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; blocks.push({ table: { head: [...(c.hasSA ? ['Ø große LN'] : []), 'Ø kleine LN', 'Ø gesamt', 'Zeugnisnote (Vorschlag)'], rows: [[...(c.hasSA ? [fmt(r.saAvg)] : []), fmt(r.smAvg), fmt(r.total), ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–']], big: [c.hasSA ? 3 : 2] } }); }
   });
   return { title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, file: list.length === 1 ? fileSafe(`${todayISO()} Schülerblatt ${list[0].name} ${c.name} ${c.subject}`) : fileName('Schülerblätter', c), subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: list.length && list[0] ? studMeta(c, list[0]) : baseMeta(c), blocks };
@@ -1159,11 +1585,12 @@ async function exportModel(m, kind) {
 }
 function printSheet(c) {
   if (!c) return;
-  const opt = (id, title, sub) => `<div class="row"><span><b>${title}</b><br><small class="hint">${sub}</small></span><button type="button" class="mini accent" data-p="${id}:pdf">PDF</button><button type="button" class="mini" data-p="${id}:docx">Word</button>${id === 'course' ? '<button type="button" class="mini" data-p="course:csv">Excel</button>' : ''}</div>`;
+  const opt = (id, title, sub, xl) => `<div class="row"><span><b>${title}</b><br><small class="hint">${sub}</small></span><button type="button" class="mini accent" data-p="${id}:pdf">PDF</button><button type="button" class="mini" data-p="${id}:docx">Word</button>${id === 'course' || xl ? `<button type="button" class="mini" data-p="${id}:csv">Excel</button>` : ''}</div>`;
   const { dlg, close } = sheet({ title: 'Drucken & Export', ok: '', cancel: 'Fertig', body: `<p class="hint" style="margin-top:0">Gilt für die aktuelle Ansicht: <b>${esc(scopeLabel(c))}</b>. Alle Ausdrucke tragen das theis-Logo und den Hinweis, dass Libretto die Dokumentation der Schule nicht ersetzt.</p>
-    <div class="rows">${opt('course', 'Kursübersicht', 'Alle Schüler mit allen Noten, Durchschnitten und Vorschlag')}${opt('transfer', 'Übertragsliste fürs Infoportal', 'Nur Name und Endnote – zum Abtippen und Abhaken')}${opt('students', 'Schülerblätter', 'Eine Seite pro Schüler, z. B. für Elterngespräche')}</div>
+    <div class="rows">${opt('course', 'Kursübersicht', 'Alle Schüler mit allen Noten, Durchschnitten und Vorschlag')}${opt('transfer', 'Übertragsliste fürs Infoportal', isSemTab(c) ? 'Ergebnisse der Seminararbeit – zum Abtippen und Abhaken' : 'Nur Name und Endnote – zum Abtippen und Abhaken')}${opt('students', 'Schülerblätter', 'Eine Seite pro Schüler, z. B. für Elterngespräche')}</div>
+    ${c.seminar ? `<div class="subhead">W-Seminar</div><div class="rows">${opt('semOverview', 'Übersicht der Seminararbeiten', 'Themen, Betreuungstermine je Halbjahr, Abgabe – ohne Noten, z. B. für die Oberstufenkoordination', true)}${opt('semResults', 'Ergebnisse W-Seminar', '12/1, 12/2, Arbeit, Prüfungsgespräch, Gesamtleistung mit Hinweisen (§ 44 GSO)', true)}${opt('semDossier', 'Betreuungsdokumentation', 'Je Schüler: Thema, alle Termine mit Protokoll, Abgabe, Bewertung – eine Seite pro Person')}</div>` : ''}
     <p class="hint">Einzelne Leistungsnachweise druckst du über den Spaltenkopf in der Tabelle, einzelne Schüler über ihren Namen.</p>` });
-  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(what === 'course' ? modelCourse(c) : what === 'transfer' ? modelTransfer(c) : modelStudentsAll(c), kind); });
+  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(({ course: modelCourse, transfer: modelTransfer, students: modelStudentsAll, semOverview: modelSemOverview, semResults: modelSemResults, semDossier: modelSemDossierAll }[what])(c), kind); });
 }
 
 /* ======================================================================
@@ -1182,13 +1609,14 @@ function calendarHTML() {
   const ev = {};
   D.courses.filter(c => !f || classesOf(c).includes(f)).forEach(c => c.assessments.filter(a => a.date && WRITTEN.includes(a.type)).forEach(a => (ev[a.date] = ev[a.date] || []).push({ c, a })));
   D.classDates.filter(x => !f || x.cls === f).forEach(x => (ev[x.date] = ev[x.date] || []).push({ other: x }));
+  D.courses.filter(c => c.seminar && c.sem && c.sem.deadline && (!f || classesOf(c).includes(f))).forEach(c => (ev[c.sem.deadline] = ev[c.sem.deadline] || []).push({ semc: c }));
   const free = Cal.freeDays(y, m);
   const first = new Date(y, m, 1), start = Cal.add(first, -((first.getDay() + 6) % 7));
   const cells = [];
   for (let i = 0; i < 42; i++) {
     const d = Cal.add(start, i), iso = Cal.iso(d), inM = d.getMonth() === m, fr = free[iso], we = d.getDay() === 0 || d.getDay() === 6;
     if (i >= 35 && !inM) break;
-    const items = (ev[iso] || []).map(x => x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
+    const items = (ev[iso] || []).map(x => x.semc ? `<span class="cev" style="--hue:var(${hueOf(x.semc.subject)})" title="${esc('Abgabe der Seminararbeit · ' + x.semc.name + ' ' + x.semc.subject + (x.semc.sem.deadlineTime ? ' · ' + x.semc.sem.deadlineTime + ' Uhr' : ''))}">${esc(x.semc.name)} Abgabe</span>` : x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
       : `<button class="cev" style="--hue:var(${hueOf(x.c.subject)})" data-cal="${x.c.id}|${x.a.id}" title="${esc(x.c.name + ' ' + x.c.subject + ' · ' + (x.a.title || R.TYPES[x.a.type].label))}">${esc(clsOf(x.c))} ${esc(x.a.short || R.TYPES[x.a.type].short)}</button>`).join('');
     const se = inM ? eventsOn(iso) : [];
     const sev = se.slice(0, 2).map(e => `<span class="cev sch" title="${esc((e.time ? e.time + ' · ' : '') + e.title)}">${esc(e.title)}</span>`).join('') + (se.length > 2 ? `<span class="cev more" title="${esc(se.slice(2).map(e => e.title).join('\n'))}">+${se.length - 2} weitere</span>` : '');
@@ -1314,7 +1742,11 @@ async function renderBackup() {
         <h2 class="ptitle" style="margin-top:22px">Zugang</h2>
         <div class="panelBtns"><button class="mini" id="pwChange">Passwort ändern …</button><button class="mini" id="codeNew">Neuen Notfallschlüssel erstellen …</button></div>
         <p class="note">Ohne Passwort und Notfallschlüssel lassen sich die Daten nicht wiederherstellen – auch nicht von theis. So bleibt sichergestellt, dass niemand anderes die Noten lesen kann.</p></section>
-    </div>`;
+    </div>
+    ${(D.trash || []).length ? `<section class="panel glass" style="margin-top:16px"><div class="phead"><h2 class="ptitle">Zuletzt gelöscht</h2><span class="count">${D.trash.length}</span></div>
+      <div class="tlist">${D.trash.map(x => `<div class="trow"><span class="d">${new Date(x.when).toLocaleDateString('de-DE')}</span><span>${esc(x.label)}<br><small>${{ course: 'Kurs mit allen Noten', snapshot: 'wird als eigener Kurs wiederhergestellt – nichts wird überschrieben', assessment: 'Leistungsnachweis mit allen Noten', termin: 'Betreuungstermin (W-Seminar)' }[x.kind] || ''}</small></span><button class="mini" data-untrash="${x.id}">Wiederherstellen</button></div>`).join('')}</div>
+      <p class="note">Gelöschtes bleibt ${TRASH_DAYS} Tage hier und kann mit einem Klick zurückgeholt werden; danach ist es nur noch in älteren Sicherungen enthalten.</p></section>` : ''}`;
+  $$('[data-untrash]').forEach(b => b.onclick = () => { if (READONLY) return; const x = (D.trash || []).find(y => y.id === b.dataset.untrash); if (x && restoreTrash(x)) { toast('Wiederhergestellt'); renderBackup(); } });
   $('#bkPick').onclick = async () => { ST = await N.chooseBackupDir(); renderBackup(); };
   if ($('#bkOpenExt')) $('#bkOpenExt').onclick = () => N.openBackupDir('external');
   $('#bkOpenLoc').onclick = () => N.openBackupDir('local');
@@ -1397,7 +1829,7 @@ function klPlan(d) {
   klDialog();
 }
 const klFieldTxt = x => x.fields.map(f => f === 'name' ? `Name: ${klName(x.cur)} → ${klName(x.inc)}` : f === 'g' ? `Geschlecht: ${x.cur.g || '–'} → ${x.inc.g || '–'}` : f === 'cls' ? `Klasse: ${x.cur.cls || '–'} → ${x.inc.cls || '–'}` : 'Abwesenheit geändert').join(' · ');
-const klHasGrades = (c, sid) => c.assessments.some(a => a.results && a.results[sid]) || (c.entries || []).some(e => e.sid === sid);
+const klHasGrades = (c, sid) => c.assessments.some(a => a.results && a.results[sid]) || (c.entries || []).some(e => e.sid === sid) || semHasData(c, sid);
 function klDialog() {
   const m = KL.meta;
   const cards = KL.plan.map((p, pi) => {
@@ -1432,6 +1864,7 @@ async function klApply(silent) {
   for (const p of KL.plan) {
     if (p.isNew) { if (p.on) fresh.push(p.c); continue; }
     const c = p.course; if (p.c.id && !c.xid) c.xid = p.c.id;
+    if (p.d.removed.some(x => x.on)) toTrash('snapshot', `${c.name} · ${c.subject}: Stand vor dem Klassen-Abgleich`, c);
     const rem = new Set();
     for (const x of p.d.changed) {
       const s = c.students.find(o => o.id === x.cur.id); if (!s) continue;
@@ -1447,7 +1880,7 @@ async function klApply(silent) {
     if (rem.size) {
       c.students = c.students.filter(s => !rem.has(s.id)); c.entries = (c.entries || []).filter(e => !rem.has(e.sid));
       const del = (o, id) => { if (o && typeof o === 'object') delete o[id]; };
-      rem.forEach(id => ['away', 'overrides', 'notes', 'seminarPaper', 'noGrade'].forEach(k => del(c[k], id)));
+      rem.forEach(id => { ['away', 'overrides', 'notes', 'seminarPaper', 'noGrade'].forEach(k => del(c[k], id)); semDrop(c, id); });
       c.assessments.forEach(a => { if (a.results) rem.forEach(id => delete a.results[id]); });
       Object.keys(c.xfer || {}).forEach(k => { const sid = k.startsWith('e|') ? null : k.split('|')[1]; if (sid && rem.has(sid)) delete c.xfer[k]; });
       sum.nr += rem.size;
@@ -1520,13 +1953,23 @@ function helpSheet() {
     <p>Wie auf den Klassenlisten: Adelsbezeichnungen und Zusätze wie „von“, „Freiherr von“ oder „Gräfin zu“ zählen nicht zum Sortierwort – „Freiherr von Musterberg“ steht bei M.</p>
     <h3>Länger erkrankt, zu wenige Noten?</h3>
     <p>Kein Problem: Fehlende Noten einfach leer lassen oder mit <code>B</code> (befreit) bzw. <code>E</code> (Nachtermin) markieren – Libretto rechnet mit dem, was da ist. Kann am Ende keine Note gebildet werden, setze im Schülerblatt „Ohne Note“: Warnungen verschwinden, und die Übertragsliste weist auf die Bemerkung nach § 39 Abs. 6 GSO hin. Über Nachtermine, Ersatzprüfung oder Vorrücken auf Probe entscheiden Schule und Klassenkonferenz.</p>
+    <h3>W-Seminar: Betreuung und Seminararbeit</h3>
+    <p>Beim Kurs (Jahrgangsstufe 12 oder 13) unter „Art des Kurses“ <b>W-Seminar</b> wählen – oder als Fach „W-Seminar“ eintragen. Dort stehen auch Beginn der Jahrgangsstufe 12, Rahmenthema, die Frist für das Thema und der <b>Abgabetermin</b> deiner Schule (Libretto schlägt den zweiten Unterrichtstag im November nach dem bayerischen Ferienkalender vor).</p>
+    <p>Der Kurs hat dann die Reiter <b>12/1</b> und <b>12/2</b> (kleine Leistungsnachweise wie gewohnt), <b>Seminararbeit</b> und <b>Übersicht</b>. Im Reiter „Seminararbeit“ siehst du alle auf einen Blick: Thema, Zahl der Betreuungstermine je Halbjahr, Abgabe, Punkte von Arbeit und Prüfungsgespräch, die Gesamtleistung und Hinweise (z. B. „unter 9 Punkten“). Ein Klick auf einen Namen öffnet die <b>Betreuungskarte</b>: Thema, Termine mit Protokoll (Besprochen, Vereinbart, nächster Termin, unterschrieben), Abgabe mit Fristverlängerung, Bewertung. Alles wird sofort gespeichert.</p>
+    <p><b>Dateien</b> wie Exposé, Gliederung oder die abgegebene Arbeit hängst du an den Termin, an dem du sie bekommen hast (oder unter „Abgabe“) – einfach hineinziehen. Sie werden wie die Noten verschlüsselt auf diesem Computer gespeichert und beim Sichern in den Sicherungsordner mitkopiert. „Öffnen“ zeigt die Datei im passenden Programm, „⤓“ speichert eine Kopie. Ausdrucke: Betreuungsprotokoll je Termin (mit Unterschriftszeilen), Betreuungsdokumentation je Person, Übersicht der Seminararbeiten (ohne Noten) und Ergebnisliste.</p>
+    <p class="hint">Libretto dokumentiert und rechnet – über Zulassung, Fristverlängerung, Rücktritt und Folgen entscheidet die Schule.</p>
+    <h3>P-Seminar und Profilfächer</h3>
+    <p><b>P-Seminar</b> (Projekt-Seminar zur beruflichen Orientierung, Jahrgangsstufe 11): Kurs mit Jahrgangsstufe 11 anlegen und „Fach mit Schulaufgaben“ ausschalten (passiert automatisch, wenn du als Fach „P-Seminar“ einträgst). Gefordert sind mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge; die Note zählt als Jahresfortgangsnote. <b>Profilfächer</b> in der Qualifikationsphase (z. B. fremdsprachige Konversation, Psychologie, Rhetorik) legst du als normalen Kurs der Jahrgangsstufe 12 oder 13 an – bei fremdsprachiger Konversation ist die „Schulaufgabe“ die Konversationsübung (§ 22 Abs. 3 GSO). Gib ihr beim Anlegen einfach die Bezeichnung „Konversationsübung“.</p>
     <h3>Regeln, die Libretto anwendet (GSO)</h3><ul>
       <li><b>§ 28</b> Jahresfortgangsnote 5–11: Gesamtnote große LN und Gesamtnote kleine LN – bei zwei Schulaufgaben 1:1, bei mehr als zwei 2:1 (abweichend einstellbar). Fächer ohne Schulaufgaben: nur kleine LN.</li>
       <li><b>Rundung</b>: Vorschlag kaufmännisch; genau x,5 wird als Grenzfall markiert – pädagogische Entscheidung der Lehrkraft.</li>
       <li><b>§ 22</b> Mindestzahl Schulaufgaben (Deutsch 3; Mathematik 4 in 5–7, sonst 3; Fremdsprachen 3, ab 4 Wochenstunden 4) und Termine (höchstens 1 pro Tag, 2 pro Woche).</li>
       <li><b>§ 26 Abs. 4</b> Versäumnis ohne Entschuldigung oder Verweigerung: Note 6. <b>§ 27</b> Nachtermin, Ersatzprüfung.</li>
       <li><b>§ 29</b> Q12/13: Halbjahresleistung = (Schulaufgabe + Ø kleine LN) / 2, gerundet, keine Aufrundung auf 1 Punkt; 13/2 Schulaufgabe nur in Deutsch, Mathematik, Leistungsfach; Seminar nur kleine LN; Seminararbeit (Arbeit × 2 + Prüfungsgespräch) × 2/3.</li>
-      <li><b>§ 30, § 40</b> Hinweis bei möglicher Note 5/6 (Gefährdung des Vorrückens – Mitteilung prüfen).</li></ul>
+      <li><b>§ 30, § 40</b> Hinweis bei möglicher Note 5/6 (Gefährdung des Vorrückens – Mitteilung prüfen).</li>
+      <li><b>W-Seminar:</b> § 20 (belegt 12/1 bis 13/1, mit Seminararbeit), § 21 Abs. 3 (in 12/1 und 12/2 je mindestens zwei kleine LN), § 24 (Thema bis Ende 12/1; Abgabe spätestens am zweiten Unterrichtstag im November der Jgst. 13, Uhrzeit und Verlängerung legt die Schule fest; Sprache der Arbeit; Prüfungsgespräch; Ersatz durch Wettbewerbsbeitrag), § 29 Abs. 2 und 6 (Halbjahresleistung, Gesamtleistung), § 44 (Zulassung: abgegeben, keine 0 Punkte, mindestens 9 Punkte; schriftliche Information bis Ende 13/1).</li>
+      <li><b>P-Seminar:</b> § 20 (Jahrgangsstufe 11, Note = Jahresfortgangsnote), § 21 Abs. 2 (mindestens zwei kleine LN, vor allem individuelle Projektbeiträge).</li></ul>
+    <p class="hint">Quellen (geprüft am 08.10.2026, nicht amtlich): Gymnasialschulordnung (GSO) in der ab 01.08.2026 geltenden Fassung, gesetze-bayern.de; Bekanntmachung „Das Wissenschaftspropädeutische Seminar in den Jahrgangsstufen 12 und 13 des neunjährigen Gymnasiums“ vom 6. April 2023 (BayMBl. 2023 Nr. 185); Handreichung des ISB zum W-Seminar (Empfehlung: mindestens ein Beratungsgespräch je Halbjahr).</p>
     <p class="hint">Schulinterne Regelungen (Leistungserhebungskonzept, Fachschaftsbeschlüsse) gehen vor – passe Gewichte und Notenschlüssel entsprechend an.</p>
     <h3>Datenschutz & Sicherheit</h3><ul><li>Alle Daten liegen nur auf diesem Computer, verschlüsselt (AES-256-GCM). Kein Server, kein Konto, keine Übertragung von Noten oder Namen. Einzige Verbindung: die (abschaltbare) Abfrage der aktuellen Versionsnummer bei theisapps.de.</li><li><b>Updates:</b> Neue Version einfach über die alte installieren. Die Daten liegen getrennt von der App und bleiben erhalten; Libretto legt beim ersten Start einer neuen Version zusätzlich eine Sicherung an.</li><li>Automatische Sperre nach Inaktivität, verschlüsselte Sicherungen mit Versionen.</li><li>Für Noten auf privaten Geräten ist in Bayern die Genehmigung der Schulleitung nötig (Mindestsicherheitsstandards des Kultusministeriums).</li></ul></div>` });
 }

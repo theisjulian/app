@@ -42,6 +42,8 @@ const Print = (() => {
       tr.grp td{background:#eef0f4;font-weight:700;text-align:left;font-size:8.5pt;padding:4px 6px;break-after:avoid}
       .pb{page-break-after:always;height:0}
       .bars{margin:4px 0 8px;break-inside:avoid}
+      p{white-space:pre-wrap}
+      table.kv th{width:27%;text-align:left;vertical-align:top;font-size:8.5pt} table.kv td{text-align:left;vertical-align:top;white-space:pre-wrap;background:none!important}
       .sig{display:flex;gap:30px;margin-top:28px} .sig div{flex:1;border-top:.5pt solid #16171a;padding-top:3px;font-size:8pt;color:#555}`;
     const who = [settings.school, settings.teacher].filter(Boolean);
     const head = (mm) => `<div class="hd"><div><h1>${esc(mm.title)}</h1>${mm.subtitle ? `<div class="sub">${esc(mm.subtitle)}</div>` : ''}</div>${who.length ? `<div class="who">${who.map(esc).join('<br>')}</div>` : ''}</div>
@@ -52,6 +54,7 @@ const Print = (() => {
       if (b.pagebreak) return '<div class="pb"></div>';
       if (b.bars) return `<div class="bars">${barsSvg(b.bars, b.bars.labels.length > 8 ? 420 : 320, 130)}</div>`;
       if (b.head) return head(b.head);
+      if (b.kv) return `<table class="kv"><tbody>${b.kv.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>`;
       if (b.sig) return `<div class="sig">${b.sig.map(s => `<div>${esc(s)}</div>`).join('')}</div>`;
       if (b.table) {
         const t = b.table, al = i => (t.align && t.align[i]) === 'l' ? 'l' : '';
@@ -89,6 +92,8 @@ const Print = (() => {
     const W = land ? 15136 : 10206;
     const FONT = 'Arial';
     const t = (text, o = {}) => new TextRun({ text: String(text ?? ''), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color });
+    /* Text mit Zeilenumbrüchen (z. B. Protokolle) */
+    const lines = (text, o = {}) => String(text ?? '').split(/\r?\n/).map((ln, i) => new TextRun({ text: ln, font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color, break: i ? 1 : 0 }));
     const p = (runs, o = {}) => new Paragraph({ children: Array.isArray(runs) ? runs : [runs], alignment: o.align, spacing: { before: o.before || 0, after: o.after ?? 60 }, keepNext: o.keepNext });
     const bd = { style: BorderStyle.SINGLE, size: 4, color: 'B9BEC8' };
     const B = { top: bd, bottom: bd, left: bd, right: bd };
@@ -107,7 +112,14 @@ const Print = (() => {
     const kids = [...headBlock(m)];
     for (const b of m.blocks) {
       if (b.h) kids.push(p(t(b.h, { size: 22, bold: true }), { before: 220, after: 80, keepNext: true }));
-      else if (b.p) kids.push(p(t(b.p)));
+      else if (b.p) kids.push(p(lines(b.p)));
+      else if (b.kv) {
+        const w1 = Math.round(W * 0.27), w2 = W - w1;
+        const cell = (txt, w, head) => new TableCell({ borders: B, width: { size: w, type: WidthType.DXA }, shading: head ? { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } : undefined, margins: { top: 50, bottom: 50, left: 80, right: 80 },
+          children: [p(lines(txt, head ? { size: 16, bold: true } : {}), { after: 0 })] });
+        kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [w1, w2], layout: TableLayoutType.FIXED, rows: b.kv.map(([k, v]) => new TableRow({ cantSplit: false, children: [cell(k, w1, true), cell(v, w2, false)] })) }));
+        kids.push(p(t(''), { after: 120 }));
+      }
       else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
       else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
@@ -116,7 +128,8 @@ const Print = (() => {
         const tb = b.table, n = tb.head.length;
         const nameW = tb.align && tb.align[0] === 'l' ? Math.min(3200, Math.round(W * 0.3)) : Math.round(W / n);
         const rest = n > 1 ? Math.floor((W - nameW) / (n - 1)) : W;
-        const widths = tb.head.map((_, i) => i === 0 ? nameW : rest);
+        const sumW = tb.widths ? tb.widths.reduce((a, x) => a + x, 0) : 0;
+        const widths = tb.widths && tb.widths.length === n ? tb.widths.map(x => Math.floor(W * x / sumW)) : tb.head.map((_, i) => i === 0 ? nameW : rest);
         const sz = tb.small || n > 14 ? 14 : 17;
         const mk = (txt, i, head, rowIdx) => new TableCell({
           borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
