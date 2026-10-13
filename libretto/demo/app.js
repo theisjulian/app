@@ -497,16 +497,18 @@ function colHead(c, a, i) {
   const T = R.TYPES[a.type], up = upper(c);
   const big = R.isBig(a);
   const w = big ? (a.bigWeight && +a.bigWeight !== 1 ? wLabel(a.bigWeight) : '') : (R.weightOf(a, c) !== 1 ? '×' + String(R.weightOf(a, c)).replace('.', ',') : '');
-  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${a.usePoints ? '<i>Pkt.</i>' : ''}${xMarkHTML(xAssess(c, a))}</button></th>`;
+  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${R.byTask(a) ? '<i>Aufg.</i>' : a.usePoints ? '<i>Pkt.</i>' : ''}${xMarkHTML(xAssess(c, a))}</button></th>`;
 }
 function cellHTML(c, a, s) {
-  const r = a.results && a.results[s.id], up = upper(c);
-  const txt = a.usePoints && r && !r.status && r.raw != null ? String(r.raw).replace('.', ',') : R.cellText(r, up);
+  const r = a.results && a.results[s.id], up = upper(c), tk = R.byTask(a);
+  let txt = a.usePoints && r && !r.status && r.raw != null ? String(r.raw).replace('.', ',') : R.cellText(r, up);
+  if (tk && r && !r.status && r.raw == null && r.pts && Object.keys(r.pts).length) txt = '…';   /* Aufgabenpunkte noch nicht vollständig */
   const cls = r && r.status ? (r.status === 'n6' || r.status === 'us' ? 'st n6' : 'st') : '';
-  const sub = a.usePoints && r && !r.status && r.v != null ? `<span class="rawpts">${up ? r.v + ' P.' : 'Note ' + r.v}</span>` : '';
+  const sub = a.usePoints && r && !r.status && r.v != null ? `<span class="rawpts">${up ? r.v + ' P.' : 'Note ' + r.v + (r.tend || '')}</span>` : '';
   const aw = !r && isAway(c, s.id, a.date);
   const xs = xState(c, xKeyA(a, s.id), r);
-  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}" value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
+  const tkAttr = tk ? ' readonly data-tk="1" title="Punkte je Aufgabe – Klick oder Enter zum Eintragen"' : '';
+  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${tk ? 'tk' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}" value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''}${tkAttr} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
 }
 function gradeBadge(sug, ov) {
   if (ov) return `<span class="gb g${ov} ov" title="Von dir festgelegt">${ov}</span>`;
@@ -611,17 +613,18 @@ function bindGrid(c) {
     const a = c.assessments.find(x => x.id === el.dataset.a), sid = el.dataset.s, up = upper(c);
     a.results = a.results || {};
     const raw = el.value.trim();
-    if (!raw) delete a.results[sid];
+    if (!raw) { const o = a.results[sid]; if (o && o.pts && Object.keys(o.pts).length) a.results[sid] = { pts: o.pts }; else delete a.results[sid]; }
     else if (a.usePoints && /^[0-9]+([.,][0-9]+)?$/.test(raw)) {
       const p = +raw.replace(',', '.');
       if (a.key && a.key.max && p > a.key.max) { bad(el, `Höchstens ${a.key.max} Punkte`); return; }
-      const v = up ? R.keyPoints(p, a.key) : R.keyGrade(p, a.key);
-      if (v == null) { bad(el, 'Erst Notenschlüssel festlegen (Spaltenkopf anklicken)'); return; }
-      a.results[sid] = { raw: p, v };
+      const kr = R.keyResult(p, a.key, up);
+      if (kr == null) { bad(el, 'Erst Notenschlüssel festlegen (Spaltenkopf anklicken)'); return; }
+      const keep = a.results[sid] && a.results[sid].pts ? { pts: a.results[sid].pts } : {};   /* Aufgabenpunkte bleiben erhalten */
+      a.results[sid] = { ...keep, raw: p, v: kr.v, ...(kr.tend ? { tend: kr.tend } : {}) };
     } else {
       const r = R.parseCell(raw, up);
       if (r.error) { bad(el, r.error + ' · Kürzel: E, B, N, U'); return; }
-      a.results[sid] = r;
+      a.results[sid] = a.results[sid] && a.results[sid].pts ? { pts: a.results[sid].pts, ...r } : r;
     }
     save();
     const tr = el.closest('tr'), s = c.students.find(x => x.id === sid);
@@ -651,7 +654,8 @@ function bindGrid(c) {
       if (!t0) return false;
       el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${t0.dataset.a}"][data-s="${t0.dataset.s}"]`) || t0; t.focus(); t.select && t.select(); }, 0); return true;
     };
-    if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey && !el.classList.contains('entq') && el.dataset.a) { if (tabMove(e.shiftKey)) e.preventDefault(); }
+    if (e.key === 'Enter' && el.classList.contains('tk')) { e.preventDefault(); taskSheet(c, c.assessments.find(x => x.id === el.dataset.a), el.dataset.s); }
+    else if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey && !el.classList.contains('entq') && el.dataset.a) { if (tabMove(e.shiftKey)) e.preventDefault(); }
     else if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); moveRow(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); moveRow(-1); }
     else if (e.key === 'ArrowRight' && el.selectionStart === el.value.length) { e.preventDefault(); moveCol(1); }
@@ -659,6 +663,7 @@ function bindGrid(c) {
     else if (e.key === 'Escape') { el.blur(); }
   });
   work.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => assessmentSheet(c, c.assessments.find(a => a.id === b.dataset.edit)));
+  work.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.cell.tk'); if (el) taskSheet(c, c.assessments.find(x => x.id === el.dataset.a), el.dataset.s); });
   work.querySelectorAll('[data-stu]').forEach(b => b.onclick = () => studentSheet(c, c.students.find(s => s.id === b.dataset.stu)));
   work.addEventListener('click', e => { const ch = e.target.closest('[data-ent]'); if (ch) entrySheet(c, c.students.find(s => s.id === ch.dataset.ent)); });
   const ec = work.querySelector('[data-entcfg]'); if (ec) ec.onclick = () => entryCfgSheet(c);
@@ -931,6 +936,13 @@ function assessmentSheet(c, a) {
   const pKey = (c.subject || '').toLowerCase() + (up ? '|Q' : '');
   D.settings.keyPresets = D.settings.keyPresets || {};
   const pre = (a.key && a.key.anchors) || D.settings.keyPresets[pKey] || (up ? { p5: 45, p1: 20, step: 0.5 } : { p4: 50, p5: 25, step: 0.5 });
+  /* Vorgabe: „KMK-Raster“ (Prozentgrenzen der Abiturprüfung, auch für Noten 1–6) oder eigene Grenzen; Mathematik beginnt mit dem KMK-Raster */
+  const preset0 = (a.key && a.key.preset) || pre.preset || (/^mathe/i.test(c.subject || '') ? 'kmk' : 'custom');
+  const tend0 = a.key && a.key.preset ? a.key.tend !== false : pre.tend !== false;
+  D.settings.taskDefaults = D.settings.taskDefaults || {};
+  const tkDef = !!(isNew && D.settings.taskDefaults[pKey]);   /* „Punkte je Aufgabe“ als Standard für dieses Fach */
+  if (tkDef) a.usePoints = true;
+  let tasks = (a.tasks || []).map(t => ({ ...t })), manualKey = false;
   let pctArr = up ? (a.key && a.key.pct15) || R.pct15FromAnchors(pre.p5, pre.p1) : (a.key && a.key.pct) || R.pctFromAnchors(pre.p4, pre.p5);
   const keyInputs = () => up
     ? `<div class="keyGrid k15">${Array.from({ length: 15 }, (_, i) => `<label>${15 - i} P.<input type="number" step="0.5" min="0" data-k="${i}" value="${a.key && a.key.pointThresholds ? a.key.pointThresholds[i] : ''}"></label>`).join('')}</div>`
@@ -952,22 +964,31 @@ function assessmentSheet(c, a) {
     <div class="subhead">Notenschlüssel</div>
     <div class="rows">${sw('aPts', a.usePoints, 'Rohpunkte eingeben, Libretto rechnet in ' + (up ? 'Notenpunkte' : 'Noten') + ' um')}</div>
     <div id="keyBox" style="margin-top:10px">
+      <div class="rows">${sw('aTasks', R.byTask(a) || (a.byTask && tasks.length) || tkDef, 'Punkte je Aufgabe eingeben (Aufgaben mit Höchstpunktzahl, Punkte pro Schüler und Aufgabe)')}</div>
+      <div id="taskBox" hidden><div class="subhead" style="margin-top:6px">Aufgaben und erreichbare Punkte</div>
+        <div class="field"><span>Schnell: Höchstpunkte aller Aufgaben in einer Zeile (z. B. 2 3 4 3 2 2 2; auch aus Excel einfügbar)</span><input type="text" id="tQuick" placeholder="2 3 4 3 2 2 2 – dann Enter" autocomplete="off"></div>
+        <div id="taskRows"></div>
+        <div class="panelBtns"><button type="button" class="mini" id="tAdd">+ Aufgabe</button><button type="button" class="mini" id="tPrev" hidden></button><button type="button" class="mini accent" id="tEnter">Sichern und Aufgabenpunkte eintragen …</button></div>
+        <p class="hint" id="tHint"></p></div>
       <div class="grid3">${field('Erreichbare Punkte', `<input type="number" step="0.5" min="1" id="aMax" value="${esc(a.key && a.key.max || '')}">`)}
-        ${up ? field('5 Punkte (4–) ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${pre.p5}">`) + field('1 Punkt ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p1}">`)
-             : field('Note 4 ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${pre.p4}">`) + field('Note 5 ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p5}">`)}</div>
+        ${field('Schlüssel', `<select id="aPreset"><option value="custom" ${preset0 === 'custom' ? 'selected' : ''}>Eigene Grenzen</option><option value="kmk" ${preset0 === 'kmk' ? 'selected' : ''}>${up ? 'KMK-Raster (95 % = 15 P. … 20 % = 1 P.)' : 'KMK-Raster (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %)'}</option></select>`)}
+        <span id="anchorBox" style="display:contents">${up ? field('5 Punkte (4–) ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${pre.p5}">`) + field('1 Punkt ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p1}">`)
+             : field('Note 4 ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${pre.p4}">`) + field('Note 5 ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p5}">`)}</span></div>
+      ${up ? '' : `<label class="check" id="tendBox" style="margin:6px 0" hidden><input type="checkbox" id="aTend" ${tend0 ? 'checked' : ''}> <span>Tendenzen (z. B. 2+, 3-) aus dem KMK-Raster mit anzeigen – gerechnet wird mit ganzen Noten</span></label>`}
       <div class="grid3">${field('Grenzen runden auf', `<select id="aStep"><option value="0.5" ${+pre.step === 0.5 ? 'selected' : ''}>halbe Punkte</option><option value="1" ${+pre.step === 1 ? 'selected' : ''}>ganze Punkte</option><option value="0.25" ${+pre.step === 0.25 ? 'selected' : ''}>Viertelpunkte</option></select>`)}
         <div class="field"><span>&nbsp;</span><button type="button" class="mini accent" id="aSuggest">Schlüssel berechnen</button></div>
-        <label class="check" style="margin-top:22px"><input type="checkbox" id="aRemember" checked> <span>Als Standard für ${esc(c.subject || 'dieses Fach')} merken</span></label></div>
+        <label class="check" style="margin-top:22px"><input type="checkbox" id="aRemember" checked> <span>Schlüssel und Eingabeart als Standard für ${esc(c.subject || 'dieses Fach')} merken</span></label></div>
       ${keyInputs()}<div class="keyPct" id="keyPct"></div>
-      <p class="hint">${up ? 'Die Punkte 6–15 werden gleichmäßig zwischen der 5-Punkte-Grenze und 100 % verteilt, 2–4 zwischen 1 und 5 Punkten.' : 'Die Noten 1–3 werden gleichmäßig zwischen der Grenze für die 4 und 100 % verteilt.'} Jede Grenze kannst du danach noch einzeln ändern.</p>
+      <p class="hint" id="kmkSrc" hidden>KMK-Raster: Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung (Beschluss vom 16.03.2023), Anlage 1. Die Grenzen werden auf das gewählte Raster aufgerundet.</p>
+      <p class="hint" id="ownHint">${up ? 'Die Punkte 6–15 werden gleichmäßig zwischen der 5-Punkte-Grenze und 100 % verteilt, 2–4 zwischen 1 und 5 Punkten.' : 'Die Noten 1–3 werden gleichmäßig zwischen der Grenze für die 4 und 100 % verteilt.'} Jede Grenze kannst du danach noch einzeln ändern.</p>
     </div>
     ${dist && dist.n ? `<div class="subhead">Notenspiegel</div><div class="distBar" style="--n:${dist.counts.length}">${dist.counts.map((n, i) => `<div>${n}<i style="height:${dist.n ? Math.max(2, n / Math.max(...dist.counts) * 56) : 2}px;background:var(--gr${up ? R.POINT_GRADE(i) : i + 1})"></i>${up ? i : i + 1}</div>`).join('')}</div>
       <p class="meta"><span>Teilnehmer: <b>${dist.n}</b></span><span>Durchschnitt: <b>${fmt(dist.avg, 2)}</b></span><span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${dist.weak} (${Math.round(dist.weakShare * 100)} %)</b></span></p>` : ''}
-    <div class="subhead">Noten aus Datei übernehmen</div>
+    <div id="impSec"><div class="subhead">Noten aus Datei übernehmen</div>
     <div class="importBox"><div><b>Notenliste einlesen</b><p class="hint">Z. B. die „Notenliste (CSV)“ aus <b>Viva</b> nach einer mündlichen Schulaufgabe. Libretto ordnet die ${up ? 'Notenpunkte' : 'Noten'} über die Namen zu; du kannst sie danach in der Tabelle ändern.</p><p class="hint" id="aImpInfo" hidden></p></div>
-      <div class="panelBtns" style="margin:0"><button type="button" class="mini" id="aImpBtn">Datei wählen …</button></div><input type="file" id="aImpFile" accept=".csv,.txt" hidden></div>
+      <div class="panelBtns" style="margin:0"><button type="button" class="mini" id="aImpBtn">Datei wählen …</button></div><input type="file" id="aImpFile" accept=".csv,.txt" hidden></div></div>
     ${field('Notiz (nur für dich)', `<textarea id="aNote" rows="2">${esc(a.note || '')}</textarea>`)}
-    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button></div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
+    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) ? '<button type="button" class="mini accent" id="aPrintD" title="Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">Aufgabenpunkte eintragen …</button>' : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
   const read = d => {
     a.type = d.querySelector('#aType').value; a.title = d.querySelector('#aTitle').value.trim(); a.date = d.querySelector('#aDate').value; a.short = d.querySelector('#aShort').value.trim();
     if (up) a.term = d.querySelector('#aTerm').value;
@@ -976,45 +997,141 @@ function assessmentSheet(c, a) {
     const w = d.querySelector('#aW').value; if (!R.isBig(a) && w !== '') a.weight = +w; else delete a.weight;
     const ar = d.querySelector('#aArea').value; if (!R.isBig(a) && ar !== R.TYPES[a.type].area) a.area = ar; else delete a.area;
     a.usePoints = d.querySelector('#aPts').checked;
+    const wantTasks = a.usePoints && d.querySelector('#aTasks').checked;
+    if (wantTasks) {
+      syncTasks();
+      /* noch keine Höchstpunkte eingetragen: eine Startspalte anlegen, die Höchstpunkte trägt man im Eingabeblatt ein */
+      if (!tasks.length || tasks.every(t => t.max === '' || t.max == null)) { tasks = [{ id: tasks.length ? tasks[0].id : uid(), label: '1', max: 1 }]; d.querySelector('#aMax').value = 1; manualKey = false; suggest(true); }
+      if (!tasks.length) { toast('Bitte mindestens eine Aufgabe anlegen'); return false; }
+      if (tasks.some(t => !(+t.max > 0))) { toast('Bitte bei jeder Aufgabe die erreichbaren Punkte eintragen'); return false; }
+      tasks.forEach((t, i) => { if (!t.label) t.label = String(i + 1); });
+      const over = tasks.find(t => Object.values(a.results || {}).some(r => r && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' && +r.pts[t.id] > +t.max));
+      if (over) { toast(`Bei Aufgabe ${over.label} sind schon mehr Punkte eingetragen, als die neue Höchstpunktzahl zulässt`); return false; }
+      a.tasks = tasks.map(t => ({ id: t.id, label: t.label, max: +t.max }));
+    }
+    a.byTask = !!wantTasks;   /* a.tasks und die Aufgabenpunkte bleiben auch dann gespeichert, wenn die Option ausgeschaltet wird */
     const max = +d.querySelector('#aMax').value;
     const ks = $$('[data-k]', d).map(i => i.value === '' ? null : +i.value);
     if (a.usePoints) {
       if (!max || ks.some(x => x == null)) { toast('Bitte erreichbare Punkte und Notenschlüssel ausfüllen'); return false; }
-      const anchors = up ? { p5: +d.querySelector('#aA1').value, p1: +d.querySelector('#aA2').value, step: +d.querySelector('#aStep').value } : { p4: +d.querySelector('#aA1').value, p5: +d.querySelector('#aA2').value, step: +d.querySelector('#aStep').value };
-      a.key = up ? { max, pointThresholds: ks, pct15: pctArr, anchors } : { max, thresholds: ks, pct: pctArr, anchors };
-      if (d.querySelector('#aRemember').checked) D.settings.keyPresets[pKey] = anchors;
-      Object.values(a.results || {}).forEach(r => { if (r && r.raw != null && !r.status) r.v = up ? R.keyPoints(r.raw, a.key) : R.keyGrade(r.raw, a.key); });
+      const preset = d.querySelector('#aPreset').value, tend = !up && preset === 'kmk' && d.querySelector('#aTend').checked, step = +d.querySelector('#aStep').value;
+      const anchors = up ? { p5: +d.querySelector('#aA1').value, p1: +d.querySelector('#aA2').value, step, preset } : { p4: +d.querySelector('#aA1').value, p5: +d.querySelector('#aA2').value, step, preset, tend: !up && d.querySelector('#aTend').checked };
+      a.key = up ? { max, pointThresholds: ks, pct15: pctArr, anchors, preset } : { max, thresholds: ks, pct: pctArr, anchors, preset, tend, ...(tend ? { tendThresholds: R.suggestKeyKmk(max, false, step, true).tendThresholds } : {}) };
+      if (d.querySelector('#aRemember').checked) { D.settings.keyPresets[pKey] = anchors; if (wantTasks) D.settings.taskDefaults[pKey] = true; else delete D.settings.taskDefaults[pKey]; }
+      Object.values(a.results || {}).forEach(r => {
+        if (!r || r.status) return;
+        /* Ein von Hand eingetragener Gesamtwert bleibt stehen; Aufgabenpunkte rechnen nur dann neu, wenn sie vollständig sind und zur Summe passen (oder noch keine Summe da ist) */
+        const sumOf = () => Math.round(a.tasks.reduce((x, t) => x + (+r.pts[t.id] || 0), 0) * 100) / 100;
+        const full = R.byTask(a) && r.pts && a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== '');
+        if (R.byTask(a) && r.pts && (r.raw == null || (full && Math.abs(r.raw - sumOf()) < 1e-9))) R.applyTasks(a, r, up);
+        else if (r.raw != null) { delete r.tend; const k = R.keyResult(r.raw, a.key, up); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; } }
+      });
+      if (R.byTask(a) && Object.values(a.results || {}).some(r => r && !r.status && r.raw != null && r.pts && !a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== ''))) toast('Hinweis: Bei einigen Personen fehlen Punkte für neue Aufgaben – bitte im Eingabeblatt prüfen.', 4500);
     }
     a.note = d.querySelector('#aNote').value;
     return true;
   };
-  const { dlg, close } = sheet({ title: isNew ? 'Neuer Leistungsnachweis' : (a.title || R.TYPES[a.type].label), wide: true, body, onOk: d => {
+  const commit = d => {
     if (!read(d)) return false;
     if (up && a.type === 'sa' && !R.termHasSA(c, a.term)) toast(`Hinweis: In ${a.term} ist für dieses Fach keine Schulaufgabe vorgesehen (§ 29 GSO).`);
     const i = c.assessments.findIndex(x => x.id === a.id);
     if (i >= 0) c.assessments[i] = a; else c.assessments.push(a);
     if (R.isBig(a) && !up) { const cf = classesOf(c).flatMap(cls => R.dateConflicts(classBigDates(cls))).filter(x => x.items.some(it => it.date === a.date)); if (cf.length) toast('Achtung: ' + cf[0].text, 5000); }
     save(); render();
-  } });
+    return true;
+  };
+  const { dlg, close } = sheet({ title: isNew ? 'Neuer Leistungsnachweis' : (a.title || R.TYPES[a.type].label), wide: true, body, onOk: d => commit(d) });
   const upd = () => {
     const t = dlg.querySelector('#aType').value; const big = t === 'sa' || (t === 'jst' && dlg.querySelector('#aCount').value === 'big');
     dlg.querySelector('#jstOpt').hidden = t !== 'jst'; dlg.querySelector('#bigOpt').hidden = !big; dlg.querySelector('#smallOpt').hidden = big;
     dlg.querySelector('#keyBox').hidden = !dlg.querySelector('#aPts').checked;
     if (!dlg.querySelector('#aArea').dataset.touched) dlg.querySelector('#aArea').value = R.TYPES[t].area;
+    const kmk = dlg.querySelector('#aPreset').value === 'kmk', tk = dlg.querySelector('#aTasks').checked;
+    dlg.querySelector('#anchorBox').hidden = kmk; dlg.querySelector('#kmkSrc').hidden = !kmk; dlg.querySelector('#ownHint').hidden = kmk;
+    const tb = dlg.querySelector('#tendBox'); if (tb) tb.hidden = !kmk;
+    dlg.querySelector('#taskBox').hidden = !tk; dlg.querySelector('#impSec').hidden = tk;
+    const mx = dlg.querySelector('#aMax'); mx.readOnly = tk; mx.title = tk ? 'Summe der Aufgaben' : '';
   };
-  ['#aType', '#aCount', '#aPts'].forEach(s => dlg.querySelector(s).addEventListener('change', upd));
+  ['#aType', '#aCount', '#aPts', '#aTasks'].forEach(s => dlg.querySelector(s).addEventListener('change', upd));
   dlg.querySelector('#aArea').addEventListener('change', e => e.target.dataset.touched = 1);
   upd();
   const showPct = () => { const max = +dlg.querySelector('#aMax').value; const el = dlg.querySelector('#keyPct');
     el.innerHTML = max ? $$('[data-k]', dlg).map(inp => `<span>${inp.value === '' ? '' : Math.round(+inp.value / max * 1000) / 10 + ' %'}</span>`).join('') : ''; el.className = 'keyPct ' + (up ? 'k15' : ''); };
-  dlg.querySelector('#aSuggest').onclick = () => {
-    const max = +dlg.querySelector('#aMax').value; if (!max) { toast('Erst erreichbare Punkte eingeben'); return; }
-    const x = +dlg.querySelector('#aA1').value, y = +dlg.querySelector('#aA2').value, step = +dlg.querySelector('#aStep').value;
-    if (!(x > y)) { toast(up ? 'Die 5-Punkte-Grenze muss über der 1-Punkt-Grenze liegen' : 'Die Grenze für die 4 muss über der für die 5 liegen'); return; }
+  const suggest = quiet => {
+    const max = +dlg.querySelector('#aMax').value; if (!max) { if (!quiet) toast('Erst erreichbare Punkte eingeben'); return; }
+    const step = +dlg.querySelector('#aStep').value;
+    if (dlg.querySelector('#aPreset').value === 'kmk') {
+      const kk = R.suggestKeyKmk(max, up, step, true); pctArr = up ? kk.pct15 : kk.pct;
+      $$('[data-k]', dlg).forEach((inp, i) => inp.value = (up ? kk.pointThresholds : kk.thresholds)[i]); showPct(); return;
+    }
+    const x = +dlg.querySelector('#aA1').value, y = +dlg.querySelector('#aA2').value;
+    if (!(x > y)) { if (!quiet) toast(up ? 'Die 5-Punkte-Grenze muss über der 1-Punkt-Grenze liegen' : 'Die Grenze für die 4 muss über der für die 5 liegen'); return; }
     pctArr = up ? R.pct15FromAnchors(x, y) : R.pctFromAnchors(x, y);
     const k = up ? R.suggestKey15(max, pctArr, step).pointThresholds : R.suggestKey(max, pctArr, step).thresholds;
     $$('[data-k]', dlg).forEach((inp, i) => inp.value = k[i]); showPct();
   };
+  dlg.querySelector('#aSuggest').onclick = () => { manualKey = false; suggest(false); };
+  /* Vorgabe gewechselt: Grenzen sofort neu berechnen */
+  dlg.querySelector('#aPreset').addEventListener('change', () => { upd(); manualKey = false; suggest(true); });
+  /* eine Grenze von Hand geändert: ab jetzt „Eigene Grenzen“ (das KMK-Raster wäre sonst nicht mehr korrekt beschriftet) */
+  $$('[data-k]', dlg).forEach(i => i.addEventListener('input', () => { manualKey = true; if (dlg.querySelector('#aPreset').value !== 'custom') { dlg.querySelector('#aPreset').value = 'custom'; upd(); } }));
+  dlg.querySelector('#aStep').addEventListener('change', () => { if (!manualKey) suggest(true); });
+  /* Punkte je Aufgabe */
+  const taskRow = (t, n) => `<div class="trowE" data-tid="${t.id}"><input type="text" data-tl maxlength="12" placeholder="${n}" value="${esc(t.label || '')}"><input type="number" data-tm step="0.5" min="0.5" placeholder="Punkte" value="${t.max == null ? '' : t.max}"><button type="button" class="mini del" data-tdel title="Aufgabe entfernen" aria-label="Aufgabe entfernen">×</button></div>`;
+  const syncTasks = () => $$('.trowE', dlg).forEach(r => { const t = tasks.find(x => x.id === r.dataset.tid); if (t) { t.label = r.querySelector('[data-tl]').value.trim(); const m = r.querySelector('[data-tm]').value; t.max = m === '' ? '' : +m; } });
+  const sumTasks = () => Math.round(tasks.reduce((x, t) => x + (+t.max || 0), 0) * 100) / 100;
+  const nOld = () => Object.values(a.results || {}).filter(r => r && !r.status && r.raw != null && !(r.pts && Object.keys(r.pts).length)).length;
+  const updTasks = () => {
+    if (!dlg.querySelector('#aTasks').checked) return;
+    const sum = sumTasks(); dlg.querySelector('#aMax').value = sum || '';
+    dlg.querySelector('#tHint').textContent = `${tasks.length} ${tasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} · zusammen ${String(sum).replace('.', ',')} Punkte.` + (nOld() ? ` ${nOld()} ${nOld() === 1 ? 'Person hat' : 'Personen haben'} bisher nur Gesamtpunkte – sie bleiben bestehen, bis du für die Person Aufgabenpunkte einträgst.` : '');
+    if (!manualKey) suggest(true); else showPct();
+  };
+  const drawTasks = () => { dlg.querySelector('#taskRows').innerHTML = tasks.map((t, i) => taskRow(t, i + 1)).join(''); updTasks(); };
+  if (!tasks.length) tasks.push({ id: uid(), label: '', max: '' });
+  drawTasks();
+  dlg.querySelector('#aTasks').addEventListener('change', () => { if (dlg.querySelector('#aTasks').checked) updTasks(); });
+  dlg.querySelector('#tAdd').onclick = () => { syncTasks(); tasks.push({ id: uid(), label: '', max: '' }); drawTasks(); const l = $$('[data-tl]', dlg); l[l.length - 1].focus(); };
+  dlg.querySelector('#taskRows').addEventListener('input', () => { syncTasks(); updTasks(); });
+  dlg.querySelector('#taskRows').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('[data-tm]')) { e.preventDefault(); const rows = $$('.trowE', dlg); if (e.target.closest('.trowE') === rows[rows.length - 1]) dlg.querySelector('#tAdd').click(); else rows[rows.indexOf(e.target.closest('.trowE')) + 1].querySelector('[data-tl]').focus(); } });
+  /* Tab im letzten Punktefeld: neue Zeile entsteht von selbst */
+  dlg.querySelector('#taskRows').addEventListener('keydown', e => { if (e.key === 'Tab' && !e.shiftKey && e.target.matches('[data-tm]') && e.target.value !== '') { const rows = $$('.trowE', dlg); if (e.target.closest('.trowE') === rows[rows.length - 1]) { e.preventDefault(); dlg.querySelector('#tAdd').click(); } } });
+  /* Schnelleingabe: Höchstpunkte als Zeile. Vorhandene Aufgaben werden der Reihe nach angepasst, Aufgaben mit schon eingetragenen Punkten bleiben immer erhalten. */
+  const hasPts = id => Object.values(a.results || {}).some(r => r && r.pts && r.pts[id] != null && r.pts[id] !== '');
+  const applyQuick = () => {
+    const inp = dlg.querySelector('#tQuick'), raw = inp.value.trim(); if (!raw) return;
+    const parts = (/[\s;]/.test(raw) ? raw.split(/[\s;]+/).map(x => x.replace(',', '.')) : raw.split(',')).filter(x => x !== '');
+    const nums = parts.map(Number);
+    if (!nums.length || nums.some(x => !(x > 0) || x > 1000)) { toast('Bitte nur Zahlen größer als 0 eingeben, z. B. 2 3 4 3 2 2 2'); return; }
+    syncTasks();
+    const keep = [];
+    tasks.forEach((t, i) => { if (i < nums.length) { t.max = nums[i]; keep.push(t); } else if (hasPts(t.id)) keep.push(t); });
+    for (let i = tasks.length; i < nums.length; i++) keep.push({ id: uid(), label: '', max: nums[i] });
+    tasks = keep; inp.value = ''; drawTasks();
+    if (tasks.length > nums.length) toast('Hinweis: Einige Aufgaben mit schon eingetragenen Punkten bleiben bestehen.', 4500);
+  };
+  dlg.querySelector('#tQuick').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); applyQuick(); } });
+  dlg.querySelector('#tQuick').addEventListener('change', applyQuick);
+  /* gleiche Aufgaben wie bei der letzten Arbeit dieses Kurses */
+  const prevA = (c.assessments || []).filter(x => x.id !== a.id && x.tasks && x.tasks.length).sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')))[0];
+  const blankTasks = () => tasks.every(t => !t.label && (t.max === '' || t.max == null)) && !(a.tasks && a.tasks.length);
+  const prevBtn = dlg.querySelector('#tPrev');
+  if (prevA) { prevBtn.textContent = `Aufgaben von „${prevA.title || R.TYPES[prevA.type].label}“ übernehmen`; prevBtn.title = prevA.tasks.map(t => t.max).join(' · ').replace(/\./g, ','); prevBtn.hidden = false; }
+  prevBtn.onclick = async () => {
+    syncTasks();
+    if (!blankTasks() && !(await ask('Die bisherigen Aufgaben dieser Arbeit werden durch die der letzten Arbeit ersetzt. Schon eingetragene Aufgabenpunkte bleiben gespeichert, zählen aber nicht mehr mit.', 'Übernehmen', true))) return;
+    tasks = prevA.tasks.map(t => ({ id: uid(), label: t.label, max: t.max })); drawTasks();
+  };
+  dlg.querySelector('#taskRows').addEventListener('click', async e => {
+    const b = e.target.closest('[data-tdel]'); if (!b) return;
+    syncTasks(); const id = b.closest('.trowE').dataset.tid, t = tasks.find(x => x.id === id);
+    const n = Object.values(a.results || {}).filter(r => r && r.pts && r.pts[id] != null && r.pts[id] !== '').length;
+    if (n && !(await ask(`Aufgabe <b>${esc(t.label || '')}</b> entfernen? Die dafür eingetragenen Punkte von ${n} ${n === 1 ? 'Person' : 'Personen'} werden nicht mehr mitgerechnet (die Eingaben bleiben gespeichert).`, 'Entfernen', true))) return;
+    tasks = tasks.filter(x => x.id !== id); if (!tasks.length) tasks.push({ id: uid(), label: '', max: '' }); drawTasks();
+  });
+  dlg.querySelector('#tEnter').onclick = () => { if (commit(dlg) !== false) { close(); taskSheet(c, c.assessments.find(x => x.id === a.id)); } };
+  dlg.querySelector('#aMax').addEventListener('input', () => { if (!dlg.querySelector('#aTasks').checked && dlg.querySelector('#aPreset').value === 'kmk' && !manualKey) suggest(true); });
+  upd();
   dlg.querySelector('#aImpBtn').onclick = () => dlg.querySelector('#aImpFile').click();
   dlg.querySelector('#aImpFile').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -1030,7 +1147,203 @@ function assessmentSheet(c, a) {
     const n = Object.keys(a.results || {}).length;
     if (await ask(`„${esc(a.title || R.TYPES[a.type].label)}“ ${n ? `mit ${n} eingetragenen Ergebnissen ` : ''}löschen?`, 'Löschen', true)) { toTrash('assessment', `${a.title || R.TYPES[a.type].label}${a.date ? ' vom ' + fdate(a.date) : ''} · ${c.name} ${c.subject}`, c.assessments.find(x => x.id === a.id), { courseId: c.id }); c.assessments = c.assessments.filter(x => x.id !== a.id); save(); close(); render(); toast('Gelöscht – 60 Tage lang unter „Sicherung“ wiederherstellbar', 4000); }
   };
+  const cur = () => c.assessments.find(x => x.id === a.id);
+  const pd = dlg.querySelector('#aPrintD'); if (pd) { pd.onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'pdf'); dlg.querySelector('#aWordD').onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'docx'); dlg.querySelector('#aTkOpen').onclick = () => { close(); taskSheet(c, cur()); }; }
   const pr = dlg.querySelector('#aPrint'); if (pr) { pr.onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'pdf'); dlg.querySelector('#aWord').onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'docx'); }
+}
+
+/* ======================================================================
+   Punkte je Aufgabe eintragen – Zeilen = Schüler, Spalten = Aufgaben (wie in der Excel-Notenliste)
+   ====================================================================== */
+function taskSheet(c, a, focusSid) {
+  if (!c || !a || !R.byTask(a)) return;
+  const up = upper(c), fp = x => x == null || x === '' ? '' : String(Math.round(x * 100) / 100).replace('.', ',');
+  let tasks = a.tasks; a.results = a.results || {};
+  const STAT = [['', '–'], ['ent', 'E'], ['bef', 'B'], ['n6', up ? '0*' : '6*'], ['us', 'U']];
+  const cells = s => {
+    const r = a.results[s.id] || {}, ent = tasks.filter(t => r.pts && r.pts[t.id] != null && r.pts[t.id] !== '');
+    const part = Math.round(ent.reduce((x, t) => x + (+r.pts[t.id] || 0), 0) * 100) / 100;
+    const sum = r.status ? '' : r.raw != null ? fp(r.raw) : ent.length ? `<span class="part" title="noch nicht alle Aufgaben eingetragen">(${fp(part)})</span>` : '';
+    const res = r.status ? R.cellText(r, up) : r.v != null ? (up ? r.v + ' P.' : r.v + (r.tend || '')) : '';
+    return { sum, res };
+  };
+  const rowHTML = (s, n) => {
+    const r = a.results[s.id] || {}, cc = cells(s), aw = !a.results[s.id] && isAway(c, s.id, a.date);
+    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${aw ? ' <small class="hint">abwesend laut Kurseinstellung</small>' : ''}</td>${tasks.map(t => `<td><input class="cell tkc" data-s="${s.id}" data-t="${t.id}" value="${esc(fp(r.pts && r.pts[t.id]))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${r.status ? 'disabled' : ''}></td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${cc.sum}</td><td class="res"><b>${cc.res}</b></td><td><select class="tkst" data-st="${s.id}" title="Status: E entschuldigt, B befreit, ${up ? '0*' : '6*'} Leistung verweigert/versäumt, U Unterschleif">${STAT.map(([v, l]) => `<option value="${v}" ${(r.status || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`;
+  };
+  const colN = () => tasks.length + 6;
+  const foot = () => {
+    const st = R.taskStats(a, c.students), dist = R.distribution(a, c.students, up);
+    const pct = x => x == null ? '' : Math.round(x * 100) + ' %';
+    return `<tr class="ft"><td></td><td class="nm">Ø Punkte</td>${st.map(t => `<td>${t.avg == null ? '' : fp(t.avg)}</td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${dist.n ? fp(c.students.map(x => a.results[x.id]).filter(r => r && !r.status && r.raw != null).reduce((x, r, _, l) => x + r.raw / l.length, 0)) : ''}</td><td colspan="2"></td></tr>
+      <tr class="ft"><td></td><td class="nm">Lösungsquote</td>${st.map(t => `<td>${pct(t.quote)}</td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${dist.n ? pct(c.students.map(x => a.results[x.id]).filter(r => r && !r.status && r.raw != null).reduce((x, r, _, l) => x + r.raw / l.length, 0) / R.tasksMax(a)) : ''}</td><td colspan="2"></td></tr>`;
+  };
+  const summary = () => { const d = R.distribution(a, c.students, up); return d.n ? `Teilnehmer: <b>${d.n}</b> · Durchschnitt: <b>${fmt(d.avg, 2)}</b> · ${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${d.weak}</b>` : 'Noch keine vollständigen Ergebnisse.'; };
+  let n = 0;
+  const hasAnyPts = () => Object.values(a.results).some(r => r && r.pts && Object.keys(r.pts).length);
+  const headHTML = () => `<tr><th>Nr.</th><th>Name</th>${tasks.map(t => `<th data-t="${t.id}"><input class="tkl" data-t="${t.id}" value="${esc(t.label)}" maxlength="12" title="Name der Aufgabe – zum Ändern anklicken" aria-label="Name der Aufgabe" ${READONLY ? 'readonly' : ''}><input class="tkm" data-t="${t.id}" value="${fp(t.max)}" inputmode="decimal" title="Erreichbare Punkte dieser Aufgabe" aria-label="Höchstpunkte Aufgabe ${esc(t.label)}" ${READONLY ? 'readonly' : ''}>${!READONLY && tasks.length > 1 ? `<button type="button" class="tkdel" data-t="${t.id}" title="Aufgabe entfernen" aria-label="Aufgabe ${esc(t.label)} entfernen">×</button>` : ''}</th>`).join('')}${READONLY ? '' : '<th class="tkplus"><span>+</span><input class="tkm new" inputmode="decimal" placeholder="Punkte" title="Neue Aufgabe: Höchstpunkte eintippen, dann Tab" aria-label="Neue Aufgabe: Höchstpunkte"></th>'}<th>Summe<small>${fp(R.tasksMax(a))}</small></th><th>${up ? 'Punkte' : 'Note'}</th><th>Status</th></tr>`;
+  const inner = () => `<p class="hint" style="margin-top:0">Oben stehen die <b>erreichbaren Punkte</b> je Aufgabe: Tippe sie ein und drücke Tab – bei „+“ entsteht jeweils eine neue Aufgabe. Darunter trägst du je Schüler die erreichten Punkte ein (Enter = eine Zeile nach unten, Tab = ein Feld nach rechts). Sobald alle Aufgaben einer Person eingetragen sind (auch 0), berechnet Libretto Summe und ${up ? 'Notenpunkte' : 'Note'}; leere Felder zählen nicht als 0. Tipp: Eine Tabelle aus Excel (erreichbare Punkte und Namen mit Punkten) kannst du hier mit Strg/Cmd + V einfügen.</p>
+    ${tasks.length === 1 && +tasks[0].max === 1 && !hasAnyPts() ? '<p class="hint tkStart">Neu: Trage zuerst oben bei der ersten Aufgabe die erreichbaren Punkte ein, dann bei „+“ die weiteren.</p>' : ''}
+    <div class="tkWrap"><table class="tkTbl"><thead>${headHTML()}</thead>
+      <tbody>${(n = 0, groupsOf(c).map(g => (g.label ? `<tr class="clsRow"><td colspan="${colN()}">${esc(g.label)}</td></tr>` : '') + g.students.map(s => rowHTML(s, ++n)).join('')).join(''))}</tbody><tfoot>${foot()}</tfoot></table></div>
+    <p class="meta" id="tkSum">${summary()}</p>`;
+  const body = () => `<div id="tkRoot">${inner()}</div>`;
+  const { dlg } = sheet({ title: (a.title || R.TYPES[a.type].label) + ' – Punkte je Aufgabe', ok: '', cancel: 'Fertig', wide: true, body: body() });
+  dlg.classList.add('tkDlg');
+  const refreshRow = sid => { const s = c.students.find(x => x.id === sid), tr = dlg.querySelector(`tr[data-s="${sid}"]`); if (!s || !tr) return; const cc = cells(s); tr.querySelector('.sum').innerHTML = cc.sum; tr.querySelector('.res b').innerHTML = cc.res; dlg.querySelector('tfoot').innerHTML = foot(); dlg.querySelector('#tkSum').innerHTML = summary(); };
+  const bad = (el, msg) => { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast(msg); const r0 = a.results[el.dataset.s]; el.value = fp(r0 && r0.pts ? r0.pts[el.dataset.t] : null); el.select(); };
+  dlg.addEventListener('change', e => {
+    const el = e.target; if (READONLY) return;
+    if (el.matches('.tkc')) {
+      const sid = el.dataset.s, t = tasks.find(x => x.id === el.dataset.t), raw = el.value.trim().replace(',', '.');
+      let v = null;
+      if (raw !== '') { if (!/^\d+(\.\d+)?$/.test(raw)) { bad(el, 'Bitte eine Zahl eintragen'); return; } v = +raw; if (v > +t.max) { bad(el, `Aufgabe ${t.label}: höchstens ${fp(t.max)} Punkte`); return; } }
+      let r = a.results[sid] || (a.results[sid] = {}); r.pts = r.pts || {};
+      if (v == null) delete r.pts[t.id]; else { r.pts[t.id] = v; el.value = fp(v); }
+      R.applyTasks(a, r, up);
+      if (!Object.keys(r.pts).length && !r.status) delete a.results[sid];
+      save(); refreshRow(sid);
+    } else if (el.matches('.tkst')) {
+      const sid = el.dataset.st; let r = a.results[sid] || (a.results[sid] = {});
+      if (el.value) { r.status = el.value; delete r.raw; delete r.v; delete r.tend; } else { delete r.status; R.applyTasks(a, r, up); }
+      if (!Object.keys(r.pts || {}).length && !r.status) delete a.results[sid];
+      save(); const tr = el.closest('tr'); $$('.tkc', tr).forEach(i => i.disabled = !!el.value); refreshRow(sid);
+    }
+  });
+  dlg.addEventListener('keydown', e => {
+    const el = e.target; if (!el.matches || !el.matches('.tkc')) return;
+    const col = el.dataset.t, rows = $$('tbody tr[data-s]', dlg), i = rows.indexOf(el.closest('tr'));
+    const go = d => { let k = i + d; while (rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`).disabled) k += d; const n2 = rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`); if (n2) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { n2.focus(); n2.select(); }, 0); } };
+    if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); go(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
+  });
+  dlg.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('.tkc')) e.target.select(); });
+  /* ---- Aufgaben im Blatt anlegen / ändern (wie in Excel) ---- */
+  const redraw = () => { dlg.querySelector('#tkRoot').innerHTML = inner(); };
+  const recompute = () => {
+    Object.values(a.results).forEach(r => {
+      if (!r || r.status) return;
+      const sumOf = () => Math.round(a.tasks.reduce((x, t) => x + (+(r.pts || {})[t.id] || 0), 0) * 100) / 100;
+      const full = r.pts && a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== '');
+      if (r.pts && (r.raw == null || (full && Math.abs(r.raw - sumOf()) < 1e-9))) R.applyTasks(a, r, up);
+      else if (r.raw != null) { delete r.tend; const k = R.keyResult(r.raw, a.key, up); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; } }
+    });
+  };
+  /* Summe geändert: Notenschlüssel auf die neue Summe umrechnen (KMK-Raster neu, eigene Grenzen im gleichen Prozentverhältnis) */
+  const rekey = () => {
+    const max = R.tasksMax(a), k = a.key; if (!k || !max) return; const old = +k.max || 0; if (max === old) return;
+    const step = (k.anchors && +k.anchors.step) || 0.5;
+    if (k.preset === 'kmk') {
+      const kk = R.suggestKeyKmk(max, up, step, up ? true : k.tend !== false);
+      if (up) k.pointThresholds = kk.pointThresholds; else { k.thresholds = kk.thresholds; if (k.tend) k.tendThresholds = kk.tendThresholds; }
+    } else if (old) {
+      const key = up ? 'pointThresholds' : 'thresholds'; if (k[key]) k[key] = k[key].map(x => R.ceilStep(x / old * max, step));
+    }
+    k.max = max;
+  };
+  const changed = (focusSel) => { rekey(); recompute(); save(); redraw(); if (focusSel) { const el = dlg.querySelector(focusSel); if (el) { el.focus(); el.select && el.select(); } } };
+  const numOf = v => { const x = String(v).trim().replace(',', '.'); return /^\d+(\.\d+)?$/.test(x) && +x > 0 && +x <= 1000 ? +x : null; };
+  const addTask = (v) => {
+    const x = numOf(v); if (x == null) { toast('Bitte die erreichbaren Punkte als Zahl größer als 0 eintragen'); return false; }
+    a.tasks.push({ id: uid(), label: String(a.tasks.length + 1), max: x }); tasks = a.tasks; return true;
+  };
+  dlg.addEventListener('change', e => {
+    const el = e.target; if (READONLY || !el.matches) return;
+    if (el.matches('.tkl')) { const t = a.tasks.find(x => x.id === el.dataset.t); if (!t) return; t.label = el.value.trim() || String(a.tasks.indexOf(t) + 1); el.value = t.label; save(); const th = dlg.querySelector(`.tkm[data-t="${t.id}"]`); if (th) th.setAttribute('aria-label', 'Höchstpunkte Aufgabe ' + t.label); }
+    else if (el.matches('.tkm.new')) { if (el.value.trim() === '') return; if (addTask(el.value)) changed('.tkm.new'); else { el.value = ''; } }
+    else if (el.matches('.tkm')) {
+      const t = a.tasks.find(x => x.id === el.dataset.t); if (!t) return; const x = numOf(el.value);
+      const over = Object.values(a.results).some(r => r && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' && +r.pts[t.id] > (x || 0));
+      if (x == null || over) { toast(x == null ? 'Bitte eine Zahl größer als 0 eintragen' : `Bei Aufgabe ${t.label} sind schon mehr Punkte eingetragen – so viele Höchstpunkte gehen nicht`); el.value = fp(t.max); return; }
+      if (x === +t.max) { el.value = fp(x); return; }
+      t.max = x; changed();
+    }
+  });
+  dlg.addEventListener('keydown', e => {
+    const el = e.target; if (!el.matches || !el.matches('.tkm.new') || READONLY) return;
+    if (e.key === 'Tab' && !e.shiftKey && el.value.trim() !== '') { e.preventDefault(); const v = el.value; el.value = ''; if (addTask(v)) changed('.tkm.new'); }
+    else if (e.key === 'Enter') { e.preventDefault(); const v = el.value; el.value = ''; const wasVal = v.trim() !== ''; if (wasVal) { if (!addTask(v)) return; rekey(); recompute(); save(); redraw(); } const f = dlg.querySelector('.tkc:not(:disabled)'); if (f) { f.focus(); f.select(); } }
+  });
+  dlg.addEventListener('keydown', e => { const el = e.target; if (el.matches && el.matches('.tkm:not(.new), .tkl') && e.key === 'Enter') { e.preventDefault(); el.dispatchEvent(new Event('change', { bubbles: true })); const f = dlg.querySelector('.tkc:not(:disabled)'); if (f) { setTimeout(() => { f.focus(); f.select(); }, 0); } } });
+  dlg.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('.tkdel'); if (!b || READONLY) return;
+    const t = a.tasks.find(x => x.id === b.dataset.t); if (!t || a.tasks.length < 2) return;
+    const n = Object.values(a.results).filter(r => r && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '').length;
+    if (!(await ask(`Aufgabe <b>${esc(t.label)}</b> entfernen?${n ? ` Die dafür eingetragenen Punkte von ${n} ${n === 1 ? 'Person' : 'Personen'} werden nicht mehr mitgerechnet (die Eingaben bleiben gespeichert).` : ''}`, 'Entfernen', true))) return;
+    a.tasks = a.tasks.filter(x => x.id !== t.id); tasks = a.tasks; changed();
+  });
+  /* ---- Einfügen aus Excel: Zeile „erreichbar“ (optional) + eine Zeile je Schüler ---- */
+  dlg.addEventListener('paste', async e => {
+    if (READONLY) return; const txt = (e.clipboardData && e.clipboardData.getData('text')) || '';
+    if (!/[\t\n]/.test(txt.trim())) return;   /* einzelner Wert: normal einfügen */
+    e.preventDefault();
+    const res = parseTaskPaste(txt, c, a, up); if (res.error) { toast(res.error, 6000); return; }
+    const msg = `Aus der Tabelle übernehmen?<br>${res.newTasks ? `<b>${res.tasks.length} Aufgaben</b> (zusammen ${fp(res.tasks.reduce((x, t) => x + t.max, 0))} Punkte)<br>` : ''}<b>${res.rows.length}</b> von ${res.total} Zeilen einem Schüler zugeordnet${res.overwrite ? `<br>Bei ${res.overwrite} ${res.overwrite === 1 ? 'Person werden' : 'Personen werden'} schon eingetragene Punkte überschrieben.` : ''}${res.unknown.length ? `<br>Nicht gefunden: ${esc(res.unknown.slice(0, 6).join('; '))}${res.unknown.length > 6 ? ' …' : ''}` : ''}`;
+    if (!(await ask(msg, 'Übernehmen'))) return;
+    if (res.newTasks) { a.tasks = res.tasks; tasks = a.tasks; }
+    res.rows.forEach(({ st, vals }) => { const r = a.results[st.id] || (a.results[st.id] = {}); r.pts = r.pts || {}; tasks.forEach((t, i) => { if (vals[i] != null) r.pts[t.id] = vals[i]; }); });
+    rekey(); recompute(); save(); redraw(); toast('Punkte übernommen');
+  });
+  dlg.addEventListener('close', () => { save(); render(); });
+  const first = (focusSid && dlg.querySelector(`tr[data-s="${focusSid}"] .tkc:not(:disabled)`) && [...dlg.querySelectorAll(`tr[data-s="${focusSid}"] .tkc:not(:disabled)`)].find(x => !x.value)) || dlg.querySelector('.tkc:not(:disabled)');
+  const startEl = dlg.querySelector('.tkStart') && dlg.querySelector('.tkm:not(.new)');
+  if (startEl) { startEl.focus(); startEl.select(); } else if (first) first.focus();
+}
+
+/* Tabelle aus Excel (Tab-getrennt) lesen: optional Kopfzeile mit Aufgabennamen, Zeile „erreichbar“ (nur Zahlen oder „erreichbar“/„max“ vorn), danach eine Zeile je Schüler.
+   Reihenfolge von Vor- und Nachname egal. Es wird nichts verändert, nur ein Ergebnis zurückgegeben (oder ein Fehler). */
+function parseTaskPaste(text, c, a, up) {
+  const num = v => { const x = String(v == null ? '' : v).trim().replace(',', '.'); return x !== '' && /^\d+(\.\d+)?$/.test(x) ? +x : null; };
+  const rows = text.replace(/\r/g, '').split('\n').map(l => l.split('\t').map(x => x.trim())).filter(r => r.some(x => x !== ''));
+  if (rows.length < 1) return { error: 'In der Zwischenablage wurde keine Tabelle gefunden.' };
+  const split = r => { let i = 0; const name = []; while (i < r.length && r[i] !== '' && num(r[i]) == null) name.push(r[i++]); while (i < r.length && r[i] === '' && !name.length) i++; return { name, rest: r.slice(i) }; };
+  let labels = null, maxRow = null, start = 0;
+  const parsed = rows.map(split);
+  /* Kopfzeile: nur Text, keine Zahl (z. B. „Name  1a  1b …“) */
+  if (rows[0].filter(x => x !== '').length > 1 && rows[0].every(x => num(x) == null) && !/^(erreichbar|max|höchst)/i.test(rows[0][0] || '')) { labels = rows[0]; start = 1; }
+  /* Zeile „erreichbar“: ohne Namen (nur Zahlen) oder mit Beschriftung erreichbar/max */
+  const p0 = parsed[start];
+  if (p0 && (p0.name.length === 0 || /^(erreichbar|max|höchst|punkte)/i.test(p0.name.join(' '))) && p0.rest.some(x => num(x) != null)) { maxRow = p0.rest.map(num); start++; }
+  let vals = null;
+  if (maxRow) {
+    let m = maxRow.slice(); while (m.length && m[m.length - 1] == null) m.pop();
+    if (labels) { const lp = split(labels); const lab = (lp.name.length ? labels.slice(lp.name.length) : labels).filter(x => x !== ''); if (lab.length && lab.length <= m.length) m = m.slice(0, lab.length); }
+    else if (m.length > 1) { const s0 = Math.round(m.slice(0, -1).reduce((x, y) => x + (y || 0), 0) * 100) / 100; if (Math.abs(s0 - m[m.length - 1]) < 0.01) m.pop(); }   /* Summenspalte am Ende nicht als Aufgabe lesen */
+    if (!m.length || m.some(x => x == null || x <= 0 || x > 1000)) return { error: 'Die Zeile mit den erreichbaren Punkten enthält Lücken oder ungültige Zahlen.' };
+    vals = m;
+  }
+  const hasPts = Object.values(a.results || {}).some(r => r && r.pts && Object.keys(r.pts).length);
+  let tasks = a.tasks, newTasks = false;
+  if (vals) {
+    const same = vals.length === tasks.length && vals.every((x, i) => Math.abs(x - +tasks[i].max) < 1e-9);
+    if (!same) {
+      if (hasPts) return { error: 'Die Aufgaben in der Tabelle passen nicht zu den schon eingetragenen Aufgaben. Es wurde nichts verändert.' };
+      const lab = labels ? (() => { const lp = split(labels); return (lp.name.length ? labels.slice(lp.name.length) : labels).filter(x => x !== ''); })() : [];
+      tasks = vals.map((mx, i) => ({ id: (a.tasks[i] && a.tasks[i].id) || uid(), label: (lab[i] || String(i + 1)).slice(0, 12), max: mx })); newTasks = true;
+    }
+  }
+  const N = tasks.length;
+  const norm = x => String(x || '').toLowerCase().replace(/[.,;]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+  const byKey = new Map(), byLast = new Map();
+  c.students.forEach(st => { const n = splitName(st); const k = norm(n.last + ' ' + n.first); byKey.set(k, byKey.has(k) ? null : st); const l = norm(n.last); byLast.set(l, byLast.has(l) ? null : st); });
+  const out = [], unknown = []; let total = 0, overwrite = 0; const seen = new Set();
+  for (let i = start; i < rows.length; i++) {
+    const { name, rest } = parsed[i]; if (!name.length) continue; total++;
+    const key = norm(name.join(' ')), st = byKey.get(key) || byLast.get(key);
+    if (!st) { unknown.push(name.join(', ')); continue; }
+    if (seen.has(st.id)) { unknown.push(name.join(', ') + ' (doppelt)'); continue; } seen.add(st.id);
+    const cells = rest.slice(0, N), v = [];
+    for (let k = 0; k < N; k++) {
+      const raw = cells[k]; if (raw == null || raw === '') { v.push(null); continue; }
+      const x = num(raw); if (x == null) return { error: `„${raw}“ bei ${name.join(', ')} ist keine Zahl. Es wurde nichts verändert.` };
+      if (x > +tasks[k].max) return { error: `${name.join(', ')}: ${raw} Punkte bei Aufgabe ${tasks[k].label}, erreichbar sind nur ${String(tasks[k].max).replace('.', ',')}. Es wurde nichts verändert.` };
+      v.push(x);
+    }
+    const r0 = (a.results || {})[st.id]; if (r0 && r0.status) { unknown.push(name.join(', ') + ' (Status gesetzt)'); continue; }
+    if (r0 && r0.pts && v.some((x, k) => x != null && r0.pts[tasks[k].id] != null && r0.pts[tasks[k].id] !== '' && +r0.pts[tasks[k].id] !== x)) overwrite++;
+    out.push({ st, vals: v });
+  }
+  if (!out.length && !newTasks) return { error: 'Keine Zeile konnte einem Schüler zugeordnet werden. Stehen die Namen in der ersten Spalte?' };
+  return { rows: out, tasks, newTasks, unknown, total, overwrite };
 }
 
 /* Noten aus einer CSV-Datei zuordnen (Viva-Notenliste: Nachname;Vorname;…;Note bzw. Notenpunkte) */
@@ -1521,17 +1834,29 @@ function modelTransfer(c) {
   });
   return { title: `Übertragsliste ${c.name} · ${c.subject}`, file: fileName('Übertragsliste', c), subtitle: scopeLabel(c) + ' – zum Eintragen ins Infoportal', meta: baseMeta(c), blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l'], big: [2] } }, { p: (isMixed(c.students) ? 'Nach Klassen unterteilt, je Klasse alphabetisch – Reihenfolge und Nummern wie auf dem Notenblatt des Infoportals.' : 'Reihenfolge alphabetisch wie in der Schülerliste.') + ' Bitte nach dem Übertragen abhaken.' }] };
 }
-function modelAssessment(c, a) {
+function modelAssessment(c, a, opt = {}) {
   const up = upper(c), dist = R.distribution(a, c.students, up);
   const head = ['Nr.', 'Name', ...(a.usePoints ? ['Punkte'] : []), up ? 'Notenpunkte' : 'Note'];
   const rows = groupedRows(c, (s, i) => { const r = a.results && a.results[s.id]; return [String(i + 1), s.name, ...(a.usePoints ? [r && r.raw != null ? String(r.raw).replace('.', ',') : ''] : []), R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
   const blocks = [{ table: { head, rows, align: ['c', 'l'], big: [head.length - 1] } }];
+  /* Detailliert (nur bei „Punkte je Aufgabe“): jede Aufgabe je Person, dazu Ø Punkte und Lösungsquote je Aufgabe */
+  const detail = !!opt.detail && R.byTask(a);
+  if (detail) {
+    const tk = a.tasks, pf = x => x == null || x === '' ? '' : String(Math.round(x * 100) / 100).replace('.', ','), st = R.taskStats(a, c.students);
+    const dh = ['Nr.', 'Name', ...tk.map(t => t.label), 'Summe', up ? 'Notenpunkte' : 'Note'];
+    const dr = groupedRows(c, (s, i) => { const r = a.results && a.results[s.id]; return [String(i + 1), s.name, ...tk.map(t => r && !r.status && r.pts && r.pts[t.id] != null ? pf(r.pts[t.id]) : ''), r && !r.status && r.raw != null ? pf(r.raw) : '', R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
+    const sums = c.students.map(s => a.results && a.results[s.id]).filter(r => r && !r.status && r.raw != null).map(r => +r.raw), avgSum = sums.length ? sums.reduce((x, y) => x + y, 0) / sums.length : null;
+    const pc = x => x == null ? '' : Math.round(x * 100) + ' %';
+    blocks[0] = { table: { head: dh, rows: [['', 'erreichbar', ...tk.map(t => pf(t.max)), pf(R.tasksMax(a)), ''], ...dr, ['', 'Ø Punkte', ...st.map(t => pf(t.avg)), pf(avgSum), ''], ['', 'Lösungsquote', ...st.map(t => pc(t.quote)), avgSum == null ? '' : pc(avgSum / R.tasksMax(a)), '']],
+      align: ['c', 'l'], big: [dh.length - 1], bold: [dh.length - 2], small: tk.length > 9, widths: [3, 12, ...tk.map(() => 3.2), 4, 4] } };
+  }
   blocks.push({ h: 'Notenspiegel' });
   const labels = up ? Array.from({ length: 16 }, (_, i) => String(15 - i)) : ['1', '2', '3', '4', '5', '6'];
   const counts = up ? dist.counts.slice().reverse() : dist.counts.slice();
   blocks.push({ table: { head: labels, rows: [counts.map(String)], bold: [] } });
   if (dist.n) blocks.push({ bars: { labels, values: counts, avg: dist.avg, unit: up ? 'Notenpunkte' : 'Note' } });
   blocks.push({ p: `Teilnehmer: ${dist.n} · Durchschnitt: ${fmt(dist.avg, 2)} · ${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: ${dist.weak} (${Math.round(dist.weakShare * 100)} %)` });
+  if (a.usePoints && a.key && a.key.preset === 'kmk') blocks.push({ p: `Notenschlüssel: KMK-Raster${!up && a.key.tend ? ' (Tendenzen aus dem 15-Punkte-Raster)' : ''}.` });
   /* Rohpunkte (nur wenn mit Punkten gearbeitet wurde): Statistik und Verteilung je Note – wichtig für Fachschaft und Notenschlüssel */
   if (a.usePoints) {
     const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && r.raw != null && isFinite(+r.raw) && r.raw !== '').map(r => +r.raw).sort((x, y) => x - y);
@@ -1547,7 +1872,7 @@ function modelAssessment(c, a) {
     }
   }
   blocks.push({ sig: ['Datum, Unterschrift der Lehrkraft'] });
-  return { title: `${a.title || R.TYPES[a.type].label} – ${c.name} · ${c.subject}`, file: fileName(a.title || R.TYPES[a.type].label, c, a.date), subtitle: `${R.TYPES[a.type].label}${R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks };
+  return { title: `${a.title || R.TYPES[a.type].label} – ${c.name} · ${c.subject}`, file: fileName(a.title || R.TYPES[a.type].label, c, a.date), subtitle: `${R.TYPES[a.type].label}${R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks, landscape: detail && a.tasks.length > 8 };
 }
 const stuSub = (c, s) => `${c.name} · ${c.subject}${isMixed(c.students) && s.cls ? ' · Klasse ' + s.cls : ''} · ${scopeLabel(c)}`;
 function modelStudents(c, list) {
@@ -1936,6 +2261,8 @@ function helpSheet() {
     <p>Unterrichtsbeiträge oder Rechenschaftsablagen bekommt meist nicht die ganze Klasse am selben Tag. Dafür gibt es die Spalte <b>„Einzeln“</b>: Note ins Feld „+“ tippen und Enter – gespeichert mit dem heutigen Datum. Vertippt? Direkt nach der Eingabe erscheint unten „Rückgängig“. Ein Klick auf eine Note öffnet die Liste: Datum, Art und Notiz ändern oder die Note <b>löschen</b>. Die Art für die schnelle Eingabe stellst du über den Spaltenkopf ein.</p>${fig('einzeln', 'Einzelnoten')}
     <h3>4 · Leistungsnachweise und Notenschlüssel</h3>
     <p>„+ Leistungsnachweis“: Art, Datum, Gewicht (z. B. Jahrgangsstufentest als ½ Schulaufgabe). Mit „Rohpunkte eingeben“ tippst du die Punkte ein und Libretto rechnet in Noten um. Den Schlüssel berechnet Libretto aus den Vorgaben eurer Fachschaft – etwa <b>Note 4 ab 50 %, Note 5 ab 33 %</b>; die Noten 1–3 werden gleichmäßig verteilt, jede Grenze bleibt änderbar. Libretto merkt sich die Vorgabe je Fach. Spaltenkopf anklicken: bearbeiten, Notenspiegel, Notenliste drucken.</p>${fig('schluessel', 'Notenschlüssel')}
+    <p><b>KMK-Raster:</b> Statt eigener Grenzen kannst du den Schlüssel der Abiturprüfung wählen (Vereinbarung der Kultusministerkonferenz vom 16.03.2023, Anlage 1): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. In der Unter- und Mittelstufe ergibt das die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen (2+, 3- …). Gerechnet wird mit ganzen Noten. In Mathematik ist das KMK-Raster vorgewählt; deine Fachschaft kann aber auch andere Grenzen festlegen („Eigene Grenzen“).</p>
+    <p><b>Punkte je Aufgabe:</b> Unter „Rohpunkte“ gibt es die Option „Punkte je Aufgabe eingeben“. Im Eingabeblatt (Klick auf ein Feld des Leistungsnachweises oder „Sichern und Aufgabenpunkte eintragen“) stehen oben die <b>erreichbaren Punkte</b> je Aufgabe: einfach eintippen und Tab drücken – bei „+“ entsteht jeweils die nächste Aufgabe. Namen der Aufgaben, Höchstpunkte und Spalten lassen sich dort jederzeit ändern; der Notenschlüssel rechnet sich mit. Darunter trägst du je Schüler die Punkte pro Aufgabe ein. Sobald bei einer Person alle Aufgaben eingetragen sind (auch 0), rechnet Libretto Summe und Note aus; leere Felder zählen nicht als 0. Unten stehen Ø Punkte und Lösungsquote je Aufgabe. Eine Tabelle aus Excel (Zeile „erreichbar“ und Namen mit Punkten) kannst du im Blatt mit Strg/Cmd + V einfügen; Libretto zeigt vorher, was übernommen wird. Mit „Als Standard für das Fach merken“ startet jede neue Arbeit in diesem Fach gleich mit dieser Eingabeart. Über den Spaltenkopf druckst du die <b>detaillierte Notenliste</b> (alle Aufgaben je Schüler, Notenspiegel, Schnitt, Schlüssel). Wer lieber direkt die Note oder nur die Gesamtpunkte einträgt, lässt die Option aus – alles Eingetragene bleibt dabei erhalten.</p>
     <h3>5 · Kalender und Termine</h3>
     <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. Ein Klick auf den Monatsnamen öffnet die Monats- und Jahreswahl. Mit <b>„Schultermine einlesen“</b> übernimmst du den Terminkalender deiner Schule: im Infoportal unter Termine „als CSV exportieren“ und die Datei hier auswählen (auch ICS-Kalenderdateien funktionieren). Die Schultermine erscheinen grau im Kalender und als Liste darunter. Außerdem: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen.</p>${fig('kalender', 'Kalender')}
     <h3>6 · Drucken, Sicherung, Sperre</h3>

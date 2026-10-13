@@ -95,11 +95,12 @@
     for (let n = 1; n <= 5; n++) if (points >= key.thresholds[n - 1]) return n;
     return 6;
   }
+  /* Aufrunden auf das Raster der Schule (z. B. halbe Punkte); die Toleranz verhindert Rechenfehler wie 14.000000000000002 -> 14,5 */
+  const ceilStep = (v, step) => Math.round(Math.ceil(v / step - 1e-9) * step * 100) / 100;
   /* Vorschlag für einen Notenschlüssel (Prozent je Note, anpassbar) */
   const DEFAULT_PCT = [87.5, 75, 62.5, 50, 25];
   function suggestKey(max, pct = DEFAULT_PCT, step = 0.5) {
-    const r = v => Math.ceil(v / step) * step;
-    return { max, thresholds: pct.map(p => r(max * p / 100)), pct: pct.slice() };
+    return { max, thresholds: pct.map(p => ceilStep(max * p / 100, step)), pct: pct.slice() };
   }
   /* Prozentgrenzen aus „Ankern“: Note 4 ab p4 %, Note 5 ab p5 %; Noten 1–3 gleichmäßig zwischen p4 und 100 % */
   function pctFromAnchors(p4, p5) { const st = (100 - p4) / 4; return [p4 + 3 * st, p4 + 2 * st, p4 + st, p4, p5].map(x => Math.round(x * 10) / 10); }
@@ -115,10 +116,49 @@
     for (let p = 15; p >= 1; p--) if (points >= key.pointThresholds[15 - p]) return p;
     return 0;
   }
+  /* KMK-Raster: „Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung“ (Beschluss vom 16.03.2023), Anlage 1, Ziff. 8.4.2:
+     Mindestanteil der erreichbaren Punkte für 15, 14, …, 1 Notenpunkte. Ohne Rundung der Prozentwerte. */
   const DEFAULT_PCT15 = [95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 33, 27, 20];
+  const KMK_PCT15 = DEFAULT_PCT15;
+  /* dasselbe Raster als Noten 1–5 (13, 10, 7, 4, 1 Punkte): Note 1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %, darunter 6 */
+  const KMK_PCT5 = [85, 70, 55, 40, 20];
   function suggestKey15(max, pct = DEFAULT_PCT15, step = 0.5) {
-    const r = v => Math.ceil(v / step) * step;
-    return { max, pointThresholds: pct.map(p => r(max * p / 100)), pct15: pct.slice() };
+    return { max, pointThresholds: pct.map(p => ceilStep(max * p / 100, step)), pct15: pct.slice() };
+  }
+  /* KMK-Schlüssel: Oberstufe in Notenpunkten; Unterstufe/Mittelstufe in Noten, auf Wunsch mit Tendenz (15 P. = 1+, 14 = 1, 13 = 1-, … 1 = 5-) */
+  function suggestKeyKmk(max, upper, step = 0.5, tend = true) {
+    if (upper) return { ...suggestKey15(max, KMK_PCT15, step), preset: 'kmk' };
+    return { ...suggestKey(max, KMK_PCT5, step), tendThresholds: KMK_PCT15.map(p => ceilStep(max * p / 100, step)), tend: !!tend, preset: 'kmk' };
+  }
+  /* Ergebnis (Note bzw. Notenpunkte, ggf. mit Tendenz) aus Punkten */
+  function keyResult(points, key, upper) {
+    if (points == null || !key) return null;
+    if (upper) { const v = keyPoints(points, key); return v == null ? null : { v }; }
+    const v = keyGrade(points, key); if (v == null) return null;
+    if (key.tend && key.tendThresholds) {
+      for (let p = 15; p >= 1; p--) if (points >= key.tendThresholds[15 - p]) { const t = POINT_LABEL(p).slice(1); return POINT_GRADE(p) === v && (t === '+' || t === '-') ? { v, tend: t } : { v }; }
+    }
+    return { v };
+  }
+  /* Punkte je Aufgabe: Summe, Lösungsquote, Ergebnis. a.tasks = [{id, label, max}], r.pts = {aufgabenId: Punkte} */
+  const byTask = a => !!(a && a.byTask && a.tasks && a.tasks.length);
+  const tasksMax = a => Math.round((a.tasks || []).reduce((s, t) => s + (+t.max || 0), 0) * 100) / 100;
+  /* Rechnet r (Ergebnis einer Person) aus den Aufgabenpunkten neu. Erst wenn jede Aufgabe einen Wert hat (auch 0), gibt es Punkte und Note. */
+  function applyTasks(a, r, upper) {
+    const ts = a.tasks || [], p = r.pts || {};
+    delete r.raw; delete r.v; delete r.tend;
+    if (!ts.length || !ts.every(t => p[t.id] != null && p[t.id] !== '')) return r;
+    r.raw = Math.round(ts.reduce((s, t) => s + (+p[t.id] || 0), 0) * 100) / 100;
+    const k = keyResult(r.raw, a.key, upper); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; }
+    return r;
+  }
+  /* Auswertung je Aufgabe: Anzahl, Ø Punkte, Lösungsquote (Ø ÷ erreichbar) */
+  function taskStats(a, students) {
+    return (a.tasks || []).map(t => {
+      const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && !r.status && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' ? +r.pts[t.id] : null; }).filter(v => v != null);
+      const avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null;
+      return { id: t.id, label: t.label, max: +t.max, n: vals.length, avg, quote: avg != null && +t.max ? avg / +t.max : null };
+    });
   }
 
   const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
@@ -362,7 +402,7 @@
   function schoolYearOf(d = new Date()) { const y = d.getFullYear(), m = d.getMonth() + 1; const s = m >= 8 ? y : y - 1; return `${s}/${String((s + 1) % 100).padStart(2, '0')}`; }
 
   return { entryItems, pctFromAnchors, pct15FromAnchors, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
-    keyGrade, suggestKey, keyPoints, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
+    keyGrade, suggestKey, keyPoints, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, KMK_PCT15, KMK_PCT5, suggestKeyKmk, keyResult, byTask, tasksMax, applyTasks, taskStats, ceilStep, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
     roundPoints, computeLower, termsOf, termHasSA, computeTerm, seminarPaper, semTermAt, semTermOver, secondSchoolDayNov, countSmall, semStatus, SEM_MID, courseWarnings, studentWarnings, dateConflicts, isoWeek,
     fmtDate, classOf, distribution, schoolYearOf, inScope };
 });
