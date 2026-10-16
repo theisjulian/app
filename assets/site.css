@@ -61,7 +61,8 @@ p{margin:0 0 14px}
 .grey{color:var(--grey)}.small{font-size:15px;color:var(--grey)}
 .lead{font-size:21px;line-height:1.5;color:var(--grey);max-width:58ch}
 section.s{padding-top:130px}
-:root[data-style=neon] h1,:root[data-style=neon] h2{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-style=neon] h1,:root[data-style=neon] h2{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.14em;margin-bottom:-.14em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+:root[data-style=neon] h2{margin-bottom:calc(16px - .14em)}:root[data-style=neon] .doc h1{margin-bottom:calc(28px - .14em)}
 :root[data-style=neon] .btn:not(.sec):not(.line):not(.off){box-shadow:0 6px 22px -8px color-mix(in srgb,var(--blue) 80%,transparent)}
 
 /* Geräte */
