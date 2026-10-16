@@ -14,8 +14,9 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://theisapps.de/libretto/demo/">
 <meta property="og:image" content="https://theisapps.de/assets/img/libretto-noten.webp">
-<link rel="stylesheet" href="app.css?v=0.9.8-170248b7">
-<link rel="stylesheet" href="demo.css?v=0.9.8-170248b7">
+<link rel="stylesheet" href="app.css?v=0.9.9-f5c6411d">
+<link rel="stylesheet" href="demo.css?v=0.9.9-f5c6411d">
+<link rel="stylesheet" href="themes.css">
 </head>
 <body>
 <div class="demoBar" id="demoBar" role="note">
@@ -37,36 +38,57 @@
 
 <!-- App -->
 <div id="appRoot" hidden>
-  <header class="toolbar">
-    <div class="dragstrip"></div>
-    <div class="bar glass">
+  <div class="dragstrip"></div>
+  <aside class="side" id="side" aria-label="Navigation">
+    <div class="sideTop">
       <div class="brand"><h1>Libretto <small id="brandSub">Notenverwaltung · Beta</small></h1></div>
-      <button class="tbtn" id="newCourseBtn">Neuer Kurs</button>
-      <button class="tbtn" id="settingsBtn">Einstellungen</button>
-      <button class="tbtn lockBtn" id="lockBtn" title="Sperren (Daten verschlüsseln)">Sperren</button>
-      <button class="tbtn helpBtn" id="helpBtn" title="Hilfe" aria-label="Hilfe">?</button>
+      <button class="iconbtn sideToggle" id="sideToggle" title="Leiste ein- oder ausklappen" aria-label="Leiste ein- oder ausklappen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M10 5v14"/></svg></button>
     </div>
-    <nav class="tabs glass" id="tabs" role="tablist">
-      <button role="tab" data-tab="grades">Noten</button>
-      <button role="tab" data-tab="dates">Kalender &amp; Termine</button>
-      <button role="tab" data-tab="backup">Sicherung</button>
+    <div class="sideSearch" id="sideSearch"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input type="search" id="sideQ" placeholder="Suchen …" autocomplete="off" spellcheck="false" aria-label="Schüler oder Kurs suchen"><kbd id="sideKbd">⌘K</kbd>
+      <div class="sideRes" id="sideRes" role="listbox" hidden></div></div>
+    <button class="sb sideSearchBtn" id="sideSearchBtn" title="Suchen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Suchen</span></button>
+    <nav class="sideNav" id="tabs" role="tablist" aria-label="Bereiche">
+      <button class="sb" role="tab" data-tab="grades" title="Noten"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 10h16M10 4v16"/></svg><span>Noten</span></button>
+      <button class="sb" role="tab" data-tab="dates" title="Kalender &amp; Termine"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>Kalender &amp; Termine</span></button>
+      <button class="sb" role="tab" data-tab="backup" title="Sicherung"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><span>Sicherung</span></button>
     </nav>
-  </header>
+    <section class="sideCourses" id="sideCourses"></section>
+    <div class="sideGroup" id="sideCourseQ">Im Kurs</div>
+    <nav class="sideQuick" aria-label="Schnellzugriffe im Kurs">
+      <button class="sb" data-qa="newAssessment" title="Neuer Leistungsnachweis"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span>Neuer Leistungsnachweis</span></button>
+      <button class="sb" data-qa="editCourse" title="Kurs &amp; Schüler"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 6a3 3 0 010 6M18 15c2 .6 3 2.2 3 5"/></svg><span>Kurs &amp; Schüler</span></button>
+      <button class="sb" data-qa="transfer" title="Übertrag ins Infoportal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/></svg><span>Übertrag ins Infoportal</span></button>
+      <button class="sb" data-qa="print" title="Notenliste drucken"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5v-7h14v7h-2"/><rect x="7" y="14" width="10" height="6"/></svg><span>Notenliste drucken</span></button>
+    </nav>
+    <div class="sideGroup">Allgemein</div>
+    <nav class="sideQuick" aria-label="Schnellzugriffe">
+      <button class="sb" id="newCourseBtn" title="Neuer Kurs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Neuer Kurs</span></button>
+      <button class="sb" data-qa="importList" title="Klassenliste / Notenblatt einlesen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Klassenliste / Notenblatt einlesen</span></button>
+      <button class="sb" data-qa="otherDates" title="Termin anderer Fächer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M12 13v5M9.5 15.5h5"/></svg><span>Termin anderer Fächer</span></button>
+      <button class="sb" data-qa="klassen" title="Klassen austauschen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg><span>Klassen austauschen</span></button>
+      <button class="sb" data-qa="backupNow" id="sideBk" title="Jetzt sichern"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg><span>Jetzt sichern</span></button>
+    </nav>
+    <div class="sideBottom">
+      <button class="sb lockBtn" id="lockBtn" title="Sperren"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V8a3 3 0 016 0v3"/></svg><span>Sperren</span></button>
+      <button class="sb" id="settingsBtn" title="Einstellungen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>Einstellungen</span></button>
+      <button class="sb helpBtn" id="helpBtn" title="Hilfe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17h.01"/></svg><span>Hilfe</span></button>
+    </div>
+  </aside>
   <main class="wrap" id="main"></main>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="demo-native.js?v=0.9.8-170248b7"></script>
-<script src="rules.js?v=0.9.8-170248b7"></script>
-<script src="names.js?v=0.9.8-170248b7"></script>
-<script src="klassen.js?v=0.9.8-170248b7"></script>
-<script src="calendar.js?v=0.9.8-170248b7"></script>
-<script src="importer.js?v=0.9.8-170248b7"></script>
-<script src="notenblatt.js?v=0.9.8-170248b7"></script>
-<script src="brand.js?v=0.9.8-170248b7"></script>
-<script src="print.js?v=0.9.8-170248b7"></script>
-<script src="app.js?v=0.9.8-170248b7"></script>
-<script src="demo-data.js?v=0.9.8-170248b7"></script>
-<script src="demo.js?v=0.9.8-170248b7"></script>
+<script src="demo-native.js?v=0.9.9-f5c6411d"></script>
+<script src="rules.js?v=0.9.9-f5c6411d"></script>
+<script src="names.js?v=0.9.9-f5c6411d"></script>
+<script src="klassen.js?v=0.9.9-f5c6411d"></script>
+<script src="calendar.js?v=0.9.9-f5c6411d"></script>
+<script src="importer.js?v=0.9.9-f5c6411d"></script>
+<script src="notenblatt.js?v=0.9.9-f5c6411d"></script>
+<script src="brand.js?v=0.9.9-f5c6411d"></script>
+<script src="print.js?v=0.9.9-f5c6411d"></script>
+<script src="app.js?v=0.9.9-f5c6411d"></script>
+<script src="demo-data.js?v=0.9.9-f5c6411d"></script>
+<script src="demo.js?v=0.9.9-f5c6411d"></script>
 </body>
 </html>

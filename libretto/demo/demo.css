@@ -10,6 +10,9 @@
 .demoBar a.demoGo:hover{background:#eef2ff}
 .demoBar a:focus-visible,.demoBar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .toolbar{top:var(--demoH)}
+.side{top:var(--demoH);height:calc(100vh - var(--demoH))}
+body.sidePeek .side{top:var(--demoH)}
+#appRoot > .dragstrip{display:none}
 .gate{min-height:calc(100vh - var(--demoH))}
 .demoLockHint{margin:14px 0 0}
 dialog.demoPrevDlg{width:min(900px,96vw)}
