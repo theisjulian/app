@@ -1,7 +1,7 @@
 // namo · Offline-Hülle. Nur für /studienfahrt/. Immer zuerst das Netz (Updates kommen sofort an),
 // der Zwischenspeicher dient ausschließlich als Rückfallebene ohne Internet.
 // Anfragen an Supabase (Anmeldung, Daten, Dateien) werden nie zwischengespeichert.
-const CACHE = 'namo-shell-v10';
+const CACHE = 'namo-shell-v11';
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './assets/andiamo-180.png?v=5', './assets/andiamo-192.png?v=5', './assets/andiamo.svg?v=5', './assets/favicon.ico?v=5', './assets/geist-latin-wght-normal.woff2', './assets/jspdf-4.2.1.umd.min.js', SUPABASE_JS];
 
