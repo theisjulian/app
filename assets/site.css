@@ -276,3 +276,21 @@ html.vt-circle::view-transition-old(root),html.vt-circle::view-transition-new(ro
 html.vt-circle::view-transition-new(root){z-index:2}
 html.vt-circle .bar{view-transition-name:none}
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}.rv{opacity:1;transform:none}.appdock{transition:none}}
+
+/* Desktop und Tablet: schmale Programmleiste unter der Kopfzeile, bleibt beim Scrollen mit stehen */
+.appstrip{display:none}
+@media(min-width:821px){
+ .appstrip{display:block;border-top:1px solid var(--line)}
+ .appstrip .w{display:flex;align-items:center;gap:4px;height:46px;margin-left:auto;margin-right:auto;overflow-x:auto;scrollbar-width:none}
+ .appstrip .w::-webkit-scrollbar{display:none}
+ .appstrip a:first-child{margin-left:-8px}
+ .appstrip a{position:relative;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;text-decoration:none;color:var(--grey);font-size:15px;font-weight:500;white-space:nowrap;transition:background .2s,color .2s}
+ .appstrip img{width:24px;height:24px;border-radius:6px;transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+ .appstrip a:hover{background:var(--surf);color:var(--ink)}
+ .appstrip a:hover img{transform:scale(1.12) rotate(-4deg)}
+ .appstrip a[aria-current]{color:var(--ink);font-weight:600}
+ .appstrip a[aria-current]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--dot);margin-left:2px}
+ .bar.on{border-bottom-color:transparent}
+ .panel{scroll-margin-top:140px}
+}
+@media(min-width:821px) and (prefers-reduced-motion:reduce){.appstrip img{transition:none}}
