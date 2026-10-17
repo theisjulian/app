@@ -20,7 +20,17 @@
     var bar=document.querySelector('.bar');if(bar){var f=function(){bar.classList.toggle('on',scrollY>8)};addEventListener('scroll',f,{passive:true});f()}
     /* Leiste unten: beim Runterscrollen weg, beim Hochscrollen oder am Seitenende wieder da */
     var dk=document.querySelector('.appdock');
-    if(dk){var ly=scrollY,tk=false;addEventListener('scroll',function(){if(tk)return;tk=true;requestAnimationFrame(function(){var y=scrollY,end=y+innerHeight>=document.documentElement.scrollHeight-40;dk.classList.toggle('hide',y>ly+4&&y>160&&!end);if(y<ly-4||end)dk.classList.remove('hide');ly=y;tk=false})},{passive:true})}
+    if(dk){var ly=scrollY,tk=false,acc=0,ih=innerHeight;
+      /* Erst nach einer bewussten Strecke umschalten (runter 40 px, hoch 90 px); Rucklern am Ende des Scrollens und Größenwechseln der Browserleiste wird nicht gefolgt */
+      addEventListener('scroll',function(){if(tk)return;tk=true;requestAnimationFrame(function(){
+        var y=scrollY,d=y-ly;ly=y;tk=false;
+        if(innerHeight!==ih){ih=innerHeight;acc=0;return}
+        if(y<=80){dk.classList.remove('hide');acc=0;return}
+        if(y+innerHeight>=document.documentElement.scrollHeight-2||y<0){acc=0;return}
+        if(d===0)return;
+        if((d>0)!==(acc>0))acc=0;acc+=d;
+        if(acc>40)dk.classList.add('hide');else if(acc<-90)dk.classList.remove('hide');
+      })},{passive:true})}
     /* Bilder, die beim Laden noch unterhalb liegen, gleiten beim Scrollen einmal herein */
     if(!calm&&'IntersectionObserver' in window){
       var io2=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io2.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
