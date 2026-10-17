@@ -242,3 +242,37 @@ footer .copy span{display:inline-flex;align-items:center;gap:8px}footer .copy sv
 .next strong+small{margin-top:4px}
 @media(max-width:820px){.seg{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}.seg button{white-space:nowrap;padding:9px 16px}}
 html,body{overflow-x:clip}
+
+/* ===== Bewegung und Navigation (ab Update 33) ===== */
+/* Seitenwechsel: Kopfzeile bleibt stehen, App-Symbol fliegt aus der Leiste unten an seinen Platz */
+@view-transition{navigation:auto}
+.bar{view-transition-name:bar}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
+::view-transition-group(*){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.7,.2,1)}
+/* Leiste unten am Handy mit allen Programmen; der Punkt unter dem aktiven Symbol ist der i-Punkt aus dem Logo */
+.appdock{display:none}
+@media(max-width:820px){
+ .appdock{position:fixed;z-index:25;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:2px;padding:7px 8px;border-radius:24px;
+  background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);
+  box-shadow:0 0 0 1px var(--line),0 14px 34px -14px rgba(17,18,20,.45);transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .25s;max-width:calc(100vw - 20px)}
+ .appdock.hide{transform:translate(-50%,calc(100% + 24px));opacity:0}
+ .appdock a{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:54px;padding:3px 0 7px;text-decoration:none;color:var(--grey);font-size:10.5px;font-weight:600;line-height:1;border-radius:16px;-webkit-tap-highlight-color:transparent}
+ .appdock img{width:36px;height:36px;border-radius:9px;transition:transform .2s}
+ .appdock a:active img{transform:scale(.9)}
+ .appdock a[aria-current]{color:var(--ink)}
+ .appdock a[aria-current]::after{content:"";position:absolute;bottom:1px;width:5px;height:5px;border-radius:50%;background:var(--dot)}
+ .appdock span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ footer{padding-bottom:120px}
+ #tip{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:360px){.appdock a{width:47px;font-size:9.5px}.appdock img{width:32px;height:32px}}
+/* Programmseiten: Laptop kommt beim Öffnen hoch wie auf der Startseite */
+.app-stage .laptop{animation:up .9s .1s cubic-bezier(.2,.7,.2,1) both}
+/* Bilder gleiten beim Scrollen einmal sanft an ihren Platz (nur was beim Laden noch unten liegt) */
+.rv{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+/* Neon-Schalter: neuer Stil breitet sich als Kreis vom Schalter aus */
+html.vt-circle::view-transition-old(root),html.vt-circle::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html.vt-circle::view-transition-new(root){z-index:2}
+html.vt-circle .bar{view-transition-name:none}
+@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}.rv{opacity:1;transform:none}.appdock{transition:none}}
