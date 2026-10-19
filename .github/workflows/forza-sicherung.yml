@@ -1,0 +1,44 @@
+# forza · nächtliche Sicherung. Gehört in ein PRIVATES Repository: .github/workflows/forza-sicherung.yml
+# Der Abzug wird mit "age" verschlüsselt abgelegt. Der Zugriff auf die Datenbank hält das kostenlose Supabase-Projekt wach.
+# Schlägt der Lauf fehl, schickt GitHub automatisch eine E-Mail.
+name: forza Sicherung
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Werkzeuge installieren
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client age
+      - name: Datenbank sichern und verschlüsseln
+        env:
+          DB_URL: ${{ secrets.FORZA_DB_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.FORZA_AGE_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p backups
+          f="backups/forza-$(date -u +%Y-%m-%d).sql.age"
+          pg_dump "$DB_URL" --no-owner --no-privileges --schema=public --table=auth.users | age -r "$AGE_PUBLIC_KEY" > "$f"
+          test -s "$f"
+          echo "Sicherung: $(wc -c < "$f") Bytes"
+      - name: Alte Sicherungen aufräumen (30 Tage plus je Monat die erste)
+        run: |
+          cutoff=$(date -u -d '30 days ago' +%Y-%m-%d)
+          for f in backups/forza-*.sql.age; do
+            d=${f#backups/forza-}; d=${d%.sql.age}
+            if [[ "$d" < "$cutoff" && "${d:8:2}" != "01" ]]; then git rm -q "$f"; fi
+          done || true
+      - name: Ablegen
+        run: |
+          git config user.name "forza-sicherung"
+          git config user.email "actions@users.noreply.github.com"
+          git add backups
+          git diff --cached --quiet || git commit -m "forza Sicherung $(date -u +%Y-%m-%d)"
+          git push
