@@ -23,7 +23,7 @@
     return `<div class="card"><div class="eyebrow" style="margin-bottom:8px">Farbe</div><div class="row wrap gap">${THEMES.map(([k, n, c]) => `<button class="chip ${l.theme === k ? 'on' : ''}" data-act="look" data-k="theme" data-v="${k}"><i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i>${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Modus</div><div class="seg">${[['Hell', 'light'], ['Dunkel', 'dark'], ['Automatisch', 'auto']].map(([n, v]) => `<button class="${l.mode === v ? 'on' : ''}" data-act="look" data-k="mode" data-v="${v}">${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Schrift</div><div class="row wrap gap">${FONTS.map(([k, n, f]) => `<button class="fbtn ${l.font === k ? 'on' : ''}" style="font-family:'${f}',sans-serif" data-act="look" data-k="font" data-v="${k}">${n}</button>`).join('')}</div>
-      <div class="eyebrow" style="margin:16px 0 8px">Startseite</div><div class="dashpick">${DASH.map(([k, n, s]) => `<button class="dp ${(l.dash || 'klassisch') === k ? 'on' : ''}" data-act="dash" data-v="${k}"><b>${n}</b><span>${s}</span></button>`).join('')}</div>
+      <div class="eyebrow" style="margin:16px 0 8px">Startseite</div><div class="dashpick">${DASH.map(([k, n, s]) => `<button class="dp ${(l.dash || 'klassisch') === k ? 'on' : ''}" data-act="dash" data-v="${k}" aria-pressed="${(l.dash || 'klassisch') === k}">${PREV[k]}<b>${n}</b><span>${s}</span></button>`).join('')}</div>
       <div class="row between" style="margin-top:16px"><div><b>Animationen</b><div class="small mute">Weiche Übergänge, Konfetti, Bewegungsskizzen</div></div><button class="sw ${l.anim ? 'on' : ''}" role="switch" aria-checked="${!!l.anim}" data-act="lookAnim"><i></i></button></div></div>`;
   };
   F.views.m_darstellung = () => `<button class="back" data-act="nav" data-r="mehr">${F.icon.back.replace('<svg', '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"')} Einstellungen</button><div class="h1" style="margin-bottom:12px">Darstellung</div>${lookCards()}`;
@@ -176,7 +176,7 @@
     keys.forEach((k) => {
       d.need(16); d.line(dd(k) + ' · ' + F.WD[F.dparse(k).getDay()], { bold: true, size: 11, h: 6.5 });
       days[k].s.forEach((s) => {
-        d.line((s.title || 'Krafttraining') + (s.duration_min ? ' · ' + s.duration_min + ' min' : '') + (s.form === 'ruhiger' ? ' · ruhigere Tagesform' : ''), { bold: true, x: 20 });
+        d.line((s.started_at ? hhmm(s.started_at) + ' Uhr · ' : '') + (s.title || 'Krafttraining') + (s.duration_min ? ' · ' + s.duration_min + ' min' : '') + (s.form === 'ruhiger' ? ' · ruhigere Tagesform' : ''), { bold: true, x: 20 });
         if (!s.session_exercises.length) d.line('Details unbekannt (übernommene Einheit).', { x: 20, color: MUTE, size: 8.5 });
         s.session_exercises.forEach((se) => { const ex = S.exById[se.exercise_id]; d.line((ex ? ex.name : '?').slice(0, 70), { x: 22, size: 9.5, bold: true, h: 5 }); const dn = se.sets.filter((x) => x.done); d.line(dn.length ? dn.map(setTxt).join('   |   ').slice(0, 150) : 'keine Sätze erfasst', { x: 26, size: 8.5, color: MUTE, h: 5 }); if (se.note) d.line('Notiz: ' + se.note.slice(0, 110), { x: 26, size: 8, color: MUTE, h: 4.5 }); });
         if (s.note && s.note !== 'Details unbekannt') d.line('Notiz: ' + s.note.slice(0, 110), { x: 20, size: 8.5, color: MUTE });
@@ -275,21 +275,35 @@
     pdf.save('forza-statistik-' + k + '-' + F.today() + '.pdf');
   };
   /* ---------- Startseite: vier Varianten, gemerkt wie Farbe und Schrift ---------- */
-  const DASH = [['klassisch', 'Klassisch', 'Vorschlag, Woche, Aktivitäten und Wochenziele'], ['fokus', 'Fokus', 'Nur der Vorschlag und ein schmaler Wochenstreifen'], ['woche', 'Woche', 'Vorschlag kompakt, dazu Woche und Aktivitäten'], ['training', 'Training', 'Vorschlag kompakt, dazu Wochenziele je Muskelgruppe']];
+
+  /* Mini-Vorschau der Startseiten (Strichzeichnung) */
+  const R = (x, y, w, h, c = 'l') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" class="pv-${c}"/>`;
+  const PREV = {
+    klassisch: `<svg viewBox="0 0 80 56" class="pv" aria-hidden="true">${R(4, 3, 30, 4, 't')}${R(4, 10, 72, 20, 'a')}${R(4, 34, 35, 18)}${R(41, 34, 35, 18)}</svg>`,
+    fokus: `<svg viewBox="0 0 80 56" class="pv" aria-hidden="true">${R(4, 3, 30, 4, 't')}${R(4, 10, 72, 32, 'a')}${R(20, 33, 40, 6, 'b')}${R(4, 46, 72, 6)}</svg>`,
+    woche: `<svg viewBox="0 0 80 56" class="pv" aria-hidden="true">${R(4, 3, 30, 4, 't')}${R(4, 9, 72, 13)}${[0, 1, 2, 3, 4, 5, 6].map((i) => `<circle cx="${12 + i * 10.5}" cy="15.5" r="3.4" class="${i === 1 || i === 4 || i === 5 ? 'pv-a' : 'pv-d'}"/>`).join('')}${R(4, 25, 72, 14, 'a')}${R(4, 42, 72, 10)}</svg>`,
+    training: `<svg viewBox="0 0 80 56" class="pv" aria-hidden="true">${R(4, 3, 30, 4, 't')}${R(4, 9, 72, 22)}${[0, 1, 2, 3, 4].map((i) => `${R(10, 13 + i * 4, 18 + (i * 13) % 34, 2, 'a')}`).join('')}${R(4, 34, 72, 18, 'a')}</svg>`
+  };
+  const DASH = [['klassisch', 'Klassisch', 'Vorschlag, Woche, Aktivitäten und Wochenziele'], ['fokus', 'Fokus', 'Ein großer Vorschlag, sonst nichts'], ['woche', 'Woche', 'Zuerst deine Woche, dann der Vorschlag'], ['training', 'Training', 'Zuerst die Wochenziele je Muskel, dann der Vorschlag']];
   const baseHeute = F.views.heute;
   F.views.heute = (a) => {
     const v = F.look().dash || 'klassisch', html = baseHeute(a);
     if (v === 'klassisch') return html;
     const box = document.createElement('div'); box.innerHTML = html;
-    const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? grid.children : [];
-    const compact = () => { // Übungsliste einklappen
-      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (!rows.length) return;
-      const det = document.createElement('details'); det.className = 'exfold'; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`;
-      rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi);
+    const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? [...grid.children] : [];
+    const fold = (keepWhy) => { // Übungsliste einklappen
+      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
+      if (!keepWhy) hero.querySelectorAll('.small.mute').forEach((e) => { if (/Warum/.test(e.textContent)) e.remove(); });
     };
-    if (v === 'fokus') { const week = grid && grid.querySelector('.week'); if (grid) grid.remove(); if (week) { const w = document.createElement('div'); w.className = 'card'; w.innerHTML = '<div class="h2">Letzte 7 Tage</div>'; w.appendChild(week); hero && hero.after(w); } }
-    if (v === 'woche') { compact(); if (cols[1]) cols[1].remove(); if (grid) grid.style.gridTemplateColumns = '1fr'; }
-    if (v === 'training') { compact(); if (cols[0]) cols[0].remove(); const sc = grid && grid.querySelector('.card.flat'); if (sc) sc.remove(); if (grid) grid.style.gridTemplateColumns = '1fr'; }
+    const weekCard = cols[0] && cols[0].children[0], actCard = cols[0] && cols[0].children[1], barCard = cols[1] && cols[1].children[0];
+    if (v === 'fokus') { fold(false); if (hero) hero.classList.add('hero-focus'); if (grid) grid.remove(); const w = weekCard; if (w && hero) { w.classList.add('strip'); hero.after(w); } }
+    if (v === 'woche') {
+      fold(true); const st = stats('woche'); if (grid) grid.remove();
+      const sum = document.createElement('div'); sum.className = 'kpis k3'; sum.innerHTML = kpi(st.ses.length, 'Kraft') + kpi(st.rides.length, 'Rad') + kpi(st.hikes.length, 'Wandern');
+      const titl = document.createElement('div'); titl.className = 'eyebrow'; titl.style.margin = '4px 2px 8px'; titl.textContent = 'Diese Woche';
+      if (hero) { if (weekCard) hero.before(titl, sum, weekCard); else hero.before(titl, sum); if (actCard) hero.after(actCard); }
+    }
+    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) hero.before(barCard); }
     return box.innerHTML;
   };
   F.acts.dash = (t) => { F.setLook('dash', t.dataset.v); F.render(); };
@@ -316,4 +330,86 @@
   };
   const tv = F.views.training;
   F.views.training = () => { const h = tv(); return F.openSession() ? h + '<button class="btn ghost block" style="margin:6px 0 18px" data-act="addExAsk">+ Übung hinzufügen</button>' : h; };
+
+  /* ---------- Zeiten je Einheit und Übung ---------- */
+  const hhmm = (iso) => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const exMinutes = (s) => { // Zeit je Übung: vom Ende der vorigen Übung (oder Start) bis zum letzten abgeschlossenen Satz
+    const out = {}; let prev = s.started_at ? new Date(s.started_at).getTime() : null;
+    for (const se of s.session_exercises) {
+      const ts = se.sets.filter((q) => q.done && q.done_at).map((q) => new Date(q.done_at).getTime()); if (!ts.length) continue;
+      const end = Math.max(...ts); if (prev !== null && end > prev) out[se.id] = Math.max(1, Math.round((end - prev) / 60000)); prev = end;
+    }
+    return out;
+  };
+  const dur = (sec) => { const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60); return h ? h + ' h ' + String(m).padStart(2, '0') + ' min' : m + ' min'; };
+  const num1 = (n) => F.fmt(Math.round(n * 10) / 10);
+
+  /* ---------- Kalender: Tag als Fenster mit Details ---------- */
+  const actDetail = (a) => {
+    const e = E.energy(a, F.weightNow()), t = a.moving_s || a.duration_s || 0, kmh = a.distance_m && t ? a.distance_m / 1000 / (t / 3600) : null;
+    const cell = (l, v) => (v === null || v === undefined || v === '' ? '' : `<div class="mc"><span>${l}</span><b>${v}</b></div>`);
+    return `<details class="act"><summary><div class="ico">${F.icon[RIDE.includes(a.sport) ? 'bike' : HIKE.includes(a.sport) ? 'hike' : 'dumb']}</div><div class="grow"><b>${esc(a.name || F.sportName(a.sport))}</b><div class="small mute">${F.sportName(a.sport)} · ${hhmm(a.start_at)}${a.distance_m ? ' · ' + num1(a.distance_m / 1000) + ' km' : ''}${t ? ' · ' + dur(t) : ''}</div></div></summary>
+      <div class="mgrid">${cell('Strecke', a.distance_m ? num1(a.distance_m / 1000) + ' km' : null)}${cell('Zeit in Bewegung', t ? dur(t) : null)}${cell('Gesamtzeit', a.duration_s ? dur(a.duration_s) : null)}${cell('Ø Tempo', kmh ? num1(kmh) + ' km/h' : null)}${cell('Höhenmeter', a.elevation_m ? Math.round(a.elevation_m) + ' hm' : null)}${cell('Ø Leistung', a.avg_watts ? Math.round(a.avg_watts) + ' W' : null)}${cell('Normalisiert', a.weighted_watts ? Math.round(a.weighted_watts) + ' W' : null)}${cell('Arbeit', a.kilojoules ? Math.round(a.kilojoules) + ' kJ' : null)}${cell('Energie', '≈ ' + F.fmt(e.kcal) + ' kcal')}</div><div class="small mute" style="margin-top:6px">Energie: ${esc(e.method)}</div></details>`;
+  };
+  const sessDetail = (s) => {
+    const S = F.S, tm = exMinutes(s), when = s.started_at ? hhmm(s.started_at) + (s.finished_at ? '–' + hhmm(s.finished_at) : '') : '';
+    const st = { geplant: 'geplant', gefuehrt: 'im Verlauf geführt', bestaetigt: 'bestätigt', ausgelassen: 'ausgelassen' }[s.status];
+    return `<details class="act"><summary><div class="ico">${F.icon.dumb}</div><div class="grow"><b>${esc(s.title || 'Training')}</b><div class="small mute">${[when, s.duration_min || s.planned_minutes ? (s.duration_min || s.planned_minutes) + ' min' : '', st].filter(Boolean).join(' · ')}</div></div></summary>
+      ${s.session_exercises.length ? s.session_exercises.map((se) => { const ex = S.exById[se.exercise_id], dn = se.sets.filter((q) => q.done); return `<div class="small" style="padding:5px 0"><b>${esc(ex ? ex.name : '?')}</b>${tm[se.id] ? ` <span class="mute">· ca. ${tm[se.id]} min</span>` : ''}<div class="mute">${dn.length ? dn.map(setTxt).join(' · ') : 'keine Sätze erfasst'}</div></div>`; }).join('') : '<div class="small mute" style="padding:5px 0">Details sind nicht bekannt (übernommene Einheit).</div>'}
+      ${s.note ? `<div class="small mute" style="margin-top:6px">Notiz: ${esc(s.note)}</div>` : ''}<button class="btn sm danger" style="margin-top:8px" data-act="delSession" data-id="${s.id}">Eintrag löschen</button></details>`;
+  };
+  const dayModal = (d) => {
+    const S = F.S, ss = S.sessions.filter((s) => s.session_date === d), aa = S.activities.filter((a) => a.start_at.slice(0, 10) === d).sort((a, b) => (a.start_at < b.start_at ? -1 : 1)), ab = S.absences.filter((a) => a.from_date <= d && a.to_date >= d);
+    F.modal(`<div class="row between"><div class="h2">${F.dlabel(d)}</div><button class="btn sm" data-act="addEntry" data-d="${d}">${F.icon.plus.replace('<svg', '<svg width="16" height="16"')} Eintragen</button></div>
+      <div style="max-height:62vh;overflow:auto;margin-top:8px">${ss.map(sessDetail).join('')}${aa.map(actDetail).join('')}${ab.map((a) => `<div class="list"><div class="it"><div class="ico">${F.icon.warn}</div><div class="grow"><b>${{ pause: 'Pause', krank: 'Krank', schmerz: 'Schmerz', reise: 'Unterwegs' }[a.kind]}</b><div class="small mute">${F.dshort(a.from_date)}–${F.dshort(a.to_date)}${a.note ? ' · ' + esc(a.note) : ''}</div></div><button class="mute" data-act="delAbs" data-id="${a.id}" aria-label="Löschen">✕</button></div></div>`).join('')}${!ss.length && !aa.length && !ab.length ? '<div class="mute" style="padding:14px 0">An diesem Tag ist nichts eingetragen.</div>' : ''}</div>`);
+  };
+  F.acts.calSel = (t) => { F.ui.cal.sel = t.dataset.d; F.render(); dayModal(t.dataset.d); };
+  const baseKal = F.views.kalender;
+  F.views.kalender = () => { const box = document.createElement('div'); box.innerHTML = baseKal(); const last = box.lastElementChild; if (last && last.classList.contains('card')) last.remove(); return box.innerHTML; };
+
+  /* ---------- Fortschritt: Auswertung je Sportart ---------- */
+  const catOf = (a) => (RIDE.includes(a.sport) ? 'rad' : a.sport);
+  const catName = (c) => (c === 'rad' ? 'Rad' : c === 'kraft' ? 'Kraft' : F.sportName(c));
+  const periods = (from, today, k) => {
+    const out = [], monthly = k === 'jahr' || k === 'alles' || k === '6m';
+    if (monthly) { let [y, m] = [+from.slice(0, 4), +from.slice(5, 7)]; const ey = +today.slice(0, 4), em = +today.slice(5, 7); let g = 0; while ((y < ey || (y === ey && m <= em)) && g++ < 60) { const a = `${y}-${String(m).padStart(2, '0')}-01`, b = `${y}-${String(m).padStart(2, '0')}-31`; out.push({ l: F.MON[m - 1].slice(0, 3), a, b }); m++; if (m > 12) { m = 1; y++; } } }
+    else { let a = F.addDays(from, -((F.dparse(from).getDay() + 6) % 7)), g = 0; while (a <= today && g++ < 20) { out.push({ l: F.dshort(a), a, b: F.addDays(a, 6) }); a = F.addDays(a, 7); } }
+    return out;
+  };
+  const bars = (vals, unit) => { const mx = Math.max(...vals.map((v) => v.v), 0.0001); return `<div class="row" style="align-items:flex-end;gap:6px;height:120px;overflow-x:auto">${vals.map((v) => `<div class="grow" style="text-align:center;min-width:26px"><div class="small mute" style="font-size:10px;height:14px">${v.v ? (v.v >= 100 ? Math.round(v.v) : num1(v.v)) : ''}</div><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px"><div class="bargrow" style="height:${v.v / mx * 80}px;background:var(--a);border-radius:5px;min-height:${v.v ? 3 : 0}px"></div></div><div class="small mute" style="font-size:10px">${v.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:6px">${unit}</div>`; };
+  const mgrid = (cells) => `<div class="mgrid">${cells.filter((c) => c && c[1] !== null && c[1] !== undefined && c[1] !== '').map(([l, v]) => `<div class="mc"><span>${l}</span><b>${v}</b></div>`).join('')}</div>`;
+  const sportDetail = (cat, st) => {
+    const S = F.S, W = F.weightNow(), wks = Math.max(1, (new Date(st.today) - new Date(st.k === 'alles' ? (st.ses[0] ? st.ses[st.ses.length - 1].session_date : st.today) : st.from)) / 6048e5);
+    const per = periods(st.k === 'alles' ? ((cat === 'kraft' ? st.ses : st.acts).map((q) => q.session_date || q.start_at.slice(0, 10)).sort()[0] || st.today) : st.from, st.today, st.k);
+    if (cat === 'kraft') {
+      const ses = st.ses, withDur = ses.filter((s) => s.duration_min), hist = ses.filter((s) => s.started_at);
+      const avgStart = hist.length ? (hist.reduce((t, s) => { const d = new Date(s.started_at); return t + d.getHours() * 60 + d.getMinutes(); }, 0) / hist.length) : null;
+      const exTimes = []; ses.forEach((s) => Object.values(exMinutes(s)).forEach((m) => exTimes.push(m)));
+      const byDay = {}; ses.forEach((s) => { const k = s.split_day || 'Sonstige'; byDay[k] = (byDay[k] || 0) + 1; });
+      const exs = exHist(st).sort((a, b) => b.n - a.n).slice(0, 6), mus = Object.entries(st.muscle).sort((a, b) => b[1] - a[1]), mm = mus[0] ? mus[0][1] : 1;
+      return `<div class="card">${mgrid([['Einheiten', ses.length], ['pro Woche', ses.length ? num1(ses.length / wks) : null], ['Ø Dauer', withDur.length ? Math.round(withDur.reduce((t, s) => t + s.duration_min, 0) / withDur.length) + ' min' : 'unbekannt'], ['Gesamtzeit', withDur.length ? dur(withDur.reduce((t, s) => t + s.duration_min, 0) * 60) : 'unbekannt'], ['Sätze', st.sets], ['Ø Sätze je Einheit', st.sets && ses.length - st.noData > 0 ? num1(st.sets / (ses.length - st.noData)) : null], ['Volumen', st.vol ? F.fmt(st.vol) + ' kg' : 'unbekannt'], ['Ø Startzeit', avgStart !== null ? String(Math.floor(avgStart / 60)).padStart(2, '0') + ':' + String(Math.round(avgStart % 60)).padStart(2, '0') : 'noch unbekannt'], ['Ø Zeit je Übung', exTimes.length ? Math.round(exTimes.reduce((a, b) => a + b, 0) / exTimes.length) + ' min' : 'noch unbekannt']])}</div>
+        <div class="card"><div class="h2">Einheiten pro ${per.length && st.k !== 'jahr' && st.k !== 'alles' && st.k !== '6m' ? 'Woche' : 'Monat'}</div>${bars(per.map((p) => ({ l: p.l, v: ses.filter((s) => s.session_date >= p.a && s.session_date <= p.b).length })), 'Krafteinheiten')}</div>
+        <div class="card"><div class="h2">Nach Split-Tag</div>${Object.entries(byDay).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<div class="mrow"><span>${esc(k)}</span><div class="bar"><i class="grow" style="width:${n / ses.length * 100}%"></i></div><b>${n}</b></div>`).join('') || '<div class="mute small">Noch keine Einheiten.</div>'}</div>
+        <div class="card"><div class="h2">Meistgemachte Übungen</div>${exs.length ? exs.map((o) => `<div class="mrow" style="grid-template-columns:1fr auto"><span>${esc(o.ex.name)}</span><b>${o.n}×</b></div>`).join('') : '<div class="mute small">Noch keine Übungsdaten.</div>'}</div>
+        <div class="card"><div class="h2">Sätze je Muskelgruppe</div>${mus.length ? mus.map(([m, n]) => `<div class="mrow"><span>${E.LABEL[m] || m}</span><div class="bar"><i class="grow" style="width:${n / mm * 100}%"></i></div><b>${n}</b></div>`).join('') : '<div class="mute small">Noch keine Sätze mit Daten.</div>'}</div>`;
+    }
+    const a = st.acts.filter((q) => catOf(q) === cat), n = a.length, sum = (f) => a.reduce((t, q) => t + (Number(f(q)) || 0), 0);
+    if (!n) return '<div class="card"><div class="mute">In diesem Zeitraum gibt es dazu nichts.</div></div>';
+    const km = sum((q) => q.distance_m) / 1000, sec = sum((q) => q.moving_s || q.duration_s), hm = sum((q) => q.elevation_m), pw = a.filter((q) => q.avg_watts && (q.moving_s || q.duration_s)), pwT = pw.reduce((t, q) => t + (q.moving_s || q.duration_s), 0);
+    const longest = a.slice().sort((p, q) => (q.distance_m || 0) - (p.distance_m || 0))[0], climb = a.slice().sort((p, q) => (q.elevation_m || 0) - (p.elevation_m || 0))[0], strong = pw.slice().sort((p, q) => q.avg_watts - p.avg_watts)[0];
+    const kc = a.reduce((t, q) => t + E.energy(q, W).kcal, 0), kj = sum((q) => q.kilojoules);
+    return `<div class="card">${mgrid([['Aktivitäten', n], ['Strecke gesamt', km ? F.fmt(Math.round(km)) + ' km' : null], ['Ø Tourlänge', km ? num1(km / n) + ' km' : null], ['Längste Tour', longest && longest.distance_m ? num1(longest.distance_m / 1000) + ' km' : null], ['Zeit gesamt', sec ? dur(sec) : null], ['Ø Dauer', sec ? dur(sec / n) : null], ['Ø Tempo', km && sec ? num1(km / (sec / 3600)) + ' km/h' : null], ['Höhenmeter', hm ? F.fmt(Math.round(hm)) + ' hm' : null], ['Ø Höhenmeter je Tour', hm ? Math.round(hm / n) + ' hm' : null], ['Ø Leistung', pwT ? Math.round(pw.reduce((t, q) => t + q.avg_watts * (q.moving_s || q.duration_s), 0) / pwT) + ' W' : null], ['Stärkste Tour (Ø)', strong ? Math.round(strong.avg_watts) + ' W' : null], ['Arbeit', kj ? F.fmt(Math.round(kj)) + ' kJ' : null], ['Energie (Schätzung)', '≈ ' + F.fmt(Math.round(kc)) + ' kcal'], ['pro Woche', num1(n / wks)]])}</div>
+      <div class="card"><div class="h2">Strecke pro ${st.k === 'woche' || st.k === 'monat' || st.k === '3m' ? 'Woche' : 'Monat'}</div>${bars(per.map((p) => ({ l: p.l, v: a.filter((q) => q.start_at.slice(0, 10) >= p.a && q.start_at.slice(0, 10) <= p.b).reduce((t, q) => t + (q.distance_m || 0) / 1000, 0) })), 'Kilometer')}</div>
+      ${hm ? `<div class="card"><div class="h2">Höhenmeter pro ${st.k === 'woche' || st.k === 'monat' || st.k === '3m' ? 'Woche' : 'Monat'}</div>${bars(per.map((p) => ({ l: p.l, v: a.filter((q) => q.start_at.slice(0, 10) >= p.a && q.start_at.slice(0, 10) <= p.b).reduce((t, q) => t + (q.elevation_m || 0), 0) })), 'Höhenmeter')}</div>` : ''}
+      <div class="card"><div class="h2">Highlights</div>${[longest && longest.distance_m ? ['Längste Tour', longest, num1(longest.distance_m / 1000) + ' km'] : null, climb && climb.elevation_m ? ['Meiste Höhenmeter', climb, Math.round(climb.elevation_m) + ' hm'] : null, strong ? ['Höchste Ø-Leistung', strong, Math.round(strong.avg_watts) + ' W'] : null].filter(Boolean).map(([t, q, v]) => `<div class="mrow" style="grid-template-columns:1fr auto"><span>${t}<div class="small mute">${esc(q.name || '')} · ${F.dshort(q.start_at.slice(0, 10))}</div></span><b>${v}</b></div>`).join('') || '<div class="mute small">Noch nichts.</div>'}</div>`;
+  };
+  const baseFort = F.views.fortschritt;
+  F.views.fortschritt = () => {
+    const sp = F.ls.get('sport', 'all'), k = F.ls.get('range', 'monat');
+    const cats = ['kraft', ...[...new Set(F.S.activities.map(catOf))].sort((a, b) => (a === 'rad' ? -1 : b === 'rad' ? 1 : a.localeCompare(b)))];
+    const chips = `<div class="rangebar"><button class="chip ${sp === 'all' ? 'on' : ''}" data-act="sport" data-v="all">Überblick</button>${cats.map((c) => `<button class="chip ${sp === c ? 'on' : ''}" data-act="sport" data-v="${c}">${esc(catName(c))}</button>`).join('')}</div>`;
+    if (sp === 'all' || !cats.includes(sp)) return baseFort().replace('<div class="kpis">', chips + '<div class="kpis">');
+    return `<div class="row between" style="margin-bottom:12px"><div class="h1">Fortschritt</div><button class="btn sm" data-act="pdf">PDF</button></div><div class="rangebar">${RANGES.map(([v, l]) => `<button class="chip ${k === v ? 'on' : ''}" data-act="range" data-v="${v}">${l}</button>`).join('')}</div>${chips}<div class="h2" style="margin:6px 2px 10px">${esc(catName(sp))} · ${rangeName(k)}</div>${sportDetail(sp, stats(k))}`;
+  };
+  F.acts.sport = (t) => { F.ls.set('sport', t.dataset.v); F.render(); };
 })();

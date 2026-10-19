@@ -75,7 +75,7 @@
     const f = findSet(t.dataset.s); if (!f) return; const st = f.st, ex = F.S.exById[f.se.exercise_id];
     const pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A;
     if (!noLoad(ex) && st.load_kg === null && pf.reps) { if (!confirm('Kein Gewicht eingetragen. Trotzdem abschließen? Das Gewicht bleibt dann „unbekannt“.')) return; }
-    const r = await F.update('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true });
+    const r = await F.update('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() });
     Object.assign(st, r);
     // nächsten offenen Satz vorbelegen (nie erfundene Werte: nur Kopie des gerade Eingegebenen)
     const nxt = f.se.sets.find((x) => !x.done);
@@ -83,7 +83,7 @@
     F.rest = { end: Date.now() + (E.params(F.S.params)[pf.rest] || 90) * 1000, total: E.params(F.S.params)[pf.rest] || 90 };
     F.pulseSet && F.pulseSet(st.id); F.render(); F.pulseSet && F.pulseSet(st.id); F.tick();
   };
-  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.update('sets', f.st.id, { done: false }); Object.assign(f.st, r); F.render(); };
+  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.update('sets', f.st.id, { done: false, done_at: null }); Object.assign(f.st, r); F.render(); };
   F.acts.addSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; const r = await F.insert('sets', { session_exercise_id: se.id, set_no: (last ? last.set_no : 0) + 1, load_kg: last ? last.load_kg : null, load_per_hand: last ? last.load_per_hand : false }); se.sets.push(r); F.render(); };
   F.acts.rmSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; if (last.done) return; await F.del('sets', last.id); se.sets.pop(); F.render(); };
 
