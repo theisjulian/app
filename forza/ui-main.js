@@ -13,12 +13,14 @@
     root.innerHTML = `<div class="auth"><div class="card"><div class="row" style="margin-bottom:18px"><img src="assets/forza.svg" width="52" height="52" style="border-radius:14px" alt=""><div><div class="h1">forza</div><div class="mute small">Dein Training, einfach geführt</div></div></div>
       <label class="f"><span>E-Mail</span><input id="au-mail" type="email" autocomplete="username" inputmode="email"></label>
       <label class="f"><span>Passwort</span><input id="au-pw" type="password" autocomplete="current-password"></label>
+      <label class="chk"><input id="au-keep" type="checkbox" ${F.keepLogin() ? 'checked' : ''}><span>Angemeldet bleiben</span></label>
       <button class="btn pri block" data-act="login">Anmelden</button>
       <div class="row between" style="margin-top:12px"><button class="btn ghost sm" data-act="signup">Konto anlegen</button><button class="btn ghost sm" data-act="reset">Passwort vergessen</button></div>
       <p id="au-msg" class="small mute" style="margin:14px 0 0"></p></div></div>`;
   };
   const msg = (m) => { const e = document.getElementById('au-msg'); if (e) e.textContent = m; };
   F.acts.login = async () => {
+    try { localStorage.setItem('forza-keep', document.getElementById('au-keep').checked ? '1' : '0'); } catch (e) { /* ignorieren */ }
     const r = await F.sb.auth.signInWithPassword({ email: document.getElementById('au-mail').value.trim(), password: document.getElementById('au-pw').value });
     if (r.error) return msg('Anmeldung nicht möglich: ' + r.error.message);
     await F.afterAuth();
@@ -55,10 +57,11 @@
     else if (sg.empty) h += `<div class="hero"><div class="h2">${esc(sg.title)}</div><div class="mute">${esc(sg.reasons[0])}</div><button class="btn pri" style="margin-top:12px" data-act="nav" data-r="mehr/split">Split wählen</button></div>`;
     else h += `<div class="hero"><div class="row between"><div class="eyebrow mute">Vorschlag für heute</div><div class="seg" role="group" aria-label="Tagesform"><button class="${form === 'normal' ? 'on' : ''}" data-act="form" data-v="normal">Normal</button><button class="${form === 'ruhiger' ? 'on' : ''}" data-act="form" data-v="ruhiger">Ruhiger</button></div></div>
       <div class="h1" style="margin:8px 0 2px">${esc(sg.title)}</div><div class="mute">ca. ${sg.minutes} Minuten · ${sg.items.length} Übungen${sg.reentry ? ' · Wiedereinstieg' : ''}</div>
-      <div style="margin-top:10px">${sg.items.map((it, i) => `<div class="exrow"><div class="exn">${i + 1}</div><div class="grow"><b>${esc(it.name)}</b><div class="mute small">${it.sets} × ${it.reps ? it.reps[0] + '–' + it.reps[1] + (it.perSide ? ' je Seite' : '') : it.secs ? it.secs[0] + '–' + it.secs[1] + (F.E.PROFILES[it.profile] === F.E.PROFILES.T ? ' s oder m' : ' s') : ''}${it.rir ? ' · Reserve ' + it.rir[0] + '–' + it.rir[1] : ''}</div></div><button class="mute" data-act="help" data-id="${it.exercise_id}" aria-label="Hilfe">${F.icon.info.replace('<svg', '<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"')}</button></div>`).join('')}</div>
+      <div style="margin-top:10px">${sg.items.map((it, i) => `<div class="exrow"><div class="exn">${i + 1}</div><div class="grow"><b>${esc(it.name)}</b><div class="mute small">${it.sets} × ${it.reps ? it.reps[0] + '–' + it.reps[1] + (it.perSide ? ' je Seite' : '') : it.secs ? it.secs[0] + '–' + it.secs[1] + (F.E.PROFILES[it.profile] === F.E.PROFILES.T ? ' s oder m' : ' s') : ''}${it.rir ? ' · Reserve ' + it.rir[0] + '–' + it.rir[1] : ''}</div></div><button class="mute" data-act="swapOne" data-id="${it.exercise_id}" aria-label="Diese Übung austauschen" title="Austauschen">↻</button><button class="mute" data-act="help" data-id="${it.exercise_id}" aria-label="Hilfe">${F.icon.info.replace('<svg', '<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"')}</button></div>`).join('')}</div>
       ${sg.mobility && sg.mobility.length ? `<div class="mobi"><div class="eyebrow mute" style="margin-bottom:4px">Vorher, ca. 4 Minuten · Haltung</div>${sg.mobility.map((m) => `<div class="small">${esc(m.name)} · ${m.sets} × ${m.reps[0]}–${m.reps[1]}</div>`).join('')}</div>` : ''}
       <div class="small mute" style="margin:12px 0"><b style="color:#eef1f6">Warum?</b> ${sg.reasons.map(esc).join(' ')}</div>
-      <div class="row gap"><button class="btn pri grow" data-act="start">Training starten</button><button class="btn ghost" style="border-color:rgba(255,255,255,.25);color:#eef1f6" data-act="pickDay">Anderes</button></div></div>`;
+      <button class="btn pri block" data-act="start">Training starten</button><div class="row gap" style="margin-top:8px"><button class="btn ghost grow" style="border-color:rgba(255,255,255,.25);color:#eef1f6" data-act="pickDay">Anderer Tag</button><button class="btn ghost dice grow" style="border-color:rgba(255,255,255,.25);color:#eef1f6" data-act="reroll" aria-label="Variieren">${F.icon.dice || '↻'} Variieren</button></div>
+      <div class="small mute" style="margin-top:8px">${sg.variant ? 'Variante ' + sg.variant + ' · <button style="color:var(--a)" data-act="rerollReset">zur festen Reihenfolge</button>' : 'Feste Reihenfolge für ' + esc(sg.title) + ' · „Variieren“ bietet Alternativen'}</div></div>`;
     // Woche
     const tiles = []; for (let i = 6; i >= 0; i--) {
       const ds = F.addDays(today, -i), ss = S.sessions.filter((s) => s.session_date === ds && s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status));
@@ -67,7 +70,7 @@
       if (ss.length) t = `<div class="tile k on">K</div>`; else if (aa.length) { const k = kind(aa[0]); t = `<div class="tile ${k === 'h' ? 'w' : ''} on" style="${k === 'r' ? 'border-radius:12px' : ''}">${k === 'r' ? 'R' : k === 'h' ? 'W' : 'A'}</div>`; } else if (ab) t = `<div class="tile pause">${ab.kind === 'krank' ? 'K' : 'P'}</div>`;
       tiles.push(`<div>${t}<span>${F.WD[F.dparse(ds).getDay()]}</span></div>`);
     }
-    const st = E.muscleStats(S.sessions, S.exById, today).sets7;
+    const st = E.muscleStats(S.sessions, S.exById, today, F.activeSplit()).sets7;
     const P = E.params(S.params);
     const bars = MUSC.filter((m) => E.BIG.includes(m) || ['waden', 'rotatoren'].includes(m)).map((m) => { const n = st[m] || 0, mx = 14; return `<div style="margin:9px 0"><div class="row between small"><span>${E.LABEL[m]}</span><span class="mute">${n} Sätze</span></div><div class="bar" style="margin-top:5px"><div class="band" style="left:${P.corridor_min / mx * 100}%;width:${(P.corridor_max - P.corridor_min) / mx * 100}%"></div><i style="width:${Math.min(100, n / mx * 100)}%"></i></div></div>`; }).join('');
     const recent = recentList(5);

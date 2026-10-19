@@ -138,3 +138,17 @@ svg.anim *{stroke:var(--text);fill:none;stroke-width:3;stroke-linecap:round;stro
 .noanim .cele,.noanim .cele-in,.noanim .ring *{animation:none!important}.noanim .ring path{stroke-dashoffset:0!important}
 @media(prefers-reduced-motion:reduce){.rise,.bar i.grow,.tile.on,.modal,.modal>div,.rest,.cele,.cele-in{animation:none!important}.ring path{animation:none;stroke-dashoffset:0}}
 .mobi{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.06)}
+
+html[data-theme=glut]{--acc:#ff9a4d;--acc-ink:#2a1200;--acc-l:#c2410c}
+html[data-theme=wald]{--acc:#5fd68a;--acc-ink:#04210f;--acc-l:#166534}
+.chk{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-size:15px}.chk input{width:20px;height:20px;accent-color:var(--a)}
+.rangebar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}.rangebar::-webkit-scrollbar{display:none}.rangebar .chip{white-space:nowrap;flex:none}
+.rangebar .chip.on{background:var(--a);color:var(--ai)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.kpi{background:var(--card);border-radius:16px;padding:12px 8px;text-align:center}.kpi b{display:block;font-size:24px;color:var(--a)}.kpi span{font-size:11px;color:var(--mute)}
+.mrow{display:grid;grid-template-columns:110px 1fr 28px;gap:10px;align-items:center;margin:7px 0;font-size:14px}.mrow .bar{height:8px;border-radius:6px}.mrow b{text-align:right}
+details.hist{border-top:1px solid var(--line);padding:10px 0}details.hist:first-of-type{border-top:0}details.hist summary{cursor:pointer;list-style:none;display:flex}details.hist summary::-webkit-details-marker{display:none}
+.dice{padding:0 14px}.dice svg{width:22px;height:22px}
+@media (max-width:420px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+.dashpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dp{text-align:left;padding:12px;border-radius:16px;background:var(--card2);border:1.5px solid transparent;display:flex;flex-direction:column;gap:3px}.dp span{font-size:12px;color:var(--mute)}.dp.on{border-color:var(--a)}
+details.exfold{margin:10px 0}details.exfold summary{cursor:pointer;color:var(--a);font-size:14px;padding:4px 0}

@@ -80,18 +80,33 @@
   }
 
   /* Letzte Belastung je Muskelgruppe in Tagen; Sätze der letzten 7 Tage */
-  function muscleStats(sessions, exById, today) {
+  function muscleStats(sessions, exById, today, split) {
     const last = {}, sets7 = {};
     for (const s of sessions) {
       if (s.kind !== 'kraft' || !['gefuehrt', 'bestaetigt'].includes(s.status)) continue;
       const ago = dayDiff(today, s.session_date);
+      if (!(s.session_exercises || []).length && s.split_day && split && split.days) {
+        // Einheit ohne Satzdaten (z. B. nachgetragen): Fokus-Muskeln des Split-Tags mit 3 Sätzen angerechnet
+        const dd = split.days.find((x) => x.name === s.split_day);
+        for (const m of (dd ? dd.focus : [])) {
+          if (last[m] === undefined || ago < last[m]) last[m] = ago;
+          if (ago >= 0 && ago < 7) sets7[m] = (sets7[m] || 0) + 3;
+        }
+        continue;
+      }
+      // Je Einheit zählen: ab 3 Sätzen auf einen Muskel gilt er als voll belastet; wenige Zusatzsätze (z. B. spontan
+      // eine Beinpresse am Brusttag) setzen die Erholungsuhr nur teilweise zurück, damit der Beintag nicht ausfällt.
+      const perM = {};
       for (const se of s.session_exercises || []) {
         const ex = exById[se.exercise_id]; if (!ex || ex.dosage_profile === 'M') continue;
         const nSets = (se.sets || []).filter((x) => x.done).length || 0;
-        for (const m of ex.muscles_primary) {
-          if (last[m] === undefined || ago < last[m]) last[m] = ago;
-          if (ago >= 0 && ago < 7) sets7[m] = (sets7[m] || 0) + nSets;
-        }
+        for (const m of ex.muscles_primary) perM[m] = (perM[m] || 0) + nSets;
+      }
+      for (const m in perM) {
+        const n = perM[m]; if (!n) continue;
+        const eff = n >= 3 ? ago : ago + 3;
+        if (last[m] === undefined || eff < last[m]) last[m] = eff;
+        if (ago >= 0 && ago < 7) sets7[m] = (sets7[m] || 0) + n;
       }
     }
     return { last, sets7 };
@@ -141,6 +156,12 @@
         parts.push(m);
       }
       score /= d.focus.length;
+      // Beine als Schwerpunkt: Tage mit Beinen werden bevorzugt, damit sie regelmäßig dran sind
+      const lg = d.focus.filter((m) => ['quadrizeps', 'hamstrings', 'gesaess', 'waden'].includes(m) && prioOf(ctx.priorities, m, ctx.today) === 'schwerpunkt').length;
+      if (lg) score += Math.min(2, lg * 0.8);
+      // Ein Schwerpunkt-Muskel, der seit 5+ Tagen nicht voll dran war, hebt Tage mit ihm deutlich an
+      const stale = d.focus.filter((m) => prioOf(ctx.priorities, m, ctx.today) === 'schwerpunkt' && (stats.last[m] === undefined || stats.last[m] >= 5)).length;
+      if (stale) score += Math.min(3, stale * 1.2);
       // R19: Beine nach harter Radeinheit zurückhalten
       const legs = d.focus.filter((m) => ['quadrizeps', 'hamstrings', 'gesaess'].includes(m)).length / d.focus.length;
       let penalty = 0;
@@ -173,6 +194,26 @@
     return out;
   }
 
+  /* Feste Reihenfolge je Split-Tag (wie im bisherigen Coaching). Jeder Platz: Muskel, Profil, bevorzugte Bewegungsmuster in Reihenfolge. */
+  const TEMPLATES = {
+    'Oberkörper': [['brust', 'G', ['horizontal_druecken', 'schraeg_druecken']], ['lat', 'G', ['vertikal_ziehen']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['brust', 'G', ['schraeg_druecken', 'vertikal_druecken']], ['schulter_seitlich', 'A', ['seitheben']], ['schulter_hinten', 'A', ['reverse_fly']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']], ['trizeps', 'A', ['trizeps_strecken']]],
+    'Unterkörper': [['quadrizeps', 'G', ['kniebeuge']], ['hamstrings', 'G', ['huefte_beugen']], ['quadrizeps', 'G', ['beinpresse', 'ausfallschritt']], ['hamstrings', 'A', ['beinbeugen']], ['quadrizeps', 'A', ['kniestrecken']], ['waden', 'A', ['wadenheben']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
+    'Push': [['brust', 'G', ['schraeg_druecken']], ['brust', 'G', ['horizontal_druecken']], ['brust', 'A', ['brust_fliegen']], ['schulter_seitlich', 'A', ['seitheben']], ['trizeps', 'A', ['trizeps_strecken']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]],
+    'Ganzkörper': [['quadrizeps', 'G', ['beinpresse', 'kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['brust', 'G', ['schraeg_druecken', 'horizontal_druecken']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen', 'huefte_beugen']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
+    'Lower + Pull': [['quadrizeps', 'G', ['kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['quadrizeps', 'G', ['beinpresse']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen']], ['waden', 'A', ['wadenheben']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]]
+  };
+
+  /* Grundpräferenz: geprüfte Standardübungen vor Heim-/Bandvarianten (im Studio sind alle Geräte da) */
+  const pref = (e, gym) => {
+    let r = 0;
+    if (e.tier === 'geprueft') r += 1;
+    if (e.code) r += 0.5 - (parseInt(String(e.code).slice(1), 10) || 0) / 100;
+    if (gym && (e.equipment || []).length && (e.equipment || []).every((q) => ['band', 'matte', 'stufe', 'koerpergewicht'].includes(q))) r -= 3;
+    if (/Heimtraining|Negativ/.test(e.name)) r -= 2;
+    return r;
+  };
+  const hash = (str) => { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; };
+
   function suggest(ctx) {
     const P = params(ctx.params);
     const today = ctx.today || todayStr();
@@ -187,7 +228,7 @@
     }
     if (abs && abs.kind === 'pause') reasons.push('Heute ist als Pause eingetragen. Du kannst trotzdem starten.');
 
-    const stats = muscleStats(ctx.sessions, exById, today);
+    const stats = muscleStats(ctx.sessions, exById, today, ctx.split);
     const doneDates = ctx.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status)).map((s) => s.session_date).sort();
     const lastDate = doneDates.length ? doneDates[doneDates.length - 1] : null;
     const gap = lastDate ? dayDiff(today, lastDate) : null;
@@ -214,7 +255,9 @@
     if (ctx.minutes) reasons.push(`Zeitfenster ${ctx.minutes} Minuten berücksichtigt.`);
 
     // Übungsauswahl: je Fokus-Muskel nach Priorität, Grundübung zuerst, Muster nicht doppeln
-    const elig = ctx.exercises.filter((e) => eligible(e, ctx));
+    const gym = (ctx.items || []).length > 12;
+    const excl = new Set(ctx.exclude || []);
+    const elig = ctx.exercises.filter((e) => eligible(e, ctx) && !excl.has(e.id));
     const focus = day.focus.slice().sort((a, b) => PRIO_W[prioOf(ctx.priorities, b, today)] - PRIO_W[prioOf(ctx.priorities, a, today)] ||
       (stats.last[b] ?? 14) - (stats.last[a] ?? 14));
     const chosen = [], usedPattern = new Set(), usedEx = new Set();
@@ -225,7 +268,8 @@
       let r = 0;
       if (e.muscles_primary[0] === m) r += 3; else if (e.muscles_primary.includes(m)) r += 2; else r += 0.5;
       if (e.dosage_profile === 'G') r += 1.5;
-      if (recentEx.has(e.id)) r -= 1;          // Abwechslung
+      r += pref(e, gym);
+      if (ctx.variant && recentEx.has(e.id)) r -= 1;          // Abwechslung nur beim Würfeln; sonst bleibt die Reihenfolge stabil
       if (usedPattern.has(e.pattern)) r -= 2.5;
       if ((ctx.favorites || new Set()).has(e.id)) r += 1;
       return r;
@@ -240,9 +284,52 @@
     };
     const estMin = (e, n) => { const pf = profOf(e.dosage_profile, P, ctx.goals, 'normal'); return n * (0.9 + P[pf.rest] / 60) + 1.5; };
     let used = 4; // Aufwärmen
+    const variant = ctx.variant || 0;
+    const tplSlots = TEMPLATES[day.name] || null;
+    // zuletzt in diesem Tag verwendete Übungen (Reihenfolge bleibt stabil)
+    const sameDay = ctx.sessions.filter((s) => s.split_day === day.name && ['gefuehrt', 'bestaetigt'].includes(s.status) && (s.session_exercises || []).length).sort((a, b) => (a.session_date < b.session_date ? 1 : -1))[0];
+    const lastSame = new Set(sameDay ? sameDay.session_exercises.map((x) => x.exercise_id) : []);
+    const prevOffered = new Set(ctx.avoid || []);
+    if (tplSlots) {
+      for (const [m, pf0, pats] of tplSlots) {
+        if (used >= minutes) break;
+        const prio = prioOf(ctx.priorities, m, today);
+        const base = elig.filter((e) => !usedEx.has(e.id) && e.muscles_primary.includes(m) && (e.dosage_profile || 'A') === pf0);
+        let pool = base.filter((e) => pats.includes(e.pattern));
+        if (!pool.length) pool = base.filter((e) => !usedPattern.has(e.pattern));
+        if (!pool.length) continue;
+        const sc = (e) => {
+          let r = 0;
+          r += pref(e, gym);
+          if (e.muscles_primary[0] === m) r += 3;
+          const pi = pats.indexOf(e.pattern); if (pi >= 0) r -= pi * 0.8;
+          if (usedPattern.has(e.pattern)) r -= 2.5;
+          if (lastSame.has(e.id)) r += 2;
+          if (variant) { r += hash(e.id + ':' + variant + ':' + day.name) * 3; if (prevOffered.has(e.id)) r -= 2; }
+          if ((ctx.favorites || new Set()).has(e.id)) r += 1;
+          return r;
+        };
+        pool.sort((a, b) => sc(b) - sc(a) || (a.name < b.name ? -1 : 1));
+        const e = pool[0];
+        const n = setsFor(e, m, prio), t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern);
+        chosen.push({ muscle: m, ex: e, sets: n, prio, minutes: t });
+      }
+      // Schwerpunkt-Muskeln, die die Vorlage nicht abdeckt, kommen als eine Zusatzübung dazu
+      for (const m of focus) {
+        if (used >= minutes) break;
+        if (prioOf(ctx.priorities, m, today) !== 'schwerpunkt' || chosen.some((c) => c.ex.muscles_primary.includes(m))) continue;
+        const e = elig.filter((x) => !usedEx.has(x.id) && x.muscles_primary.includes(m) && ['G', 'A', 'S'].includes(x.dosage_profile || 'A')).sort((a, b) => rank(b, m) - rank(a, m) || (a.name < b.name ? -1 : 1))[0];
+        if (!e) continue;
+        const n = setsFor(e, m, 'schwerpunkt'), t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t });
+      }
+    }
     // Reihenfolge der Runden: erst Grundbewegungen je Muskel, dann Zusatz, dann Stabilität
     const rounds = [['G'], ['A'], ['S', 'C', 'I', 'T']];
-    for (const rd of rounds) {
+    for (const rd of (tplSlots ? [] : rounds)) {
       for (const m of focus) {
         if (used >= minutes) break;
         const prio = prioOf(ctx.priorities, m, today);
@@ -262,7 +349,7 @@
     }
     // Reihenfolge: G vor A vor S/C/I/T, dann Priorität
     const ord = { G: 0, A: 1, S: 2, C: 3, I: 3, T: 3 };
-    chosen.sort((a, b) => ord[a.ex.dosage_profile || 'A'] - ord[b.ex.dosage_profile || 'A']);
+    if (!tplSlots) chosen.sort((a, b) => ord[a.ex.dosage_profile || 'A'] - ord[b.ex.dosage_profile || 'A']);
 
     const items = chosen.map((c) => {
       const pf = profOf(c.ex.dosage_profile, P, ctx.goals, c.prio);
@@ -292,7 +379,7 @@
     if (goals.includes('Muskelaufbau')) reasons.push('Ziel Muskelaufbau: Wiederholungen meist 6–15 mit 1–3 Reserve, Wochenziel 6–10 Sätze je Muskelgruppe.');
     if (goals.includes('Fettabbau')) reasons.push('Ziel Fettabbau: Gewichte und Satzzahl halten, nicht kürzen. Ob mehr Volumen im Defizit mehr Muskeln erhält, ist offen.');
     const mobility = P.posture_block ? mobilityPick(ctx, P, 3) : [];
-    return { rest: false, title: day.name, split_day: day.name, minutes: total + (mobility.length ? 4 : 0), items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P };
+    return { rest: false, title: day.name, split_day: day.name, minutes: total + (mobility.length ? 4 : 0), items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P, variant, stable: !variant, template: !!tplSlots };
   }
 
   /* Energie: immer Schätzung mit Methode */
@@ -307,6 +394,6 @@
 
   function e1rm(kg, reps) { return reps && kg ? kg * (1 + reps / 30) : null; }
 
-  const api = { mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
+  const api = { TEMPLATES, mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
   if (typeof module !== 'undefined') module.exports = api; else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

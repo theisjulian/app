@@ -8,6 +8,10 @@
       const pr = await F.sb.from('profiles').select('user_id').maybeSingle();
       if (!pr.data) await firstRun();
       await F.load();
+      if (!F.S.equipment.some((p) => p.kind === 'studio')) { // Reparatur: Studio-Profil muss immer existieren
+        await F.sb.from('equipment_profiles').insert({ name: 'Studio', kind: 'studio', items: F.allItems(), is_default: !F.S.equipment.some((p) => p.is_default) });
+        await F.load();
+      }
       // Strava-Rückkehr
       const q = new URLSearchParams(location.search);
       if (q.get('code') && q.get('scope')) { const code = q.get('code'), scope = q.get('scope'); history.replaceState(null, '', location.pathname + '#/mehr/strava'); F.render(); try { await F.stravaExchange(code, scope); } catch (e) { F.err(e, 'Strava-Verbindung'); } }
