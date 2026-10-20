@@ -16,14 +16,14 @@
   F.acts.rerollReset = () => { const t = F.today(); F.ls.set('variant-' + t, 0); F.ls.set('avoid-' + t, []); F.ls.set('excl-' + t, []); F.render(); };
 
   /* ---------- Einstellungen: Darstellung sofort sichtbar ---------- */
-  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f']];
+  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f'], ['tag', 'Tageslicht', '#ffb36b', '#2a6fd8'], ['apple', 'Apple', '#ff375f', '#ff9f0a']];
   const FONTS = [['standard', 'Standard', 'Geist'], ['rund', 'Rund', 'Nunito'], ['klassisch', 'Klassisch', 'Lora'], ['technisch', 'Technisch', 'Space Grotesk'], ['lesbar', 'Gut lesbar', 'Atkinson Hyperlegible'], ['geometrisch', 'Geometrisch', 'Jost']];
   const lookCards = () => {
     const l = F.look();
     return `<div class="card"><div class="eyebrow" style="margin-bottom:8px">Farbe</div><div class="row wrap gap">${THEMES.map(([k, n, c, c2]) => `<button class="chip ${l.theme === k ? 'on' : ''}" data-act="look" data-k="theme" data-v="${k}"><i style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,${c},${c2});display:inline-block"></i>${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Modus</div><div class="seg">${[['Hell', 'light'], ['Dunkel', 'dark'], ['Automatisch', 'auto']].map(([n, v]) => `<button class="${l.mode === v ? 'on' : ''}" data-act="look" data-k="mode" data-v="${v}">${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Schrift</div><div class="row wrap gap">${FONTS.map(([k, n, f]) => `<button class="fbtn ${l.font === k ? 'on' : ''}" style="font-family:'${f}',sans-serif" data-act="look" data-k="font" data-v="${k}">${n}</button>`).join('')}</div>
-      <div class="eyebrow" style="margin:16px 0 8px">Startseite</div><div class="dashpick">${DASH.map(([k, n, s]) => `<button class="dp ${(l.dash || 'klassisch') === k ? 'on' : ''}" data-act="dash" data-v="${k}" aria-pressed="${(l.dash || 'klassisch') === k}">${PREV[k]}<b>${n}</b><span>${s}</span></button>`).join('')}</div>
+      <div class="eyebrow" style="margin:16px 0 8px">Startseite</div><div class="dashpick">${DASH.map(([k, n, s]) => `<button class="dp ${(l.dash || F.defDash()) === k ? 'on' : ''}" data-act="dash" data-v="${k}" aria-pressed="${(l.dash || F.defDash()) === k}">${PREV[k]}<b>${n}</b><span>${s}</span></button>`).join('')}</div>
       <div class="row between" style="margin-top:16px"><div><b>Animationen</b><div class="small mute">Weiche Übergänge, Konfetti, Bewegungsskizzen</div></div><button class="sw ${l.anim ? 'on' : ''}" role="switch" aria-checked="${!!l.anim}" data-act="lookAnim"><i></i></button></div></div>`;
   };
   F.views.m_darstellung = () => `<button class="back" data-act="nav" data-r="mehr">${F.icon.back.replace('<svg', '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"')} Einstellungen</button><div class="h1" style="margin-bottom:12px">Darstellung</div>${lookCards()}`;
@@ -123,7 +123,7 @@
       <div class="rangebar">${RANGES.map(([v, l]) => `<button class="chip ${k === v ? 'on' : ''}" data-act="range" data-v="${v}">${l}</button>`).join('')}</div>
       <div class="kpis">${kpi(st.ses.length, 'Krafteinheiten')}${kpi(st.rides.length, 'Radfahrten')}${kpi(st.hikes.length, 'Wanderungen')}${kpi(st.days, 'aktive Tage')}</div>
       <div class="card"><div class="kv"><span class="mute">Sätze mit Daten</span><b>${st.sets}</b><span class="mute">Gesamtvolumen</span><b>${st.vol ? F.fmt(st.vol) + ' kg' : 'unbekannt'}</b><span class="mute">Krafttraining Dauer</span><b>${st.kraftMin ? st.kraftMin + ' min' : 'unbekannt'}</b><span class="mute">Rad</span><b>${st.rides.length ? F.fmt(Math.round(st.rideKm)) + ' km · ' + F.fmt(Math.round(st.rideH * 10) / 10) + ' h' : '–'}</b><span class="mute">Wandern</span><b>${st.hikes.length ? F.fmt(Math.round(st.hikeKm)) + ' km · ' + Math.round(st.hikeUp) + ' hm' : '–'}</b><span class="mute">Energie (Schätzung)</span><b>${st.kcal ? '≈ ' + F.fmt(st.kcal) + ' kcal' : '–'}</b></div>${st.noData ? `<div class="small mute" style="margin-top:8px">${st.noData} Einheit${st.noData > 1 ? 'en' : ''} ohne Satzdaten (übernommen). Sie zählen bei Einheiten, aber nicht bei Sätzen oder Volumen.</div>` : ''}</div>
-      <div class="card"><div class="h2">Wochen · ${rangeName(k)}</div><div class="row" style="align-items:flex-end;gap:6px;height:110px;overflow-x:auto">${st.wk.map((w) => `<div class="grow" style="text-align:center;min-width:28px"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.wan / mx * 80}px;background:#e9a23b;border-radius:5px"></div><div style="height:${w.rad / mx * 80}px;background:#6aa9ff;border-radius:5px"></div><div class="bargrow" style="height:${w.kraft / mx * 80}px;background:var(--a);border-radius:5px"></div></div><div class="small mute" style="font-size:10px">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px">Grün Kraft · Blau Rad · Orange Wandern</div></div>
+      <div class="card"><div class="h2">Wochen · ${rangeName(k)}</div><div class="row" style="align-items:flex-end;gap:6px;height:110px;overflow-x:auto">${st.wk.map((w) => `<div class="grow" style="text-align:center;min-width:28px"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.wan / mx * 80}px;background:#e9a23b;border-radius:5px"></div><div style="height:${w.rad / mx * 80}px;background:#6aa9ff;border-radius:5px"></div><div class="bargrow" style="height:${w.kraft / mx * 80}px;background:var(--a);border-radius:5px"></div></div><div class="small mute" style="font-size:10px">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:#6aa9ff;font-weight:700">Rad</span> · <span style="color:#e9a23b;font-weight:700">Wandern</span></div></div>
       <div class="card"><div class="h2">Sätze je Muskelgruppe</div>${mus.length ? mus.map(([m, n]) => `<div class="mrow"><span>${E.LABEL[m] || m}</span><div class="bar"><i class="grow" style="width:${n / mm * 100}%"></i></div><b>${n}</b></div>`).join('') : '<div class="mute small">In diesem Zeitraum gibt es noch keine Sätze mit Daten.</div>'}</div>
       <div class="card"><div class="h2">Kraftverlauf</div>${ids.length ? `<label class="f"><select data-in="progEx">${ids.map((id) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(S.exById[id].name)}</option>`).join('')}</select></label>${lineChart(byEx[sel])}<div class="small mute">Geschätzte Maximalkraft (Epley) aus dem besten Satz je Einheit.</div>` : '<div class="mute">Sobald du Sätze mit Gewicht und Wiederholungen protokollierst, erscheint hier dein Verlauf. Aus übernommenen Einheiten gibt es bewusst keine Werte.</div>'}</div>
       <div class="card"><div class="row between"><div class="h2">Körpergewicht</div><button class="btn sm" data-act="addWeight">Eintragen</button></div>${lineChart(weights)}<div class="small mute">Zuletzt ${F.fmt(F.weightNow())} kg${weights.length ? ' am ' + F.dshort(weights[weights.length - 1].d) : ''}.</div></div>`;
@@ -258,7 +258,7 @@
     need(H + 14); const base = y + H;
     st.wk.slice(-16).forEach((w, i) => { const x = 18 + i * (bw + 2); let yy = base; [[w.kraft, acc], [w.rad, [60, 130, 230]], [w.wan, [233, 162, 59]]].forEach(([n, c]) => { const h = n / mx * H; if (h > 0) { pdf.setFillColor(...c); pdf.rect(x, yy - h, bw, h, 'F'); yy -= h; } }); pdf.setFontSize(6.5); pdf.setTextColor(...mute); pdf.text(w.l, x + bw / 2, base + 4, { align: 'center' }); });
     pdf.setDrawColor(...line); pdf.setLineWidth(.2); pdf.line(16, base, 194, base); y = base + 9;
-    pdf.setFontSize(8); pdf.setTextColor(...mute); pdf.text('Grün Kraft · Blau Rad · Orange Wandern (Einheiten je Woche)', 16, y); y += 9;
+    pdf.setFontSize(8); { let lx = 16; [['Kraft', acc], ['Rad', [60, 130, 230]], ['Wandern', [233, 162, 59]]].forEach(([t, c], i) => { if (i) { pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text(' · ', lx, y); lx += pdf.getTextWidth(' · '); } pdf.setTextColor(...c); pdf.setFont(undefined, 'bold'); pdf.text(t, lx, y); lx += pdf.getTextWidth(t); }); pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text('  (Einheiten je Woche)', lx, y); } y += 9;
     // Muskelgruppen
     const mus = Object.entries(st.muscle).sort((a, b) => b[1] - a[1]);
     head('Sätze je Muskelgruppe');
@@ -287,7 +287,7 @@
   const DASH = [['klassisch', 'Klassisch', 'Vorschlag, Woche, Aktivitäten und Wochenziele'], ['fokus', 'Fokus', 'Ein großer Vorschlag, sonst nichts'], ['woche', 'Woche', 'Zuerst deine Woche, dann der Vorschlag'], ['training', 'Training', 'Zuerst die Wochenziele je Muskel, dann der Vorschlag']];
   const baseHeute = F.views.heute;
   F.views.heute = (a) => {
-    const v = F.look().dash || 'klassisch', html = baseHeute(a);
+    const v = F.look().dash || F.defDash(), html = baseHeute(a);
     if (v === 'klassisch') return html;
     const box = document.createElement('div'); box.innerHTML = html;
     const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? [...grid.children] : [];
@@ -329,7 +329,20 @@
     F.closeModal(); await F.load(); F.ui.tr.ei = F.openSession().session_exercises.length - 1; F.render(); window.scrollTo(0, 0); F.toast('Hinzugefügt · zählt für künftige Vorschläge');
   };
   const tv = F.views.training;
-  F.views.training = () => { const h = tv(); return F.openSession() ? h + '<button class="btn ghost block" style="margin:6px 0 18px" data-act="addExAsk">+ Übung hinzufügen</button>' : h; };
+  F.views.training = () => { const h = tv(); const s = F.openSession(); if (!s) return h; const dn = s.session_exercises.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length;
+    return '<div class="row between" style="margin-bottom:8px"><button class="btn sm" data-act="trOverview" style="gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Übersicht · ' + dn + '/' + s.session_exercises.length + '</button></div>' + h + '<button class="btn ghost block" style="margin:6px 0 18px" data-act="addExAsk">+ Übung hinzufügen</button>'; };
+  F.acts.trOverview = () => {
+    const s = F.openSession(); if (!s) return; const exs = s.session_exercises, cur = F.ui.tr.ei;
+    const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
+    const row = (e, i) => { const ex = F.S.exById[e.exercise_id] || { name: '?' }, d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length, on = i === cur;
+      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
+    F.modal(`<div class="row between"><div class="h2">Dein Training</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
+      <div class="small mute" style="margin:2px 0 8px">${dn} von ${tot} Sätzen · ${exs.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length} von ${exs.length} Übungen erledigt</div>
+      <div style="height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:${pct}%;background:var(--grad,var(--a));border-radius:99px"></i></div>
+      <div class="list" style="max-height:52vh;overflow:auto">${exs.map(row).join('')}</div>
+      <button class="btn block" style="margin-top:12px" data-act="addExAsk">+ Übung hinzufügen</button>`);
+  };
+  F.acts.trJump = (t) => { F.closeModal(); F.acts.goEx(t); };
 
   /* ---------- Zeiten je Einheit und Übung ---------- */
   const hhmm = (iso) => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });

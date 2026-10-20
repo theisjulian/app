@@ -8,7 +8,7 @@
   F.acts.start = async () => {
     if (F.openSession()) return F.go('training');
     const sg0 = F.suggestion(); if (sg0.rest || sg0.empty || !sg0.items.length) return F.toast('Heute kein Vorschlag möglich.');
-    const sg = Object.assign({}, sg0, { items: (sg0.mobility || []).concat(sg0.items) });
+    const sg = Object.assign({}, sg0, { items: sg0.items.concat(sg0.mobility || []) });
     const sess = await F.insert('sessions', { session_date: F.today(), kind: 'kraft', title: sg.title, split_day: sg.split_day, status: 'geplant', source: 'manuell', form: F.ls.get('form-' + F.today(), 'normal'), planned_minutes: sg.minutes, equipment_profile_id: F.items().id, rule_version: sg.rule_version, started_at: new Date().toISOString() });
     const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: it.load_text }))).select();
     if (ses.error) throw ses.error;
@@ -61,6 +61,11 @@
         ${F.ui.tr.ei > 0 ? `<button class="btn sm" data-act="goEx" data-i="${F.ui.tr.ei - 1}">‹ Zurück</button>` : ''}${F.ui.tr.ei < exs.length - 1 ? `<button class="btn sm pri" data-act="goEx" data-i="${F.ui.tr.ei + 1}">Weiter ›</button>` : `<button class="btn sm pri" data-act="finishAsk">Fertig</button>`}</div>`;
   };
   const findSet = (id) => { for (const s of F.S.sessions) for (const se of s.session_exercises) for (const st of se.sets) if (st.id === id) return { s, se, st }; return null; };
+  /* Wischen: nach links = nächste Übung, nach rechts = vorherige */
+  (() => { let x0 = 0, y0 = 0, ok = false;
+    document.addEventListener('touchstart', (e) => { const t0 = e.touches[0]; x0 = t0.clientX; y0 = t0.clientY; ok = /training/.test(location.hash) && !(e.target.closest && e.target.closest('input,textarea,select,.modal,.rangebar,[data-noswipe]')) && e.touches.length === 1; }, { passive: true });
+    document.addEventListener('touchend', (e) => { if (!ok) return; ok = false; const t1 = e.changedTouches[0], dx = t1.clientX - x0, dy = t1.clientY - y0; if (Math.abs(dx) < 70 || Math.abs(dy) > 60 || Math.abs(dx) < 1.6 * Math.abs(dy)) return;
+      const s = F.openSession && F.openSession(); if (!s) return; const i = F.ui.tr.ei + (dx < 0 ? 1 : -1); if (i < 0 || i >= s.session_exercises.length) return; F.acts.goEx({ dataset: { i: String(i) } }); }, { passive: true }); })();
   F.acts.goEx = (t) => { F.ui.tr.ei = Number(t.dataset.i); F.render(); window.scrollTo(0, 0); };
   F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); };
   F.acts.step = (t) => {

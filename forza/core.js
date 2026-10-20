@@ -41,9 +41,25 @@
   };
 
   /* ---------- Darstellung ---------- */
+  /* Tageslicht-Theme: Phase nach Sonnenstand (Näherung für Süddeutschland, ca. 48,2° N / 10,8° O) */
+  F.sunPhase = (d = new Date()) => {
+    const N = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5), rad = Math.PI / 180, lat = 48.2, lon = 10.8;
+    const decl = 23.44 * Math.sin(2 * Math.PI * (284 + N) / 365) * rad, H = Math.acos(Math.max(-1, Math.min(1, -Math.tan(lat * rad) * Math.tan(decl)))) / rad / 15;
+    const noon = 12 - lon / 15 - d.getTimezoneOffset() / 60, sr = noon - H, ss = noon + H, t = d.getHours() + d.getMinutes() / 60;
+    if (t < sr - .75 || t >= ss + .75) return 'nacht';
+    if (t < sr + .75) return 'morgen';
+    if (t < noon - 2) return 'vormittag';
+    if (t < noon + 2) return 'mittag';
+    if (t < ss - 1.25) return 'nachmittag';
+    return 'abend';
+  };
+  setInterval(() => { if (F.look().theme === 'tag') F.applyLook(); }, 300000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && F.look().theme === 'tag') F.applyLook(); });
+  F.defDash = () => (matchMedia('(min-width:900px)').matches ? 'klassisch' : 'fokus');
   F.applyLook = () => {
     const el = document.documentElement, p = F.ls.get('look', { theme: 'graphit', mode: 'dark', font: 'standard', anim: true });
     let mode = p.mode; if (mode === 'auto') mode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (p.theme === 'tag') { const ph = F.sunPhase(); el.dataset.phase = ph; mode = (ph === 'nacht' || ph === 'abend') ? 'dark' : 'light'; } else delete el.dataset.phase;
     el.dataset.theme = p.theme; el.dataset.mode = mode; el.dataset.font = p.font; el.classList.toggle('noanim', !p.anim);
     const m = document.querySelector('meta[name=theme-color]'); if (m) { const bg = getComputedStyle(el).getPropertyValue('--bg2').trim(); m.content = bg || (mode === 'dark' ? '#141922' : '#f2f4f7'); }
   };

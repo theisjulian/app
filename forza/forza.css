@@ -195,3 +195,60 @@ html{background:var(--bg);min-height:100%;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:-webkit-fill-available}
 .app{min-height:100vh;min-height:100dvh}
 @media(max-width:899px){.bnav{padding-bottom:calc(6px + var(--sb)*.55)}.main{padding-bottom:calc(84px + var(--sb)*.55)}}
+
+/* ===== Tageslicht: ändert sich mit dem Sonnenstand ===== */
+html[data-theme=tag][data-phase=morgen]{--acc:#ff7a59;--acc-ink:#2a0f08;--acc-l:#d9482a;--bg:#fff1e6;--bg2:#fff8f2;--card:#ffffff;--card2:#ffe9da;--line:#f6d9c6;--text:#3a2030;--mute:#8a6670;--hero1:#f0845c;--hero2:#7a3f8f;--heroline:#7a3f8f;--grad:linear-gradient(150deg,#ff9a62 0%,#e8508a 100%);--glow:linear-gradient(180deg,#ffd0a8 0%,#ffe6d6 22%,transparent 55%)}
+html[data-theme=tag][data-phase=vormittag]{--acc:#1a9be0;--acc-ink:#031c2e;--acc-l:#0a6fb3;--bg:#eef8ff;--bg2:#f7fcff;--card:#ffffff;--card2:#e2f2fc;--line:#d2e8f6;--text:#10283a;--mute:#5a7488;--hero1:#35b0f2;--hero2:#1760c4;--heroline:#1760c4;--grad:linear-gradient(150deg,#3cb8f5 0%,#1d6fd6 100%);--glow:linear-gradient(180deg,#bfe4fb 0%,#e3f3fd 24%,transparent 58%)}
+html[data-theme=tag][data-phase=mittag]{--acc:#f0a010;--acc-ink:#2d1d00;--acc-l:#b36f00;--bg:#f4faff;--bg2:#ffffff;--card:#ffffff;--card2:#e9f4fd;--line:#d6e8f5;--text:#0f2538;--mute:#58728a;--hero1:#2b9cf2;--hero2:#145db8;--heroline:#145db8;--grad:linear-gradient(150deg,#ffc83d 0%,#f08a00 100%);--glow:linear-gradient(180deg,#a8dcff 0%,#d9efff 26%,transparent 60%)}
+html[data-theme=tag][data-phase=nachmittag]{--acc:#f08a24;--acc-ink:#2b1300;--acc-l:#c2610b;--bg:#fff6e8;--bg2:#fffaf2;--card:#ffffff;--card2:#ffeed6;--line:#f3dfc2;--text:#3a2410;--mute:#8a6a4c;--hero1:#f09a3c;--hero2:#b8512c;--heroline:#b8512c;--grad:linear-gradient(150deg,#ffb25a 0%,#e8622a 100%);--glow:linear-gradient(180deg,#ffdca8 0%,#ffeed8 24%,transparent 58%)}
+html[data-theme=tag][data-phase=abend]{--acc:#ff7a9a;--acc-ink:#2c0614;--acc-l:#ff7a9a;--bg:#1a1030;--bg2:#221640;--card:#2b1d4d;--card2:#36265e;--line:#45326f;--text:#f6eaff;--mute:#bba3d4;--hero1:#ff7a4a;--hero2:#6a2a8a;--heroline:#6a2a8a;--grad:linear-gradient(150deg,#ff8a4a 0%,#c8307a 55%,#6a35c8 100%);--glow:radial-gradient(900px 420px at 50% 105%,rgba(255,122,74,.45),transparent 65%),radial-gradient(700px 400px at 90% -10%,rgba(138,63,252,.3),transparent 60%)}
+html[data-theme=tag][data-phase=nacht]{--acc:#8fb4ff;--acc-ink:#06122e;--acc-l:#8fb4ff;--bg:#060a18;--bg2:#0b1128;--card:#111a38;--card2:#18234a;--line:#223060;--text:#e6ecff;--mute:#93a2cc;--hero1:#2c4a9e;--hero2:#050a1e;--heroline:#050a1e;--grad:linear-gradient(150deg,#6a8cff 0%,#3a2fb8 100%);--glow:radial-gradient(1.5px 1.5px at 20% 12%,#fff8,transparent),radial-gradient(1.5px 1.5px at 70% 8%,#fff7,transparent),radial-gradient(1px 1px at 45% 20%,#fff6,transparent),radial-gradient(1.5px 1.5px at 88% 24%,#fff6,transparent),radial-gradient(900px 500px at 85% -10%,rgba(80,100,255,.22),transparent 60%)}
+html[data-theme=tag] body{transition:background .8s}
+html[data-theme=tag][data-phase=mittag] .btn.pri,html[data-theme=tag][data-phase=mittag] .seg button.on,html[data-theme=tag][data-phase=mittag] .tile.on{color:#2d1d00}
+html[data-theme]:not([data-theme=graphit]) .hero{--mute:rgba(255,255,255,.8);color:#fff}
+html[data-theme]:not([data-theme=graphit]) .hero summary,html[data-theme]:not([data-theme=graphit]) .hero .eyebrow{color:rgba(255,255,255,.85)}
+
+/* ===== Apple: eigene Formen, Listen, Schrift und Leisten (nur wenn Theme „Apple“ aktiv) ===== */
+html[data-theme=apple]{--acc:#ff375f;--acc-ink:#fff;--acc-l:#ff2d55;--grad:#ff375f;--glow:none;--r:20px;--r2:14px;--r3:10px;--ok:#30d158}
+html[data-theme=apple][data-mode=dark]{--bg:#000;--bg2:#161618;--card:#1c1c1e;--card2:#2c2c2e;--line:#38383a;--text:#fff;--mute:#8e8e93;--hero1:#1c1c1e;--hero2:#1c1c1e;--heroline:transparent;--sh:none}
+html[data-theme=apple][data-mode=light]{--bg:#f2f2f7;--bg2:#f9f9f9;--card:#fff;--card2:#efeff4;--line:#d9d9de;--text:#000;--mute:#8a8a8e;--hero1:#fff;--hero2:#fff;--heroline:transparent;--sh:none;--ok:#34c759}
+html[data-theme=apple][data-font=standard]{--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif}
+html[data-theme=apple][data-mode][data-font] body{letter-spacing:-.011em}
+html[data-theme=apple][data-mode][data-font] .h1{font-size:34px;font-weight:700;letter-spacing:-.025em}
+html[data-theme=apple][data-mode][data-font] .h2{font-size:22px;font-weight:600;letter-spacing:-.015em}
+html[data-theme=apple][data-mode][data-font] .eyebrow{font-size:13px;letter-spacing:.02em;font-weight:500;text-transform:uppercase;color:var(--mute)}
+html[data-theme=apple][data-mode][data-font] .card{border:0;border-radius:20px;box-shadow:none;padding:16px 18px}
+html[data-theme=apple][data-mode][data-font] .hero{background:var(--card);color:var(--text);border:0;border-radius:22px;box-shadow:none;--mute:#8e8e93}
+html[data-theme=apple][data-mode][data-font] .hero .mute,html[data-theme=apple][data-mode][data-font] .hero summary,html[data-theme=apple][data-mode][data-font] .hero .eyebrow{color:var(--mute)}
+html[data-theme=apple][data-mode][data-font] .hero .seg button:not(.on){color:var(--mute)}
+html[data-theme=apple][data-mode][data-font] .hero .btn.pri,html[data-theme=apple][data-mode][data-font] .btn.pri{background:var(--acc);color:#fff;box-shadow:none;border-radius:14px;font-weight:600}
+html[data-theme=apple][data-mode][data-font] .btn{background:var(--card2);color:var(--a);font-weight:600;border-radius:14px;box-shadow:none}
+html[data-theme=apple][data-mode][data-font] .btn.ghost{background:var(--card2);border:0}
+html[data-theme=apple][data-mode][data-font] .btn.danger{color:#ff453a}
+html[data-theme=apple][data-mode][data-font] .btn.sm{border-radius:10px}
+html[data-theme=apple][data-mode][data-font] .chip{background:var(--card2);border:0;color:var(--text);font-weight:500}
+html[data-theme=apple][data-mode][data-font] .chip.on,html[data-theme=apple][data-mode][data-font] .rangebar .chip.on{background:var(--acc);color:#fff;border:0}
+html[data-theme=apple][data-mode][data-font] .seg{background:var(--card2);border-radius:10px;padding:2px}
+html[data-theme=apple][data-mode][data-font] .seg button,html[data-theme=apple][data-mode][data-font] .hero .seg{border-radius:8px}
+html[data-theme=apple][data-mode][data-font] .seg button.on,html[data-theme=apple][data-mode][data-font] .hero .seg button.on{background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 .5px rgba(0,0,0,.04)}
+html[data-theme=apple][data-mode=dark][data-font] .seg button.on{background:#636366;color:#fff}
+html[data-theme=apple][data-mode][data-font] .hero .seg{background:var(--card2)}
+html[data-theme=apple][data-mode][data-font] .list .it{border-top:.5px solid var(--line);padding:12px 0}
+html[data-theme=apple][data-mode][data-font] .tile{border-radius:10px;background:var(--card2)}html[data-theme=apple][data-mode][data-font] .tile.k{border-radius:50%}
+html[data-theme=apple][data-mode][data-font] .tile.on{background:var(--acc);color:#fff}
+html[data-theme=apple][data-mode][data-font] .setrow{border:0;border-radius:18px;background:var(--card)}
+html[data-theme=apple][data-mode][data-font] .setrow.cur{box-shadow:0 0 0 2px var(--acc)}
+html[data-theme=apple][data-mode][data-font] .stepper{background:var(--card2);border-radius:12px}
+html[data-theme=apple][data-mode][data-font] .stepper button{color:var(--acc)}
+html[data-theme=apple][data-mode][data-font] .kpis .kpi{background:var(--card);border-radius:18px}
+html[data-theme=apple][data-mode][data-font] .kpis .kpi b{color:var(--text);font-weight:700;letter-spacing:-.02em}
+html[data-theme=apple][data-mode][data-font] .kpis .kpi:first-child{background:var(--card)}html[data-theme=apple][data-mode][data-font] .kpis .kpi:first-child b{color:var(--acc)}html[data-theme=apple][data-mode][data-font] .kpis .kpi:first-child span{color:var(--mute)}
+html[data-theme=apple][data-mode][data-font] .bnav{background:color-mix(in srgb,var(--bg2) 80%,transparent);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-top:.5px solid var(--line);padding-top:6px}
+html[data-theme=apple][data-mode][data-font] .bnav button{font-size:10px;font-weight:500;gap:2px}html[data-theme=apple][data-mode][data-font] .bnav svg{width:25px;height:25px;stroke-width:1.6}
+html[data-theme=apple][data-mode][data-font] .bnav button.on{color:var(--acc)}
+html[data-theme=apple][data-mode][data-font] .bar>i,html[data-theme=apple][data-mode][data-font] .mrow .bar i{background:var(--acc)}
+html[data-theme=apple][data-mode][data-font] .modal>div{background:var(--card);border:0;border-radius:28px 28px 0 0}
+html[data-theme=apple][data-mode][data-font] .badge{background:var(--card2);font-weight:500}
+html[data-theme=apple][data-mode][data-font] .dp{border:0;background:var(--card2)}html[data-theme=apple][data-mode][data-font] .dp.on{box-shadow:0 0 0 2px var(--acc);background:var(--card2)}
+html[data-theme=apple][data-mode][data-font] .hero .btn:not(.pri),html[data-theme=apple][data-mode][data-font] .btn:not(.pri):not(.danger){color:var(--a)}
+html[data-theme=apple][data-mode][data-font] .hero .btn.ghost{color:var(--a)!important;border:0!important;background:var(--card2)!important}
