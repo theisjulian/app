@@ -16,11 +16,11 @@
   F.acts.rerollReset = () => { const t = F.today(); F.ls.set('variant-' + t, 0); F.ls.set('avoid-' + t, []); F.ls.set('excl-' + t, []); F.render(); };
 
   /* ---------- Einstellungen: Darstellung sofort sichtbar ---------- */
-  const THEMES = [['graphit', 'Graphit', '#c8f542'], ['laguna', 'Laguna', '#2cc4d0'], ['klar', 'Klar', '#7db1ff'], ['neon', 'Neon', '#ff6fd8'], ['glut', 'Glut', '#ff9a4d'], ['wald', 'Wald', '#5fd68a']];
+  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f']];
   const FONTS = [['standard', 'Standard', 'Geist'], ['rund', 'Rund', 'Nunito'], ['klassisch', 'Klassisch', 'Lora'], ['technisch', 'Technisch', 'Space Grotesk'], ['lesbar', 'Gut lesbar', 'Atkinson Hyperlegible'], ['geometrisch', 'Geometrisch', 'Jost']];
   const lookCards = () => {
     const l = F.look();
-    return `<div class="card"><div class="eyebrow" style="margin-bottom:8px">Farbe</div><div class="row wrap gap">${THEMES.map(([k, n, c]) => `<button class="chip ${l.theme === k ? 'on' : ''}" data-act="look" data-k="theme" data-v="${k}"><i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i>${n}</button>`).join('')}</div>
+    return `<div class="card"><div class="eyebrow" style="margin-bottom:8px">Farbe</div><div class="row wrap gap">${THEMES.map(([k, n, c, c2]) => `<button class="chip ${l.theme === k ? 'on' : ''}" data-act="look" data-k="theme" data-v="${k}"><i style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,${c},${c2});display:inline-block"></i>${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Modus</div><div class="seg">${[['Hell', 'light'], ['Dunkel', 'dark'], ['Automatisch', 'auto']].map(([n, v]) => `<button class="${l.mode === v ? 'on' : ''}" data-act="look" data-k="mode" data-v="${v}">${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Schrift</div><div class="row wrap gap">${FONTS.map(([k, n, f]) => `<button class="fbtn ${l.font === k ? 'on' : ''}" style="font-family:'${f}',sans-serif" data-act="look" data-k="font" data-v="${k}">${n}</button>`).join('')}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Startseite</div><div class="dashpick">${DASH.map(([k, n, s]) => `<button class="dp ${(l.dash || 'klassisch') === k ? 'on' : ''}" data-act="dash" data-v="${k}" aria-pressed="${(l.dash || 'klassisch') === k}">${PREV[k]}<b>${n}</b><span>${s}</span></button>`).join('')}</div>
@@ -364,6 +364,10 @@
       <div style="max-height:62vh;overflow:auto;margin-top:8px">${ss.map(sessDetail).join('')}${aa.map(actDetail).join('')}${ab.map((a) => `<div class="list"><div class="it"><div class="ico">${F.icon.warn}</div><div class="grow"><b>${{ pause: 'Pause', krank: 'Krank', schmerz: 'Schmerz', reise: 'Unterwegs' }[a.kind]}</b><div class="small mute">${F.dshort(a.from_date)}–${F.dshort(a.to_date)}${a.note ? ' · ' + esc(a.note) : ''}</div></div><button class="mute" data-act="delAbs" data-id="${a.id}" aria-label="Löschen">✕</button></div></div>`).join('')}${!ss.length && !aa.length && !ab.length ? '<div class="mute" style="padding:14px 0">An diesem Tag ist nichts eingetragen.</div>' : ''}</div>`);
   };
   F.acts.calSel = (t) => { F.ui.cal.sel = t.dataset.d; F.render(); dayModal(t.dataset.d); };
+  /* Kalender springt immer auf heute: beim Öffnen des Tabs und beim Zurückkehren in die App */
+  const calToday = () => { F.ui.cal.y = null; F.ui.cal.m = null; F.ui.cal.sel = null; };
+  window.addEventListener('hashchange', () => { if (/kalender/.test(location.hash)) calToday(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && /kalender/.test(location.hash)) { calToday(); F.render(); } });
   const baseKal = F.views.kalender;
   F.views.kalender = () => { const box = document.createElement('div'); box.innerHTML = baseKal(); const last = box.lastElementChild; if (last && last.classList.contains('card')) last.remove(); return box.innerHTML; };
 
