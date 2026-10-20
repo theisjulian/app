@@ -112,7 +112,7 @@ h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em;flex:1 1 auto;m
 .picker{position:relative;display:inline-flex}
 .classBtn{appearance:none;-webkit-appearance:none;background:var(--fill);border:0;border-radius:11px;padding:8px 34px 8px 14px;font-size:15px;font-weight:600;color:var(--label);font-variant-numeric:tabular-nums;cursor:pointer;min-width:64px;text-align:left;font-family:inherit}
 .classBtn:hover{filter:brightness(.97)}
-#clsPop{position:fixed;z-index:9000;background:var(--card,#fff);color:var(--label);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.06);padding:10px;width:min(340px,calc(100vw - 24px));max-height:min(70vh,460px);display:flex;flex-direction:column;gap:8px}
+#clsPop{position:fixed;z-index:9000;background:color-mix(in srgb,var(--canvas) 93%,var(--label) 7%);color:var(--label);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.06);padding:10px;width:min(340px,calc(100vw - 24px));max-height:min(70vh,460px);display:flex;flex-direction:column;gap:8px}
 #clsPop[hidden]{display:none}
 #clsPop input{border:0;background:var(--fill);border-radius:10px;padding:9px 12px;font-size:15px;width:100%;box-sizing:border-box;color:inherit}
 #clsPop .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;overflow:auto;padding:2px}
@@ -3429,7 +3429,7 @@ Object.assign(X, {
 
 
 /* ===== W10: Dashboard (Startseite mit 3 Schwerpunkten) + Piantina/Orario eingebettet neben der Seitenleiste ===== */
-wt.view = wt.view === 'groups' ? 'groups' : 'dash';
+wt.view = 'dash'; /* beim Öffnen immer das Dashboard (nicht die zuletzt benutzte Ansicht) */
 
 Object.assign(X, {
   setName: ['Dein Name', 'Your name', 'Il tuo nome', 'Ton nom', 'Tu nombre'],
@@ -4278,10 +4278,11 @@ function planPrintHtml(m, preview) {
   const API = 'https://api.github.com/repos/';
   const hdr = c => ({ Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
   const path = c => (c.path || 'orario.enc');
+  const ghErr = (st, repo, write) => { const e = new Error(st === 401 ? 'Token ungültig oder abgelaufen' : st === 403 ? 'Token ohne Berechtigung (Repository-Berechtigung „Contents“ muss „Read and write“ sein)' : st === 404 ? 'Repository „' + repo + '“ nicht gefunden oder Token hat dort keinen Zugriff' : 'GitHub ' + st); e.user = st === 401 || st === 403 || st === 404; return e; };
   async function ghGet(c) {
     const r = await fetch(API + c.repo + '/contents/' + path(c) + '?t=' + Date.now(), { headers: hdr(c), cache: 'no-store' });
-    if (r.status === 404) return null;
-    if (!r.ok) throw new Error('GitHub ' + r.status);
+    if (r.status === 404) { const q = await fetch(API + c.repo, { headers: hdr(c), cache: 'no-store' }); if (q.status === 200) return null; throw ghErr(q.status, c.repo); }
+    if (!r.ok) throw ghErr(r.status, c.repo);
     const j = await r.json(); let txt;
     if (j.content) txt = td.decode(unb64(j.content.replace(/\n/g, '')));
     else { const r2 = await fetch(API + c.repo + '/contents/' + path(c), { headers: Object.assign(hdr(c), { Accept: 'application/vnd.github.raw+json' }), cache: 'no-store' }); txt = await r2.text(); }
@@ -4291,7 +4292,7 @@ function planPrintHtml(m, preview) {
     const body = { message: 'Abgleich', content: b64(te.encode(JSON.stringify(blob))) }; if (sha) body.sha = sha;
     const r = await fetch(API + c.repo + '/contents/' + path(c), { method: 'PUT', headers: Object.assign(hdr(c), { 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
     if (r.status === 409 || r.status === 422) { const e = new Error('conflict'); e.conflict = true; throw e; }
-    if (!r.ok) throw new Error('GitHub ' + r.status);
+    if (!r.ok) throw ghErr(r.status, c.repo, true);
     return (await r.json()).content.sha;
   }
   /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). v=null = gelöscht. */
@@ -4346,19 +4347,20 @@ Object.assign(X, {
       if (!S.salt) S.salt = Vault.newSalt();
       const mg = Vault.merge(local(), rem); let reload = false, applied = 0;
       mg.remoteWon.forEach(k => {
+        if (!isKey(k)) return; /* Aussehen (gb_look) und Abgleich-Zugang bleiben je Gerät eigen */
         const e = mg.merged[k];
         if (STATEKEY.test(k) && !(manual || atStart)) return; /* Klassen/Verlauf erst beim Start oder auf Knopfdruck übernehmen, damit nichts überschrieben wird */
         if (e.v == null) localStorage.removeItem(k); else localStorage.setItem(k, e.v);
         S.meta[k] = { h: e.v == null ? 'null' : hash(e.v), t: e.t }; applied++; if (STATEKEY.test(k)) reload = true;
       });
       /* nur zurückschreiben, was wirklich übernommen wurde bzw. lokal neuer ist */
-      const toSend = {}; Object.keys(mg.merged).forEach(k => { const e = mg.merged[k]; toSend[k] = (mg.remoteWon.indexOf(k) >= 0 && !(S.meta[k] && S.meta[k].t === e.t)) ? rem[k] : e; });
+      const toSend = {}; Object.keys(mg.merged).filter(isKey).forEach(k => { const e = mg.merged[k]; toSend[k] = (mg.remoteWon.indexOf(k) >= 0 && !(S.meta[k] && S.meta[k].t === e.t)) ? rem[k] : e; });
       const need = mg.localWon.length > 0 || !r;
       if (need) { const blob = await Vault.seal({ data: toSend }, S.pw, S.salt); try { await Vault.ghPut(cfg, blob, r && r.sha); } catch (e) { if (e.conflict) { r = await Vault.ghGet(cfg); await Vault.ghPut(cfg, blob, r && r.sha); } else throw e; } res = x('ipSent'); }
       else res = applied ? x('ipNew') : x('ipOk');
       sv(S); st = res + ' · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       if (reload) { try { toast(x('ipNew'), 2500); } catch (e) {} setTimeout(() => location.reload(), 900); }
-    } catch (e) { st = e.message === 'pw' ? x('ipBadPw') : x('ipFail'); if (manual) try { toast(st, 4000); } catch (e2) {} }
+    } catch (e) { st = e.message === 'pw' ? x('ipBadPw') : (e.user ? e.message : x('ipFail')); if (manual) try { toast(st, 4000); } catch (e2) {} }
     busy = false; draw();
   }
   /* Oberfläche */
