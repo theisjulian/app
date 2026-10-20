@@ -123,6 +123,20 @@ body.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
   .wk .pn{font-size:10px}
   .wk tr.brk td{height:auto;padding:0 4px;font-size:9.5px}
 }
+/* Eingebettet: Formen passend zum Gruppo-Theme */
+:root[data-skin=graphit]{--r:2px}:root[data-skin=graphit] .card,:root[data-skin=graphit] .chip,:root[data-skin=graphit] .btn,:root[data-skin=graphit] .seg,:root[data-skin=graphit] .seg button,:root[data-skin=graphit] .search input{border-radius:2px}
+:root[data-skin=graphit] .card{border:1px solid var(--tx);box-shadow:none}
+:root[data-skin=heft]{--r:8px}:root[data-skin=heft] .card{border:1.5px solid color-mix(in srgb,var(--tx) 70%,transparent);box-shadow:4px 4px 0 color-mix(in srgb,var(--tx) 14%,transparent)}
+:root[data-skin=heft] .nowwho,:root[data-skin=heft] h1{font-family:'Lora',Georgia,serif}
+:root[data-skin=klar] .card{box-shadow:none;border:1px solid var(--line)}
+:root[data-skin=neon]{--r:24px}:root[data-skin=neon] .btn,:root[data-skin=neon] .chip,:root[data-skin=neon] .seg,:root[data-skin=neon] .seg button{border-radius:999px}
+:root[data-skin=neon] .card{box-shadow:0 0 0 1px color-mix(in srgb,var(--blue) 30%,transparent),0 18px 40px -22px var(--blue)}
+:root[data-skin=salbei],:root[data-skin=wald]{--r:28px}
+:root[data-skin=laguna]{--r:22px}
+.frhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.frhead b{margin-right:auto;font-size:16px}
+.frhead select{min-height:36px}
+.chip[aria-pressed=true]{background:var(--blue);color:var(--onb,#fff);border-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -303,6 +317,7 @@ const D = {
  'Gerade in einer Freistunde': ['In a free period right now', 'Ora libera in questo momento', 'En heure libre en ce moment', 'En hora libre ahora'],
  'In einer Freistunde · {0}': ['Free period · {0}', 'Ora libera · {0}', 'Heure libre · {0}', 'Hora libre · {0}'],
  'Alle Lehrkräfte von A bis Z': ['All teachers A–Z', 'Tutti i docenti dalla A alla Z', 'Tous les enseignants de A à Z', 'Todo el profesorado de la A a la Z'],
+ 'Wähle Tag und Stunde.': ['Choose a day and period.', 'Scegli giorno e ora.', 'Choisissez un jour et une heure.', 'Elige día y hora.'],
  'Raum frei': ['Room free', 'Aula libera', 'Salle libre', 'Aula libre'],
  'Raumplan': ['Room plan', 'Piano aula', 'Planning de la salle', 'Plan del aula'],
  'Klassen': ['Classes', 'Classi', 'Classes', 'Clases'],
@@ -534,8 +549,10 @@ function drawChips() {
   if (f) { list = f.slice(0, 80); head = f.length ? '' : `<p class="hint">${_('Nichts gefunden.')}</p>`; }
   else if (S.tab === 'c') { list = IDX.cnames; }
   else if (S.tab === 'r') {
-    const R = resolve(), fr = R.state === 'over' || R.state === 'weekend' ? [] : freeRooms(R);
-    extra = fr.length ? `<div class="card freebox"><div class="hint">${esc(slotLbl(R))} · ${_('Raum frei')}</div><div class="chips">${fr.map(n => `<button class="chip free" type="button" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>` : '';
+    const R = resolve(), live = S.mode !== 'pick', fr = live && (R.state === 'over' || R.state === 'weekend') ? [] : freeRooms(R);
+    const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join(''), psel = DATA.periods.map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
+    extra = `<div class="card freebox"><div class="frhead"><b>${_('Raum frei')}</b><button class="chip" type="button" id="frNow" aria-pressed="${live}">${_('Jetzt')}</button><select id="frD" aria-label="${_('Tag')}">${dsel}</select><select id="frP" aria-label="${_('Stunde')}">${psel}</select></div>`
+      + (fr.length ? `<div class="chips">${fr.map(n => `<button class="chip free" type="button" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : `<p class="hint" style="margin:6px 0 0">${live && (R.state === 'over' || R.state === 'weekend') ? _('Unterricht für heute vorbei') + ' – ' + _('Wähle Tag und Stunde.') : _('Nichts gefunden.')}</p>`) + `</div>`;
     head = `<p class="hint" style="margin:10px 0 6px">${_('Alle Räume')}</p>`; list = IDX.rnames;
   } else {
     const rec = recents().filter(r => r[0] === 't' && IDX.T[r[1]]).map(r => r[1]);
@@ -549,6 +566,8 @@ function drawChips() {
   box.innerHTML = extra + head + '<div class="chips">' + list.map(chip).join('') + '</div>';
   box.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => choose(b.dataset.pick));
   box.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { S.letter = S.letter === b.dataset.l ? '' : b.dataset.l; drawChips(); });
+  const fn = $('frNow'), fd = $('frD'), fp = $('frP');
+  if (fn) { fn.onclick = () => { S.mode = 'now'; drawChips(); }; const pk = () => { S.mode = 'pick'; S.d = +fd.value; S.p = +fp.value; drawChips(); }; fd.onchange = pk; fp.onchange = pk; }
 }
 function nameBtn(tab, name, label) { const ok = tab === 't' ? IDX.T[name] : tab === 'r' ? IDX.R[name] : IDX.C[name]; return ok ? `<button class="lk" type="button" data-go="${tab}:${esc(name)}">${esc(label || name)}</button>` : esc(label || name); }
 function lessonCard(E, l) {
@@ -579,7 +598,7 @@ function drawDetail() {
   const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join('');
   box.innerHTML = `<div class="card"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div class="nowwho">${esc(S.sel)}${E.plan ? '' : ' <span class="pill mut" title="' + (t ? _('aus dem Klassenplan abgeleitet') : _('aus dem Lehrerplan abgeleitet')) + '">' + _('abgeleitet') + '</span>'}</div><div class="hint">${meta}</div></div><span class="grow"></span><button class="btn sec noprint" id="close" type="button">${_('Schließen')}</button></div><div style="margin-top:12px">${head}</div>${body}
   <div class="pick noprint"><button class="chip" type="button" id="bNow" aria-pressed="${S.mode === 'now'}" style="${S.mode === 'now' ? 'background:var(--blue);color:var(--onb,#fff);border-color:var(--blue)' : ''}">${_('Jetzt')}</button><select id="sD" aria-label="${_('Tag')}">${dsel}</select><select id="sP" aria-label="${_('Stunde')}">${opts}</select></div></div>
-  <div class="card" style="margin-top:12px;padding:10px"><div class="wkh"><h2 style="padding:4px 6px 0">${_('Woche')}${own && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ' <span class="pill mut">' + _('angepasst') + '</span>' : ''}</h2>${EMB && window.parent._planPrint ? `<span class="noprint"><button class="chip" type="button" id="pdfBtn">⎙ ${_('PDF / Drucken')}</button></span>` : ''}${own ? `<span class="noprint"><button class="chip" type="button" id="edBtn" aria-pressed="${!!S.edit}">${S.edit ? '✓ ' + _('Fertig') : '✎ ' + _('Plan bearbeiten')}</button>${S.edit && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ` <button class="chip" type="button" id="edReset">${_('Auf Untis-Plan zurücksetzen')}</button>` : ''}</span>` : ''}</div>${own && S.edit ? `<p class="hint" style="margin:2px 6px 6px">${_('Ziehe eine Stunde auf ein anderes Feld, um sie zu verschieben. Tippe auf eine Stunde, um sie zu ändern, oder auf ein leeres Feld, um eine hinzuzufügen.')}</p>` : ''}<div class="tw">${weekTable(E, R)}</div></div>`;
+  <div class="card" style="margin-top:12px;padding:10px"><div class="wkh"><h2 style="padding:4px 6px 0">${_('Woche')}${own && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ' <span class="pill mut">' + _('angepasst') + '</span>' : ''}</h2>${EMB && window.parent._planPrint && !window.parent._phoneMode ? `<span class="noprint"><button class="chip" type="button" id="pdfBtn">⎙ ${_('PDF / Drucken')}</button></span>` : ''}${own ? `<span class="noprint"><button class="chip" type="button" id="edBtn" aria-pressed="${!!S.edit}">${S.edit ? '✓ ' + _('Fertig') : '✎ ' + _('Plan bearbeiten')}</button>${S.edit && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ` <button class="chip" type="button" id="edReset">${_('Auf Untis-Plan zurücksetzen')}</button>` : ''}</span>` : ''}</div>${own && S.edit ? `<p class="hint" style="margin:2px 6px 6px">${_('Ziehe eine Stunde auf ein anderes Feld, um sie zu verschieben. Tippe auf eine Stunde, um sie zu ändern, oder auf ein leeres Feld, um eine hinzuzufügen.')}</p>` : ''}<div class="tw">${weekTable(E, R)}</div></div>`;
   $('close').onclick = () => { S.sel = null; render(); };
   $('bNow').onclick = () => { S.mode = 'now'; drawDetail(); };
   $('sD').onchange = () => { S.mode = 'pick'; S.d = +$('sD').value; S.p = +$('sP').value; drawDetail(); };
@@ -785,8 +804,9 @@ document.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.fi
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden && !$('sheet').dataset.lock) closeSheet(); });
 if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 setInterval(() => { if (DATA && S.mode === 'now' && !document.hidden && $('sheet').hidden) { drawMe(); if (S.sel) drawDetail(); } }, 60000);
-if (EMB) { try { const P = parent.document.documentElement, cs = parent.getComputedStyle(P), r = document.documentElement, map = { '--blue': '--blue', '--bg': '--canvas', '--solid': '--glass-solid', '--tx': '--label', '--tx2': '--label-2', '--glass': '--glass', '--fill': '--fill', '--line': '--hair', '--onb': '--on-accent' };
+function embTheme() { if (!EMB) return; try { document.documentElement.dataset.skin = parent.document.documentElement.dataset.skin || ''; const P = parent.document.documentElement, cs = parent.getComputedStyle(P), r = document.documentElement, map = { '--blue': '--blue', '--bg': '--canvas', '--solid': '--glass-solid', '--tx': '--label', '--tx2': '--label-2', '--glass': '--glass', '--fill': '--fill', '--line': '--hair', '--onb': '--on-accent' };
   Object.keys(map).forEach(k => { const v = cs.getPropertyValue(map[k]).trim(); if (v) r.style.setProperty(k, v); }); r.style.setProperty('--blue-t', 'color-mix(in srgb,var(--blue) 14%,transparent)'); const dk = P.dataset.theme === 'dark' || (P.dataset.theme !== 'light' && parent.matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = dk ? 'dark' : 'light'; r.style.colorScheme = dk ? 'dark' : 'light'; try { parent.document.getElementById('stFrame').style.colorScheme = dk ? 'dark' : 'light'; } catch (e) {} r.style.background = document.body.style.background = 'var(--bg)'; document.body.classList.add('emb'); const ff = parent.getComputedStyle(parent.document.body).fontFamily; if (ff) document.body.style.fontFamily = ff; } catch (e) {} }
+embTheme(); window._orTheme = embTheme;
 load(); render();
 /* Querformat am Handy: direkt zum Wochenplan */
 try { const mq = matchMedia('(orientation:landscape) and (max-height:520px)'); const go = () => { if (mq.matches && S.sel) { const w = document.querySelector('.wkh'); if (w) w.closest('.card').scrollIntoView({ block: 'start' }); } }; mq.addEventListener ? mq.addEventListener('change', go) : mq.addListener(go); } catch (e) {}

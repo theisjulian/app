@@ -81,7 +81,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
   </div>
 </div>
 <div id="top" hidden></div>
-<div id="stage" hidden><iframe id="fO" title="Stundenplan"></iframe><iframe id="fG" title="Gruppo" hidden></iframe></div>
+<div id="stage" hidden><iframe id="fG" title="Orario und Gruppo"></iframe></div>
 <nav id="tabs" hidden aria-label="Bereiche">
   <button data-t="o" type="button" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8.5 3v3M15.5 3v3M8 13.5h2.5M13.5 13.5H16M8 17h2.5"/></svg>Wer ist wo?</button>
   <button data-t="g" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Gruppo</button>
@@ -200,7 +200,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     $('pw2Box').hidden = true; $('pw').autocomplete = has ? 'current-password' : 'new-password';
   }
   function showUI(on) { ['top', 'stage', 'tabs'].forEach(id => $(id).hidden = !on); $('lock').hidden = on; }
-  function showLock() { showUI(false); $('sheet').hidden = true; $('fO').srcdoc = ''; $('fG').srcdoc = ''; gLoaded = false; $('pw').value = ''; $('pw2').value = ''; showErr(''); $('bEmpty').hidden = true; window._allowEmpty = false; mode(); setTimeout(() => { try { $('pw').focus(); } catch (e) {} }, 50); }
+  function showLock() { showUI(false); $('sheet').hidden = true; $('fG').srcdoc = ''; gLoaded = false; $('pw').value = ''; $('pw2').value = ''; showErr(''); $('bEmpty').hidden = true; window._allowEmpty = false; mode(); setTimeout(() => { try { $('pw').focus(); } catch (e) {} }, 50); }
   function lockNow() { keyDel(); stayOn = false; pw = ''; store = { data: {} }; window._opData = null; cfg = null; sha = null; dirty = false; clearTimeout(saveT); clearTimeout(pushT); showLock(); }
   /* Lokal (verschlüsselt) gespeichert wird alles – abgeglichen nur die echten Daten (Vault.SYNC) */
   async function persist() { if (!pw) return; const ok = LS.set('opv_blob', JSON.stringify(await Vault.seal({ data: store.data }, pw, salt))); if (!ok) setStat('bad', 'iPhone-Speicher voll – bitte abgleichen'); }
@@ -235,19 +235,26 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
   const SRC = {};
   async function load(name) { if (!SRC[name]) SRC[name] = await (await fetch(name, { cache: 'no-cache' })).text(); return SRC[name]; }
   const base = () => '<base href="' + location.href.replace(/[^/]*$/, '') + '">';
-  async function startO() { window._opData = store.data; const h = await load('orario.html'); $('fO').srcdoc = h.replace('<head>', '<head>' + base() + '<script>(' + shim.toString() + ')(true);<' + '/script>'); }
   async function startG() { window._opData = store.data;
-    try { const g = store.data.gb_tool && store.data.gb_tool.v ? JSON.parse(store.data.gb_tool.v) : {}; if (store.data.orario_v1 && store.data.orario_v1.v && !(g.plan && g.plan.on)) { g.plan = Object.assign({}, g.plan, { on: true }); store.data.gb_tool = { v: JSON.stringify(g), t: Date.now() }; } } catch (e) {} const h = await load('gruppo.html'); $('fG').srcdoc = h.replace('<head>', '<head>' + base() + '<style>' + PHONE_CSS + '</style><script>(' + shim.toString() + ')(false);window._phoneOrario=function(){top._showO()};<' + '/script>'); gLoaded = true; }
-  async function startUI() { showUI(true); await startO(); if (tab === 'g') await startG(); show(tab); }
-  async function refresh() { await startO(); if (gLoaded) await startG(); }
+    try { const g = store.data.gb_tool && store.data.gb_tool.v ? JSON.parse(store.data.gb_tool.v) : {}; if (store.data.orario_v1 && store.data.orario_v1.v && !(g.plan && g.plan.on)) { g.plan = Object.assign({}, g.plan, { on: true }); store.data.gb_tool = { v: JSON.stringify(g), t: Date.now() }; } } catch (e) {}
+    const h = await load('gruppo.html'), f = $('fG');
+    await new Promise(res => { f.onload = () => res(); f.srcdoc = h.replace('<head>', '<head>' + base() + '<style>' + PHONE_CSS + '</style><script>(' + shim.toString() + ')(false);window._phoneMode=true;window._phoneOrario=function(){top._showO()};<' + '/script>'); setTimeout(res, 4000); });
+    gLoaded = true; window._phTheme(); show(tab); }
+  async function startUI() { showUI(true); await startG(); }
+  async function refresh() { await startG(); }
   window._showO = () => show('o');
+  /* Tab-Leiste und Ränder übernehmen das Gruppo-Theme dieses Geräts */
+  window._phTheme = () => { try { const d = $('fG').contentDocument, cs = d && getComputedStyle(d.documentElement); if (!cs) return; const r = document.documentElement.style, g = n => cs.getPropertyValue(n).trim();
+    const map = { '--bar': g('--sheet') || g('--glass-solid'), '--bg': g('--canvas'), '--card': g('--sheet'), '--tx': g('--label'), '--tx2': g('--label-2'), '--blue': g('--blue'), '--line': g('--hairline'), '--fill': g('--fill') };
+    Object.keys(map).forEach(k => { if (map[k]) r.setProperty(k, map[k]); });
+    document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = map['--bar'] || m.content); } catch (e) {} };
   function show(t) {
-    tab = t; $('fO').hidden = t !== 'o'; $('fG').hidden = t !== 'g';
+    tab = t; try { const w = $('fG').contentWindow; w && w._phoneOr && w._phoneOr(t === 'o'); } catch (e) {}
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   }
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = async () => {
     const t = b.dataset.t; if (t === 'more') { $('sheet').hidden = false; return; }
-    if (t === 'g' && !gLoaded) await startG(); show(t);
+    show(t);
   });
   function schedulePush() { if (!cfg || !cfg.repo) { dirty = false; setStat('ok', 'Nur auf diesem iPhone gesichert'); return; } clearTimeout(pushT); pushT = setTimeout(push, 1500); }
   async function push(tries) {
