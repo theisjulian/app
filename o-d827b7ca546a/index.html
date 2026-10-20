@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gruppo">
+<meta name="theme-color" content="#2F5BEA">
+<title>Gruppo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#eef0f5;--card:#fff;--tx:#14161a;--tx2:#6b7280;--blue:#2f5bea;--red:#d8201c;--fill:rgba(120,120,140,.14)}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0f1d;--card:#1a1f35;--tx:#f3f4f8;--tx2:#9aa1b5;--blue:#6f93ff;--fill:rgba(160,170,200,.16)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+#lock{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 22px max(24px,env(safe-area-inset-bottom));overflow:auto}
+#lock[hidden],#sheet[hidden],#fab[hidden],#frame[hidden]{display:none}
+.box{width:100%;max-width:380px;background:var(--card);border-radius:24px;padding:26px 22px;box-shadow:0 20px 60px rgba(0,0,0,.14)}
+.ic{width:64px;height:64px;border-radius:16px;margin:0 auto 14px;display:block}
+h1{margin:0 0 4px;text-align:center;font-size:26px;letter-spacing:-.02em}
+.sub{margin:0 0 18px;text-align:center;color:var(--tx2);font-size:14px}
+label{display:block;font-size:12px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;margin:12px 4px 5px}
+input{width:100%;border:0;background:var(--fill);color:var(--tx);border-radius:13px;padding:14px 14px;font-size:17px;font-family:inherit}
+input:focus{outline:2px solid var(--blue)}
+.btn{width:100%;margin-top:16px;border:0;border-radius:14px;background:var(--blue);color:#fff;font-size:17px;font-weight:600;padding:15px;font-family:inherit}
+.btn.sec{background:var(--fill);color:var(--tx);margin-top:8px}
+.btn.red{background:rgba(216,32,28,.12);color:var(--red)}
+.btn:disabled{opacity:.5}
+.err{color:var(--red);font-size:14px;min-height:20px;margin:10px 4px 0;text-align:center}
+.hint{font-size:13px;color:var(--tx2);margin:8px 4px 0}
+label.stay{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:15px;font-weight:500;color:var(--tx);margin:14px 4px 0}label.stay input{width:22px;height:22px;flex:none}
+details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px;cursor:pointer}
+#frame{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top);width:100%;height:calc(100% - env(safe-area-inset-top));border:0;background:var(--bg)}
+#fab{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));z-index:20;width:44px;height:44px;border-radius:50%;border:0;background:var(--card);color:var(--tx);box-shadow:0 4px 18px rgba(0,0,0,.25);font-size:18px;opacity:.85}
+#fab i{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:#9aa1b5;border:2px solid var(--card)}
+#fab i.ok{background:#27ae60}#fab i.wait{background:#f5a623}#fab i.bad{background:var(--red)}
+#sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center}
+#sheet .box{border-radius:24px 24px 0 0;max-width:520px;padding-bottom:max(22px,env(safe-area-inset-bottom))}
+.st{display:flex;align-items:center;gap:8px;font-size:15px;margin:4px 0 6px}
+.st i{width:10px;height:10px;border-radius:50%;background:#9aa1b5;flex:none}.st i.ok{background:#27ae60}.st i.wait{background:#f5a623}.st i.bad{background:var(--red)}
+</style>
+</head>
+<body>
+<div id="lock" hidden>
+  <div class="box">
+    <img class="ic" src="icons/icon-192.png" alt="">
+    <h1>Gruppo</h1><p class="sub" id="lsub">Privat · verschlüsselt</p>
+    <form id="lf" autocomplete="off">
+      <div id="setupBox" hidden>
+        <label for="repo">GitHub-Repository</label><input id="repo" placeholder="benutzername/orario-daten" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <label for="tok">Zugangs-Token</label><input id="tok" type="password" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <p class="hint">Beides nur einmal. Wird verschlüsselt auf diesem Gerät gespeichert. Ohne Eintrag bleibt alles nur auf diesem Gerät.</p>
+      </div>
+      <label for="pw" id="pwl">Passwort</label><input id="pw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go">
+      <div id="pw2Box" hidden><label for="pw2">Passwort wiederholen</label><input id="pw2" type="password" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+      <label class="stay" id="stayL"><input type="checkbox" id="stay"> Angemeldet bleiben (auf diesem iPhone)</label>
+      <div class="err" id="err" role="alert"></div>
+      <button class="btn" id="go" type="submit">Entsperren</button>
+    </form>
+  </div>
+</div>
+<iframe id="frame" hidden title="Gruppo"></iframe>
+<button id="fab" hidden aria-label="Menü">🔒<i id="fabDot"></i></button>
+<div id="sheet" hidden>
+  <div class="box">
+    <h1 style="font-size:20px;text-align:left">Gruppo privat</h1>
+    <div class="st"><i id="stDot"></i><span id="stTxt">–</span></div>
+    <button class="btn" id="bSync">Jetzt abgleichen</button>
+    <button class="btn sec" id="bLock">Sperren / Abmelden</button>
+    <details><summary>Mehr</summary>
+      <button class="btn sec" id="bCfg">GitHub-Zugang ändern</button>
+      <button class="btn red" id="bWipe">Daten auf diesem Gerät löschen</button>
+      <p class="hint">Löschen entfernt nur dieses Gerät. Die verschlüsselte Datei auf GitHub bleibt erhalten.</p>
+    </details>
+    <button class="btn sec" id="bClose" style="margin-top:14px">Schließen</button>
+  </div>
+</div>
+<script>/* theis Tresor – verschlüsselter Abgleich (AES-256-GCM, Schlüssel aus Passwort via PBKDF2-SHA256).
+   Gleicher Code im iPhone-Orario und in Gruppo. Auf GitHub liegt nur verschlüsselter Text. */
+(function (g) {
+  const te = new TextEncoder(), td = new TextDecoder(), ITER = 600000, KEYS = ['orario_v1', 'orario_me', 'orario_mine', 'orario_prev'];
+  const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const keyCache = {};
+  async function key(pw, saltB64, iter) {
+    if (typeof pw !== 'string') return pw; /* fertiger Schlüssel (Angemeldet bleiben) */
+    const id = saltB64 + '|' + iter + '|' + pw; if (keyCache[id]) return keyCache[id];
+    const base = await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveKey']);
+    return keyCache[id] = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: unb64(saltB64), iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  const newSalt = () => b64(crypto.getRandomValues(new Uint8Array(16)));
+  async function seal(obj, pw, salt) {
+    salt = salt || newSalt(); const k = await key(pw, salt, ITER), iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, te.encode(JSON.stringify(obj))));
+    return { v: 1, iter: ITER, salt, iv: b64(iv), ct: b64(ct) };
+  }
+  async function open(blob, pw) {
+    const k = await key(pw, blob.salt, blob.iter || ITER);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(blob.iv) }, k, unb64(blob.ct));
+    return JSON.parse(td.decode(pt));
+  }
+  /* GitHub (privates Repository, Datei orario.enc) */
+  const API = 'https://api.github.com/repos/';
+  const hdr = c => ({ Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
+  const path = c => (c.path || 'orario.enc');
+  async function ghGet(c) {
+    const r = await fetch(API + c.repo + '/contents/' + path(c) + '?t=' + Date.now(), { headers: hdr(c), cache: 'no-store' });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    const j = await r.json(); let txt;
+    if (j.content) txt = td.decode(unb64(j.content.replace(/\n/g, '')));
+    else { const r2 = await fetch(API + c.repo + '/contents/' + path(c), { headers: Object.assign(hdr(c), { Accept: 'application/vnd.github.raw+json' }), cache: 'no-store' }); txt = await r2.text(); }
+    return { blob: JSON.parse(txt), sha: j.sha };
+  }
+  async function ghPut(c, blob, sha) {
+    const body = { message: 'Abgleich', content: b64(te.encode(JSON.stringify(blob))) }; if (sha) body.sha = sha;
+    const r = await fetch(API + c.repo + '/contents/' + path(c), { method: 'PUT', headers: Object.assign(hdr(c), { 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
+    if (r.status === 409 || r.status === 422) { const e = new Error('conflict'); e.conflict = true; throw e; }
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    return (await r.json()).content.sha;
+  }
+  /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). v=null = gelöscht. */
+  function merge(local, remote) {
+    const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local || {}).concat(Object.keys(remote || {})));
+    ks.forEach(k => { const l = local && local[k], r = remote && remote[k];
+      if (l && (!r || l.t >= r.t)) { out[k] = l; if (!r || r.v !== l.v) localWon.push(k); } else { out[k] = r; if (!l || l.v !== r.v) remoteWon.push(k); } });
+    return { merged: out, remoteWon, localWon };
+  }
+  g.Vault = { deriveKey: (pw, salt) => key(pw, salt, ITER), seal, open, ghGet, ghPut, merge, newSalt };
+})(window);
+</script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id), LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
+  const AUTOLOCK = 3 * 60 * 1000; let stayOn = false;
+  const idb = (mode, fn) => new Promise(res => { try { const o = indexedDB.open('opv', 1); o.onupgradeneeded = () => o.result.createObjectStore('k'); o.onerror = () => res(null); o.onsuccess = () => { const t = o.result.transaction('k', mode), r = fn(t.objectStore('k')); t.oncomplete = () => res(r && r.result !== undefined ? r.result : null); t.onerror = () => res(null); }; } catch (e) { res(null); } });
+  const keyGet = () => idb('readonly', s => s.get('key')), keySet = k => idb('readwrite', s => s.put(k, 'key')), keyDel = () => idb('readwrite', s => s.delete('key'));
+  let pw = '', salt = '', store = { data: {} }, cfg = null, sha = null, dirty = false, hiddenAt = 0, saveT = 0, pushT = 0, busy = false;
+  const setStat = (cls, txt) => { $('fabDot').className = cls; $('stDot').className = cls; $('stTxt').textContent = txt; };
+  const fix = d => { d = d || {}; Object.keys(d).forEach(k => { if (typeof d[k] === 'string') d[k] = { v: d[k], t: 0 }; }); return d; };
+  const showErr = m => { $('err').textContent = m || ''; };
+  function mode() {
+    const has = !!LS.get('opv_blob'); $('setupBox').hidden = has; $('pwl').textContent = has ? 'Passwort' : 'Passwort (wie in Gruppo)';
+    $('go').textContent = has ? 'Entsperren' : 'Einrichten'; $('stay').checked = false; $('lsub').textContent = has ? 'Privat · verschlüsselt' : 'Einrichtung · einmalig';
+    $('pw2Box').hidden = true; $('pw').autocomplete = has ? 'current-password' : 'new-password';
+  }
+  function showLock() { $('lock').hidden = false; $('frame').hidden = true; $('fab').hidden = true; $('sheet').hidden = true; $('frame').srcdoc = ''; $('pw').value = ''; $('pw2').value = ''; showErr(''); mode(); setTimeout(() => { try { $('pw').focus(); } catch (e) {} }, 50); }
+  function lockNow() { keyDel(); stayOn = false; pw = ''; store = { data: {} }; window._opData = null; cfg = null; sha = null; clearTimeout(saveT); clearTimeout(pushT); showLock(); }
+  async function persist() { LS.set('opv_blob', JSON.stringify(await Vault.seal({ data: store.data }, pw, salt))); }
+  async function persistCfg() { LS.set('opv_cfg', JSON.stringify(await Vault.seal(cfg || {}, pw, salt))); }
+  /* Gruppo im Rahmen starten – mit eigenem, nur im Arbeitsspeicher liegenden Speicher (nichts im Klartext auf dem Gerät) */
+  function shim() {
+    const T = top, m = T._opData, live = k => m[k] && m[k].v != null;
+    const ls = { getItem: k => live(k) ? m[k].v : null, setItem: (k, v) => { v = String(v); if (!m[k] || m[k].v !== v) { m[k] = { v, t: Date.now() }; T._opChanged(); } }, removeItem: k => { if (live(k)) { m[k] = { v: null, t: Date.now() }; T._opChanged(); } }, clear() {}, key: i => Object.keys(m).filter(live)[i] || null };
+    Object.defineProperty(ls, 'length', { get: () => Object.keys(m).filter(live).length });
+    Object.defineProperty(window, 'localStorage', { get: () => ls, configurable: true });
+    const d = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc'), inner = '<script>Object.defineProperty(window,"localStorage",{get:function(){return parent.localStorage},configurable:true})<' + '/script>';
+    Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', { set(v) { d.set.call(this, String(v).replace('<head>', '<head>' + inner)); }, get() { return d.get.call(this); } });
+  }
+  async function startFrame() {
+    let html = await (await fetch('gruppo.html', { cache: 'no-cache' })).text();
+    window._opData = store.data;
+    html = html.replace('<head>', '<head><base href="' + location.href.replace(/[^/]*$/, '') + '"><script>(' + shim.toString() + ')();<' + '/script>');
+    const f = $('frame'); f.srcdoc = html; f.hidden = false; $('lock').hidden = true; $('fab').hidden = false;
+  }
+  window._opChanged = () => {
+    dirty = true; setStat('wait', 'Änderung wird gesichert …');
+    clearTimeout(saveT); saveT = setTimeout(async () => { try { await persist(); } catch (e) {} schedulePush(); }, 700);
+  };
+  function schedulePush() { if (!cfg || !cfg.repo) { dirty = false; setStat('ok', 'Nur auf diesem Gerät gesichert'); return; } clearTimeout(pushT); pushT = setTimeout(push, 1500); }
+  async function push(retry) {
+    if (!cfg || !cfg.repo || !pw) return; if (busy) { pushT = setTimeout(push, 1500); return; } busy = true; setStat('wait', 'Wird abgeglichen …');
+    try { sha = await Vault.ghPut(cfg, await Vault.seal({ data: store.data }, pw, salt), sha); dirty = false; setStat('ok', 'Abgeglichen ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })); }
+    catch (e) { busy = false; if (e.conflict && !retry) { await pull(); return push(true); } setStat('bad', navigator.onLine ? 'Abgleich fehlgeschlagen' : 'Offline – wird später abgeglichen'); return; }
+    busy = false;
+  }
+  /* Rückgabe: { leer, changed (Neues vom Computer übernommen), needPush } */
+  async function pull() {
+    if (!cfg || !cfg.repo) return { changed: false, needPush: false };
+    const r = await Vault.ghGet(cfg); if (!r) return { leer: true, needPush: true }; sha = r.sha; salt = r.blob.salt;
+    const o = await Vault.open(r.blob, pw), mg = Vault.merge(store.data, o.data || {});
+    if (mg.remoteWon.length) { store.data = mg.merged; await persist(); }
+    return { changed: mg.remoteWon.length > 0, needPush: mg.localWon.length > 0 };
+  }
+  async function sync() {
+    if (!cfg || !cfg.repo) { setStat('ok', 'Nur auf diesem Gerät'); return; }
+    setStat('wait', 'Wird abgeglichen …');
+    try {
+      const res = await pull(); if (res.changed) await startFrame();
+      if (res.needPush || dirty) await push(); else setStat('ok', 'Abgeglichen ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+    } catch (e) { setStat('bad', navigator.onLine ? 'Abgleich fehlgeschlagen' : 'Offline'); }
+  }
+  async function afterLogin() { if ($('stay').checked) { try { await keySet(await Vault.deriveKey(pw, salt)); stayOn = true; } catch (e) {} } }
+  /* Automatisch weitermachen, wenn „Angemeldet bleiben“ aktiv war */
+  async function autoLogin() {
+    const raw = LS.get('opv_blob'), k = raw && await keyGet(); if (!k) return false;
+    try { const blob = JSON.parse(raw), o = await Vault.open(blob, k); pw = k; salt = blob.salt; store = { data: fix(o.data) }; stayOn = true;
+      try { const c = LS.get('opv_cfg'); cfg = c ? await Vault.open(JSON.parse(c), k) : {}; } catch (e) { cfg = {}; }
+      await startFrame(); sync(); return true; } catch (e) { keyDel(); return false; }
+  }
+  $('lf').onsubmit = async e => {
+    e.preventDefault(); showErr(''); const p = $('pw').value; if (!p) { showErr('Bitte Passwort eingeben.'); return; }
+    $('go').disabled = true;
+    try {
+      const raw = LS.get('opv_blob');
+      if (raw) { /* Entsperren */
+        const blob = JSON.parse(raw); let o; try { o = await Vault.open(blob, p); } catch (x) { showErr('Falsches Passwort.'); return; }
+        pw = p; salt = blob.salt; store = { data: fix(o.data) }; try { const c = LS.get('opv_cfg'); cfg = c ? await Vault.open(JSON.parse(c), p) : {}; } catch (x) { cfg = {}; }
+        await afterLogin(); await startFrame(); sync();
+      } else { /* Einrichten */
+        const repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), tok = $('tok').value.trim(), c = repo && tok ? { repo, token: tok } : {};
+        let remote = null;
+        if (c.repo) { try { remote = await Vault.ghGet(c); } catch (x) { showErr('GitHub nicht erreichbar oder Zugang falsch (' + x.message + ').'); return; } }
+        if (remote) { let o; try { o = await Vault.open(remote.blob, p); } catch (x) { showErr('Falsches Passwort (muss dasselbe wie in Gruppo sein).'); return; } pw = p; salt = remote.blob.salt; store = { data: fix(o.data) }; sha = remote.sha; }
+        else {
+          if ($('pw2Box').hidden) { $('pw2Box').hidden = false; showErr(c.repo ? 'Noch keine Daten auf GitHub. Neues Passwort bitte wiederholen.' : 'Neues Passwort bitte wiederholen.'); $('pw2').focus(); return; }
+          if ($('pw2').value !== p) { showErr('Die Passwörter stimmen nicht überein.'); return; }
+          if (p.length < 8) { showErr('Bitte mindestens 8 Zeichen.'); return; }
+          pw = p; salt = Vault.newSalt(); store = { data: {} };
+        }
+        cfg = c; await persist(); await persistCfg(); await afterLogin(); await startFrame(); if (c.repo && !remote) { dirty = true; push(); } else setStat('ok', c.repo ? 'Abgeglichen' : 'Nur auf diesem Gerät');
+      }
+    } finally { $('go').disabled = false; }
+  };
+  $('fab').onclick = () => { $('sheet').hidden = false; };
+  $('bClose').onclick = () => { $('sheet').hidden = true; };
+  $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').hidden = true; };
+  $('bLock').onclick = lockNow;
+  $('bSync').onclick = () => { $('sheet').hidden = true; sync(true); };
+  $('bCfg').onclick = async () => {
+    const repo = prompt('GitHub-Repository (benutzername/name) – leer = nur dieses Gerät', cfg && cfg.repo || ''); if (repo === null) return;
+    let token = cfg && cfg.token || ''; if (repo.trim()) { const t = prompt('Zugangs-Token (leer lassen = unverändert)', ''); if (t === null) return; if (t.trim()) token = t.trim(); }
+    cfg = repo.trim() ? { repo: repo.trim().replace(/^https?:\/\/github\.com\//, ''), token } : {}; await persistCfg(); sha = null; $('sheet').hidden = true; sync(true);
+  };
+  $('bWipe').onclick = () => { if (!confirm('Alle Gruppo-Daten auf diesem Gerät löschen? (Auf GitHub bleibt die verschlüsselte Kopie.)')) return; LS.del('opv_blob'); LS.del('opv_cfg'); lockNow(); };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); if (dirty) { clearTimeout(pushT); push(); } }
+    else if (pw && !stayOn && hiddenAt && Date.now() - hiddenAt > AUTOLOCK) lockNow();
+    else if (pw) sync();
+  });
+  addEventListener('pagehide', () => { if (dirty) { try { persist(); } catch (e) {} } });
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+  showLock(); autoLogin();
+})();
+</script>
+</body>
+</html>
