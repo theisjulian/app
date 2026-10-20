@@ -252,3 +252,23 @@ html[data-theme=apple][data-mode][data-font] .badge{background:var(--card2);font
 html[data-theme=apple][data-mode][data-font] .dp{border:0;background:var(--card2)}html[data-theme=apple][data-mode][data-font] .dp.on{box-shadow:0 0 0 2px var(--acc);background:var(--card2)}
 html[data-theme=apple][data-mode][data-font] .hero .btn:not(.pri),html[data-theme=apple][data-mode][data-font] .btn:not(.pri):not(.danger){color:var(--a)}
 html[data-theme=apple][data-mode][data-font] .hero .btn.ghost{color:var(--a)!important;border:0!important;background:var(--card2)!important}
+/* ===== Wochen-Übersicht ===== */
+.ov-top{display:flex;align-items:center;gap:18px}.ov-rings{flex:none}.ov-arc{transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)}
+.ov-legs{flex:1;display:grid;gap:10px}.ov-leg{display:flex;align-items:center;gap:10px}.ov-leg i{width:10px;height:10px;border-radius:50%;flex:none}.ov-leg span{display:block;font-size:12px;color:var(--mute)}.ov-leg b{font-size:21px;letter-spacing:-.02em}.ov-leg small{font-size:13px;color:var(--mute);font-weight:500}
+.ov-cmp{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px}.ov-d{color:var(--mute)}.ov-d.up{color:var(--ok)}.ov-d.dn{color:var(--warn)}
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ov-t{background:var(--card);border-radius:var(--r2);padding:14px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.ov-t:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tc)}
+.ov-t b{display:block;font-size:22px;letter-spacing:-.02em;margin-bottom:2px}.ov-t span{font-size:12px;color:var(--mute);display:block}.ov-t .ov-d{display:block;margin-top:6px;font-size:11px}.ov-ti{display:none}
+.ov-trend{display:flex;gap:8px;align-items:flex-end}.ov-bar{flex:1;text-align:center}.ov-bar span{font-size:10px;color:var(--mute);display:block;margin-top:5px}.ov-bar.now span{color:var(--text);font-weight:700}
+.ov-stack{display:flex;flex-direction:column;justify-content:flex-end;gap:2px}.ov-stack i{display:block;border-radius:4px;min-height:0}.ov-bar:not(.now) .ov-stack{opacity:.55}
+@media(min-width:900px){.ov-grid{grid-template-columns:repeat(4,1fr)}}
+/* ===== Kalender: Feiertage, Ferien, Urlaub (dezent) ===== */
+.cal .d.fe{background:color-mix(in srgb,var(--a) 9%,var(--card))}
+.cal .d.ft{color:var(--bad)}.cal .d.ft.today{color:var(--a)}
+.cal .d.ur{background:color-mix(in srgb,#6aa9ff 20%,var(--card));border-color:color-mix(in srgb,#6aa9ff 45%,var(--line))}
+.cal-leg{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--mute)}.cal-leg span{display:flex;align-items:center;gap:5px}
+.lg{width:11px;height:11px;border-radius:4px;display:inline-block;border:1px solid var(--line)}.lg.ft{background:var(--card);border-color:var(--bad)}.lg.fe{background:color-mix(in srgb,var(--a) 22%,var(--card))}.lg.ur{background:color-mix(in srgb,#6aa9ff 40%,var(--card))}
+.dashseg{position:absolute;right:0;top:-6px;display:flex;background:var(--card2);border-radius:12px;padding:2px}
+.dashseg button{width:34px;height:28px;display:grid;place-items:center;border-radius:10px;color:var(--mute)}.dashseg button.on{background:var(--card);color:var(--a);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.ur-card{border-color:color-mix(in srgb,#6aa9ff 55%,var(--line))}

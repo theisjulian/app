@@ -99,6 +99,37 @@
   };
   F.progStats = stats;
   const kpi = (n, l) => `<div class="kpi"><b data-count="${n}">${n}</b><span>${l}</span></div>`;
+
+  /* ---------- Wochen-Übersicht (Startseite „Woche“) ---------- */
+  const GOAL = { kraft: 3, ausd: 4, tage: 5 };
+  const ringSvg = (list) => { const R = [52, 38, 24]; return `<svg class="ov-rings" viewBox="0 0 120 120" width="124" height="124"><g fill="none" stroke-width="11" stroke-linecap="round">${list.map(([pct, col], i) => { const c = 2 * Math.PI * R[i], p = Math.max(0.012, Math.min(1, pct)); return `<circle cx="60" cy="60" r="${R[i]}" stroke="${col}" opacity=".18"/><circle class="ov-arc" cx="60" cy="60" r="${R[i]}" stroke="${col}" stroke-dasharray="${(p * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 60 60)"/>`; }).join('')}</g></svg>`; };
+  const delta = (n, o, unit) => { const d = n - o; if (!o && !n) return ''; return `<span class="ov-d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${d > 0 ? '▲ +' : d < 0 ? '▼ −' : '= '}${d === 0 ? 'gleich viel' + (unit || '') : Math.abs(Math.round(d * 10) / 10) + (unit || '')} ggü. Vorwoche</span>`; };
+  F.weekOverview = () => {
+    const S = F.S, st = stats('woche'), f0 = st.from, p0 = F.addDays(f0, -7), p1 = F.addDays(f0, -1);
+    const inP = (d) => d >= p0 && d <= p1;
+    const pSes = S.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && inP(s.session_date)).length;
+    const pA = S.activities.filter((a) => inP(a.start_at.slice(0, 10)));
+    const pRideKm = pA.filter((a) => RIDE.includes(a.sport)).reduce((t, a) => t + (a.distance_m || 0), 0) / 1000;
+    const pDays = new Set([...S.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && inP(s.session_date)).map((s) => s.session_date), ...pA.map((a) => a.start_at.slice(0, 10))]).size;
+    const ausdH = st.rideH + st.acts.filter((a) => HIKE.includes(a.sport)).reduce((t, a) => t + (a.moving_s || 0), 0) / 3600;
+    const col = ['var(--a)', '#6aa9ff', '#e9a23b'];
+    const ring = ringSvg([[st.ses.length / GOAL.kraft, col[0]], [ausdH / GOAL.ausd, col[1]], [st.days / GOAL.tage, col[2]]]);
+    const leg = (c, l, v, g) => `<div class="ov-leg"><i style="background:${c}"></i><div><span>${l}</span><b>${v}<small> / ${g}</small></b></div></div>`;
+    const end = F.addDays(f0, 6), f = (n, d = 1) => F.fmt(Math.round(n * Math.pow(10, d)) / Math.pow(10, d));
+    const tile = (c, ic, big, sub, extra) => `<div class="ov-t" style="--tc:${c}"><div class="ov-ti">${ic}</div><b>${big}</b><span>${sub}</span>${extra || ''}</div>`;
+    const wk = stats('3m').wk.slice(-8), mx = Math.max(3, ...wk.map((w) => w.kraft + w.rad + w.wan));
+    const trend = `<div class="ov-trend">${wk.map((w, i) => `<div class="ov-bar${i === wk.length - 1 ? ' now' : ''}"><div class="ov-stack" style="height:64px"><i style="height:${w.wan / mx * 64}px;background:#e9a23b"></i><i style="height:${w.rad / mx * 64}px;background:#6aa9ff"></i><i style="height:${w.kraft / mx * 64}px;background:var(--a)"></i></div><span>${w.l.slice(0, 5)}</span></div>`).join('')}</div>`;
+    return `<div class="card ov-main"><div class="row between" style="margin-bottom:12px"><div class="h2" style="margin:0">Diese Woche</div><span class="small mute">${F.dshort(f0)} – ${F.dshort(end)}</span></div>
+      <div class="ov-top">${ring}<div class="ov-legs">${leg(col[0], 'Kraft', st.ses.length, GOAL.kraft)}${leg(col[1], 'Ausdauer (h)', f(ausdH), GOAL.ausd)}${leg(col[2], 'Aktive Tage', st.days, GOAL.tage)}</div></div>
+      <div class="ov-cmp">${delta(st.ses.length, pSes, ' Kraft')} ${delta(st.days, pDays, ' Tage')}</div></div>
+    <div class="ov-grid">
+      ${tile('#6aa9ff', F.icon.chart || '', st.rideKm ? f(st.rideKm, 0) + ' km' : '–', st.rides.length ? `${st.rides.length} × Rad · ${f(st.rideH)} h` : 'Rad', delta(st.rideKm, pRideKm, ' km'))}
+      ${tile('#e9a23b', '', st.hikeKm ? f(st.hikeKm) + ' km' : '–', st.hikeUp ? `Wandern · ${Math.round(st.hikeUp)} hm` : 'Wandern')}
+      ${tile('var(--a)', '', st.kraftMin ? st.kraftMin + ' min' : st.ses.length + '×', st.sets ? `Kraft · ${st.sets} Sätze` : 'Kraft')}
+      ${tile('#ff7a59', '', st.kcal ? '≈ ' + st.kcal.toLocaleString('de-DE') : '–', 'kcal (Schätzung)')}
+    </div>
+    <div class="card"><div class="row between" style="margin-bottom:8px"><div class="h2" style="margin:0">Letzte 8 Wochen</div><span class="small"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:#6aa9ff;font-weight:700">Rad</span> · <span style="color:#e9a23b;font-weight:700">Wandern</span></span></div>${trend}</div>`;
+  };
   const lineChart = (pts) => {
     if (pts.length < 2) return '<div class="mute small">Noch zu wenig Daten für einen Verlauf.</div>';
     const W = 320, H = 150, p = 28, xs = pts.map((q) => new Date(q.d).getTime()), ys = pts.map((q) => q.v);
@@ -299,9 +330,8 @@
     if (v === 'fokus') { fold(false); if (hero) hero.classList.add('hero-focus'); if (grid) grid.remove(); const w = weekCard; if (w && hero) { w.classList.add('strip'); hero.after(w); } }
     if (v === 'woche') {
       fold(true); const st = stats('woche'); if (grid) grid.remove();
-      const sum = document.createElement('div'); sum.className = 'kpis k3'; sum.innerHTML = kpi(st.ses.length, 'Kraft') + kpi(st.rides.length, 'Rad') + kpi(st.hikes.length, 'Wandern');
-      const titl = document.createElement('div'); titl.className = 'eyebrow'; titl.style.margin = '4px 2px 8px'; titl.textContent = 'Diese Woche';
-      if (hero) { if (weekCard) hero.before(titl, sum, weekCard); else hero.before(titl, sum); if (actCard) hero.after(actCard); }
+      const ov = document.createElement('div'); ov.innerHTML = F.weekOverview();
+      if (hero) { hero.before(...ov.children); if (weekCard) hero.before(weekCard); if (actCard) hero.after(actCard); if (barCard) hero.parentNode.appendChild(barCard); }
     }
     if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) hero.before(barCard); }
     return box.innerHTML;
@@ -374,7 +404,7 @@
   const dayModal = (d) => {
     const S = F.S, ss = S.sessions.filter((s) => s.session_date === d), aa = S.activities.filter((a) => a.start_at.slice(0, 10) === d).sort((a, b) => (a.start_at < b.start_at ? -1 : 1)), ab = S.absences.filter((a) => a.from_date <= d && a.to_date >= d);
     F.modal(`<div class="row between"><div class="h2">${F.dlabel(d)}</div><button class="btn sm" data-act="addEntry" data-d="${d}">${F.icon.plus.replace('<svg', '<svg width="16" height="16"')} Eintragen</button></div>
-      <div style="max-height:62vh;overflow:auto;margin-top:8px">${ss.map(sessDetail).join('')}${aa.map(actDetail).join('')}${ab.map((a) => `<div class="list"><div class="it"><div class="ico">${F.icon.warn}</div><div class="grow"><b>${{ pause: 'Pause', krank: 'Krank', schmerz: 'Schmerz', reise: 'Unterwegs' }[a.kind]}</b><div class="small mute">${F.dshort(a.from_date)}–${F.dshort(a.to_date)}${a.note ? ' · ' + esc(a.note) : ''}</div></div><button class="mute" data-act="delAbs" data-id="${a.id}" aria-label="Löschen">✕</button></div></div>`).join('')}${!ss.length && !aa.length && !ab.length ? '<div class="mute" style="padding:14px 0">An diesem Tag ist nichts eingetragen.</div>' : ''}</div>`);
+      <div style="max-height:62vh;overflow:auto;margin-top:8px">${ss.map(sessDetail).join('')}${aa.map(actDetail).join('')}${ab.map((a) => `<div class="list"><div class="it"><div class="ico">${F.icon.warn}</div><div class="grow"><b>${{ pause: 'Pause', krank: 'Krank', schmerz: 'Schmerz', reise: 'Unterwegs', urlaub: 'Urlaub', ski: 'Skiurlaub' }[a.kind]}</b><div class="small mute">${F.dshort(a.from_date)}–${F.dshort(a.to_date)}${a.note ? ' · ' + esc(a.note) : ''}</div></div><button class="mute" data-act="delAbs" data-id="${a.id}" aria-label="Löschen">✕</button></div></div>`).join('')}${!ss.length && !aa.length && !ab.length ? '<div class="mute" style="padding:14px 0">An diesem Tag ist nichts eingetragen.</div>' : ''}</div>`);
   };
   F.acts.calSel = (t) => { F.ui.cal.sel = t.dataset.d; F.render(); dayModal(t.dataset.d); };
   /* Kalender springt immer auf heute: beim Öffnen des Tabs und beim Zurückkehren in die App */

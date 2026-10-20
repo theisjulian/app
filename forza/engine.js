@@ -226,6 +226,10 @@
     if (abs && ['krank', 'schmerz'].includes(abs.kind)) {
       return { rest: true, title: abs.kind === 'krank' ? 'Heute Erholung' : 'Heute schonen', reasons: [abs.kind === 'krank' ? 'Du bist als krank eingetragen. Erst wieder trainieren, wenn du dich fit fühlst.' : 'Schmerz ist eingetragen. Bewegung nur schmerzfrei, kein Krafttraining an der betroffenen Stelle.'], rule_version: RULE_VERSION };
     }
+    if (abs && ['urlaub', 'ski'].includes(abs.kind)) {
+      if (abs.mode === 'frei') return { rest: true, title: abs.kind === 'ski' ? 'Skiurlaub: Erholung' : 'Urlaub: Erholung', reasons: ['Du bist im Urlaub und hast Erholung gewählt. Wenn du Lust hast, kannst du über „Anderer Tag“ trotzdem etwas wählen.'], rule_version: RULE_VERSION };
+      reasons.push(abs.mode === 'studio' ? 'Urlaub: Training nach Lust, alle Geräte stehen zur Verfügung.' : 'Urlaub: nur Eigengewicht und Bänder.');
+    }
     if (abs && abs.kind === 'pause') reasons.push('Heute ist als Pause eingetragen. Du kannst trotzdem starten.');
 
     const stats = muscleStats(ctx.sessions, exById, today, ctx.split);

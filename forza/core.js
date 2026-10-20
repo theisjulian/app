@@ -120,7 +120,7 @@
     const legs = F.ls.get('legs-' + F.today(), null);
     if (legs === 'frisch') rideH = null; else if (legs === 'schwer') rideH = 0;
     return E.suggest({ variant: F.ls.get('variant-' + F.today(), 0), avoid: F.ls.get('avoid-' + F.today(), []), exclude: F.ls.get('excl-' + F.today(), []), forceDay: F.ls.get('force-' + F.today(), null),
-      exercises: S.exercises, items: F.items().items, split: F.activeSplit(), sessions: S.sessions, absences: S.absences, priorities: prio,
+      exercises: S.exercises, items: (() => { const u = F.absMode(F.today()); return u && u.mode !== 'studio' ? ['matte', 'band'] : F.items().items; })(), split: F.activeSplit(), sessions: S.sessions, absences: S.absences, priorities: prio,
       today: F.today(), form, minutes, params: S.params, rideHoursAgo: rideH,
       userEx: S.userEx, painEx: F.painSet(), favorites: new Set(S.exercises.filter((x) => x.code === 'E17' || ['Pec Deck (Butterfly)', 'Leg Extension'].includes(x.name)).map((x) => x.id)), goals: (S.profile && S.profile.goals) || []
     });
