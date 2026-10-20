@@ -48,7 +48,7 @@
       <div class="card list">
         ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} Übungen`, 'start')}
         ${card(F.icon.kalender, 'Anderen Tag wählen', 'Oberkörper, Unterkörper, Push …', 'pickDay')}
-        ${card(F.icon.heute, 'Nur Haltung & Mobilität', 'ca. 8 Minuten', 'startPosture')}
+        ${card(F.icon.heute, 'Mobilität', 'Aufwärmen · Dehnen · Sanft · Haltung', 'mobMenu')}
         ${card(F.icon.plus, 'Einheit nachtragen', 'Auch für frühere Tage', 'addEntry', `data-d="${F.today()}"`)}
       </div>
       <div class="card"><div class="h2">Bisherige Einheiten</div>${done.slice(0, 20).map((x) => `<details class="hist"><summary><div class="grow"><b>${esc(x.title || 'Training')}</b><div class="small mute">${F.dlabel(x.session_date)}${x.duration_min ? ' · ' + x.duration_min + ' min' : ''}${x.session_exercises.length ? ' · ' + x.session_exercises.length + ' Übungen' : ' · Details unbekannt'}</div></div></summary>${x.session_exercises.length ? x.session_exercises.map((se) => `<div class="small" style="padding:4px 0"><b>${esc((S.exById[se.exercise_id] || {}).name || '?')}</b><div class="mute">${setLine(se) || 'keine Sätze erfasst'}</div></div>`).join('') : '<div class="small mute" style="padding:4px 0">Zu dieser Einheit sind keine Übungen oder Sätze bekannt. Du kannst sie über „Einheit nachtragen“ ergänzen oder die Einheit so lassen.</div>'}</details>`).join('') || '<div class="mute">Noch nichts.</div>'}</div>`;
@@ -102,7 +102,10 @@
 
   /* ---------- Wochen-Übersicht (Startseite „Woche“) ---------- */
   const GOAL = { kraft: 3, ausd: 4, tage: 5 };
-  const ringSvg = (list) => { const R = [52, 38, 24]; return `<svg class="ov-rings" viewBox="0 0 120 120" width="124" height="124"><g fill="none" stroke-width="11" stroke-linecap="round">${list.map(([pct, col], i) => { const c = 2 * Math.PI * R[i], p = Math.max(0.012, Math.min(1, pct)); return `<circle cx="60" cy="60" r="${R[i]}" stroke="${col}" opacity=".18"/><circle class="ov-arc" cx="60" cy="60" r="${R[i]}" stroke="${col}" stroke-dasharray="${(p * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 60 60)"/>`; }).join('')}</g></svg>`; };
+  /* Diagrammfarben (PDF): gleiche Farbfamilie wie in der App, aus dem Farbton des Themes (OKLCH) */
+  const oklch = (L, C, h) => { const a = C * Math.cos(h * Math.PI / 180), b = C * Math.sin(h * Math.PI / 180), l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3), m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3), s = Math.pow(L - 0.0894841775 * a - 1.2914855480 * b, 3); const lin = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s]; return lin.map((v) => Math.round(255 * Math.max(0, Math.min(1, v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)))); };
+  const chartRgb = () => { const H = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hue')) || 125; return { rad: oklch(0.58, 0.14, H + 130), wan: oklch(0.6, 0.14, H + 250) }; };
+  const ringSvg = (list) => { const R = [52, 38, 24]; return `<svg class="ov-rings" viewBox="0 0 120 120" width="124" height="124"><g fill="none" stroke-width="11" stroke-linecap="round">${list.map(([pct, col], i) => { const c = 2 * Math.PI * R[i], p = Math.max(0.012, Math.min(1, pct)); return `<circle cx="60" cy="60" r="${R[i]}" style="stroke:${col}" opacity=".18"/><circle class="ov-arc" cx="60" cy="60" r="${R[i]}" style="stroke:${col}" stroke-dasharray="${(p * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 60 60)"/>`; }).join('')}</g></svg>`; };
   const delta = (n, o, unit) => { const d = n - o; if (!o && !n) return ''; return `<span class="ov-d ${d > 0 ? 'up' : d < 0 ? 'dn' : ''}">${d > 0 ? '▲ +' : d < 0 ? '▼ −' : '= '}${d === 0 ? 'gleich viel' + (unit || '') : Math.abs(Math.round(d * 10) / 10) + (unit || '')} ggü. Vorwoche</span>`; };
   F.weekOverview = () => {
     const S = F.S, st = stats('woche'), f0 = st.from, p0 = F.addDays(f0, -7), p1 = F.addDays(f0, -1);
@@ -112,23 +115,23 @@
     const pRideKm = pA.filter((a) => RIDE.includes(a.sport)).reduce((t, a) => t + (a.distance_m || 0), 0) / 1000;
     const pDays = new Set([...S.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && inP(s.session_date)).map((s) => s.session_date), ...pA.map((a) => a.start_at.slice(0, 10))]).size;
     const ausdH = st.rideH + st.acts.filter((a) => HIKE.includes(a.sport)).reduce((t, a) => t + (a.moving_s || 0), 0) / 3600;
-    const col = ['var(--a)', '#6aa9ff', '#e9a23b'];
+    const col = ['var(--a)', 'var(--c-rad)', 'var(--c-wan)'];
     const ring = ringSvg([[st.ses.length / GOAL.kraft, col[0]], [ausdH / GOAL.ausd, col[1]], [st.days / GOAL.tage, col[2]]]);
     const leg = (c, l, v, g) => `<div class="ov-leg"><i style="background:${c}"></i><div><span>${l}</span><b>${v}<small> / ${g}</small></b></div></div>`;
     const end = F.addDays(f0, 6), f = (n, d = 1) => F.fmt(Math.round(n * Math.pow(10, d)) / Math.pow(10, d));
     const tile = (c, ic, big, sub, extra) => `<div class="ov-t" style="--tc:${c}"><div class="ov-ti">${ic}</div><b>${big}</b><span>${sub}</span>${extra || ''}</div>`;
     const wk = stats('3m').wk.slice(-8), mx = Math.max(3, ...wk.map((w) => w.kraft + w.rad + w.wan));
-    const trend = `<div class="ov-trend">${wk.map((w, i) => `<div class="ov-bar${i === wk.length - 1 ? ' now' : ''}"><div class="ov-stack" style="height:64px"><i style="height:${w.wan / mx * 64}px;background:#e9a23b"></i><i style="height:${w.rad / mx * 64}px;background:#6aa9ff"></i><i style="height:${w.kraft / mx * 64}px;background:var(--a)"></i></div><span>${w.l.slice(0, 5)}</span></div>`).join('')}</div>`;
+    const trend = `<div class="ov-trend">${wk.map((w, i) => `<div class="ov-bar${i === wk.length - 1 ? ' now' : ''}"><div class="ov-stack" style="height:64px"><i style="height:${w.wan / mx * 64}px;background:var(--c-wan)"></i><i style="height:${w.rad / mx * 64}px;background:var(--c-rad)"></i><i style="height:${w.kraft / mx * 64}px;background:var(--a)"></i></div><span>${w.l.slice(0, 5)}</span></div>`).join('')}</div>`;
     return `<div class="card ov-main"><div class="row between" style="margin-bottom:12px"><div class="h2" style="margin:0">Diese Woche</div><span class="small mute">${F.dshort(f0)} – ${F.dshort(end)}</span></div>
       <div class="ov-top">${ring}<div class="ov-legs">${leg(col[0], 'Kraft', st.ses.length, GOAL.kraft)}${leg(col[1], 'Ausdauer (h)', f(ausdH), GOAL.ausd)}${leg(col[2], 'Aktive Tage', st.days, GOAL.tage)}</div></div>
       <div class="ov-cmp">${delta(st.ses.length, pSes, ' Kraft')} ${delta(st.days, pDays, ' Tage')}</div></div>
     <div class="ov-grid">
-      ${tile('#6aa9ff', F.icon.chart || '', st.rideKm ? f(st.rideKm, 0) + ' km' : '–', st.rides.length ? `${st.rides.length} × Rad · ${f(st.rideH)} h` : 'Rad', delta(st.rideKm, pRideKm, ' km'))}
-      ${tile('#e9a23b', '', st.hikeKm ? f(st.hikeKm) + ' km' : '–', st.hikeUp ? `Wandern · ${Math.round(st.hikeUp)} hm` : 'Wandern')}
+      ${tile('var(--c-rad)', F.icon.chart || '', st.rideKm ? f(st.rideKm, 0) + ' km' : '–', st.rides.length ? `${st.rides.length} × Rad · ${f(st.rideH)} h` : 'Rad', delta(st.rideKm, pRideKm, ' km'))}
+      ${tile('var(--c-wan)', '', st.hikeKm ? f(st.hikeKm) + ' km' : '–', st.hikeUp ? `Wandern · ${Math.round(st.hikeUp)} hm` : 'Wandern')}
       ${tile('var(--a)', '', st.kraftMin ? st.kraftMin + ' min' : st.ses.length + '×', st.sets ? `Kraft · ${st.sets} Sätze` : 'Kraft')}
-      ${tile('#ff7a59', '', st.kcal ? '≈ ' + st.kcal.toLocaleString('de-DE') : '–', 'kcal (Schätzung)')}
+      ${tile('var(--c-kcal)', '', st.kcal ? '≈ ' + st.kcal.toLocaleString('de-DE') : '–', 'kcal (Schätzung)')}
     </div>
-    <div class="card"><div class="row between" style="margin-bottom:8px"><div class="h2" style="margin:0">Letzte 8 Wochen</div><span class="small"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:#6aa9ff;font-weight:700">Rad</span> · <span style="color:#e9a23b;font-weight:700">Wandern</span></span></div>${trend}</div>`;
+    <div class="card"><div class="row between" style="margin-bottom:8px"><div class="h2" style="margin:0">Letzte 8 Wochen</div><span class="small"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:var(--c-rad);font-weight:700">Rad</span> · <span style="color:var(--c-wan);font-weight:700">Wandern</span></span></div>${trend}</div>`;
   };
   const lineChart = (pts) => {
     if (pts.length < 2) return '<div class="mute small">Noch zu wenig Daten für einen Verlauf.</div>';
@@ -154,7 +157,7 @@
       <div class="rangebar">${RANGES.map(([v, l]) => `<button class="chip ${k === v ? 'on' : ''}" data-act="range" data-v="${v}">${l}</button>`).join('')}</div>
       <div class="kpis">${kpi(st.ses.length, 'Krafteinheiten')}${kpi(st.rides.length, 'Radfahrten')}${kpi(st.hikes.length, 'Wanderungen')}${kpi(st.days, 'aktive Tage')}</div>
       <div class="card"><div class="kv"><span class="mute">Sätze mit Daten</span><b>${st.sets}</b><span class="mute">Gesamtvolumen</span><b>${st.vol ? F.fmt(st.vol) + ' kg' : 'unbekannt'}</b><span class="mute">Krafttraining Dauer</span><b>${st.kraftMin ? st.kraftMin + ' min' : 'unbekannt'}</b><span class="mute">Rad</span><b>${st.rides.length ? F.fmt(Math.round(st.rideKm)) + ' km · ' + F.fmt(Math.round(st.rideH * 10) / 10) + ' h' : '–'}</b><span class="mute">Wandern</span><b>${st.hikes.length ? F.fmt(Math.round(st.hikeKm)) + ' km · ' + Math.round(st.hikeUp) + ' hm' : '–'}</b><span class="mute">Energie (Schätzung)</span><b>${st.kcal ? '≈ ' + F.fmt(st.kcal) + ' kcal' : '–'}</b></div>${st.noData ? `<div class="small mute" style="margin-top:8px">${st.noData} Einheit${st.noData > 1 ? 'en' : ''} ohne Satzdaten (übernommen). Sie zählen bei Einheiten, aber nicht bei Sätzen oder Volumen.</div>` : ''}</div>
-      <div class="card"><div class="h2">Wochen · ${rangeName(k)}</div><div class="row" style="align-items:flex-end;gap:6px;height:110px;overflow-x:auto">${st.wk.map((w) => `<div class="grow" style="text-align:center;min-width:28px"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.wan / mx * 80}px;background:#e9a23b;border-radius:5px"></div><div style="height:${w.rad / mx * 80}px;background:#6aa9ff;border-radius:5px"></div><div class="bargrow" style="height:${w.kraft / mx * 80}px;background:var(--a);border-radius:5px"></div></div><div class="small mute" style="font-size:10px">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:#6aa9ff;font-weight:700">Rad</span> · <span style="color:#e9a23b;font-weight:700">Wandern</span></div></div>
+      <div class="card"><div class="h2">Wochen · ${rangeName(k)}</div><div class="row" style="align-items:flex-end;gap:6px;height:110px;overflow-x:auto">${st.wk.map((w) => `<div class="grow" style="text-align:center;min-width:28px"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.wan / mx * 80}px;background:var(--c-wan);border-radius:5px"></div><div style="height:${w.rad / mx * 80}px;background:var(--c-rad);border-radius:5px"></div><div class="bargrow" style="height:${w.kraft / mx * 80}px;background:var(--a);border-radius:5px"></div></div><div class="small mute" style="font-size:10px">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:var(--c-rad);font-weight:700">Rad</span> · <span style="color:var(--c-wan);font-weight:700">Wandern</span></div></div>
       <div class="card"><div class="h2">Sätze je Muskelgruppe</div>${mus.length ? mus.map(([m, n]) => `<div class="mrow"><span>${E.LABEL[m] || m}</span><div class="bar"><i class="grow" style="width:${n / mm * 100}%"></i></div><b>${n}</b></div>`).join('') : '<div class="mute small">In diesem Zeitraum gibt es noch keine Sätze mit Daten.</div>'}</div>
       <div class="card"><div class="h2">Kraftverlauf</div>${ids.length ? `<label class="f"><select data-in="progEx">${ids.map((id) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(S.exById[id].name)}</option>`).join('')}</select></label>${lineChart(byEx[sel])}<div class="small mute">Geschätzte Maximalkraft (Epley) aus dem besten Satz je Einheit.</div>` : '<div class="mute">Sobald du Sätze mit Gewicht und Wiederholungen protokollierst, erscheint hier dein Verlauf. Aus übernommenen Einheiten gibt es bewusst keine Werte.</div>'}</div>
       <div class="card"><div class="row between"><div class="h2">Körpergewicht</div><button class="btn sm" data-act="addWeight">Eintragen</button></div>${lineChart(weights)}<div class="small mute">Zuletzt ${F.fmt(F.weightNow())} kg${weights.length ? ' am ' + F.dshort(weights[weights.length - 1].d) : ''}.</div></div>`;
@@ -287,9 +290,9 @@
     head('Wochen im Überblick');
     const H = 34, mx = Math.max(3, ...st.wk.map((w) => w.kraft + w.rad + w.wan)), bw = Math.min(10, 170 / Math.max(1, st.wk.length) - 2);
     need(H + 14); const base = y + H;
-    st.wk.slice(-16).forEach((w, i) => { const x = 18 + i * (bw + 2); let yy = base; [[w.kraft, acc], [w.rad, [60, 130, 230]], [w.wan, [233, 162, 59]]].forEach(([n, c]) => { const h = n / mx * H; if (h > 0) { pdf.setFillColor(...c); pdf.rect(x, yy - h, bw, h, 'F'); yy -= h; } }); pdf.setFontSize(6.5); pdf.setTextColor(...mute); pdf.text(w.l, x + bw / 2, base + 4, { align: 'center' }); });
+    st.wk.slice(-16).forEach((w, i) => { const x = 18 + i * (bw + 2); let yy = base; [[w.kraft, acc], [w.rad, chartRgb().rad], [w.wan, chartRgb().wan]].forEach(([n, c]) => { const h = n / mx * H; if (h > 0) { pdf.setFillColor(...c); pdf.rect(x, yy - h, bw, h, 'F'); yy -= h; } }); pdf.setFontSize(6.5); pdf.setTextColor(...mute); pdf.text(w.l, x + bw / 2, base + 4, { align: 'center' }); });
     pdf.setDrawColor(...line); pdf.setLineWidth(.2); pdf.line(16, base, 194, base); y = base + 9;
-    pdf.setFontSize(8); { let lx = 16; [['Kraft', acc], ['Rad', [60, 130, 230]], ['Wandern', [233, 162, 59]]].forEach(([t, c], i) => { if (i) { pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text(' · ', lx, y); lx += pdf.getTextWidth(' · '); } pdf.setTextColor(...c); pdf.setFont(undefined, 'bold'); pdf.text(t, lx, y); lx += pdf.getTextWidth(t); }); pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text('  (Einheiten je Woche)', lx, y); } y += 9;
+    pdf.setFontSize(8); { let lx = 16; [['Kraft', acc], ['Rad', chartRgb().rad], ['Wandern', chartRgb().wan]].forEach(([t, c], i) => { if (i) { pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text(' · ', lx, y); lx += pdf.getTextWidth(' · '); } pdf.setTextColor(...c); pdf.setFont(undefined, 'bold'); pdf.text(t, lx, y); lx += pdf.getTextWidth(t); }); pdf.setTextColor(...mute); pdf.setFont(undefined, 'normal'); pdf.text('  (Einheiten je Woche)', lx, y); } y += 9;
     // Muskelgruppen
     const mus = Object.entries(st.muscle).sort((a, b) => b[1] - a[1]);
     head('Sätze je Muskelgruppe');
@@ -331,9 +334,10 @@
     if (v === 'woche') {
       fold(true); const st = stats('woche'); if (grid) grid.remove();
       const ov = document.createElement('div'); ov.innerHTML = F.weekOverview();
-      if (hero) { hero.before(...ov.children); if (weekCard) hero.before(weekCard); if (actCard) hero.after(actCard); if (barCard) hero.parentNode.appendChild(barCard); }
+      if (hero) { const kids = [...ov.children]; hero.before(kids[0], kids[1]); const chips = box.querySelector('[data-act=placeMenu]'); const row = chips && chips.closest('.row'); if (row) hero.before(row);
+        let tail = hero; [kids[2], weekCard, actCard].filter(Boolean).forEach((el) => { tail.after(el); tail = el; }); if (barCard) tail.after(barCard); }
     }
-    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) hero.before(barCard); }
+    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) { hero.before(barCard); const chips = box.querySelector('[data-act=placeMenu]'), row = chips && chips.closest('.row'); if (row) hero.before(row); } }
     return box.innerHTML;
   };
   F.acts.dash = (t) => { F.setLook('dash', t.dataset.v); F.render(); };
@@ -409,6 +413,7 @@
   F.acts.calSel = (t) => { F.ui.cal.sel = t.dataset.d; F.render(); dayModal(t.dataset.d); };
   /* Kalender springt immer auf heute: beim Öffnen des Tabs und beim Zurückkehren in die App */
   const calToday = () => { F.ui.cal.y = null; F.ui.cal.m = null; F.ui.cal.sel = null; };
+  { const nav0 = F.acts.nav; F.acts.nav = (t) => { if (t.dataset.r === 'kalender' && /kalender/.test(location.hash)) { calToday(); F.render(); window.scrollTo(0, 0); return; } nav0(t); }; }
   window.addEventListener('hashchange', () => { if (/kalender/.test(location.hash)) calToday(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && /kalender/.test(location.hash)) { calToday(); F.render(); } });
   const baseKal = F.views.kalender;

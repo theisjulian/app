@@ -85,7 +85,7 @@ label.f{display:block;margin-bottom:12px}label.f>span{display:block;font-size:13
 .cal .d{aspect-ratio:1;border-radius:14px;background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;gap:3px;position:relative}
 .cal .d.sel{border-color:var(--a);box-shadow:0 0 0 1px var(--a)}.cal .d.today{font-weight:800;color:var(--a)}.cal .d.out{opacity:.3}
 .cal .hd{text-align:center;font-size:12px;color:var(--mute);padding:4px 0}
-.dots{display:flex;gap:3px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--a)}.dots i.r{border-radius:2px;background:#6aa9ff}.dots i.h{background:#ffb454;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}.dots i.p{background:var(--warn)}
+.dots{display:flex;gap:3px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--a)}.dots i.r{border-radius:2px;background:var(--c-rad)}.dots i.h{background:var(--c-wan);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}.dots i.p{background:var(--warn)}
 .stepper{display:flex;align-items:center;background:var(--card2);border-radius:14px;overflow:hidden}
 .stepper button{width:46px;height:52px;font-size:22px;color:var(--a)}
 .stepper input{border:0;background:none;text-align:center;font-size:22px;font-weight:700;padding:0;width:100%;min-width:0}
@@ -197,7 +197,7 @@ body{min-height:100vh;min-height:-webkit-fill-available}
 @media(max-width:899px){.bnav{padding-bottom:calc(6px + var(--sb)*.55)}.main{padding-bottom:calc(84px + var(--sb)*.55)}}
 
 /* ===== Tageslicht: ändert sich mit dem Sonnenstand ===== */
-html[data-theme=tag][data-phase=morgen]{--acc:#ff7a59;--acc-ink:#2a0f08;--acc-l:#d9482a;--bg:#fff1e6;--bg2:#fff8f2;--card:#ffffff;--card2:#ffe9da;--line:#f6d9c6;--text:#3a2030;--mute:#8a6670;--hero1:#f0845c;--hero2:#7a3f8f;--heroline:#7a3f8f;--grad:linear-gradient(150deg,#ff9a62 0%,#e8508a 100%);--glow:linear-gradient(180deg,#ffd0a8 0%,#ffe6d6 22%,transparent 55%)}
+html[data-theme=tag][data-phase=morgen]{--acc:var(--c-kcal);--acc-ink:#2a0f08;--acc-l:#d9482a;--bg:#fff1e6;--bg2:#fff8f2;--card:#ffffff;--card2:#ffe9da;--line:#f6d9c6;--text:#3a2030;--mute:#8a6670;--hero1:#f0845c;--hero2:#7a3f8f;--heroline:#7a3f8f;--grad:linear-gradient(150deg,#ff9a62 0%,#e8508a 100%);--glow:linear-gradient(180deg,#ffd0a8 0%,#ffe6d6 22%,transparent 55%)}
 html[data-theme=tag][data-phase=vormittag]{--acc:#1a9be0;--acc-ink:#031c2e;--acc-l:#0a6fb3;--bg:#eef8ff;--bg2:#f7fcff;--card:#ffffff;--card2:#e2f2fc;--line:#d2e8f6;--text:#10283a;--mute:#5a7488;--hero1:#35b0f2;--hero2:#1760c4;--heroline:#1760c4;--grad:linear-gradient(150deg,#3cb8f5 0%,#1d6fd6 100%);--glow:linear-gradient(180deg,#bfe4fb 0%,#e3f3fd 24%,transparent 58%)}
 html[data-theme=tag][data-phase=mittag]{--acc:#f0a010;--acc-ink:#2d1d00;--acc-l:#b36f00;--bg:#f4faff;--bg2:#ffffff;--card:#ffffff;--card2:#e9f4fd;--line:#d6e8f5;--text:#0f2538;--mute:#58728a;--hero1:#2b9cf2;--hero2:#145db8;--heroline:#145db8;--grad:linear-gradient(150deg,#ffc83d 0%,#f08a00 100%);--glow:linear-gradient(180deg,#a8dcff 0%,#d9efff 26%,transparent 60%)}
 html[data-theme=tag][data-phase=nachmittag]{--acc:#f08a24;--acc-ink:#2b1300;--acc-l:#c2610b;--bg:#fff6e8;--bg2:#fffaf2;--card:#ffffff;--card2:#ffeed6;--line:#f3dfc2;--text:#3a2410;--mute:#8a6a4c;--hero1:#f09a3c;--hero2:#b8512c;--heroline:#b8512c;--grad:linear-gradient(150deg,#ffb25a 0%,#e8622a 100%);--glow:linear-gradient(180deg,#ffdca8 0%,#ffeed8 24%,transparent 58%)}
@@ -255,7 +255,7 @@ html[data-theme=apple][data-mode][data-font] .hero .btn.ghost{color:var(--a)!imp
 /* ===== Wochen-Übersicht ===== */
 .ov-top{display:flex;align-items:center;gap:18px}.ov-rings{flex:none}.ov-arc{transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)}
 .ov-legs{flex:1;display:grid;gap:10px}.ov-leg{display:flex;align-items:center;gap:10px}.ov-leg i{width:10px;height:10px;border-radius:50%;flex:none}.ov-leg span{display:block;font-size:12px;color:var(--mute)}.ov-leg b{font-size:21px;letter-spacing:-.02em}.ov-leg small{font-size:13px;color:var(--mute);font-weight:500}
-.ov-cmp{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px}.ov-d{color:var(--mute)}.ov-d.up{color:var(--ok)}.ov-d.dn{color:var(--warn)}
+.ov-cmp{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px}.ov-d{color:var(--mute)}.ov-d.up{color:var(--ok)}.ov-d.dn{color:var(--mute)}
 .ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .ov-t{background:var(--card);border-radius:var(--r2);padding:14px;position:relative;overflow:hidden;border:1px solid var(--line)}
 .ov-t:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tc)}
@@ -266,9 +266,18 @@ html[data-theme=apple][data-mode][data-font] .hero .btn.ghost{color:var(--a)!imp
 /* ===== Kalender: Feiertage, Ferien, Urlaub (dezent) ===== */
 .cal .d.fe{background:color-mix(in srgb,var(--a) 9%,var(--card))}
 .cal .d.ft{color:var(--bad)}.cal .d.ft.today{color:var(--a)}
-.cal .d.ur{background:color-mix(in srgb,#6aa9ff 20%,var(--card));border-color:color-mix(in srgb,#6aa9ff 45%,var(--line))}
+.cal .d.ur{background:color-mix(in srgb,var(--c-rad) 20%,var(--card));border-color:color-mix(in srgb,var(--c-rad) 45%,var(--line))}
 .cal-leg{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--mute)}.cal-leg span{display:flex;align-items:center;gap:5px}
-.lg{width:11px;height:11px;border-radius:4px;display:inline-block;border:1px solid var(--line)}.lg.ft{background:var(--card);border-color:var(--bad)}.lg.fe{background:color-mix(in srgb,var(--a) 22%,var(--card))}.lg.ur{background:color-mix(in srgb,#6aa9ff 40%,var(--card))}
+.lg{width:11px;height:11px;border-radius:4px;display:inline-block;border:1px solid var(--line)}.lg.ft{background:var(--card);border-color:var(--bad)}.lg.fe{background:color-mix(in srgb,var(--a) 22%,var(--card))}.lg.ur{background:color-mix(in srgb,var(--c-rad) 40%,var(--card))}
 .dashseg{position:absolute;right:0;top:-6px;display:flex;background:var(--card2);border-radius:12px;padding:2px}
 .dashseg button{width:34px;height:28px;display:grid;place-items:center;border-radius:10px;color:var(--mute)}.dashseg button.on{background:var(--card);color:var(--a);box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.ur-card{border-color:color-mix(in srgb,#6aa9ff 55%,var(--line))}
+.ur-card{border-color:color-mix(in srgb,var(--c-rad) 55%,var(--line))}
+
+/* ===== Statistikfarben: Rad und Wandern leiten sich vom Akzent-Farbton ab (OKLCH), damit alles zusammenpasst ===== */
+html[data-theme=graphit]{--hue:125}html[data-theme=neon]{--hue:350}html[data-theme=laguna]{--hue:200}html[data-theme=klar]{--hue:255}html[data-theme=glut]{--hue:55}html[data-theme=wald]{--hue:150}html[data-theme=apple]{--hue:15}
+html[data-theme=tag][data-phase=morgen]{--hue:30}html[data-theme=tag][data-phase=vormittag]{--hue:235}html[data-theme=tag][data-phase=mittag]{--hue:75}html[data-theme=tag][data-phase=nachmittag]{--hue:55}html[data-theme=tag][data-phase=abend]{--hue:10}html[data-theme=tag][data-phase=nacht]{--hue:265}
+html[data-mode=dark]{--c-rad:oklch(.76 .12 calc(var(--hue,125) + 130));--c-wan:oklch(.78 .12 calc(var(--hue,125) + 250));--c-kcal:oklch(.74 .06 var(--hue,125))}
+html[data-mode=light]{--c-rad:oklch(.58 .14 calc(var(--hue,125) + 130));--c-wan:oklch(.6 .14 calc(var(--hue,125) + 250));--c-kcal:oklch(.58 .07 var(--hue,125))}
+.tile.on[style*="--c-"]{animation:none}
+
+html[data-mode=light] .chip:not(.on){border-color:var(--line)}

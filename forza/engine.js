@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.0';
+  const RULE_VERSION = 'forza-regeln-1.1';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -13,7 +13,7 @@
     leg_after_ride_hours: 24,                     // R19
     load_step_total: 2.5, load_step_hand: 1,      // kg
     default_minutes: 55,
-    rest_m: 30, posture_block: 1, rest_g: 150, rest_g_long: 180, rest_a: 90, rest_s: 75, rest_c: 75, rest_i: 75, rest_t: 90 // Sekunden
+    rest_m: 30, posture_block: 1, rest_g: 120, rest_g_long: 180, rest_a: 75, rest_s: 60, rest_c: 60, rest_i: 60, rest_t: 75 // Sekunden. Pausen: Grundübungen ca. 2 Min (Schoenfeld 2016, Grgic 2017), Zusatz und Stabilität 60–75 s (Singer 2024: ab 60 s günstig für Muskelaufbau)
   };
   const PROFILES = {
     G: { sets: 2, reps: [6, 10], rir: [2, 3], rest: 'rest_g', label: 'Grundbewegung' },
@@ -180,7 +180,7 @@
   /* Haltungs- und Mobilitätsblock: rotiert zwischen BWS, Brust/Nacken, je Einheit höchstens n Übungen */
   function mobilityPick(ctx, P, n) {
     const have = new Set((ctx.items || []));
-    const all = ctx.exercises.filter((e) => e.active && e.dosage_profile === 'M' && !((ctx.userEx || {})[e.id] || {}).hidden && available(e, [...have]).ok && !(ctx.painEx || new Set()).has(e.id));
+    const all = ctx.exercises.filter((e) => e.active && e.dosage_profile === 'M' && !(e.content && e.content.einsatz) && !((ctx.userEx || {})[e.id] || {}).hidden && available(e, [...have]).ok && !(ctx.painEx || new Set()).has(e.id));
     const lastUse = {};
     (ctx.sessions || []).forEach((s) => (s.session_exercises || []).forEach((se) => { if (!lastUse[se.exercise_id] || s.session_date > lastUse[se.exercise_id]) lastUse[se.exercise_id] = s.session_date; }));
     const groups = [['mobilitaet_bws'], ['mobilitaet_nacken'], ['mobilitaet_bws', 'mobilitaet_nacken']];
@@ -286,7 +286,10 @@
       if (calm && n >= 3) n -= P.calm_sets_minus;
       return n;
     };
-    const estMin = (e, n) => { const pf = profOf(e.dosage_profile, P, ctx.goals, 'normal'); return n * (0.9 + P[pf.rest] / 60) + 1.5; };
+    // Zeitmodell: je Satz 0,9 Min Arbeit inkl. Einrichten + Pause; je Übung Einrichtung (Grundübung 1,5 Min mit Einsteigersätzen, sonst 0,8).
+    // Bei knapper Zeit (<= 45 Min) werden Zusatzübungen als Supersätze gepaart (Weakley 2021: gleiches Volumen und gleiche Zuwächse in kürzerer Zeit).
+    const tight = !!ctx.minutes && ctx.minutes <= 45;
+    const estMin = (e, n, paired) => { const pf = profOf(e.dosage_profile, P, ctx.goals, 'normal'), g = (e.dosage_profile || 'A') === 'G'; const rest = P[pf.rest] / 60 * (tight && !g && !paired ? 0.75 : 1); return n * (0.9 + rest) + (g ? 1.5 : 0.8); };
     let used = 4; // Aufwärmen
     const variant = ctx.variant || 0;
     const tplSlots = TEMPLATES[day.name] || null;
@@ -371,7 +374,24 @@
         load_text: ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio
       };
     });
-    const total = Math.round(4 + items.reduce((s, i) => s + estMin(exById[i.exercise_id], i.sets), 0));
+    // Supersätze: aufeinanderfolgende Nicht-Grundübungen mit verschiedenen Muskeln im Wechsel
+    let total;
+    if (tight) {
+      for (let i = 0; i < items.length - 1; i++) {
+        const a = items[i], b = items[i + 1];
+        if (a.pair_with || a.profile === 'G' || b.profile === 'G' || a.muscle === b.muscle) continue;
+        a.pair_with = b.name; b.pair_with = a.name; i++;
+      }
+      let t = 4, done = new Set();
+      items.forEach((it, i) => {
+        if (done.has(i)) return;
+        const ex = exById[it.exercise_id];
+        if (it.pair_with) { const j = items.findIndex((x, k) => k > i && x.name === it.pair_with), o = items[j], r = Math.max(it.rest_s, o.rest_s) / 60, lo = Math.min(it.sets, o.sets), hi = Math.max(it.sets, o.sets); t += 1.6 + lo * (1.8 + r) + (hi - lo) * (0.9 + r); done.add(j); }
+        else t += estMin(ex, it.sets, true);
+      });
+      total = Math.round(t);
+      if (items.some((i) => i.pair_with)) reasons.push('Zeit knapp: Zusatzübungen laufen als Supersatz im Wechsel, das spart Zeit bei gleicher Satzzahl.');
+    } else total = Math.round(4 + items.reduce((s, i) => s + estMin(exById[i.exercise_id], i.sets), 0));
     if (calm) reasons.push('Ruhigere Tagesform: eine Reserve mehr und bei 3+ Sätzen ein Satz weniger.');
     const gaps = focus.filter((m) => !chosen.some((c) => c.muscle === m) && BIG.includes(m));
     if (gaps.length) reasons.push(`Wegen Zeit oder Ausstattung nicht abgedeckt: ${gaps.map((m) => LABEL[m]).join(', ')}.`);

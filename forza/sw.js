@@ -1,6 +1,6 @@
 // forza · Hülle für die Installation auf dem Homescreen. Immer zuerst das Netz, Zwischenspeicher nur als Rückfall.
 // Anfragen an Supabase und Strava werden nie zwischengespeichert.
-const CACHE = 'forza-shell-v4';
+const CACHE = 'forza-shell-v5';
 const SHELL = ['./', './index.html', './forza.css', './config.js', './texts.js', './engine.js', './core.js', './ui-main.js', './ui-train.js', './ui-more.js', './ui-extra.js', './ui-extra2.js', './ui-fx.js', './boot.js', './manifest.webmanifest', './assets/forza.svg', './assets/forza-180.png'];
 self.addEventListener('install', (e) => { e.waitUntil((async () => { const c = await caches.open(CACHE); await Promise.all(SHELL.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => null))); await self.skipWaiting(); })()); });
 self.addEventListener('activate', (e) => { e.waitUntil((async () => { for (const k of await caches.keys()) if (k.startsWith('forza-shell-') && k !== CACHE) await caches.delete(k); await self.clients.claim(); })()); });
