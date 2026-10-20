@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orario – Wer ist wo?</title>
+<meta name="description" content="Lehrkräfte und Klassen im Stundenplan finden – jetzt oder zu jeder Stunde. Die Pläne bleiben auf deinem Gerät.">
+<meta name="theme-color" content="#2F5BEA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{--bg:#eef0f5;--wa:rgba(47,91,234,.16);--wb:rgba(150,110,240,.14);--glass:rgba(255,255,255,.72);--solid:#fff;--line:rgba(20,30,60,.10);--tx:#14182b;--tx2:#5a6078;--blue:#2F5BEA;--blue-t:rgba(47,91,234,.12);--ok:#1f9d6b;--warn:#c2680a;--fill:rgba(20,30,60,.07);--r:18px;--sh:0 1px 2px rgba(20,30,60,.06),0 8px 28px rgba(20,30,60,.08)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1020;--wa:rgba(47,91,234,.26);--wb:rgba(150,110,240,.16);--glass:rgba(28,32,54,.70);--solid:#1b1f36;--line:rgba(255,255,255,.12);--tx:#eef0fb;--tx2:#9aa1bd;--blue:#6f93ff;--blue-t:rgba(111,147,255,.18);--fill:rgba(255,255,255,.08);--sh:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35)}}
+:root[data-theme=dark]{--bg:#0d1020;--wa:rgba(47,91,234,.26);--wb:rgba(150,110,240,.16);--glass:rgba(28,32,54,.70);--solid:#1b1f36;--line:rgba(255,255,255,.12);--tx:#eef0fb;--tx2:#9aa1bd;--blue:#6f93ff;--blue-t:rgba(111,147,255,.18);--fill:rgba(255,255,255,.08);--sh:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35)}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;color:var(--tx);background:radial-gradient(900px 500px at 10% -10%,var(--wa),transparent 60%),radial-gradient(800px 500px at 100% 0,var(--wb),transparent 60%),var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{width:100%;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));max-width:1500px;margin:0 auto}
+header.top{display:flex;align-items:center;gap:12px;padding:16px 0 10px}
+.app-t{font-weight:700;font-size:22px;letter-spacing:-.02em}.app-t small{display:block;font-weight:500;font-size:12px;color:var(--tx2);letter-spacing:0}
+.grow{flex:1}
+.ibtn{border:0;background:var(--fill);width:40px;height:40px;border-radius:12px;font-size:18px;display:grid;place-items:center}
+.ibtn:hover{background:var(--blue-t)}
+.card{background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--line);padding:16px}
+.seg{display:inline-flex;background:var(--fill);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:8px 16px;border-radius:10px;font-weight:600;color:var(--tx2)}
+.seg button[aria-pressed=true]{background:var(--solid);color:var(--tx);box-shadow:0 1px 4px rgba(20,30,60,.15)}
+.search{position:relative;flex:1;min-width:220px}
+.search input{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--solid);font-size:17px;outline:none}
+.search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-t)}
+.search:before{content:"";position:absolute;left:14px;top:50%;width:14px;height:14px;margin-top:-9px;border:2px solid var(--tx2);border-radius:50%;opacity:.7}
+.search:after{content:"";position:absolute;left:28px;top:50%;width:7px;height:2px;margin-top:6px;background:var(--tx2);transform:rotate(45deg);opacity:.7}
+.bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:6px 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{border:1px solid var(--line);background:var(--solid);border-radius:999px;padding:7px 13px;font-size:15px}
+.chip:hover,.chip:focus-visible{border-color:var(--blue);background:var(--blue-t);outline:none}
+.chip small{color:var(--tx2);margin-left:4px}
+.hint{color:var(--tx2);font-size:14px}
+h2{font-size:15px;margin:0 0 8px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.now{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.nowwho{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.nowwho a,.lk{color:var(--blue);cursor:pointer;text-decoration:none;border:0;background:none;padding:0;font-weight:inherit}
+.lk:hover{text-decoration:underline}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--blue-t);color:var(--blue);font-weight:600;font-size:14px}
+.pill.ok{background:rgba(31,157,107,.14);color:var(--ok)}.pill.mut{background:var(--fill);color:var(--tx2)}
+.big{font-size:44px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--blue)}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.les{background:var(--solid);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.les b{font-size:19px}.les .rm{float:right;font-weight:700;color:var(--blue);font-size:18px}
+.pick{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 4px}
+.pick select{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--solid)}
+.btn{border:0;background:var(--blue);color:var(--onb,#fff);border-radius:12px;padding:10px 18px;font-weight:600}
+.btn.sec{background:var(--fill);color:var(--tx)}.btn.danger{background:rgba(214,60,60,.14);color:#c2342f}
+.btn[disabled]{opacity:.5}
+.tw{overflow:auto;border-radius:14px;border:1px solid var(--line);background:var(--solid);margin-top:6px}
+table.wk{border-collapse:collapse;width:100%;min-width:680px;table-layout:fixed}
+.wk th{font-size:13px;color:var(--tx2);padding:8px 4px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--solid)}
+.wk th.td{color:var(--blue)}
+.wk td{border:1px solid var(--line);padding:3px 5px;vertical-align:middle;font-size:13px;height:46px}
+.wk td.pn{width:62px;text-align:center;background:var(--fill);font-size:12px;color:var(--tx2);cursor:pointer}
+.wk td.pn b{display:block;font-size:17px;color:var(--tx)}
+.wk td.ce{cursor:pointer;background:var(--blue-t)}
+.wk td.ce:hover{outline:2px solid var(--blue);outline-offset:-2px}
+.wk td.em{cursor:pointer}.wk td.em:hover{background:var(--fill)}
+.wk td.sel{box-shadow:inset 0 0 0 2.5px var(--blue)}
+.wk td.bk{border-top:2.5px double var(--line)}
+.wk .e{line-height:1.25}.wk .e+.e{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
+.wk .e b{font-size:14px}.wk .e i{color:var(--tx2);font-style:normal;float:right;margin-left:6px}
+.wk .g{opacity:.9}
+footer.brand{display:flex;justify-content:center;align-items:center;gap:10px;padding:28px 0 24px;color:var(--tx2);font-size:13px;opacity:.8}
+footer.brand a{display:inline-flex;color:var(--tx)}footer.brand svg{height:19px;width:auto}
+.logo path{fill:currentColor}
+.drop{border:2px dashed color-mix(in srgb,var(--blue) 45%,transparent);border-radius:22px;text-align:center;padding:44px 20px;background:var(--blue-t)}
+.drop.over{background:color-mix(in srgb,var(--blue) 25%,transparent)}
+.drop h1{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+.prog{height:10px;border-radius:99px;background:var(--fill);overflow:hidden;margin:14px 0 6px}.prog i{display:block;height:100%;width:0;background:var(--blue);transition:width .15s}
+.sheet{position:fixed;inset:0;background:rgba(10,14,30,.45);display:grid;place-items:center;padding:16px;z-index:20}
+.sheet[hidden]{display:none}
+.sheet .card{background:var(--solid);width:min(560px,100%);max-height:92vh;overflow:auto}
+.sheet h3{margin:0 0 10px;font-size:20px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.stat{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0}.stat b{text-align:right}
+.note{background:rgba(194,104,10,.12);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin:10px 0}
+.today{background:rgba(47,91,234,.07)}
+.list{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;margin:8px 0;background:var(--fill)}
+@media(max-width:700px){.big{font-size:34px}.nowwho{font-size:22px}header.top{padding-top:12px}}
+@media print{.noprint,header.top .ibtn,.pick,.bar{display:none!important}body{background:#fff}}
+@media(max-width:700px){table.wk{min-width:500px}.wk td{font-size:12px;padding:2px 4px}.wk td.pn{width:46px}.wk th{font-size:12px}.card{padding:14px}}
+
+body.emb footer.brand{display:none}body.emb header.top{padding-top:6px}body.emb .app-t{display:none}
+
+.wkh{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wk.ed td{outline:1px dashed color-mix(in srgb,var(--blue) 55%,transparent);outline-offset:-3px;cursor:pointer}
+.wk.ed td.em:hover{background:color-mix(in srgb,var(--blue) 10%,transparent)}
+.wk.ed td.em:hover::after{content:"+";color:var(--blue);font-size:20px;font-weight:600}
+#sheetBody input{border:1px solid var(--line,rgba(120,120,128,.3));background:var(--fill);color:var(--tx);border-radius:10px;padding:8px 10px;font:inherit;min-width:0}
+.wk tr.brk td{height:20px;padding:0 8px;font-size:11px;color:var(--tx2);background:repeating-linear-gradient(135deg,var(--fill) 0 6px,transparent 6px 12px);text-align:center;border-left:0;border-right:0;letter-spacing:.04em}
+.wk.ed .e{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.wk.ed .e.lifted{opacity:.35}
+.wk td.dt{outline:3px solid var(--blue)!important;outline-offset:-3px;background:var(--blue-t)}
+.e.ghost{position:fixed;z-index:99;pointer-events:none;background:var(--solid);border-radius:10px;padding:6px 8px;box-shadow:0 10px 30px rgba(20,30,60,.3);opacity:.95;line-height:1.25}
+body.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:color-mix(in srgb,var(--tx) 20%,var(--solid));box-shadow:0 2px 8px rgba(0,0,0,.35)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .seg button[aria-pressed=true]{background:color-mix(in srgb,var(--tx) 20%,var(--solid));box-shadow:0 2px 8px rgba(0,0,0,.35)}}
+.abc{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.abc button{min-width:34px;height:34px;border:0;border-radius:9px;background:var(--fill);color:var(--tx);font-weight:600;font-size:14px}
+.abc button[aria-pressed=true]{background:var(--blue);color:var(--onb,#fff)}
+.freebox{padding:10px 12px;margin:0 0 12px}
+.freebox summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+.freebox summary::-webkit-details-marker{display:none}
+.freebox summary::after{content:"›";margin-left:auto;color:var(--tx2);font-size:20px;transition:transform .2s}
+.freebox[open] summary::after{transform:rotate(90deg)}
+.chip.free{border-color:color-mix(in srgb,var(--ok) 45%,transparent);color:var(--tx)}
+.les .rm.lk{border:0;font:inherit}
+/* iPhone quer: Wochenplan füllt den Bildschirm */
+@media (orientation:landscape) and (max-height:520px){
+  header.top,footer.brand{display:none}
+  .wrap{padding-top:6px}
+  table.wk{min-width:0}
+  .wk th{padding:3px 2px;font-size:11px}
+  .wk td{height:26px;padding:1px 3px;font-size:11px;line-height:1.15}
+  .wk td .hint{font-size:10px}
+  .wk .pn{font-size:10px}
+  .wk tr.brk td{height:auto;padding:0 4px;font-size:9.5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="top">
+    <div class="app-t">Orario<small>Wer ist wo?</small></div><span class="grow"></span>
+    <button class="ibtn" id="btnSet" type="button" aria-label="Einstellungen" title="Pläne und Daten">⚙︎</button>
+  </header>
+  <main id="main"></main>
+  <footer class="brand"><a href="https://theisapps.de" target="_blank" rel="noopener" aria-label="theis"><svg class="logo" role="img" aria-label="theis" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228.1 71.9"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" fill="#2F5BEA" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/></g></svg></a><span>© 2026</span></footer>
+</div>
+<input type="file" id="file" accept="application/pdf,.pdf,application/json,.json" multiple hidden>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"><div class="card" id="sheetBody"></div></div>
+<script src="pdf.min.js"></script>
+<script>/* Orario – liest eine Untis-Stundenplanseite (Lehrer- oder Klassenplan) aus Textteilen + Gitterlinien */
+(function (g) {
+  const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+  const near = (a, b, t) => Math.abs(a - b) <= t;
+  function cluster(vals, tol) { const s = vals.slice().sort((a, b) => a - b), out = []; s.forEach(v => { const l = out[out.length - 1]; if (l && v - l.max <= tol) { l.max = v; l.v.push(v); } else out.push({ max: v, v: [v] }); }); return out.map(o => o.v.reduce((a, b) => a + b, 0) / o.v.length); }
+  const CLS = /^(\d{1,2}\s?[A-Za-z]?|[QKJ]\d{1,3}|\d{1,2}[A-Za-z]{1,2})$/;
+  function normClass(c) { c = String(c || '').trim(); const q = /^(1[123])\s*\(Q/.exec(c); if (q) return 'Q' + q[1]; return c.replace(/^0+(?=\d)/, ''); }
+
+  function parsePage(raw) {
+    const warn = [], items = raw.items;
+    const days = items.filter(i => DAYS.includes(i.s.trim()));
+    if (days.length < 3) return { ok: false, why: 'kein Stundenplan-Raster gefunden' };
+    const hy = days[0].y;                                    /* Baseline der Wochentage */
+    /* Spaltengrenzen aus langen senkrechten Linien */
+    const vs = raw.vs.filter(v => v.y1 - v.y0 > 120 && v.y1 > hy - 40);
+    const bx = cluster(vs.map(v => v.x), 2.5);
+    if (bx.length < days.length + 1) return { ok: false, why: 'Spalten nicht erkannt' };
+    const cols = [];
+    days.sort((a, b) => a.x - b.x).forEach(d => { const cx = d.x + d.w / 2; for (let k = 0; k < bx.length - 1; k++) if (cx >= bx[k] && cx <= bx[k + 1]) { cols.push({ day: DAYS.indexOf(d.s.trim()), x0: bx[k], x1: bx[k + 1] }); break; } });
+    if (cols.length !== days.length) return { ok: false, why: 'Wochentage keiner Spalte zugeordnet' };
+    const labelX1 = cols[0].x0 + 1, tableX0 = bx[0], tableX1 = cols[cols.length - 1].x1;
+    /* waagrechte Linien über die ganze Tabelle = Stundengrenzen */
+    const full = cluster(raw.hs.filter(h => h.x0 <= tableX0 + 4 && h.x1 >= tableX1 - 4 && h.y < hy).map(h => h.y), 4).sort((a, b) => b - a);
+    if (full.length < 3) return { ok: false, why: 'Stundenraster nicht erkannt' };
+    const bands = []; for (let i = 0; i < full.length - 1; i++) bands.push({ top: full[i], bot: full[i + 1] });
+    /* Stundennummern und Zeiten */
+    const nums = items.filter(i => i.x < labelX1 && /^\d{1,2}$/.test(i.s.trim()) && i.h > 12 && i.y < hy);
+    const times = items.filter(i => i.x < labelX1 && /^\d{1,2}:\d{2}$/.test(i.s.trim()) && i.y < hy);
+    const periods = []; const bandPeriod = new Array(bands.length).fill(null);
+    nums.forEach(n => {
+      const yc = n.y + 5, bi = bands.findIndex(b => yc <= b.top && yc >= b.bot); if (bi < 0) return;
+      const ts = times.filter(t => t.y <= bands[bi].top + 2 && t.y >= bands[bi].bot - 2).sort((a, b) => b.y - a.y);
+      const p = { n: +n.s, from: ts[0] ? ts[0].s : '', to: ts[1] ? ts[1].s : (ts[0] ? ts[0].s : ''), bi }; periods.push(p); bandPeriod[bi] = p;
+    });
+    if (!periods.length) return { ok: false, why: 'keine Stundennummern' };
+    periods.sort((a, b) => a.n - b.n);
+    /* Kopfzeile */
+    const head = items.filter(i => i.y > hy + 1);
+    const title = head.filter(i => i.h >= 11.9 && i.y < raw.h - 30 && !/^(Untis|gültig|ab:)/.test(i.s) && !/\d{1,2}\.\d{1,2}\.\d{2,4}/.test(i.s)).sort((a, b) => a.x - b.x);
+    const name = title.map(t => t.s.trim()).join(' ').trim();
+    const find = s => head.find(i => i.s.trim() === s);
+    const kl = head.find(i => /^Klassenleitung:?$/.test(i.s.trim()));
+    let type = null, leader = '', deputy = '', homeroom = '';
+    const line = kl ? head.filter(i => near(i.y, kl.y, 3)).sort((a, b) => a.x - b.x) : [];
+    if (kl){
+      const ordinal = line.some(i => /^\d+\.$/.test(i.s.trim()) && i.x < kl.x);
+      const after = line.filter(i => i.x > kl.x && !/^(gültig|ab:)/.test(i.s.trim()) && i.x < (head.find(h => /^gültig/.test(h.s.trim())) || { x: 9999 }).x - 1).map(i => i.s.trim());
+      const sv = after.findIndex(s => /^Stellvertretung:?$/.test(s));
+      if (ordinal) { type = 'teacher'; homeroom = after.join(' ').replace(/^[-–]\s*/, '').trim(); }
+      else { type = 'class'; leader = (sv < 0 ? after : after.slice(0, sv)).join(' '); deputy = sv < 0 ? '' : after.slice(sv + 1).join(' '); }
+    }
+    if (!type) type = CLS.test(name) ? 'class' : 'teacher';
+    const valid = (head.filter(i => /\d{1,2}\.\d{1,2}\./.test(i.s) && i.y < raw.h - 40 && i.y > hy + 20 && !/\d{1,2}:\d{2}/.test(i.s))[0] || {}).s || '';
+    const stamp = (head.find(i => /^\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}:\d{2}$/.test(i.s.trim())) || {}).s || '';
+    const yr = (head.find(i => /\d{4}\/\d{4}/.test(i.s)) || {}).s || '';
+    /* Zellen */
+    const lessons = [];
+    cols.forEach(col => {
+      const colW = col.x1 - col.x0, seen = new Set(), regions = [];
+      (raw.fl || []).forEach(f => { if (f.x0 < col.x0 - 2 || f.x1 > col.x1 + 2 || f.x1 - f.x0 < colW * .8 || f.y1 - f.y0 > (full[0] - full[full.length - 1]) * .9) return; if (f.y1 > full[0] + 2 || f.y0 < full[full.length - 1] - 2) return; const k = Math.round(f.y0) + '/' + Math.round(f.y1); if (seen.has(k)) return; seen.add(k); regions.push({ top: f.y1, bot: f.y0 }); });
+      const cell = items.filter(i => i.x + i.w / 2 > col.x0 && i.x + i.w / 2 < col.x1 && i.y < full[0] && i.y > full[full.length - 1]);
+      regions.forEach(rg => {
+        const its = cell.filter(i => i.y + 3 < rg.top && i.y + 3 > rg.bot); if (!its.length) return;
+        const covered = []; bands.forEach((b, bi) => { const c = (b.top + b.bot) / 2; if (c < rg.top && c > rg.bot && bandPeriod[bi]) covered.push(bandPeriod[bi].n); });
+        if (!covered.length) { warn.push('Zelle ohne Stunde'); return; }
+        const p0 = Math.min(...covered), p1 = Math.max(...covered);
+        const lines = []; its.sort((a, b) => b.y - a.y || a.x - b.x).forEach(i => { const l = lines.find(L => near(L.y, i.y, 3.2)); if (l) l.t.push(i); else lines.push({ y: i.y, t: [i] }); });
+        lines.forEach(L => {
+          L.t.sort((a, b) => a.x - b.x); let toks = L.t.map(t => t.s.trim()); let grp = false;
+          if (toks[0] && toks[0][0] === '*') { grp = true; toks[0] = toks[0].slice(1); if (!toks[0]) toks.shift(); }
+          if (toks.length < 2){ const e1 = { d: col.day, p0, p1, fach: toks[0] || '', room: '', grp, single: true }; if (type === 'teacher') e1.cls = ''; else e1.teacher = ''; lessons.push(e1); return; }
+          let room = '', mid;
+          if (toks.length >= 3) { room = toks[toks.length - 1]; mid = toks.slice(0, -1); } else mid = toks;
+          const first = mid[0], rest = mid.slice(1).join(' ');
+          const e = { d: col.day, p0, p1, fach: '', room, grp };
+          if (type === 'teacher') { e.cls = normClass(first); e.fach = rest; } else { e.fach = first; e.teacher = rest; }
+          lessons.push(e);
+        });
+      });
+    });
+    return { ok: true, type, name, leader, deputy, homeroom, valid, stamp, year: yr.replace(/^Stundenplan\s*/, ''), periods: periods.map(p => ({ n: p.n, from: p.from, to: p.to })), lessons, warn };
+  }
+  g.OrarioParse = { parsePage, normClass };
+  if (typeof module !== 'undefined') module.exports = g.OrarioParse;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Seite -> Textteile + Gitterlinien (pdf.js) */
+async function stpExtractPage(page){
+  const O = pdfjsLib.OPS, tc = await page.getTextContent(), items = [];
+  for (const it of tc.content ? tc.content.items : tc.items){
+    const s = it.str; if (!s || !s.trim()) continue;
+    const t = it.transform; items.push({ s: s, x: t[4], y: t[5], w: it.width, h: Math.hypot(t[2], t[3]) });
+  }
+  const ol = await page.getOperatorList(), hs = [], vs = [], fl = [];
+  let m = [1, 0, 0, 1, 0, 0]; const st = [];
+  const mul = (a, b) => [a[0]*b[0]+a[2]*b[1], a[1]*b[0]+a[3]*b[1], a[0]*b[2]+a[2]*b[3], a[1]*b[2]+a[3]*b[3], a[0]*b[4]+a[2]*b[5]+a[4], a[1]*b[4]+a[3]*b[5]+a[5]];
+  const ap = (p) => [m[0]*p[0]+m[2]*p[1]+m[4], m[1]*p[0]+m[3]*p[1]+m[5]];
+  let segs = [];
+  ol.fnArray.forEach((fn, i) => {
+    const a = ol.argsArray[i];
+    if (fn === O.save) st.push(m.slice());
+    else if (fn === O.restore) m = st.pop() || m;
+    else if (fn === O.transform) m = mul(m, a);
+    else if (fn === O.constructPath){
+      segs = []; let c = 0, cur = null;
+      a[0].forEach(op => {
+        if (op === O.moveTo){ cur = ap([a[1][c], a[1][c+1]]); c += 2; }
+        else if (op === O.lineTo){ const q = ap([a[1][c], a[1][c+1]]); c += 2; if (cur) segs.push([cur, q]); cur = q; }
+        else if (op === O.rectangle){ const p0 = ap([a[1][c], a[1][c+1]]), p1 = ap([a[1][c]+a[1][c+2], a[1][c+1]+a[1][c+3]]); c += 4; segs.push(['r', p0, p1]); }
+        else if (op === O.closePath){} else if (op === O.curveTo) c += 6;
+      });
+      segs.cur = segs;
+    } 
+    else if (fn === O.stroke || fn === O.closeStroke){
+      (segs || []).forEach(sg => {
+        if (sg[0] === 'r'){ const [p0, p1] = [sg[1], sg[2]], x0 = Math.min(p0[0], p1[0]), x1 = Math.max(p0[0], p1[0]), y0 = Math.min(p0[1], p1[1]), y1 = Math.max(p0[1], p1[1]);
+          hs.push({ y: y0, x0, x1 }); hs.push({ y: y1, x0, x1 }); vs.push({ x: x0, y0, y1 }); vs.push({ x: x1, y0, y1 }); }
+        else { const [p, q] = sg; if (Math.abs(p[1]-q[1]) < .3) hs.push({ y: p[1], x0: Math.min(p[0], q[0]), x1: Math.max(p[0], q[0]) }); else if (Math.abs(p[0]-q[0]) < .3) vs.push({ x: p[0], y0: Math.min(p[1], q[1]), y1: Math.max(p[1], q[1]) }); }
+      }); segs = [];
+    }
+    else if (fn === O.fill || fn === O.eoFill || fn === O.fillStroke || fn === O.eoFillStroke){
+      const pts = []; (segs || []).forEach(sg => { if (sg[0] === 'r'){ pts.push(sg[1], sg[2]); } else { pts.push(sg[0], sg[1]); } });
+      if (pts.length >= 2){ const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); fl.push({ x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }); } segs = [];
+    } else if (fn === O.endPath) segs = [];
+  });
+  const vp = page.getViewport({ scale: 1 });
+  return { items, hs, vs, fl, w: vp.width, h: vp.height };
+}
+
+/* Orario – Stundenplan-Suche (theis). Alle Daten bleiben auf dem Gerät. */
+(function () {
+'use strict';
+const VERSION = '1.0.0', KEY = 'orario_v1', PREV = 'orario_prev', REC = 'orario_recent';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss');
+const tick = () => new Promise(r => setTimeout(r, 0));
+const CLS = /^(\d{1,2}[A-Za-z]{0,2}|[QKJ]\d{1,3})$/;
+const ME_KEY = 'orario_me';
+const EMB = window.parent !== window;
+/* ---------- Sprache (de, en, it, fr, es) – folgt der App, in der Orario eingebettet ist ---------- */
+const LANGS = ['de', 'en', 'it', 'fr', 'es'];
+function pickLang() { let l = ''; try { if (EMB) l = parent.document.documentElement.lang; } catch (e) {} if (!l) l = (document.documentElement.lang && document.documentElement.getAttribute('data-l')) || navigator.language || 'de'; l = String(l).slice(0, 2).toLowerCase(); return LANGS.includes(l) ? l : (EMB ? 'de' : 'en'); }
+const LG = pickLang(), LI = LANGS.indexOf(LG);
+const DAYN_L = { de: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'], en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], it: ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'], fr: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'], es: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] };
+const DAYS_L = { de: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], it: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'], fr: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'], es: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] };
+const DAYN = DAYN_L[LG], DAYS = DAYS_L[LG];
+const PLONG = { de: p => p + '. Stunde', en: p => 'Period ' + p, it: p => p + 'ª ora', fr: p => p + 'e heure', es: p => p + '.ª hora' }[LG];
+const PSHORT = { de: p => p + '. Std', en: p => 'P' + p, it: p => p + 'ª', fr: p => p + 'e h', es: p => p + '.ª' }[LG];
+const PRANGE = (a, b) => b > a ? { de: a + '.–' + b + '. Std', en: 'P' + a + '–' + b, it: a + 'ª–' + b + 'ª', fr: a + 'e–' + b + 'e h', es: a + '.ª–' + b + '.ª' }[LG] : PSHORT(a);
+/* Schlüssel = deutscher Text; Werte = [en, it, fr, es]. {0}, {1} = Platzhalter */
+const D = {
+ 'Speichern im Browser nicht möglich – bitte „Daten sichern“ nutzen.': ['Saving in the browser is not possible – please use “Back up data”.', 'Salvataggio nel browser non possibile – usa “Salva dati”.', 'Enregistrement impossible dans le navigateur – utilisez « Sauvegarder les données ».', 'No se puede guardar en el navegador – usa «Guardar datos».'],
+ 'Stundenplan einlesen': ['Import timetable', 'Importa l’orario', 'Importer l’emploi du temps', 'Importar horario'],
+ 'Lege hier die Untis-PDFs ab: den <b>Lehrerplan</b> und/oder den <b>Klassenplan</b> (Stundenpläne als PDF, eine Seite je Lehrkraft bzw. Klasse). Es genügt eine der beiden Dateien, mit beiden wird es genauer. Alles bleibt auf diesem Gerät.': ['Drop the Untis PDFs here: the <b>teacher timetable</b> and/or the <b>class timetable</b> (timetables as PDF, one page per teacher or class). One of the two files is enough; with both it is more accurate. Everything stays on this device.', 'Trascina qui i PDF di Untis: l’<b>orario dei docenti</b> e/o l’<b>orario delle classi</b> (orari in PDF, una pagina per docente o classe). Basta uno dei due file, con entrambi è più preciso. Tutto resta su questo dispositivo.', 'Déposez ici les PDF d’Untis : l’<b>emploi du temps des enseignants</b> et/ou celui des <b>classes</b> (PDF, une page par enseignant ou classe). Un seul fichier suffit ; avec les deux, c’est plus précis. Tout reste sur cet appareil.', 'Suelta aquí los PDF de Untis: el <b>horario del profesorado</b> y/o el de las <b>clases</b> (PDF, una página por docente o clase). Basta uno de los dos; con ambos es más preciso. Todo se queda en este dispositivo.'],
+ 'PDF-Dateien auswählen …': ['Choose PDF files …', 'Scegli i file PDF …', 'Choisir des fichiers PDF …', 'Elegir archivos PDF …'],
+ 'Erst mal mit Beispieldaten ausprobieren': ['Try it with sample data first', 'Prova prima con dati di esempio', 'Essayer d’abord avec des données d’exemple', 'Probar primero con datos de ejemplo'],
+ 'Lehrkräfte': ['Teachers', 'Docenti', 'Enseignants', 'Profesorado'],
+ 'Räume': ['Rooms', 'Aule', 'Salles', 'Aulas'],
+ 'Raum, z. B. 101 …': ['Room, e.g. 101 …', 'Aula, es. 101 …', 'Salle, p. ex. 101 …', 'Aula, p. ej. 101 …'],
+ 'Jetzt frei': ['Free now', 'Libere ora', 'Libres maintenant', 'Libres ahora'],
+ 'Frei: {0}': ['Free: {0}', 'Libere: {0}', 'Libres : {0}', 'Libres: {0}'],
+ 'Alle Räume': ['All rooms', 'Tutte le aule', 'Toutes les salles', 'Todas las aulas'],
+ 'Gerade in einer Freistunde': ['In a free period right now', 'Ora libera in questo momento', 'En heure libre en ce moment', 'En hora libre ahora'],
+ 'In einer Freistunde · {0}': ['Free period · {0}', 'Ora libera · {0}', 'Heure libre · {0}', 'Hora libre · {0}'],
+ 'Alle Lehrkräfte von A bis Z': ['All teachers A–Z', 'Tutti i docenti dalla A alla Z', 'Tous les enseignants de A à Z', 'Todo el profesorado de la A a la Z'],
+ 'Raum frei': ['Room free', 'Aula libera', 'Salle libre', 'Aula libre'],
+ 'Raumplan': ['Room plan', 'Piano aula', 'Planning de la salle', 'Plan del aula'],
+ 'Klassen': ['Classes', 'Classi', 'Classes', 'Clases'],
+ 'Name der Lehrkraft …': ['Teacher’s name …', 'Nome del docente …', 'Nom de l’enseignant …', 'Nombre del docente …'],
+ 'Klasse, z. B. 9F …': ['Class, e.g. 9F …', 'Classe, es. 9F …', 'Classe, p. ex. 9F …', 'Clase, p. ej. 9F …'],
+ 'Suche': ['Search', 'Cerca', 'Recherche', 'Búsqueda'],
+ 'Tipp: Lege in den Einstellungen (⚙︎) fest, wer du bist – dann zeigt Orario dir immer, welche Klasse du gerade hast.': ['Tip: set who you are in the settings (⚙︎) – then Orario always shows which class you have right now.', 'Suggerimento: nelle impostazioni (⚙︎) indica chi sei – Orario ti mostrerà sempre quale classe hai adesso.', 'Astuce : indiquez dans les réglages (⚙︎) qui vous êtes – Orario vous montre alors toujours quelle classe vous avez en ce moment.', 'Consejo: indica en los ajustes (⚙︎) quién eres – Orario te mostrará siempre qué clase tienes ahora.'],
+ 'Jetzt': ['Now', 'Adesso', 'Maintenant', 'Ahora'],
+ 'Gleich': ['Next', 'Tra poco', 'Bientôt', 'Enseguida'],
+ 'keine Stunde': ['no lesson', 'nessuna lezione', 'pas de cours', 'sin clase'],
+ 'Raum': ['Room', 'Aula', 'Salle', 'Aula'],
+ 'Mein Plan': ['My timetable', 'Il mio orario', 'Mon emploi du temps', 'Mi horario'],
+ 'Mein Wochenplan': ['My week', 'La mia settimana', 'Ma semaine', 'Mi semana'],
+ 'Nichts gefunden.': ['Nothing found.', 'Nessun risultato.', 'Aucun résultat.', 'No se encontró nada.'],
+ 'Zuletzt angesehen': ['Recently viewed', 'Visti di recente', 'Consultés récemment', 'Vistos recientemente'],
+ 'Tippe einen Namen ein.': ['Type a name.', 'Scrivi un nome.', 'Saisissez un nom.', 'Escribe un nombre.'],
+ 'Gruppe': ['Group', 'Gruppo', 'Groupe', 'Grupo'],
+ 'bis {0}': ['until {0}', 'fino alle {0}', 'jusqu’à {0}', 'hasta las {0}'],
+ 'Klassenleitung': ['Form teacher', 'Coordinatore di classe', 'Professeur principal', 'Tutor/a'],
+ 'Stellvertretung': ['Deputy', 'Vice', 'Suppléant', 'Suplente'],
+ 'Wochenende': ['Weekend', 'Fine settimana', 'Week-end', 'Fin de semana'],
+ 'Wähle unten einen Tag und eine Stunde.': ['Choose a day and a period below.', 'Scegli sotto un giorno e un’ora.', 'Choisissez ci-dessous un jour et une heure.', 'Elige abajo un día y una hora.'],
+ 'Jetzt · {0}': ['Now · {0}', 'Adesso · {0}', 'Maintenant · {0}', 'Ahora · {0}'],
+ 'Pause · gleich {0} ({1})': ['Break · {0} starts soon ({1})', 'Pausa · a breve {0} ({1})', 'Pause · bientôt {0} ({1})', 'Recreo · enseguida {0} ({1})'],
+ 'Unterricht für heute vorbei': ['Lessons are over for today', 'Lezioni finite per oggi', 'Les cours sont terminés pour aujourd’hui', 'Clases terminadas por hoy'],
+ 'Nächste Stunde: {0}': ['Next lesson: {0}', 'Prossima lezione: {0}', 'Prochain cours : {0}', 'Próxima clase: {0}'],
+ 'Freistunde': ['Free period', 'Ora libera', 'Heure libre', 'Hora libre'],
+ 'Keine Stunde': ['No lesson', 'Nessuna lezione', 'Pas de cours', 'Sin clase'],
+ 'Kein Unterricht': ['No lessons', 'Nessuna lezione', 'Pas de cours', 'Sin clases'],
+ 'abgeleitet': ['derived', 'derivato', 'déduit', 'derivado'],
+ 'aus dem Klassenplan abgeleitet': ['derived from the class timetable', 'ricavato dall’orario delle classi', 'déduit de l’emploi du temps des classes', 'derivado del horario de las clases'],
+ 'aus dem Lehrerplan abgeleitet': ['derived from the teacher timetable', 'ricavato dall’orario dei docenti', 'déduit de l’emploi du temps des enseignants', 'derivado del horario del profesorado'],
+ 'Das bin ich': ['That’s me', 'Sono io', 'C’est moi', 'Soy yo'],
+ '✓ Das bin ich': ['✓ That’s me', '✓ Sono io', '✓ C’est moi', '✓ Soy yo'],
+ 'Schließen': ['Close', 'Chiudi', 'Fermer', 'Cerrar'],
+ 'Tag': ['Day', 'Giorno', 'Jour', 'Día'],
+ 'Stunde': ['Period', 'Ora', 'Heure', 'Hora'],
+ 'Woche': ['Week', 'Settimana', 'Semaine', 'Semana'],
+ 'Bitte PDF-Dateien aus Untis auswählen.': ['Please choose PDF files from Untis.', 'Scegli i file PDF di Untis.', 'Veuillez choisir des fichiers PDF d’Untis.', 'Elige archivos PDF de Untis.'],
+ 'Pläne werden gelesen …': ['Reading timetables …', 'Lettura degli orari …', 'Lecture des emplois du temps …', 'Leyendo los horarios …'],
+ 'Start …': ['Starting …', 'Avvio …', 'Démarrage …', 'Iniciando …'],
+ '{0} – Seite {1} von {2}': ['{0} – page {1} of {2}', '{0} – pagina {1} di {2}', '{0} – page {1} sur {2}', '{0} – página {1} de {2}'],
+ 'Die Datei konnte nicht gelesen werden: {0}': ['The file could not be read: {0}', 'Impossibile leggere il file: {0}', 'Le fichier n’a pas pu être lu : {0}', 'No se pudo leer el archivo: {0}'],
+ '{0}, Seite {1}: {2}': ['{0}, page {1}: {2}', '{0}, pagina {1}: {2}', '{0}, page {1} : {2}', '{0}, página {1}: {2}'],
+ 'Nichts erkannt': ['Nothing recognised', 'Nulla riconosciuto', 'Rien reconnu', 'No se reconoció nada'],
+ 'In den Dateien wurde kein Untis-Stundenplan gefunden.': ['No Untis timetable was found in the files.', 'Nei file non è stato trovato alcun orario Untis.', 'Aucun emploi du temps Untis trouvé dans les fichiers.', 'No se encontró ningún horario de Untis en los archivos.'],
+ 'Es muss ein Stundenplan-Export aus Untis als PDF sein (ein Plan je Seite, mit Wochentagen oben).': ['It must be a timetable export from Untis as PDF (one timetable per page, weekdays across the top).', 'Deve essere un’esportazione dell’orario da Untis in PDF (un orario per pagina, con i giorni in alto).', 'Il doit s’agir d’un export d’emploi du temps Untis en PDF (un plan par page, jours de la semaine en haut).', 'Debe ser una exportación de horario de Untis en PDF (un horario por página, con los días arriba).'],
+ 'OK': ['OK', 'OK', 'OK', 'OK'],
+ 'Die bisherigen Lehrerpläne ({0}) werden ersetzt.': ['The existing teacher timetables ({0}) will be replaced.', 'Gli orari dei docenti esistenti ({0}) verranno sostituiti.', 'Les emplois du temps des enseignants actuels ({0}) seront remplacés.', 'Los horarios del profesorado actuales ({0}) se sustituirán.'],
+ 'Die bisherigen Klassenpläne ({0}) werden entfernt.': ['The existing class timetables ({0}) will be removed.', 'Gli orari delle classi esistenti ({0}) verranno rimossi.', 'Les emplois du temps des classes actuels ({0}) seront supprimés.', 'Los horarios de las clases actuales ({0}) se eliminarán.'],
+ 'anderes Schuljahr': ['other school year', 'altro anno scolastico', 'autre année scolaire', 'otro curso'],
+ 'Gefunden': ['Found', 'Trovato', 'Trouvé', 'Encontrado'],
+ '{0} Stunden': ['{0} lessons', '{0} lezioni', '{0} cours', '{0} clases'],
+ 'Stundenraster': ['Period grid', 'Griglia oraria', 'Grille horaire', 'Rejilla horaria'],
+ 'Schuljahr': ['School year', 'Anno scolastico', 'Année scolaire', 'Curso'],
+ 'Stand': ['As of', 'Aggiornato al', 'Mise à jour', 'Actualizado'],
+ 'gültig ab': ['valid from', 'valido dal', 'valable dès', 'válido desde'],
+ '{0} Seite(n) konnten nicht gelesen werden.': ['{0} page(s) could not be read.', '{0} pagina/e non leggibili.', '{0} page(s) illisible(s).', '{0} página(s) no se pudieron leer.'],
+ '{0} Zeile(n) mit ungewöhnlichem Aufbau wurden übernommen.': ['{0} line(s) with an unusual layout were imported.', '{0} riga/righe con struttura insolita importate.', '{0} ligne(s) de structure inhabituelle importée(s).', '{0} línea(s) con estructura inusual importadas.'],
+ 'Der vorherige Stand bleibt als Sicherung erhalten.': ['The previous version is kept as a backup.', 'La versione precedente resta come copia di sicurezza.', 'La version précédente est conservée comme sauvegarde.', 'La versión anterior se conserva como copia de seguridad.'],
+ 'Übernehmen': ['Apply', 'Applica', 'Appliquer', 'Aplicar'],
+ 'Verwerfen': ['Discard', 'Scarta', 'Rejeter', 'Descartar'],
+ 'Das ist keine gültige Orario-Sicherung.': ['This is not a valid Orario backup.', 'Non è un backup Orario valido.', 'Ce n’est pas une sauvegarde Orario valide.', 'No es una copia de seguridad válida de Orario.'],
+ 'Sicherung eingespielt.': ['Backup restored.', 'Backup ripristinato.', 'Sauvegarde restaurée.', 'Copia restaurada.'],
+ 'Pläne und Daten': ['Timetables and data', 'Orari e dati', 'Emplois du temps et données', 'Horarios y datos'],
+ 'Noch keine Pläne eingelesen.': ['No timetables imported yet.', 'Nessun orario ancora importato.', 'Aucun emploi du temps importé.', 'Aún no hay horarios importados.'],
+ 'Lehrkräfte / Klassen': ['Teachers / classes', 'Docenti / classi', 'Enseignants / classes', 'Docentes / clases'],
+ 'Neues Schuljahr? Einfach die neuen Untis-PDFs einlesen – sie ersetzen die alten. Der vorherige Stand bleibt als Sicherung erhalten.': ['New school year? Just import the new Untis PDFs – they replace the old ones. The previous version is kept as a backup.', 'Nuovo anno scolastico? Importa i nuovi PDF di Untis: sostituiscono i vecchi. La versione precedente resta come copia di sicurezza.', 'Nouvelle année scolaire ? Importez simplement les nouveaux PDF d’Untis – ils remplacent les anciens. La version précédente est conservée.', '¿Nuevo curso? Importa los nuevos PDF de Untis: sustituyen a los antiguos. La versión anterior se conserva como copia.'],
+ 'Das bin ich:': ['That’s me:', 'Sono io:', 'C’est moi :', 'Soy yo:'],
+ '– nicht festgelegt –': ['– not set –', '– non impostato –', '– non défini –', '– sin definir –'],
+ 'Pläne einlesen …': ['Import timetables …', 'Importa orari …', 'Importer des emplois du temps …', 'Importar horarios …'],
+ 'Vorherigen Stand zurückholen': ['Restore previous version', 'Ripristina la versione precedente', 'Restaurer la version précédente', 'Recuperar la versión anterior'],
+ 'Daten sichern (Datei)': ['Back up data (file)', 'Salva i dati (file)', 'Sauvegarder les données (fichier)', 'Guardar datos (archivo)'],
+ 'Sicherung einspielen …': ['Restore backup …', 'Ripristina backup …', 'Restaurer une sauvegarde …', 'Restaurar copia …'],
+ 'Alles löschen': ['Delete everything', 'Elimina tutto', 'Tout supprimer', 'Borrar todo'],
+ 'Alle Pläne bleiben auf diesem Gerät – nichts wird hochgeladen.': ['All timetables stay on this device – nothing is uploaded.', 'Tutti gli orari restano su questo dispositivo – nulla viene caricato.', 'Tous les emplois du temps restent sur cet appareil – rien n’est envoyé.', 'Todos los horarios se quedan en este dispositivo: no se sube nada.'],
+ 'Alles löschen?': ['Delete everything?', 'Eliminare tutto?', 'Tout supprimer ?', '¿Borrar todo?'],
+ 'Die eingelesenen Pläne werden von diesem Gerät entfernt. Du kannst sie jederzeit neu einlesen.': ['The imported timetables will be removed from this device. You can import them again at any time.', 'Gli orari importati verranno rimossi da questo dispositivo. Puoi reimportarli in qualsiasi momento.', 'Les emplois du temps importés seront supprimés de cet appareil. Vous pouvez les réimporter à tout moment.', 'Los horarios importados se eliminarán de este dispositivo. Puedes volver a importarlos cuando quieras.'],
+ 'Löschen': ['Delete', 'Elimina', 'Supprimer', 'Borrar'],
+ 'Abbrechen': ['Cancel', 'Annulla', 'Annuler', 'Cancelar'],
+ 'Beispieldaten': ['Sample data', 'Dati di esempio', 'Données d’exemple', 'Datos de ejemplo'],
+ 'Wer ist wo?': ['Who is where?', 'Chi è dove?', 'Qui est où ?', '¿Quién está dónde?'],
+ 'Einstellungen': ['Settings', 'Impostazioni', 'Réglages', 'Ajustes'],
+ 'Plan bearbeiten': ['Edit timetable', 'Modifica orario', 'Modifier l’emploi du temps', 'Editar horario'],
+ 'Fertig': ['Done', 'Fatto', 'Terminé', 'Listo'],
+ 'Ziehe eine Stunde auf ein anderes Feld, um sie zu verschieben. Tippe auf eine Stunde, um sie zu ändern, oder auf ein leeres Feld, um eine hinzuzufügen.': ['Drag a lesson to another cell to move it. Tap a lesson to change it, or an empty cell to add one.', 'Trascina una lezione su un’altra cella per spostarla. Tocca una lezione per modificarla o una cella vuota per aggiungerne una.', 'Fais glisser un cours vers une autre case pour le déplacer. Touche un cours pour le modifier ou une case vide pour en ajouter un.', 'Arrastra una clase a otra casilla para moverla. Toca una clase para cambiarla o una casilla vacía para añadir una.'],
+ 'Pause': ['Break', 'Pausa', 'Pause', 'Recreo'],
+ 'PDF / Drucken': ['PDF / Print', 'PDF / Stampa', 'PDF / Imprimer', 'PDF / Imprimir'],
+ 'Parallel eingetragen.': ['Added in parallel.', 'Inserita in parallelo.', 'Ajouté en parallèle.', 'Añadida en paralelo.'],
+ 'Verschoben.': ['Moved.', 'Spostata.', 'Déplacé.', 'Movida.'],
+ 'Getauscht.': ['Swapped.', 'Scambiate.', 'Échangés.', 'Intercambiadas.'],
+ 'Dort ist kein Platz im Stundenraster.': ['No room in the period grid there.', 'Non c’è posto nella griglia oraria.', 'Pas de place dans la grille horaire.', 'No hay sitio en la rejilla horaria.'],
+ 'Stunde ändern': ['Edit lesson', 'Modifica lezione', 'Modifier le cours', 'Editar clase'],
+ 'Neue Stunde': ['New lesson', 'Nuova lezione', 'Nouveau cours', 'Nueva clase'],
+ 'von': ['from', 'dalla', 'de', 'desde'],
+ 'bis': ['to', 'alla', 'à', 'hasta'],
+ 'Klasse': ['Class', 'Classe', 'Classe', 'Clase'],
+ 'Fach': ['Subject', 'Materia', 'Matière', 'Asignatura'],
+ 'Speichern': ['Save', 'Salva', 'Enregistrer', 'Guardar'],
+ 'Auf Untis-Plan zurücksetzen': ['Reset to Untis timetable', 'Ripristina l’orario Untis', 'Revenir à l’emploi du temps Untis', 'Restablecer el horario de Untis'],
+ 'Deine Änderungen gehen dabei verloren. Fortfahren?': ['Your changes will be lost. Continue?', 'Le tue modifiche andranno perse. Continuare?', 'Tes modifications seront perdues. Continuer ?', 'Se perderán tus cambios. ¿Continuar?'],
+ 'angepasst': ['edited', 'modificato', 'modifié', 'editado'],
+ 'Weitere Stunde': ['Other lesson', 'Altra lezione', 'Autre cours', 'Otra clase']
+};
+function _(k, ...a) { const v = D[k]; let r = (v && LI > 0 && v[LI - 1]) || k; a.forEach((x, i) => { r = r.split('{' + i + '}').join(x); }); return r; }
+const mem = {};
+const store = {
+  get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return mem[k] ? JSON.parse(mem[k]) : null; } },
+  set(k, v) { const s = JSON.stringify(v); try { localStorage.setItem(k, s); mem[k] = s; return true; } catch (e) { mem[k] = s; return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} delete mem[k]; }
+};
+let DATA = null, IDX = null, S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 };
+
+/* ---------- Daten ---------- */
+function validData(d) { return d && d.v === 1 && d.teachers && d.classes && Array.isArray(d.periods) && d.periods.length; }
+function load() { const d = store.get(KEY); DATA = validData(d) ? d : null; IDX = DATA ? buildIndex(DATA) : null; }
+function sortCls(a, b) { const f = s => { const m = /^(\d+)([A-Za-z]*)$/.exec(s); return m ? [0, +m[1], m[2]] : [1, 0, s]; }, x = f(a), y = f(b); return x[0] - y[0] || x[1] - y[1] || (x[2] < y[2] ? -1 : x[2] > y[2] ? 1 : 0); }
+function buildIndex(D) {
+  const names = Object.keys(D.teachers), bySur = {};
+  names.forEach(n => { const k = fold(n).split(/\s+/)[0]; (bySur[k] = bySur[k] || []).push(n); });
+  function match(str) {
+    const s = fold(str).trim(); if (!s) return null; const ex = names.find(n => fold(n) === s); if (ex) return ex;
+    const t = s.split(/\s+/), c = bySur[t[0]] || []; if (c.length === 1 && t.length === 1) return c[0];
+    if (!c.length) { if (t.length === 1 && t[0].length >= 5) { const pf = names.filter(n => fold(n).split(/\s+/)[0].startsWith(t[0])); if (pf.length === 1) return pf[0]; } return null; }
+    if (t[1]) { const f = c.filter(n => (fold(n).split(/\s+/)[1] || '')[0] === t[1][0]); if (f.length === 1) return f[0]; const f2 = c.filter(n => fold(n).startsWith(s)); if (f2.length === 1) return f2[0]; }
+    if (c.length === 1) return c[0];
+    if (t.length === 1 && t[0].length >= 5) { const pf = names.filter(n => fold(n).split(/\s+/)[0].startsWith(t[0]) || t[0].startsWith(fold(n).split(/\s+/)[0]) && fold(n).split(/\s+/)[0].length >= 5); if (pf.length === 1) return pf[0]; }
+    return null;
+  }
+  const T = {}, C = {};
+  names.forEach(n => { T[n] = { name: n, plan: true, homeroom: D.teachers[n].homeroom || '', lessons: D.teachers[n].lessons.slice() }; });
+  const seen = new Set();
+  Object.keys(D.classes).forEach(c => {
+    const cd = D.classes[c]; C[c] = { name: c, plan: true, leader: cd.leader || '', deputy: cd.deputy || '', lessons: cd.lessons.slice() };
+    cd.lessons.forEach(l => { if (!l.teacher) return; const tn = match(l.teacher) || l.teacher; if (D.teachers[tn]) return;
+      const k = [tn, l.d, l.p0, c, l.fach].join('|'); if (seen.has(k)) return; seen.add(k);
+      (T[tn] = T[tn] || { name: tn, plan: false, homeroom: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, cls: c, fach: l.fach, room: l.room, grp: l.grp }); });
+  });
+  names.forEach(n => D.teachers[n].lessons.forEach(l => { const c = l.cls; if (!c || !CLS.test(c) || D.classes[c]) return;
+    (C[c] = C[c] || { name: c, plan: false, leader: '', deputy: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, teacher: n, room: l.room, grp: l.grp }); }));
+  Object.values(C).forEach(c => { c.leader = c.leader; });
+  /* Klassenleitung aus Klassenplänen an Lehrkräfte hängen */
+  Object.values(C).forEach(c => { [c.leader].forEach(l => { const tn = l && match(l); if (tn && T[tn] && !T[tn].homeroom) T[tn].homeroom = c.name; }); });
+  /* Räume: aus allen Stunden (Lehrkräfte + Klassen) – wer ist wann in welchem Raum */
+  const R = {}, rk = new Set();
+  const addR = (l, teacher, cls) => { const r = (l.room || '').trim(); if (!r) return; const k = [r, l.d, l.p0, l.p1, cls || '', teacher || ''].join('|'); if (rk.has(k)) return; rk.add(k);
+    (R[r] = R[r] || { name: r, plan: true, lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, cls: cls || '', teacher: teacher || '', room: r, grp: l.grp }); };
+  Object.values(T).forEach(t => t.lessons.forEach(l => addR(l, t.name, l.cls)));
+  Object.values(C).forEach(c => c.lessons.forEach(l => { const tn = l.teacher ? (match(l.teacher) || l.teacher) : ''; if (!rk.has([(l.room || '').trim(), l.d, l.p0, l.p1, c.name, tn].join('|'))) addR(l, tn, c.name); }));
+  const rnames = Object.keys(R).sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
+  return { T, C, R, match, tnames: Object.keys(T).sort((a, b) => a.localeCompare(b, 'de')), cnames: Object.keys(C).sort(sortCls), rnames };
+}
+const MINE = 'orario_mine';
+/* Eigene Änderungen am eigenen Plan bleiben erhalten – auch wenn neue Untis-PDFs eingelesen werden */
+function applyMine() { try { const m = store.get(MINE); if (!DATA || !m || !m.name || !DATA.teachers[m.name]) return; const E = DATA.teachers[m.name]; if (!E.edited) { m.orig = E.lessons; store.set(MINE, m); } E.lessons = JSON.parse(JSON.stringify(m.lessons)); E.edited = true; } catch (e) {} }
+function persist() { applyMine(); const ok = store.set(KEY, DATA); if (!ok) toastMsg(_('Speichern im Browser nicht möglich – bitte „Daten sichern“ nutzen.')); }
+
+/* ---------- Zeit ---------- */
+const mins = t => { const m = /^(\d+):(\d+)/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : null; };
+const per = n => DATA.periods.find(p => p.n === n);
+function nowSlot() {
+  const n = new Date(), d = (n.getDay() + 6) % 7, m = n.getHours() * 60 + n.getMinutes(); let cur = null, next = null, last = null;
+  DATA.periods.forEach(p => { const a = mins(p.from), b = mins(p.to); if (a == null) return; if (m >= a && m < b) cur = p; else if (a > m && !next) next = p; if (b <= m) last = p; });
+  return { d, m, cur, next, last, weekend: d > 4 };
+}
+function resolve() {
+  if (S.mode === 'pick') return { d: S.d, p: S.p, state: 'pick' };
+  const n = nowSlot();
+  if (n.weekend) return { d: 0, p: 1, state: 'weekend' };
+  if (n.cur) return { d: n.d, p: n.cur.n, state: 'now' };
+  if (n.next) return { d: n.d, p: n.next.n, state: 'break', n };
+  return { d: n.d, p: DATA.periods[DATA.periods.length - 1].n, state: 'over' };
+}
+const at = (E, d, p) => E.lessons.filter(l => l.d === d && l.p0 <= p && p <= l.p1);
+function nextLesson(E, d, p) {
+  const maxP = Math.max(...DATA.periods.map(x => x.n));
+  for (let k = 0; k < 7; k++) { const day = (d + k) % 7; if (day > 4) continue;
+    const cand = E.lessons.filter(l => l.d === day && (k > 0 || l.p0 > p)).sort((a, b) => a.p0 - b.p0)[0]; if (cand) return cand; }
+  return null;
+}
+const slotTxt = (d, p) => { const q = per(p); return DAYS[d] + ' · ' + PSHORT(p) + (q && q.from ? ' (' + q.from + ')' : ''); };
+const blockEnd = l => { const q = per(l.p1); return q && q.to ? q.to : ''; };
+
+/* ---------- Suche ---------- */
+function recents() { return store.get(REC) || []; }
+function pushRecent(tab, name) { const r = recents().filter(x => !(x[0] === tab && x[1] === name)); r.unshift([tab, name]); store.set(REC, r.slice(0, 8)); }
+function ents() { return S.tab === 't' ? IDX.tnames : S.tab === 'r' ? IDX.rnames : IDX.cnames; }
+const ENT = () => S.tab === 't' ? IDX.T : S.tab === 'r' ? IDX.R : IDX.C;
+function filtered() { const q = fold(S.q).trim(); if (!q) return null; const toks = q.split(/\s+/); return ents().filter(n => { const f = fold(n); return toks.every(t => f.includes(t)); }); }
+
+/* ---------- Ansicht ---------- */
+function autoMe() {
+  if (store.get(ME_KEY) || !IDX) return;
+  try { if (!EMB) return; const t = JSON.parse(parent.localStorage.getItem('gb_tool') || '{}').teacher || ''; const nm = t.replace(/^(herr|frau|dr\.?|prof\.?|mr\.?|mrs\.?|ms\.?|mme|sig\.?ra?|sra?\.?)\s+/i, '').trim(); const m = nm && IDX.match(nm); if (m && IDX.T[m]) store.set(ME_KEY, m); } catch (e) {}
+}
+function render() { if (!DATA) return renderWelcome(); if (!S.init) { S.init = true; autoMe(); const me = myName(); if (me && !S.sel) { S.tab = 't'; S.sel = me; } } renderShell(); drawMe(); drawChips(); drawDetail(); }
+function renderWelcome() {
+  $('main').innerHTML = `<div class="drop" id="drop"><h1>${_('Stundenplan einlesen')}</h1><p class="hint" style="max-width:560px;margin:0 auto 18px">${_('Lege hier die Untis-PDFs ab: den <b>Lehrerplan</b> und/oder den <b>Klassenplan</b> (Stundenpläne als PDF, eine Seite je Lehrkraft bzw. Klasse). Es genügt eine der beiden Dateien, mit beiden wird es genauer. Alles bleibt auf diesem Gerät.')}</p><button class="btn" id="pick" type="button">${_('PDF-Dateien auswählen …')}</button><p class="hint" style="margin-top:18px"><button class="lk" id="demo" type="button">${_('Erst mal mit Beispieldaten ausprobieren')}</button></p></div>`;
+  $('pick').onclick = () => $('file').click(); $('demo').onclick = loadDemo;
+}
+function renderShell() {
+  $('main').innerHTML = `<div id="me"></div><div class="bar noprint"><div class="seg" role="tablist"><button type="button" id="tabT" aria-pressed="${S.tab === 't'}">${_('Lehrkräfte')}</button><button type="button" id="tabC" aria-pressed="${S.tab === 'c'}">${_('Klassen')}</button><button type="button" id="tabR" aria-pressed="${S.tab === 'r'}">${_('Räume')}</button></div><div class="search"><input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${S.tab === 't' ? _('Name der Lehrkraft …') : S.tab === 'r' ? _('Raum, z. B. 101 …') : _('Klasse, z. B. 9F …')}" value="${esc(S.q)}" aria-label="${_('Suche')}"></div></div><div id="chips"></div><div id="detail"></div>`;
+  $('tabT').onclick = () => { S.tab = 't'; S.q = ''; S.sel = null; render(); };
+  $('tabC').onclick = () => { S.tab = 'c'; S.q = ''; S.sel = null; render(); };
+  $('tabR').onclick = () => { S.tab = 'r'; S.q = ''; S.sel = null; S.letter = ''; render(); };
+  const q = $('q'); q.oninput = () => { S.q = q.value; drawChips(); };
+  q.onkeydown = e => { if (e.key === 'Enter') { const f = filtered(); if (f && f.length) choose(f[0]); } };
+}
+function myName() { const m = store.get(ME_KEY); return m && IDX && IDX.T[m] ? m : null; }
+function drawMe() {
+  const box = $('me'); if (!box) return; const me = myName();
+  if (!me || (S.sel === me && S.tab === 't')) { box.innerHTML = me ? '' : (S.sel ? '' : `<p class="hint" style="margin:0 0 8px">${_('Tipp: Lege in den Einstellungen (⚙︎) fest, wer du bist – dann zeigt Orario dir immer, welche Klasse du gerade hast.')}</p>`); return; }
+  const R = resolve(), L = at(IDX.T[me], R.d, R.p), q = per(R.p);
+  const lbl = R.state === 'now' ? _('Jetzt') : R.state === 'break' ? _('Gleich') : R.state === 'pick' ? DAYS[R.d] + ' ' + PSHORT(R.p) : '';
+  const txt = (lbl && L.length) ? L.map(l => `<b>${esc(l.cls || l.fach)}</b>${l.cls ? ' · ' + esc(l.fach) : ''}${l.room ? ' · ' + _('Raum') + ' ' + esc(l.room) : ''}`).join('  ·  ') : (R.state === 'now' || R.state === 'break' ? _('keine Stunde') : '');
+  box.innerHTML = `<div class="card" style="margin-bottom:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div><div class="hint">${_('Mein Plan')} · ${esc(me)}</div><div style="font-size:20px">${lbl ? '<span class="pill ok">' + lbl + '</span> ' : ''}${txt}</div></div><span class="grow"></span><button class="btn" type="button" id="meOpen">${_('Mein Wochenplan')}</button></div>`;
+  $('meOpen').onclick = () => { S.tab = 't'; choose(me); };
+}
+function choose(name) { S.sel = name; S.q = ''; pushRecent(S.tab, name); render(); window.scrollTo({ top: 0 }); }
+function slotLbl(R) { return R.state === 'now' ? _('Jetzt') : R.state === 'break' ? _('Gleich') : DAYS[R.d] + ' · ' + PSHORT(R.p); }
+function freeTeachers(R) { /* im Haus (vorher und nachher Unterricht), aber jetzt keine Stunde */
+  return IDX.tnames.filter(n => { const E = IDX.T[n]; if (!E.plan) return false; const L = E.lessons.filter(l => l.d === R.d); return L.length && !L.some(l => l.p0 <= R.p && R.p <= l.p1) && L.some(l => l.p1 < R.p) && L.some(l => l.p0 > R.p); });
+}
+function freeRooms(R) { return IDX.rnames.filter(r => !at(IDX.R[r], R.d, R.p).length); }
+function drawChips() {
+  const box = $('chips'); if (!box) return; const f = filtered(); let list, head = '', extra = '';
+  const chip = n => `<button class="chip" type="button" data-pick="${esc(n)}">${esc(n)}</button>`;
+  if (S.sel && !f) { box.innerHTML = ''; return; }
+  if (f) { list = f.slice(0, 80); head = f.length ? '' : `<p class="hint">${_('Nichts gefunden.')}</p>`; }
+  else if (S.tab === 'c') { list = IDX.cnames; }
+  else if (S.tab === 'r') {
+    const R = resolve(), fr = R.state === 'over' || R.state === 'weekend' ? [] : freeRooms(R);
+    extra = fr.length ? `<div class="card freebox"><div class="hint">${esc(slotLbl(R))} · ${_('Raum frei')}</div><div class="chips">${fr.map(n => `<button class="chip free" type="button" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>` : '';
+    head = `<p class="hint" style="margin:10px 0 6px">${_('Alle Räume')}</p>`; list = IDX.rnames;
+  } else {
+    const rec = recents().filter(r => r[0] === 't' && IDX.T[r[1]]).map(r => r[1]);
+    const R = resolve(), ft = R.state === 'now' || R.state === 'break' ? freeTeachers(R) : [];
+    if (rec.length) extra += `<p class="hint" style="margin:0 0 6px">${_('Zuletzt angesehen')}</p><div class="chips" style="margin-bottom:12px">${rec.map(chip).join('')}</div>`;
+    if (ft.length) extra += `<details class="card freebox"><summary>${_('Gerade in einer Freistunde')} <span class="pill mut">${ft.length}</span></summary><div class="chips" style="margin-top:8px">${ft.map(n => `<button class="chip free" type="button" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div></details>`;
+    const letters = [...new Set(IDX.tnames.map(n => fold(n)[0].toUpperCase()))].filter(Boolean).sort();
+    extra += `<p class="hint" style="margin:12px 0 6px">${_('Alle Lehrkräfte von A bis Z')}</p><div class="abc">${letters.map(l => `<button type="button" data-l="${l}" aria-pressed="${S.letter === l}">${l}</button>`).join('')}</div>`;
+    list = S.letter ? IDX.tnames.filter(n => fold(n)[0].toUpperCase() === S.letter) : [];
+  }
+  box.innerHTML = extra + head + '<div class="chips">' + list.map(chip).join('') + '</div>';
+  box.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => choose(b.dataset.pick));
+  box.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { S.letter = S.letter === b.dataset.l ? '' : b.dataset.l; drawChips(); });
+}
+function nameBtn(tab, name, label) { const ok = tab === 't' ? IDX.T[name] : tab === 'r' ? IDX.R[name] : IDX.C[name]; return ok ? `<button class="lk" type="button" data-go="${tab}:${esc(name)}">${esc(label || name)}</button>` : esc(label || name); }
+function lessonCard(E, l) {
+  if (S.tab === 'r') return `<div class="les"><div><b style="font-size:21px">${l.cls ? nameBtn('c', l.cls) : esc(l.fach)}</b></div><div>${l.cls ? esc(l.fach) + ' · ' : ''}${l.teacher ? nameBtn('t', IDX.match(l.teacher) || l.teacher, l.teacher) : ''}</div><div class="hint">${PRANGE(l.p0, l.p1)} · ${_('bis {0}', esc(blockEnd(l)))}</div></div>`;
+  const t = S.tab === 't';
+  const who = t ? (l.cls ? nameBtn('c', l.cls) : '') : (l.teacher ? nameBtn('t', IDX.match(l.teacher) || l.teacher, l.teacher) : '');
+  const fach = l.fach ? `<b>${esc(l.fach)}</b>` : '';
+  return `<div class="les">${l.room ? (IDX.R[l.room] ? `<button class="rm lk" type="button" data-go="r:${esc(l.room)}" title="${_('Raumplan')}">${esc(l.room)}</button>` : `<span class="rm" title="${_('Raum')}">${esc(l.room)}</span>`) : ''}<div>${t ? `<b style="font-size:21px">${who || esc(l.fach)}</b>` : `<b style="font-size:21px">${esc(l.fach)}</b>`}</div><div>${t ? (l.cls ? esc(l.fach) : '') : who}${l.grp ? ` <span class="pill mut">${_('Gruppe')}</span>` : ''}</div><div class="hint">${PRANGE(l.p0, l.p1)} · ${_('bis {0}', esc(blockEnd(l)))}</div></div>`;
+}
+function drawDetail() {
+  const box = $('detail'); if (!box) return;
+  if (!S.sel) { box.innerHTML = ''; return; }
+  const E = ENT()[S.sel]; if (!E) { S.sel = null; box.innerHTML = ''; return; }
+  const R = resolve(), L = at(E, R.d, R.p), t = S.tab === 't', q = per(R.p), own = t && S.sel === myName();
+  const meta = S.tab === 'r' ? _('Raumplan') : t ? (E.homeroom ? `${_('Klassenleitung')}: ${nameBtn('c', E.homeroom)}` : '') : [E.leader && _('Klassenleitung') + ': ' + nameBtn('t', IDX.match(E.leader) || E.leader, E.leader), E.deputy && _('Stellvertretung') + ': ' + nameBtn('t', IDX.match(E.deputy) || E.deputy, E.deputy)].filter(Boolean).join(' · ');
+  let head = '', body = '';
+  const n = R.n || (R.state === 'now' || R.state === 'break' || R.state === 'over' ? nowSlot() : null);
+  if (R.state === 'weekend') head = `<span class="pill mut">${_('Wochenende')}</span> <span class="hint">${_('Wähle unten einen Tag und eine Stunde.')}</span>`;
+  else if (R.state === 'now') head = `<span class="pill ok">${_('Jetzt · {0}', PLONG(R.p))}${q && q.from ? ' · ' + esc(q.from) + '–' + esc(q.to) : ''}</span>`;
+  else if (R.state === 'break') head = `<span class="pill">${_('Pause · gleich {0} ({1})', PLONG(R.p), esc(q.from))}</span>`;
+  else if (R.state === 'over') head = `<span class="pill mut">${_('Unterricht für heute vorbei')}</span>`;
+  else head = `<span class="pill">${DAYN[R.d]} · ${PLONG(R.p)}${q && q.from ? ' · ' + esc(q.from) + '–' + esc(q.to) : ''}</span>`;
+  if (R.state === 'weekend' || R.state === 'over') { const nl = nextLesson(E, R.state === 'over' ? R.d : 4, R.state === 'over' ? R.p : 99); body = nl ? `<p class="hint" style="margin:12px 0 0">${_('Nächste Stunde: {0}', slotTxt(nl.d, nl.p0))}</p><div class="res">${lessonCard(E, nl)}</div>` : ''; }
+  else if (L.length) body = `<div class="res">${L.map(l => lessonCard(E, l)).join('')}</div>`;
+  else { const nl = nextLesson(E, R.d, R.p), before = E.lessons.some(l => l.d === R.d && l.p1 < R.p), after = E.lessons.some(l => l.d === R.d && l.p0 > R.p);
+    body = `<p style="font-size:20px;font-weight:700;margin:14px 0 2px">${S.tab === 'r' ? _('Raum frei') : t ? (before && after ? _('Freistunde') : _('Keine Stunde')) : _('Kein Unterricht')}</p>${nl ? `<p class="hint" style="margin:0">${_('Nächste Stunde: {0}', slotTxt(nl.d, nl.p0))}</p><div class="res">${lessonCard(E, nl)}</div>` : ''}`; }
+  const opts = DATA.periods.map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
+  const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join('');
+  box.innerHTML = `<div class="card"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div class="nowwho">${esc(S.sel)}${E.plan ? '' : ' <span class="pill mut" title="' + (t ? _('aus dem Klassenplan abgeleitet') : _('aus dem Lehrerplan abgeleitet')) + '">' + _('abgeleitet') + '</span>'}</div><div class="hint">${meta}</div></div><span class="grow"></span><button class="btn sec noprint" id="close" type="button">${_('Schließen')}</button></div><div style="margin-top:12px">${head}</div>${body}
+  <div class="pick noprint"><button class="chip" type="button" id="bNow" aria-pressed="${S.mode === 'now'}" style="${S.mode === 'now' ? 'background:var(--blue);color:var(--onb,#fff);border-color:var(--blue)' : ''}">${_('Jetzt')}</button><select id="sD" aria-label="${_('Tag')}">${dsel}</select><select id="sP" aria-label="${_('Stunde')}">${opts}</select></div></div>
+  <div class="card" style="margin-top:12px;padding:10px"><div class="wkh"><h2 style="padding:4px 6px 0">${_('Woche')}${own && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ' <span class="pill mut">' + _('angepasst') + '</span>' : ''}</h2>${EMB && window.parent._planPrint ? `<span class="noprint"><button class="chip" type="button" id="pdfBtn">⎙ ${_('PDF / Drucken')}</button></span>` : ''}${own ? `<span class="noprint"><button class="chip" type="button" id="edBtn" aria-pressed="${!!S.edit}">${S.edit ? '✓ ' + _('Fertig') : '✎ ' + _('Plan bearbeiten')}</button>${S.edit && DATA.teachers[S.sel] && DATA.teachers[S.sel].edited ? ` <button class="chip" type="button" id="edReset">${_('Auf Untis-Plan zurücksetzen')}</button>` : ''}</span>` : ''}</div>${own && S.edit ? `<p class="hint" style="margin:2px 6px 6px">${_('Ziehe eine Stunde auf ein anderes Feld, um sie zu verschieben. Tippe auf eine Stunde, um sie zu ändern, oder auf ein leeres Feld, um eine hinzuzufügen.')}</p>` : ''}<div class="tw">${weekTable(E, R)}</div></div>`;
+  $('close').onclick = () => { S.sel = null; render(); };
+  $('bNow').onclick = () => { S.mode = 'now'; drawDetail(); };
+  $('sD').onchange = () => { S.mode = 'pick'; S.d = +$('sD').value; S.p = +$('sP').value; drawDetail(); };
+  $('sP').onchange = () => { S.mode = 'pick'; S.d = +$('sD').value; S.p = +$('sP').value; drawDetail(); };
+  const pb = $('pdfBtn'); if (pb) pb.onclick = () => { try { parent._planPrint({ tab: S.tab, name: S.sel, lessons: E.lessons, leader: E.leader || '', deputy: E.deputy || '', homeroom: E.homeroom || '', periods: DATA.periods, year: DATA.year || '', valid: DATA.valid || '' }); } catch (e) {} };
+  const eb = $('edBtn'); if (eb) eb.onclick = () => { S.edit = !S.edit; drawDetail(); };
+  const er = $('edReset'); if (er) er.onclick = () => resetMine();
+  box.querySelectorAll('[data-slot]').forEach(td => td.onclick = () => { if (box._suppress) return; const [d, p] = td.dataset.slot.split(',').map(Number); if (S.edit && own) return editLesson(d, p); S.mode = 'pick'; S.d = d; S.p = p; drawDetail(); });
+  if (own && S.edit) enableDrag(box, myName());
+}
+function resetMine() {
+  const me = myName(); if (!me) return; const m = store.get(MINE);
+  openSheet(`<h3>${_('Auf Untis-Plan zurücksetzen')}</h3><p>${_('Deine Änderungen gehen dabei verloren. Fortfahren?')}</p><div class="row"><button class="btn danger" id="rOk" type="button">${_('Auf Untis-Plan zurücksetzen')}</button><button class="btn sec" id="rNo" type="button">${_('Abbrechen')}</button></div>`);
+  $('rNo').onclick = closeSheet;
+  $('rOk').onclick = () => { const E = DATA.teachers[me]; if (m && m.orig) E.lessons = m.orig; delete E.edited; store.del(MINE); persist(); IDX = buildIndex(DATA); closeSheet(); render(); };
+}
+function commitMine(me, before) {
+  const E = DATA.teachers[me], old = store.get(MINE), orig = (old && old.name === me && old.orig) ? old.orig : before;
+  E.edited = true; store.set(MINE, { name: me, lessons: JSON.parse(JSON.stringify(E.lessons)), orig }); persist(); IDX = buildIndex(DATA);
+}
+function editLesson(d, p, idx) {
+  const me = myName(); if (!me) return; const E = DATA.teachers[me], here = E.lessons.filter(l => l.d === d && l.p0 <= p && p <= l.p1);
+  const cur = idx === 'new' ? null : here[idx || 0] || null;
+  const P = DATA.periods, pOpt = v => P.map(q => `<option value="${q.n}"${q.n === v ? ' selected' : ''}>${PLONG(q.n)}${q.from ? ' · ' + esc(q.from) : ''}</option>`).join('');
+  const sw = here.length ? `<div class="chips" style="margin-bottom:10px">${here.map((l, i) => `<button class="chip" type="button" data-sw="${i}" aria-pressed="${cur === l}">${esc(l.cls || l.fach)}</button>`).join('')}<button class="chip" type="button" data-sw="new" aria-pressed="${!cur}">+ ${_('Weitere Stunde')}</button></div>` : '';
+  openSheet(`<h3>${cur ? _('Stunde ändern') : _('Neue Stunde')}</h3>${sw}
+  <div class="pick"><label class="hint" for="eD">${_('Tag')}</label><select id="eD">${[0, 1, 2, 3, 4, 5].map(i => `<option value="${i}"${i === (cur ? cur.d : d) ? ' selected' : ''}>${DAYN[i]}</option>`).join('')}</select>
+  <label class="hint" for="eP0">${_('von')}</label><select id="eP0">${pOpt(cur ? cur.p0 : p)}</select><label class="hint" for="eP1">${_('bis')}</label><select id="eP1">${pOpt(cur ? cur.p1 : p)}</select></div>
+  <div class="pick"><label class="hint" for="eC">${_('Klasse')}</label><input id="eC" list="eCl" value="${esc(cur ? cur.cls || '' : '')}" maxlength="24" autocomplete="off"><datalist id="eCl">${IDX.cnames.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+  <label class="hint" for="eF">${_('Fach')}</label><input id="eF" value="${esc(cur ? cur.fach || '' : '')}" maxlength="24" autocomplete="off" style="width:90px"><label class="hint" for="eR">${_('Raum')}</label><input id="eR" value="${esc(cur ? cur.room || '' : '')}" maxlength="12" autocomplete="off" style="width:90px"></div>
+  <div class="row"><button class="btn" id="eS" type="button">${_('Speichern')}</button>${cur ? `<button class="btn danger" id="eX" type="button">${_('Löschen')}</button>` : ''}<button class="btn sec" id="eN" type="button">${_('Abbrechen')}</button></div>`);
+  $('eN').onclick = closeSheet;
+  $('sheetBody').querySelectorAll('[data-sw]').forEach(b => b.onclick = () => editLesson(d, p, b.dataset.sw === 'new' ? 'new' : +b.dataset.sw));
+  $('eS').onclick = () => {
+    const before = JSON.parse(JSON.stringify(E.lessons)); let p0 = +$('eP0').value, p1 = +$('eP1').value; if (p1 < p0) [p0, p1] = [p1, p0];
+    const nl = Object.assign({}, cur || {}, { d: +$('eD').value, p0, p1, cls: $('eC').value.trim(), fach: $('eF').value.trim(), room: $('eR').value.trim() });
+    if (!nl.cls && !nl.fach) return;
+    if (cur) E.lessons[E.lessons.indexOf(cur)] = nl; else E.lessons.push(nl);
+    commitMine(me, before); closeSheet(); render();
+  };
+  if ($('eX')) $('eX').onclick = () => { const before = JSON.parse(JSON.stringify(E.lessons)); E.lessons.splice(E.lessons.indexOf(cur), 1); commitMine(me, before); closeSheet(); render(); };
+}
+function gapBefore(i) { const P = DATA.periods; if (i < 1) return null; const a = mins(P[i - 1].to), b = mins(P[i].from); return a != null && b != null && b - a >= 10 ? { from: P[i - 1].to, to: P[i].from } : null; }
+function weekTable(E, R) {
+  const t = S.tab === 't', P = DATA.periods, today = (new Date().getDay() + 6) % 7, edit = S.edit && t && E === IDX.T[myName()];
+  const used5 = E.lessons.some(l => l.d === 5);
+  const days = used5 ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4];
+  let h = '<table class="wk' + (edit ? ' ed' : '') + '"><thead><tr><th style="width:62px"></th>' + days.map(d => `<th class="${d === today ? 'td' : ''}">${DAYN[d]}</th>`).join('') + '</tr></thead><tbody>';
+  const skip = {};
+  P.forEach((p, i) => {
+    const gp = gapBefore(i); if (gp) h += `<tr class="brk"><td colspan="${days.length + 1}">${_('Pause')} · ${esc(gp.from)}–${esc(gp.to)}</td></tr>`;
+    h += `<tr><td class="pn"><b>${p.n}</b>${esc(p.from)}</td>`;
+    days.forEach(d => {
+      if (skip[d + ',' + p.n]) return;
+      const L = at(E, d, p.n); let span = 1;
+      if (L.length) { const key = L.map(l => l.p0 + l.p1 + l.fach + (l.cls || l.teacher || '')).join('|');
+        for (let j = i + 1; j < P.length; j++) { if (gapBefore(j)) break; const L2 = at(E, d, P[j].n); if (L2.length === L.length && L2.map(l => l.p0 + l.p1 + l.fach + (l.cls || l.teacher || '')).join('|') === key && L.every(l => l.p1 >= P[j].n)) { span++; skip[d + ',' + P[j].n] = 1; } else break; } }
+      let sel = false; for (let k = 0; k < span; k++) if (R.d === d && R.p === P[i + k].n) sel = true;
+      const rr = S.tab === 'r', cell = L.map(l => `<div class="e${l.grp ? ' g' : ''}" data-li="${E.lessons.indexOf(l)}">${rr ? '' : `<i>${esc(l.room)}</i>`}<b>${esc(rr ? (l.cls || l.fach) : t ? (l.cls || l.fach) : l.fach)}</b><br><span class="hint">${esc(rr ? (l.teacher || '') : t ? (l.cls ? l.fach : '') : l.teacher)}</span></div>`).join('');
+      h += `<td class="${L.length ? 'ce' : 'em'}${sel ? ' sel' : ''}" rowspan="${span}" data-slot="${d},${p.n}">${cell}</td>`;
+    });
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+/* Stunden per Ziehen verschieben (Maus, Finger, Stift) */
+function enableDrag(box, me) {
+  const E = DATA.teachers[me]; let drag = null;
+  const cellAt = (x, y) => { const el = document.elementFromPoint(x, y), td = el && el.closest ? el.closest('td[data-slot]') : null; return td && box.contains(td) ? td : null; };
+  box.querySelectorAll('table.ed .e').forEach(ev => {
+    ev.addEventListener('pointerdown', e => {
+      if (e.button) return; const l = E.lessons[+ev.dataset.li]; if (!l) return; const td = ev.closest('td'), r = td.getBoundingClientRect(), len = l.p1 - l.p0 + 1;
+      drag = { ev, l, td, x0: e.clientX, y0: e.clientY, on: false, off: Math.max(0, Math.min(len - 1, Math.floor((e.clientY - r.top) / Math.max(1, r.height) * len))), pid: e.pointerId, over: null };
+    });
+  });
+  const clearHi = () => box.querySelectorAll('td.dt').forEach(t => t.classList.remove('dt'));
+  box.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (!drag.on) { if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8) return; drag.on = true; document.body.classList.add('dragging');
+      const g = drag.ev.cloneNode(true); g.className = 'e ghost'; g.removeAttribute('data-li'); g.style.width = drag.td.getBoundingClientRect().width + 'px'; document.body.appendChild(g); drag.ghost = g; drag.ev.classList.add('lifted'); try { box.setPointerCapture(e.pointerId); } catch (x) {} }
+    drag.ghost.style.left = e.clientX - 20 + 'px'; drag.ghost.style.top = e.clientY - 14 + 'px'; e.preventDefault();
+    const td = cellAt(e.clientX, e.clientY); clearHi(); drag.over = td; if (td) td.classList.add('dt');
+  });
+  const end = (e, cancel) => {
+    if (!drag || e.pointerId !== drag.pid) return; const D0 = drag; drag = null; clearHi(); document.body.classList.remove('dragging'); if (D0.ghost) D0.ghost.remove();
+    if (!D0.on) return; D0.ev.classList.remove('lifted'); box._suppress = true; setTimeout(() => { box._suppress = false; }, 50);
+    const td = cancel ? null : cellAt(e.clientX, e.clientY); if (!td) return;
+    const [nd, tp] = td.dataset.slot.split(',').map(Number), l = D0.l, len = l.p1 - l.p0, np0 = tp - D0.off, np1 = np0 + len, ns = DATA.periods.map(x => x.n);
+    if (np0 < Math.min(...ns) || np1 > Math.max(...ns)) return toastMsg(_('Dort ist kein Platz im Stundenraster.'));
+    if (nd === l.d && np0 === l.p0) return;
+    const before = JSON.parse(JSON.stringify(E.lessons)), hit = E.lessons.filter(o => o !== l && o.d === nd && o.p0 <= np1 && np0 <= o.p1);
+    let msg = _('Verschoben.');
+    if (hit.length === 1 && hit[0].p1 - hit[0].p0 === len) { const o = hit[0]; o.d = l.d; o.p0 = l.p0; o.p1 = l.p1; msg = _('Getauscht.'); } else if (hit.length) msg = _('Parallel eingetragen.');
+    l.d = nd; l.p0 = np0; l.p1 = np1; commitMine(me, before); render();
+  };
+  box.addEventListener('pointerup', e => end(e, false)); box.addEventListener('pointercancel', e => end(e, true));
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const [tab, ...rest] = b.dataset.go.split(':'); S.tab = tab; S.q = ''; choose(rest.join(':')); });
+
+/* ---------- Einlesen ---------- */
+function openSheet(html) { $('sheetBody').innerHTML = html; $('sheet').hidden = false; }
+function closeSheet() { $('sheet').hidden = true; }
+$('sheet').addEventListener('click', e => { if (e.target === $('sheet') && !$('sheet').dataset.lock) closeSheet(); });
+function toastMsg(m) { openSheet(`<p>${esc(m)}</p><div class="row"><button class="btn" type="button" id="ok">OK</button></div>`); $('ok').onclick = closeSheet; }
+async function readPdf(file, onProg) {
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise, recs = [];
+  for (let n = 1; n <= pdf.numPages; n++) {
+    let r; try { const page = await pdf.getPage(n); r = OrarioParse.parsePage(await stpExtractPage(page)); page.cleanup(); } catch (err) { r = { ok: false, why: String(err.message || err) }; }
+    r.page = n; r.file = file.name; recs.push(r); onProg(n, pdf.numPages); if (n % 3 === 0) await tick();
+  }
+  return recs;
+}
+async function importFiles(files) {
+  files = Array.from(files); if (!files.length) return;
+  const js = files.filter(f => /\.json$/i.test(f.name)), pdfs = files.filter(f => /\.pdf$/i.test(f.name));
+  if (js.length && !pdfs.length) return restoreJson(js[0]);
+  if (!pdfs.length) return toastMsg(_('Bitte PDF-Dateien aus Untis auswählen.'));
+  $('sheet').dataset.lock = '1';
+  openSheet(`<h3>${_('Pläne werden gelesen …')}</h3><div class="prog"><i id="pg"></i></div><p class="hint" id="pt">${_('Start …')}</p>`);
+  const recs = []; let done = 0, total = 0;
+  try {
+    for (const f of pdfs) { const r = await readPdf(f, (n, t) => { $('pg').style.width = Math.round(100 * (done + n / t) / pdfs.length) + '%'; $('pt').textContent = _('{0} – Seite {1} von {2}', f.name, n, t); }); recs.push(...r); done++; }
+  } catch (err) { delete $('sheet').dataset.lock; return toastMsg(_('Die Datei konnte nicht gelesen werden: {0}', err.message || err)); }
+  delete $('sheet').dataset.lock; reviewImport(recs, pdfs.map(f => f.name));
+}
+function aggregate(recs) {
+  const R = { teachers: {}, classes: {}, periods: null, year: '', valid: '', stamp: '', bad: [], warn: [], nT: 0, nC: 0 };
+  recs.forEach(r => {
+    if (!r.ok) { R.bad.push(_('{0}, Seite {1}: {2}', r.file, r.page, r.why)); return; }
+    if (!R.periods) { R.periods = r.periods; R.year = r.year; R.valid = r.valid; R.stamp = r.stamp; }
+    r.warn.forEach(w => R.warn.push(`${r.name}: ${w}`));
+    if (r.type === 'teacher') { const o = R.teachers[r.name] = R.teachers[r.name] || { homeroom: '', lessons: [] }; o.homeroom = o.homeroom || r.homeroom; o.lessons.push(...r.lessons); }
+    else { const nm = OrarioParse.normClass(r.name), o = R.classes[nm] = R.classes[nm] || { leader: r.leader, deputy: r.deputy, lessons: [] }; o.lessons.push(...r.lessons); }
+  });
+  R.nT = Object.keys(R.teachers).length; R.nC = Object.keys(R.classes).length;
+  R.les = o => Object.values(o).reduce((a, x) => a + x.lessons.length, 0);
+  return R;
+}
+function reviewImport(recs, fnames) {
+  const R = aggregate(recs);
+  if (!R.nT && !R.nC) return openSheet(`<h3>${_('Nichts erkannt')}</h3><p>${_('In den Dateien wurde kein Untis-Stundenplan gefunden.')}</p>${R.bad.length ? `<div class="list">${R.bad.slice(0, 20).map(esc).join('<br>')}</div>` : ''}<p class="hint">${_('Es muss ein Stundenplan-Export aus Untis als PDF sein (ein Plan je Seite, mit Wochentagen oben).')}</p><div class="row"><button class="btn" id="ok" type="button">OK</button></div>`) || ($('ok').onclick = closeSheet);
+  const old = DATA; let drop = '';
+  const keepT = !R.nT && old && old.year === R.year, keepC = !R.nC && old && old.year === R.year;
+  if (!R.nT && old && Object.keys(old.teachers).length && !keepT) drop = _('Die bisherigen Lehrerpläne ({0}) werden ersetzt.', old.year || _('anderes Schuljahr'));
+  if (!R.nC && old && Object.keys(old.classes).length && !keepC) drop = (drop ? drop + ' ' : '') + _('Die bisherigen Klassenpläne ({0}) werden entfernt.', old.year || _('anderes Schuljahr'));
+  openSheet(`<h3>${_('Gefunden')}</h3><div class="stat"><span>${_('Lehrkräfte')}</span><b>${R.nT}${R.nT ? ' · ' + _('{0} Stunden', R.les(R.teachers)) : ''}</b><span>${_('Klassen')}</span><b>${R.nC}${R.nC ? ' · ' + _('{0} Stunden', R.les(R.classes)) : ''}</b><span>${_('Stundenraster')}</span><b>${_('{0} Stunden', R.periods.length)}</b><span>${_('Schuljahr')}</span><b>${esc(R.year || '–')}</b><span>${_('Stand')}</span><b>${esc(R.stamp || '–')}</b><span>${_('gültig ab')}</span><b>${esc(R.valid || '–')}</b></div>
+  ${R.bad.length ? `<div class="note">${_('{0} Seite(n) konnten nicht gelesen werden.', R.bad.length)}</div><div class="list">${R.bad.slice(0, 30).map(esc).join('<br>')}</div>` : ''}
+  ${R.warn.length ? `<p class="hint">${_('{0} Zeile(n) mit ungewöhnlichem Aufbau wurden übernommen.', R.warn.length)}</p>` : ''}${drop ? `<div class="note">${esc(drop)} ${_('Der vorherige Stand bleibt als Sicherung erhalten.')}</div>` : ''}
+  ${old ? '' : ''}<div class="row"><button class="btn" id="take" type="button">${_('Übernehmen')}</button><button class="btn sec" id="no" type="button">${_('Verwerfen')}</button></div>`);
+  $('no').onclick = closeSheet;
+  $('take').onclick = () => {
+    if (old) store.set(PREV, old);
+    const nd = { v: 1, year: R.year, valid: R.valid, stamp: R.stamp, periods: R.periods, teachers: R.nT ? R.teachers : (keepT ? old.teachers : {}), classes: R.nC ? R.classes : (keepC ? old.classes : {}), importedAt: Date.now(), files: fnames };
+    DATA = nd; persist(); IDX = buildIndex(DATA); S = { tab: R.nT ? 't' : 'c', q: '', sel: null, mode: 'now', d: 0, p: 1 }; closeSheet(); render();
+  };
+}
+function restoreJson(f) {
+  f.text().then(t => { let d; try { d = JSON.parse(t); } catch (e) {} if (!validData(d)) return toastMsg(_('Das ist keine gültige Orario-Sicherung.'));
+    if (DATA) store.set(PREV, DATA); DATA = d; persist(); IDX = buildIndex(DATA); S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; render(); toastMsg(_('Sicherung eingespielt.')); });
+}
+
+/* ---------- Einstellungen ---------- */
+function settings() {
+  const prev = store.get(PREV), n = DATA ? Object.keys(DATA.teachers).length : 0, c = DATA ? Object.keys(DATA.classes).length : 0;
+  openSheet(`<h3>${_('Pläne und Daten')}</h3>${DATA ? `<div class="stat"><span>${_('Schuljahr')}</span><b>${esc(DATA.year || '–')}</b><span>${_('Stand')}</span><b>${esc(DATA.stamp || '–')}</b><span>${_('gültig ab')}</span><b>${esc(DATA.valid || '–')}</b><span>${_('Lehrkräfte / Klassen')}</span><b>${n} / ${c}</b></div>` : `<p class="hint">${_('Noch keine Pläne eingelesen.')}</p>`}
+  <p class="hint">${_('Neues Schuljahr? Einfach die neuen Untis-PDFs einlesen – sie ersetzen die alten. Der vorherige Stand bleibt als Sicherung erhalten.')}</p>
+  ${DATA ? `<div class="pick"><label for="sMe" class="hint">${_('Das bin ich:')}</label><select id="sMe"><option value="">${_('– nicht festgelegt –')}</option>${IDX.tnames.map(n => `<option${n === myName() ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>` : ''}<div class="row"><button class="btn" id="sImp" type="button">${_('Pläne einlesen …')}</button>${prev ? `<button class="btn sec" id="sPrev" type="button">${_('Vorherigen Stand zurückholen')}</button>` : ''}</div>
+  <div class="row">${DATA ? `<button class="btn sec" id="sExp" type="button">${_('Daten sichern (Datei)')}</button>` : ''}<button class="btn sec" id="sRes" type="button">${_('Sicherung einspielen …')}</button>${DATA ? `<button class="btn danger" id="sDel" type="button">${_('Alles löschen')}</button>` : ''}</div>
+  <p class="hint" style="margin-top:16px">${_('Alle Pläne bleiben auf diesem Gerät – nichts wird hochgeladen.')} Orario ${VERSION} · theis</p><div class="row"><button class="btn sec" id="sClose" type="button">${_('Schließen')}</button></div>`);
+  $('sClose').onclick = closeSheet; $('sImp').onclick = () => { closeSheet(); $('file').click(); }; $('sRes').onclick = () => { closeSheet(); $('file').click(); };
+  if ($('sMe')) $('sMe').onchange = () => { if ($('sMe').value) store.set(ME_KEY, $('sMe').value); else store.del(ME_KEY); render(); };
+  if ($('sPrev')) $('sPrev').onclick = () => { const p = store.get(PREV); if (!validData(p)) return; store.set(PREV, DATA); DATA = p; persist(); IDX = buildIndex(DATA); S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; closeSheet(); render(); };
+  if ($('sExp')) $('sExp').onclick = () => { const b = new Blob([JSON.stringify(DATA)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'orario-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+  if ($('sDel')) $('sDel').onclick = () => { openSheet(`<h3>${_('Alles löschen?')}</h3><p>${_('Die eingelesenen Pläne werden von diesem Gerät entfernt. Du kannst sie jederzeit neu einlesen.')}</p><div class="row"><button class="btn danger" id="yes" type="button">${_('Löschen')}</button><button class="btn sec" id="no" type="button">${_('Abbrechen')}</button></div>`); $('no').onclick = closeSheet; $('yes').onclick = () => { store.set(PREV, DATA); store.del(KEY); store.del(REC); DATA = null; IDX = null; closeSheet(); render(); }; };
+}
+
+/* ---------- Beispieldaten (erfundene Namen) ---------- */
+function loadDemo() {
+  let seed = 7; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const periods = [['8:10', '8:55'], ['8:55', '9:40'], ['10:00', '10:45'], ['10:45', '11:30'], ['11:45', '12:30'], ['12:30', '13:15'], ['13:15', '14:00'], ['14:00', '14:45'], ['14:45', '15:30']].map((p, i) => ({ n: i + 1, from: p[0], to: p[1] }));
+  const subj = [['D', 4, 'Muster'], ['M', 4, 'Winter'], ['E', 4, 'Beispiel'], ['I', 3, 'Rossi'], ['Mu', 2, 'Sommer'], ['Ku', 2, 'Lindner'], ['Sp', 3, 'Falk'], ['G', 2, 'Berger'], ['B', 2, 'Roth'], ['Ph', 2, 'Kaiser']];
+  const teachers = {}, classes = {}, tbusy = {}; const cn = ['5A', '5B', '6A', '7B', '8A', '9F', '10C', '11D'];
+  const rooms = { D: '101', M: '102', E: '103', I: '104', Mu: '027', Ku: '215', Sp: 'Sp1', G: '105', B: '103E', Ph: '201' };
+  subj.forEach(s => { teachers[s[2]] = { homeroom: '', lessons: [] }; });
+  cn.forEach((c, ci) => {
+    const cb = {}; classes[c] = { leader: subj[ci % subj.length][2], deputy: subj[(ci + 3) % subj.length][2], lessons: [] }; teachers[classes[c].leader].homeroom = teachers[classes[c].leader].homeroom || c;
+    subj.forEach(s => { let need = s[1], tries = 0; while (need > 0 && tries++ < 400) {
+      const dbl = need >= 2 && rnd() < .5, d = Math.floor(rnd() * 5), p = 1 + Math.floor(rnd() * 6), len = dbl ? 2 : 1, ok = [...Array(len)].every((_, k) => !cb[d + ',' + (p + k)] && !tbusy[s[2] + d + ',' + (p + k)] && p + k <= 8 && !(p + k === 3 && false));
+      if (!ok) continue; for (let k = 0; k < len; k++) { cb[d + ',' + (p + k)] = 1; tbusy[s[2] + d + ',' + (p + k)] = 1; }
+      const l = { d, p0: p, p1: p + len - 1, fach: s[0], room: rooms[s[0]] }; classes[c].lessons.push({ ...l, teacher: s[2] }); teachers[s[2]].lessons.push({ ...l, cls: c }); need -= len; } });
+  });
+  DATA = { v: 1, demo: true, year: '2026/2027', valid: '14.9.2026', stamp: _('Beispieldaten'), periods, teachers, classes, importedAt: Date.now(), files: [] };
+  persist(); IDX = buildIndex(DATA); S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; render();
+}
+
+/* ---------- Start ---------- */
+$('btnSet').onclick = settings;
+document.documentElement.lang = LG; document.querySelector('.app-t small').textContent = _('Wer ist wo?'); $('btnSet').setAttribute('aria-label', _('Einstellungen')); $('btnSet').title = _('Pläne und Daten');
+$('file').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+['dragover', 'dragenter'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); const d = $('drop'); if (d) d.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); const d = $('drop'); if (d) d.classList.remove('over'); }));
+document.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files.length) importFiles(e.dataTransfer.files); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden && !$('sheet').dataset.lock) closeSheet(); });
+if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+setInterval(() => { if (DATA && S.mode === 'now' && !document.hidden && $('sheet').hidden) { drawMe(); if (S.sel) drawDetail(); } }, 60000);
+if (EMB) { try { const P = parent.document.documentElement, cs = parent.getComputedStyle(P), r = document.documentElement, map = { '--blue': '--blue', '--bg': '--canvas', '--solid': '--glass-solid', '--tx': '--label', '--tx2': '--label-2', '--glass': '--glass', '--fill': '--fill', '--line': '--hair', '--onb': '--on-accent' };
+  Object.keys(map).forEach(k => { const v = cs.getPropertyValue(map[k]).trim(); if (v) r.style.setProperty(k, v); }); r.style.setProperty('--blue-t', 'color-mix(in srgb,var(--blue) 14%,transparent)'); const dk = P.dataset.theme === 'dark' || (P.dataset.theme !== 'light' && parent.matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = dk ? 'dark' : 'light'; r.style.colorScheme = dk ? 'dark' : 'light'; try { parent.document.getElementById('stFrame').style.colorScheme = dk ? 'dark' : 'light'; } catch (e) {} r.style.background = document.body.style.background = 'var(--bg)'; document.body.classList.add('emb'); const ff = parent.getComputedStyle(parent.document.body).fontFamily; if (ff) document.body.style.fontFamily = ff; } catch (e) {} }
+load(); render();
+/* Querformat am Handy: direkt zum Wochenplan */
+try { const mq = matchMedia('(orientation:landscape) and (max-height:520px)'); const go = () => { if (mq.matches && S.sel) { const w = document.querySelector('.wkh'); if (w) w.closest('.card').scrollIntoView({ block: 'start' }); } }; mq.addEventListener ? mq.addEventListener('change', go) : mq.addListener(go); } catch (e) {}
+if (!EMB && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+window.__orario = { get data() { return DATA; }, S, importFiles, aggregate };
+})();
+</script>
+</body>
+</html>

@@ -1,11 +1,11 @@
 {
-  "name": "Gruppo privat",
-  "short_name": "Gruppo",
+  "name": "Orario privat",
+  "short_name": "Orario",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#EEF0F5",
-  "theme_color": "#2F5BEA",
+  "theme_color": "#F7F7FA",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

@@ -7,19 +7,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Gruppo">
-<meta name="theme-color" content="#2F5BEA">
-<title>Gruppo</title>
+<meta name="apple-mobile-web-app-title" content="Orario">
+<meta name="theme-color" content="#f7f7fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151a2c" media="(prefers-color-scheme: dark)">
+<title>Orario</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>
-:root{--bg:#eef0f5;--card:#fff;--tx:#14161a;--tx2:#6b7280;--blue:#2f5bea;--red:#d8201c;--fill:rgba(120,120,140,.14)}
-@media (prefers-color-scheme:dark){:root{--bg:#0c0f1d;--card:#1a1f35;--tx:#f3f4f8;--tx2:#9aa1b5;--blue:#6f93ff;--fill:rgba(160,170,200,.16)}}
+:root{--bg:#eef0f5;--card:#fff;--bar:#f7f7fa;--tx:#14161a;--tx2:#6b7280;--blue:#2f5bea;--red:#d8201c;--fill:rgba(120,120,140,.14);--line:rgba(60,60,80,.16)}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0f1d;--card:#1a1f35;--bar:#151a2c;--tx:#f3f4f8;--tx2:#9aa1b5;--blue:#6f93ff;--fill:rgba(160,170,200,.16);--line:rgba(255,255,255,.12)}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
-#lock{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 22px max(24px,env(safe-area-inset-bottom));overflow:auto}
-#lock[hidden],#sheet[hidden],#fab[hidden],#frame[hidden]{display:none}
+html{background:var(--bar)}
+body{margin:0;min-height:100vh;background:var(--bar);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 22px max(24px,env(safe-area-inset-bottom));overflow:auto}
+[hidden]{display:none!important}
 .box{width:100%;max-width:380px;background:var(--card);border-radius:24px;padding:26px 22px;box-shadow:0 20px 60px rgba(0,0,0,.14)}
 .ic{width:64px;height:64px;border-radius:16px;margin:0 auto 14px;display:block}
 h1{margin:0 0 4px;text-align:center;font-size:26px;letter-spacing:-.02em}
@@ -35,15 +37,23 @@ input:focus{outline:2px solid var(--blue)}
 .hint{font-size:13px;color:var(--tx2);margin:8px 4px 0}
 label.stay{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:15px;font-weight:500;color:var(--tx);margin:14px 4px 0}label.stay input{width:22px;height:22px;flex:none}
 details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px;cursor:pointer}
-#frame{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
-#fab i.ok{background:#27ae60}#fab i.wait{background:#f5a623}#fab i.bad{background:var(--red)}
-#tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;justify-content:space-around;padding:6px 6px calc(max(6px,env(safe-area-inset-bottom)) );background:color-mix(in srgb,var(--card) 90%,transparent);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border-top:.5px solid var(--fill);transition:transform .25s}
-#tabs[hidden]{display:none}#tabs.away{transform:translateY(110%)}
-#tabs button{flex:1;min-width:0;border:0;background:none;color:var(--tx2);font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 3px;border-radius:12px;position:relative}
-#tabs button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* Bühne: unter der Statusleiste, über der Tab-Leiste – nichts liegt darunter versteckt */
+#top{position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top);background:var(--bg);z-index:5}
+#stage{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg)}
+#stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+#tabs{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:25;display:flex;justify-content:space-around;align-items:flex-start;padding:6px max(8px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));background:var(--bar);border-top:.5px solid var(--line)}
+#tabs button{flex:1;min-width:0;max-width:160px;border:0;background:none;color:var(--tx2);font-family:inherit;font-size:11px;font-weight:600;line-height:1.1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 3px;border-radius:12px;position:relative}
+#tabs button svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #tabs button.on{color:var(--blue)}
-#tabs button i{position:absolute;top:2px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:#9aa1b5;border:2px solid var(--card)}
+#tabs button i{position:absolute;top:3px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:#9aa1b5;border:2px solid var(--bar)}
 #tabs button i.ok{background:#27ae60}#tabs button i.wait{background:#f5a623}#tabs button i.bad{background:var(--red)}
+@media (orientation:landscape) and (max-height:520px){
+  #stage{left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);bottom:calc(42px + env(safe-area-inset-bottom,0px))}
+  #tabs{padding:3px max(8px,env(safe-area-inset-left,0px)) calc(3px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px))}
+  #tabs button{flex-direction:row;justify-content:center;gap:7px;font-size:12.5px;padding:6px 0}
+  #tabs button svg{width:20px;height:20px}
+  #tabs button i{top:2px;left:auto;right:calc(50% - 46px)}
+}
 #sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center}
 #sheet .box{border-radius:24px 24px 0 0;max-width:520px;padding-bottom:max(22px,env(safe-area-inset-bottom))}
 .st{display:flex;align-items:center;gap:8px;font-size:15px;margin:4px 0 6px}
@@ -54,7 +64,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
 <div id="lock" hidden>
   <div class="box">
     <img class="ic" src="icons/icon-192.png" alt="">
-    <h1>Gruppo</h1><p class="sub" id="lsub">Privat · verschlüsselt</p>
+    <h1>Orario</h1><p class="sub" id="lsub">Privat · verschlüsselt</p>
     <form id="lf" autocomplete="off">
       <div id="setupBox" hidden>
         <label for="repo">GitHub-Repository</label><input id="repo" placeholder="benutzername/orario-daten" autocapitalize="none" autocorrect="off" spellcheck="false">
@@ -70,25 +80,23 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     </form>
   </div>
 </div>
-<iframe id="frame" hidden title="Gruppo"></iframe>
-<nav id="tabs" hidden aria-label="Gruppo">
-  <button data-t="dash" type="button"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="9" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.8"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.8"/></svg>Übersicht</button>
-  <button data-t="groups" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Gruppen</button>
-  <button data-t="tm" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.6 1.6M9.5 3h5"/></svg>Timer</button>
-  <button data-t="cl" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.4 2"/></svg>Uhr</button>
-  <button data-t="pk" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.6-4 3.4-6 7-6s6.4 2 7 6"/></svg>Wer?</button>
-  <button data-t="more" type="button"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>Sperre<i id="fabDot"></i></button>
+<div id="top" hidden></div>
+<div id="stage" hidden><iframe id="fO" title="Stundenplan"></iframe><iframe id="fG" title="Gruppo" hidden></iframe></div>
+<nav id="tabs" hidden aria-label="Bereiche">
+  <button data-t="o" type="button" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8.5 3v3M15.5 3v3M8 13.5h2.5M13.5 13.5H16M8 17h2.5"/></svg>Wer ist wo?</button>
+  <button data-t="g" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Gruppo</button>
+  <button data-t="more" type="button"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>Abgleich<i id="fabDot"></i></button>
 </nav>
 <div id="sheet" hidden>
   <div class="box">
-    <h1 style="font-size:20px;text-align:left">Gruppo privat</h1>
+    <h1 style="font-size:20px;text-align:left">Abgleich mit dem Mac</h1>
     <div class="st"><i id="stDot"></i><span id="stTxt">–</span></div>
     <button class="btn" id="bSync">Jetzt abgleichen</button>
     <button class="btn sec" id="bLock">Sperren / Abmelden</button>
     <details><summary>Mehr</summary>
       <button class="btn sec" id="bCfg">GitHub-Zugang ändern</button>
-      <button class="btn red" id="bWipe">Daten auf diesem Gerät löschen</button>
-      <p class="hint">Löschen entfernt nur dieses Gerät. Die verschlüsselte Datei auf GitHub bleibt erhalten.</p>
+      <button class="btn red" id="bWipe">Daten auf diesem iPhone löschen</button>
+      <p class="hint">Löschen entfernt nur dieses iPhone. Die verschlüsselte Datei auf GitHub und alles am Mac bleiben erhalten.</p>
     </details>
     <button class="btn sec" id="bClose" style="margin-top:14px">Schließen</button>
   </div>
@@ -96,7 +104,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
 <script>/* theis Tresor – verschlüsselter Abgleich (AES-256-GCM, Schlüssel aus Passwort via PBKDF2-SHA256).
    Gleicher Code im iPhone-Orario und in Gruppo. Auf GitHub liegt nur verschlüsselter Text. */
 (function (g) {
-  const te = new TextEncoder(), td = new TextDecoder(), ITER = 600000, KEYS = ['orario_v1', 'orario_me', 'orario_mine', 'orario_prev'];
+  const te = new TextEncoder(), td = new TextDecoder(), ITER = 600000, FMT = 2;
   const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
   const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const keyCache = {};
@@ -138,110 +146,132 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     if (!r.ok) throw ghErr(r.status, c.repo, true);
     return (await r.json()).content.sha;
   }
-  /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). v=null = gelöscht. */
+  /* Was abgeglichen wird: nur echte Daten. Einstellungen, Aussehen, Ansicht und Sicherungskopien bleiben je Gerät. */
+  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine)$/.test(k);
+  /* Große Datenbestände werden nie durch einen Abgleich gelöscht – Löschen geht nur am jeweiligen Gerät. */
+  const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1 };
+  const parse = s => { try { return JSON.parse(s); } catch (e) { return undefined; } };
+  /* Inhalt prüfen, bevor er irgendwo übernommen wird */
+  function valid(k, v) {
+    if (v === null) return !NODEL[k];
+    if (typeof v !== 'string') return false;
+    const d = parse(v); if (d === undefined) return false;
+    if (k === 'orario_v1') return !!(d && typeof d === 'object' && d.teachers && typeof d.teachers === 'object' && Object.keys(d.teachers).length && Array.isArray(d.periods));
+    if (k === 'gb_classes') return !!(d && typeof d === 'object' && !Array.isArray(d) && Object.keys(d).length && Object.values(d).every(c => c && typeof c === 'object' && (typeof c.raw === 'string' || Array.isArray(c.students))));
+    if (k === 'gb_seen') return Array.isArray(d);
+    if (/^gb_hist_/.test(k)) return Array.isArray(d);
+    if (k === 'gb_sitz') return !!(d && typeof d === 'object');
+    return true;
+  }
+  /* Nur gültige Einträge {v, t} der abgeglichenen Schlüssel behalten */
+  function clean(data) {
+    const out = {}; if (!data || typeof data !== 'object') return out;
+    Object.keys(data).forEach(k => { const e = data[k]; if (SYNC(k) && e && typeof e === 'object' && typeof e.t === 'number' && isFinite(e.t) && (typeof e.v === 'string' || e.v === null) && valid(k, e.v)) out[k] = { v: e.v, t: e.t }; });
+    return out;
+  }
+  /* Entschlüsselten Inhalt prüfen: falsches/altes Format nie übernehmen */
+  function payload(o) { if (!o || o.fmt !== FMT || !o.data) { const e = new Error('Die Daten auf GitHub stammen von einer älteren Version. Bitte am Mac Gruppo 1.2.0 öffnen und „Jetzt abgleichen“ tippen.'); e.user = true; e.fmt = true; throw e; } return clean(o.data); }
+  const wrap = data => ({ fmt: FMT, data: clean(data) });
+  /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). */
   function merge(local, remote) {
-    const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local || {}).concat(Object.keys(remote || {})));
-    ks.forEach(k => { const l = local && local[k], r = remote && remote[k];
+    local = clean(local); remote = clean(remote);
+    const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local).concat(Object.keys(remote)));
+    ks.forEach(k => { const l = local[k], r = remote[k];
       if (l && (!r || l.t >= r.t)) { out[k] = l; if (!r || r.v !== l.v) localWon.push(k); } else { out[k] = r; if (!l || l.v !== r.v) remoteWon.push(k); } });
     return { merged: out, remoteWon, localWon };
   }
-  g.Vault = { deriveKey: (pw, salt) => key(pw, salt, ITER), seal, open, ghGet, ghPut, merge, newSalt };
+  g.Vault = { deriveKey: (pw, salt) => key(pw, salt, ITER), seal, open, ghGet, ghPut, merge, newSalt, SYNC, valid, clean, payload, wrap, FMT };
 })(window);
 </script>
 <script>
 (function () {
-  const $ = id => document.getElementById(id), LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
+  const $ = id => document.getElementById(id), LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
   const AUTOLOCK = 3 * 60 * 1000; let stayOn = false;
   const idb = (mode, fn) => new Promise(res => { try { const o = indexedDB.open('opv', 1); o.onupgradeneeded = () => o.result.createObjectStore('k'); o.onerror = () => res(null); o.onsuccess = () => { const t = o.result.transaction('k', mode), r = fn(t.objectStore('k')); t.oncomplete = () => res(r && r.result !== undefined ? r.result : null); t.onerror = () => res(null); }; } catch (e) { res(null); } });
   const keyGet = () => idb('readonly', s => s.get('key')), keySet = k => idb('readwrite', s => s.put(k, 'key')), keyDel = () => idb('readwrite', s => s.delete('key'));
-  let pw = '', salt = '', store = { data: {} }, cfg = null, sha = null, dirty = false, hiddenAt = 0, saveT = 0, pushT = 0, busy = false;
+  let pw = '', salt = '', store = { data: {} }, cfg = null, sha = null, dirty = false, hiddenAt = 0, saveT = 0, pushT = 0, busy = false, tab = 'o', gLoaded = false;
   const setStat = (cls, txt) => { $('fabDot').className = cls; $('stDot').className = cls; $('stTxt').textContent = txt; };
-  const fix = d => { d = d || {}; Object.keys(d).forEach(k => { if (typeof d[k] === 'string') d[k] = { v: d[k], t: 0 }; }); return d; };
+  const fix = d => { d = d || {}; Object.keys(d).forEach(k => { if (typeof d[k] === 'string') d[k] = { v: d[k], t: 0 }; else if (!d[k] || typeof d[k] !== 'object') delete d[k]; }); return d; };
   const showErr = m => { $('err').textContent = m || ''; };
+  const now = () => new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   function mode() {
-    const has = !!LS.get('opv_blob'); $('setupBox').hidden = has; $('pwl').textContent = has ? 'Passwort' : 'Passwort (wie in Gruppo)';
+    const has = !!LS.get('opv_blob'); $('setupBox').hidden = has; $('pwl').textContent = has ? 'Passwort' : 'Passwort (wie am Mac)';
     $('go').textContent = has ? 'Entsperren' : 'Einrichten'; $('stay').checked = false; $('lsub').textContent = has ? 'Privat · verschlüsselt' : 'Einrichtung · einmalig';
     $('pw2Box').hidden = true; $('pw').autocomplete = has ? 'current-password' : 'new-password';
   }
-  function showLock() { $('lock').hidden = false; $('frame').hidden = true; $('tabs').hidden = true; $('sheet').hidden = true; $('frame').srcdoc = ''; $('pw').value = ''; $('pw2').value = ''; showErr(''); $('bEmpty').hidden = true; window._allowEmpty = false; mode(); setTimeout(() => { try { $('pw').focus(); } catch (e) {} }, 50); }
-  function lockNow() { keyDel(); stayOn = false; pw = ''; store = { data: {} }; window._opData = null; cfg = null; sha = null; clearTimeout(saveT); clearTimeout(pushT); showLock(); }
-  /* Das Aussehen (Theme, Schrift, hell/dunkel) bleibt auf diesem Gerät und wird nie abgeglichen */
-  const shared = () => { const d = Object.assign({}, store.data); delete d.gb_look; return d; };
-  async function persist() { LS.set('opv_blob', JSON.stringify(await Vault.seal({ data: store.data }, pw, salt))); }
-  async function persistCfg() { LS.set('opv_cfg', JSON.stringify(await Vault.seal(cfg || {}, pw, salt))); }
-  /* Gruppo im Rahmen starten – mit eigenem, nur im Arbeitsspeicher liegenden Speicher (nichts im Klartext auf dem Gerät) */
-  function shim() {
+  function showUI(on) { ['top', 'stage', 'tabs'].forEach(id => $(id).hidden = !on); $('lock').hidden = on; }
+  function showLock() { showUI(false); $('sheet').hidden = true; $('fO').srcdoc = ''; $('fG').srcdoc = ''; gLoaded = false; $('pw').value = ''; $('pw2').value = ''; showErr(''); $('bEmpty').hidden = true; window._allowEmpty = false; mode(); setTimeout(() => { try { $('pw').focus(); } catch (e) {} }, 50); }
+  function lockNow() { keyDel(); stayOn = false; pw = ''; store = { data: {} }; window._opData = null; cfg = null; sha = null; dirty = false; clearTimeout(saveT); clearTimeout(pushT); showLock(); }
+  /* Lokal (verschlüsselt) gespeichert wird alles – abgeglichen nur die echten Daten (Vault.SYNC) */
+  async function persist() { if (!pw) return; const ok = LS.set('opv_blob', JSON.stringify(await Vault.seal({ data: store.data }, pw, salt))); if (!ok) setStat('bad', 'iPhone-Speicher voll – bitte abgleichen'); }
+  async function persistCfg() { if (!pw) return; LS.set('opv_cfg', JSON.stringify(await Vault.seal(cfg || {}, pw, salt))); }
+  /* Speicher-Ersatz im Rahmen: nur im Arbeitsspeicher, nichts im Klartext auf dem Gerät */
+  function shim(alone) {
     const T = top, m = T._opData, live = k => m[k] && m[k].v != null;
     const ls = { getItem: k => live(k) ? m[k].v : null, setItem: (k, v) => { v = String(v); if (!m[k] || m[k].v !== v) { m[k] = { v, t: Date.now() }; T._opChanged(); } }, removeItem: k => { if (live(k)) { m[k] = { v: null, t: Date.now() }; T._opChanged(); } }, clear() {}, key: i => Object.keys(m).filter(live)[i] || null };
     Object.defineProperty(ls, 'length', { get: () => Object.keys(m).filter(live).length });
     Object.defineProperty(window, 'localStorage', { get: () => ls, configurable: true });
+    if (alone) Object.defineProperty(window, 'parent', { value: window, configurable: true });
     const d = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc'), inner = '<script>Object.defineProperty(window,"localStorage",{get:function(){return parent.localStorage},configurable:true})<' + '/script>';
     Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', { set(v) { d.set.call(this, String(v).replace('<head>', '<head>' + inner)); }, get() { return d.get.call(this); } });
   }
-
-  /* Nur für das iPhone: Kopfleiste ordentlich in zwei Zeilen, nichts scheint durch, Platz unten für den Schloss-Knopf */
-  const PHONE_CSS = '@media (max-width:700px){'
-    + 'html{background:var(--canvas,#eef0f5)}'
-    + 'body{padding-bottom:calc(var(--sab,0px) + 84px)!important}'
-    + '.toolbar{position:sticky;top:0;padding:calc(var(--sat,0px) + 6px) 10px 6px!important;background:var(--canvas,#eef0f5);z-index:40}'
-    + '.toolbar .bar{display:flex!important;flex-wrap:wrap!important;align-items:center;justify-content:space-between;gap:6px 6px!important;padding:8px 10px!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--glass-solid)!important;box-shadow:0 0 0 .5px var(--hairline)}'
+  /* Gruppo auf dem iPhone: Kopfleiste kompakt, Werkzeug-Fenster passen in die Bühne, nichts verdeckt */
+  const ICON = p => 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>');
+  const PHONE_CSS = '@media (max-width:700px),(orientation:landscape) and (max-height:520px){'
+    + '.toolbar{position:sticky;top:0;padding:6px 10px!important;background:var(--canvas,#eef0f5);z-index:40}'
+    + '.toolbar .bar{display:flex!important;flex-wrap:wrap!important;align-items:center;gap:6px!important;padding:8px 10px!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--glass-solid)!important;box-shadow:0 0 0 .5px var(--hairline)}'
     + '.toolbar h1{display:none!important}'
     + '.toolbar .picker{flex:1 1 0;min-width:0}.toolbar .picker select,.toolbar .picker .classBtn{width:100%}'
     + '.toolbar #addBtn,.toolbar #editBtn{font-size:0!important;width:38px;min-width:38px;padding:0!important;text-align:center}'
-    + '.toolbar #addBtn::before{content:"+";font-size:22px;line-height:36px}.toolbar #editBtn::before{content:"\\270E";font-size:18px;line-height:36px}'
-    + '.toolbar #navGrp,.toolbar .tgrp,.toolbar #sbProf,.toolbar #stNow{display:none!important}'
-    + '.toolbar #setBtn{order:4;flex:none}'
+    + '.toolbar #addBtn::before,.toolbar #editBtn::before{content:"";display:block;width:23px;height:23px;margin:7px auto;background:var(--blue);-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}'
+    + '.toolbar #addBtn{--ic:url("' + ICON('<path d="M12 5v14M5 12h14"/>') + '")}.toolbar #editBtn{--ic:url("' + ICON('<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>') + '")}'
+    + '.toolbar #navGrp,.toolbar .tgrp,.toolbar #stNow,.toolbar #sbProf,.toolbar #stBtn{display:none!important}.toolbar #setBtn{order:4;flex:none}'
+    + '.ovmark,.brandmark,.ov .mark{display:none!important}'
     + '}';
-  function insets() { const d = document.createElement('div'); d.style.cssText = 'position:fixed;visibility:hidden;top:0;left:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)'; document.body.appendChild(d); const cs = getComputedStyle(d), r = [parseFloat(cs.paddingTop) || 0, parseFloat(cs.paddingBottom) || 0]; d.remove(); return r; }
-  function setInsets() { try { const w = $('frame').contentWindow, i = insets(); if (w && w.document && w.document.documentElement) { w.document.documentElement.style.setProperty('--sat', i[0] + 'px'); w.document.documentElement.style.setProperty('--sab', i[1] + 'px'); } } catch (e) {} }
-  addEventListener('resize', setInsets); addEventListener('orientationchange', () => setTimeout(setInsets, 300));
-
-  /* Tab-Leiste unten: steuert die Gruppo-Oberfläche im Rahmen */
-  const TAB = { dash: 'vDashBtn', groups: 'vGroupsBtn', tm: 'tmBtn', cl: 'clBtn', pk: 'pkBtn' };
-  function fdoc() { try { return $('frame').contentDocument; } catch (e) { return null; } }
-  document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
-    const t = b.dataset.t; if (t === 'more') { $('sheet').hidden = false; return; }
-    const d = fdoc(), el = d && d.getElementById(TAB[t]); if (el) el.click();
-  });
-  setInterval(() => {
-    const d = fdoc(); if (!d || $('tabs').hidden) return;
-    const ovOpen = !!d.querySelector('.ov:not([hidden])') || !!d.querySelector('dialog[open]');
-    $('tabs').classList.toggle('away', ovOpen);
-    const on = id => { const e = d.getElementById(id); return !!(e && e.classList.contains('on')); };
-    document.querySelectorAll('#tabs button').forEach(b => { const t = b.dataset.t; b.classList.toggle('on', t === 'dash' ? on('vDashBtn') : t === 'groups' ? on('vGroupsBtn') : false); });
-  }, 350);
-  async function startFrame() {
-    let html = await (await fetch('gruppo.html', { cache: 'no-cache' })).text();
-    window._opData = store.data;
-    const ins = insets();
-    html = html.replace('<head>', '<head><base href="' + location.href.replace(/[^/]*$/, '') + '"><style>html{--sat:' + ins[0] + 'px;--sab:' + ins[1] + 'px}' + PHONE_CSS + '</style><script>(' + shim.toString() + ')();<' + '/script>');
-    const f = $('frame'); f.onload = setInsets; f.srcdoc = html; f.hidden = false; $('lock').hidden = true; $('tabs').hidden = false;
-  }
   window._opChanged = () => {
     dirty = true; setStat('wait', 'Änderung wird gesichert …');
     clearTimeout(saveT); saveT = setTimeout(async () => { try { await persist(); } catch (e) {} schedulePush(); }, 700);
   };
-  function schedulePush() { if (!cfg || !cfg.repo) { dirty = false; setStat('ok', 'Nur auf diesem Gerät gesichert'); return; } clearTimeout(pushT); pushT = setTimeout(push, 1500); }
-  async function push(retry) {
-    if (!cfg || !cfg.repo || !pw) return; if (busy) { pushT = setTimeout(push, 1500); return; } busy = true; setStat('wait', 'Wird abgeglichen …');
-    try { sha = await Vault.ghPut(cfg, await Vault.seal({ data: shared() }, pw, salt), sha); dirty = false; setStat('ok', 'Abgeglichen ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })); }
-    catch (e) { busy = false; if (e.conflict && !retry) { await pull(); return push(true); } setStat('bad', e.user ? e.message : navigator.onLine ? 'Abgleich fehlgeschlagen' : 'Offline – wird später abgeglichen'); return; }
-    busy = false;
+  const SRC = {};
+  async function load(name) { if (!SRC[name]) SRC[name] = await (await fetch(name, { cache: 'no-cache' })).text(); return SRC[name]; }
+  const base = () => '<base href="' + location.href.replace(/[^/]*$/, '') + '">';
+  async function startO() { window._opData = store.data; const h = await load('orario.html'); $('fO').srcdoc = h.replace('<head>', '<head>' + base() + '<script>(' + shim.toString() + ')(true);<' + '/script>'); }
+  async function startG() { window._opData = store.data;
+    try { const g = store.data.gb_tool && store.data.gb_tool.v ? JSON.parse(store.data.gb_tool.v) : {}; if (store.data.orario_v1 && store.data.orario_v1.v && !(g.plan && g.plan.on)) { g.plan = Object.assign({}, g.plan, { on: true }); store.data.gb_tool = { v: JSON.stringify(g), t: Date.now() }; } } catch (e) {} const h = await load('gruppo.html'); $('fG').srcdoc = h.replace('<head>', '<head>' + base() + '<style>' + PHONE_CSS + '</style><script>(' + shim.toString() + ')(false);window._phoneOrario=function(){top._showO()};<' + '/script>'); gLoaded = true; }
+  async function startUI() { showUI(true); await startO(); if (tab === 'g') await startG(); show(tab); }
+  async function refresh() { await startO(); if (gLoaded) await startG(); }
+  window._showO = () => show('o');
+  function show(t) {
+    tab = t; $('fO').hidden = t !== 'o'; $('fG').hidden = t !== 'g';
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   }
-  /* Rückgabe: { leer, changed (Neues vom Computer übernommen), needPush } */
+  document.querySelectorAll('#tabs button').forEach(b => b.onclick = async () => {
+    const t = b.dataset.t; if (t === 'more') { $('sheet').hidden = false; return; }
+    if (t === 'g' && !gLoaded) await startG(); show(t);
+  });
+  function schedulePush() { if (!cfg || !cfg.repo) { dirty = false; setStat('ok', 'Nur auf diesem iPhone gesichert'); return; } clearTimeout(pushT); pushT = setTimeout(push, 1500); }
+  async function push(tries) {
+    if (!cfg || !cfg.repo || !pw) return; if (busy) { pushT = setTimeout(push, 1500); return; } busy = true; setStat('wait', 'Wird abgeglichen …');
+    try { sha = await Vault.ghPut(cfg, await Vault.seal(Vault.wrap(store.data), pw, salt), sha); dirty = false; setStat('ok', 'Abgeglichen ' + now()); busy = false; }
+    catch (e) { busy = false; if (e.conflict && (tries || 0) < 3) { try { const r = await pull(); if (r.changed) await refresh(); } catch (x) { setStat('bad', x.user ? x.message : 'Abgleich fehlgeschlagen'); return; } return push((tries || 0) + 1); } setStat('bad', e.user ? e.message : navigator.onLine ? 'Abgleich fehlgeschlagen' : 'Offline – wird später abgeglichen'); }
+  }
+  /* GitHub-Stand holen und einarbeiten. Ändert store.data an Ort und Stelle (die Rahmen behalten ihren Bezug). */
   async function pull() {
     if (!cfg || !cfg.repo) return { changed: false, needPush: false };
     const r = await Vault.ghGet(cfg); if (!r) return { leer: true, needPush: true }; sha = r.sha; salt = r.blob.salt;
-    const o = await Vault.open(r.blob, pw); if (o.data) delete o.data.gb_look; const mg = Vault.merge(store.data, o.data || {});
-    if (mg.remoteWon.length) { store.data = mg.merged; await persist(); }
+    const rem = Vault.payload(await Vault.open(r.blob, pw)), mg = Vault.merge(store.data, rem);
+    mg.remoteWon.forEach(k => { const e = mg.merged[k], old = store.data[k];
+      if (k === 'orario_v1' && old && old.v && e.v && old.v !== e.v) store.data.orario_prev = { v: old.v, t: Date.now() };
+      store.data[k] = { v: e.v, t: e.t }; });
+    if (mg.remoteWon.length) await persist();
     return { changed: mg.remoteWon.length > 0, needPush: mg.localWon.length > 0 };
   }
   async function sync() {
-    if (!cfg || !cfg.repo) { setStat('ok', 'Nur auf diesem Gerät'); return; }
-    setStat('wait', 'Wird abgeglichen …');
+    if (!cfg || !cfg.repo) { setStat('ok', 'Nur auf diesem iPhone'); return; }
+    if (busy) return; setStat('wait', 'Wird abgeglichen …');
     try {
-      const res = await pull(); if (res.changed) await startFrame();
-      if (res.needPush || dirty) await push(); else setStat('ok', 'Abgeglichen ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+      const res = await pull(); if (res.changed) await refresh();
+      if (res.needPush || dirty) await push(); else setStat('ok', 'Abgeglichen ' + now());
     } catch (e) { setStat('bad', e.message === 'pw' ? 'Falsches Passwort (muss wie am Mac sein)' : e.user ? e.message : (navigator.onLine ? 'Abgleich fehlgeschlagen' : 'Offline')); }
   }
   async function afterLogin() { if ($('stay').checked) { try { await keySet(await Vault.deriveKey(pw, salt)); stayOn = true; } catch (e) {} } }
@@ -250,7 +280,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     const raw = LS.get('opv_blob'), k = raw && await keyGet(); if (!k) return false;
     try { const blob = JSON.parse(raw), o = await Vault.open(blob, k); pw = k; salt = blob.salt; store = { data: fix(o.data) }; stayOn = true;
       try { const c = LS.get('opv_cfg'); cfg = c ? await Vault.open(JSON.parse(c), k) : {}; } catch (e) { cfg = {}; }
-      await startFrame(); sync(); return true; } catch (e) { keyDel(); return false; }
+      await startUI(); sync(); return true; } catch (e) { keyDel(); return false; }
   }
   $('lf').onsubmit = async e => {
     e.preventDefault(); showErr(''); const p = $('pw').value; if (!p) { showErr('Bitte Passwort eingeben.'); return; }
@@ -260,40 +290,43 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
       if (raw) { /* Entsperren */
         const blob = JSON.parse(raw); let o; try { o = await Vault.open(blob, p); } catch (x) { showErr('Falsches Passwort.'); return; }
         pw = p; salt = blob.salt; store = { data: fix(o.data) }; try { const c = LS.get('opv_cfg'); cfg = c ? await Vault.open(JSON.parse(c), p) : {}; } catch (x) { cfg = {}; }
-        await afterLogin(); await startFrame(); sync();
+        await afterLogin(); await startUI(); sync();
       } else { /* Einrichten */
-        const repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, ''), tok = $('tok').value.trim(), c = repo && tok ? { repo, token: tok } : {};
+        const repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, ''), tok = $('tok').value.trim(), c = repo && tok ? { repo, token: tok } : {};
         let remote = null;
-        if (c.repo) { try { remote = await Vault.ghGet(c); } catch (x) { showErr('GitHub nicht erreichbar oder Zugang falsch (' + x.message + ').'); return; } }
-        if (!remote && c.repo && !window._allowEmpty) { showErr('Auf GitHub liegen noch keine Daten. Gruppo am Mac: Einstellungen → Daten → iPhone-Abgleich → „Jetzt abgleichen“. Danach hier erneut „Einrichten“.'); $('bEmpty').hidden = false; return; }
-        if (remote) { let o; try { o = await Vault.open(remote.blob, p); } catch (x) { showErr('Falsches Passwort (muss dasselbe wie in Gruppo sein).'); return; } pw = p; salt = remote.blob.salt; store = { data: fix(o.data) }; sha = remote.sha; }
-        else {
-          if ($('pw2Box').hidden) { $('pw2Box').hidden = false; showErr(c.repo ? 'Noch keine Daten auf GitHub. Neues Passwort bitte wiederholen.' : 'Neues Passwort bitte wiederholen.'); $('pw2').focus(); return; }
+        if (c.repo) { try { remote = await Vault.ghGet(c); } catch (x) { showErr(x.user ? x.message : 'GitHub nicht erreichbar (' + x.message + ').'); return; } }
+        if (!remote && c.repo && !window._allowEmpty) { showErr('Auf GitHub liegen noch keine Daten. Am Mac: Gruppo → Einstellungen → Daten → iPhone-Abgleich → „Jetzt abgleichen“. Danach hier erneut „Einrichten“.'); $('bEmpty').hidden = false; return; }
+        if (remote) {
+          let o; try { o = await Vault.open(remote.blob, p); } catch (x) { showErr('Falsches Passwort (muss dasselbe wie am Mac sein).'); return; }
+          let d; try { d = Vault.payload(o); } catch (x) { showErr(x.message); return; }
+          pw = p; salt = remote.blob.salt; store = { data: d }; sha = remote.sha;
+        } else {
+          if ($('pw2Box').hidden) { $('pw2Box').hidden = false; showErr('Neues Passwort bitte wiederholen.'); $('pw2').focus(); return; }
           if ($('pw2').value !== p) { showErr('Die Passwörter stimmen nicht überein.'); return; }
           if (p.length < 8) { showErr('Bitte mindestens 8 Zeichen.'); return; }
           pw = p; salt = Vault.newSalt(); store = { data: {} };
         }
-        cfg = c; await persist(); await persistCfg(); await afterLogin(); await startFrame(); if (c.repo && !remote) { dirty = true; push(); } else setStat('ok', c.repo ? 'Abgeglichen' : 'Nur auf diesem Gerät');
+        cfg = c; await persist(); await persistCfg(); await afterLogin(); await startUI(); setStat('ok', c.repo ? 'Abgeglichen ' + now() : 'Nur auf diesem iPhone');
       }
     } finally { $('go').disabled = false; }
   };
-    $('bClose').onclick = () => { $('sheet').hidden = true; };
+  $('bClose').onclick = () => { $('sheet').hidden = true; };
   $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').hidden = true; };
   $('bLock').onclick = lockNow;
   $('bEmpty').onclick = () => { window._allowEmpty = true; $('bEmpty').hidden = true; showErr('Dann: neues Passwort bitte unten wiederholen.'); $('pw2Box').hidden = false; $('pw2').focus(); };
-  $('bSync').onclick = () => { $('sheet').hidden = true; sync(true); };
+  $('bSync').onclick = () => { $('sheet').hidden = true; sync(); };
   $('bCfg').onclick = async () => {
-    const repo = prompt('GitHub-Repository (benutzername/name) – leer = nur dieses Gerät', cfg && cfg.repo || ''); if (repo === null) return;
+    const repo = prompt('GitHub-Repository (benutzername/name) – leer = nur dieses iPhone', cfg && cfg.repo || ''); if (repo === null) return;
     let token = cfg && cfg.token || ''; if (repo.trim()) { const t = prompt('Zugangs-Token (leer lassen = unverändert)', ''); if (t === null) return; if (t.trim()) token = t.trim(); }
-    cfg = repo.trim() ? { repo: repo.trim().replace(/^https?:\/\/github\.com\//, ''), token } : {}; await persistCfg(); sha = null; $('sheet').hidden = true; sync(true);
+    cfg = repo.trim() ? { repo: repo.trim().replace(/^https?:\/\/github\.com\//, ''), token } : {}; await persistCfg(); sha = null; $('sheet').hidden = true; sync();
   };
-  $('bWipe').onclick = () => { if (!confirm('Alle Gruppo-Daten auf diesem Gerät löschen? (Auf GitHub bleibt die verschlüsselte Kopie.)')) return; LS.del('opv_blob'); LS.del('opv_cfg'); lockNow(); };
+  $('bWipe').onclick = () => { if (!confirm('Alle Daten auf diesem iPhone löschen? (Auf GitHub und am Mac bleibt alles erhalten.)')) return; LS.del('opv_blob'); LS.del('opv_cfg'); lockNow(); };
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { hiddenAt = Date.now(); if (dirty) { clearTimeout(pushT); push(); } }
+    if (document.hidden) { hiddenAt = Date.now(); if (dirty && pw) { clearTimeout(pushT); push(); } }
     else if (pw && !stayOn && hiddenAt && Date.now() - hiddenAt > AUTOLOCK) lockNow();
     else if (pw) sync();
   });
-  addEventListener('pagehide', () => { if (dirty) { try { persist(); } catch (e) {} } });
+  addEventListener('pagehide', () => { if (dirty && pw) { try { persist(); } catch (e) {} } });
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
   showLock(); autoLogin();
 })();
