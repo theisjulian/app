@@ -137,6 +137,14 @@ body.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
 .frhead b{margin-right:auto;font-size:16px}
 .frhead select{min-height:36px}
 .chip[aria-pressed=true]{background:var(--blue);color:var(--onb,#fff);border-color:var(--blue)}
+
+.e.m{opacity:.68;font-style:italic}
+.brk.du td{padding:3px 4px;font-size:11px}
+.duty{display:inline-block;background:var(--card2,rgba(120,120,128,.14));border-radius:6px;padding:2px 6px;font-weight:600;font-size:11px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.dutyline{margin:12px 0 0;font-size:16px}
+.shortb{margin-bottom:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:8px 14px}.shortb .chip{white-space:nowrap}
+
+.wk td.cx{opacity:.4;text-decoration:line-through}
 </style>
 </head>
 <body>
@@ -206,12 +214,26 @@ body.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
     const valid = (head.filter(i => /\d{1,2}\.\d{1,2}\./.test(i.s) && i.y < raw.h - 40 && i.y > hy + 20 && !/\d{1,2}:\d{2}/.test(i.s))[0] || {}).s || '';
     const stamp = (head.find(i => /^\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}:\d{2}$/.test(i.s.trim())) || {}).s || '';
     const yr = (head.find(i => /\d{4}\/\d{4}/.test(i.s)) || {}).s || '';
+    /* Umrahmte Kästchen (z. B. „Mensa“, „OG 1“) = Pausenaufsichten, keine Unterrichtsstunden */
+    const rk = new Set(), boxes = [], sh = raw.hs.filter(h => h.x1 - h.x0 > 6 && h.x1 - h.x0 < 140);
+    sh.forEach((a, i) => { for (let j = i + 1; j < sh.length; j++) { const b = sh[j]; if (!near(a.x0, b.x0, 1) || !near(a.x1, b.x1, 1)) continue; const dy = Math.abs(a.y - b.y); if (dy < 6 || dy > 20) continue;
+      const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y), sides = raw.vs.filter(v => (near(v.x, a.x0, 1) || near(v.x, a.x1, 1)) && v.y0 <= y0 + 1.5 && v.y1 >= y1 - 1.5 && v.y1 - v.y0 < 30).length;
+      const k = Math.round(a.x0) + '/' + Math.round(y0); if (sides >= 2 && !rk.has(k)) { rk.add(k); boxes.push({ x0: a.x0, x1: a.x1, y0, y1 }); } } });
+    const inBox = i => boxes.find(b => i.x >= b.x0 - 2 && i.x + i.w <= b.x1 + 2 && i.y >= b.y0 - 2 && i.y <= b.y1);
+    const duties = [];
+    if (type === 'teacher') boxes.forEach(b => {
+      const its = []; items.filter(i => inBox(i) === b).sort((p, q) => p.x - q.x).forEach(i => { if (!its.some(o => o.s === i.s && near(o.x, i.x, 3) && near(o.y, i.y, 3))) its.push(i); }); if (!its.length) return;
+      const place = its.map(i => i.s.trim()).join(' ').replace(/\s+/g, ' ').trim(), cx = (b.x0 + b.x1) / 2, yc = (b.y0 + b.y1) / 2;
+      const col = cols.find(c => cx >= c.x0 && cx <= c.x1); if (!col || !place) return;
+      let best = null; bands.forEach((bd, bi) => { if (!bandPeriod[bi]) return; const dist = Math.abs(yc - bd.bot); if (!best || dist < best.dist) best = { dist, n: bandPeriod[bi].n }; });
+      if (best && best.dist < 16) duties.push({ d: col.day, after: best.n, place });
+    });
     /* Zellen */
     const lessons = [];
     cols.forEach(col => {
       const colW = col.x1 - col.x0, seen = new Set(), regions = [];
       (raw.fl || []).forEach(f => { if (f.x0 < col.x0 - 2 || f.x1 > col.x1 + 2 || f.x1 - f.x0 < colW * .8 || f.y1 - f.y0 > (full[0] - full[full.length - 1]) * .9) return; if (f.y1 > full[0] + 2 || f.y0 < full[full.length - 1] - 2) return; const k = Math.round(f.y0) + '/' + Math.round(f.y1); if (seen.has(k)) return; seen.add(k); regions.push({ top: f.y1, bot: f.y0 }); });
-      const cell = items.filter(i => i.x + i.w / 2 > col.x0 && i.x + i.w / 2 < col.x1 && i.y < full[0] && i.y > full[full.length - 1]);
+      const cell = items.filter(i => !inBox(i) && i.x + i.w / 2 > col.x0 && i.x + i.w / 2 < col.x1 && i.y < full[0] && i.y > full[full.length - 1]);
       regions.forEach(rg => {
         const its = cell.filter(i => i.y + 3 < rg.top && i.y + 3 > rg.bot); if (!its.length) return;
         const covered = []; bands.forEach((b, bi) => { const c = (b.top + b.bot) / 2; if (c < rg.top && c > rg.bot && bandPeriod[bi]) covered.push(bandPeriod[bi].n); });
@@ -221,17 +243,18 @@ body.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
         lines.forEach(L => {
           L.t.sort((a, b) => a.x - b.x); let toks = L.t.map(t => t.s.trim()); let grp = false;
           if (toks[0] && toks[0][0] === '*') { grp = true; toks[0] = toks[0].slice(1); if (!toks[0]) toks.shift(); }
-          if (toks.length < 2){ const e1 = { d: col.day, p0, p1, fach: toks[0] || '', room: '', grp, single: true }; if (type === 'teacher') e1.cls = ''; else e1.teacher = ''; lessons.push(e1); return; }
+          if (toks.length < 2){ const e1 = { d: col.day, p0, p1, fach: toks[0] || '', room: '', grp, single: true }; if (/^\[.+\]$/.test(e1.fach)) { e1.fach = e1.fach.slice(1, -1); e1.mentor = true; } if (type === 'teacher') e1.cls = ''; else e1.teacher = ''; lessons.push(e1); return; }
           let room = '', mid;
           if (toks.length >= 3) { room = toks[toks.length - 1]; mid = toks.slice(0, -1); } else mid = toks;
           const first = mid[0], rest = mid.slice(1).join(' ');
           const e = { d: col.day, p0, p1, fach: '', room, grp };
           if (type === 'teacher') { e.cls = normClass(first); e.fach = rest; } else { e.fach = first; e.teacher = rest; }
+          if (/^\[.+\]$/.test(e.fach)) { e.fach = e.fach.slice(1, -1); e.mentor = true; }
           lessons.push(e);
         });
       });
     });
-    return { ok: true, type, name, leader, deputy, homeroom, valid, stamp, year: yr.replace(/^Stundenplan\s*/, ''), periods: periods.map(p => ({ n: p.n, from: p.from, to: p.to })), lessons, warn };
+    return { ok: true, type, name, leader, deputy, homeroom, valid, stamp, year: yr.replace(/^Stundenplan\s*/, ''), periods: periods.map(p => ({ n: p.n, from: p.from, to: p.to })), lessons, duties, warn };
   }
   g.OrarioParse = { parsePage, normClass };
   if (typeof module !== 'undefined') module.exports = g.OrarioParse;
@@ -405,6 +428,14 @@ const D = {
  'Fertig': ['Done', 'Fatto', 'Terminé', 'Listo'],
  'Ziehe eine Stunde auf ein anderes Feld, um sie zu verschieben. Tippe auf eine Stunde, um sie zu ändern, oder auf ein leeres Feld, um eine hinzuzufügen.': ['Drag a lesson to another cell to move it. Tap a lesson to change it, or an empty cell to add one.', 'Trascina una lezione su un’altra cella per spostarla. Tocca una lezione per modificarla o una cella vuota per aggiungerne una.', 'Fais glisser un cours vers une autre case pour le déplacer. Touche un cours pour le modifier ou une case vide pour en ajouter un.', 'Arrastra una clase a otra casilla para moverla. Toca una clase para cambiarla o una casilla vacía para añadir una.'],
  'Pause': ['Break', 'Pausa', 'Pause', 'Recreo'],
+ 'Betreuung': ['Mentoring', 'Tutoraggio', 'Encadrement', 'Tutoría'],
+ 'Betreuung einer Lehrkraft im Referendariat': ['Supervising a trainee teacher', 'Tutoraggio di un tirocinante', 'Encadrement d’un stagiaire', 'Tutoría de un docente en prácticas'],
+ 'Pausenaufsicht': ['Break duty', 'Sorveglianza intervallo', 'Surveillance de récréation', 'Vigilancia del recreo'],
+ 'Aufsicht': ['Duty', 'Sorveglianza', 'Surveillance', 'Vigilancia'],
+ 'Heute Kurzstunden': ['Short lessons today', 'Oggi lezioni brevi', 'Cours courts aujourd’hui', 'Hoy clases cortas'],
+ '3 × 30 Min.': ['3 × 30 min', '3 × 30 min', '3 × 30 min', '3 × 30 min'],
+ 'Ausschalten': ['Turn off', 'Disattiva', 'Désactiver', 'Desactivar'],
+ 'Nur für heute: drei Stunden à 30 Minuten, nach der Pause nochmal drei.': ['Today only: three 30-minute lessons, then another three after the break.', 'Solo per oggi: tre lezioni da 30 minuti, dopo l’intervallo altre tre.', 'Aujourd’hui seulement : trois cours de 30 minutes, puis trois autres après la pause.', 'Solo hoy: tres clases de 30 minutos y otras tres después del recreo.'],
  'PDF / Drucken': ['PDF / Print', 'PDF / Stampa', 'PDF / Imprimer', 'PDF / Imprimir'],
  'Parallel eingetragen.': ['Added in parallel.', 'Inserita in parallelo.', 'Ajouté en parallèle.', 'Añadida en paralelo.'],
  'Verschoben.': ['Moved.', 'Spostata.', 'Déplacé.', 'Movida.'],
@@ -448,22 +479,22 @@ function buildIndex(D) {
     return null;
   }
   const T = {}, C = {};
-  names.forEach(n => { T[n] = { name: n, plan: true, homeroom: D.teachers[n].homeroom || '', lessons: D.teachers[n].lessons.slice() }; });
+  names.forEach(n => { T[n] = { name: n, plan: true, homeroom: D.teachers[n].homeroom || '', lessons: D.teachers[n].lessons.slice(), duties: D.teachers[n].duties || [] }; });
   const seen = new Set();
   Object.keys(D.classes).forEach(c => {
     const cd = D.classes[c]; C[c] = { name: c, plan: true, leader: cd.leader || '', deputy: cd.deputy || '', lessons: cd.lessons.slice() };
     cd.lessons.forEach(l => { if (!l.teacher) return; const tn = match(l.teacher) || l.teacher; if (D.teachers[tn]) return;
       const k = [tn, l.d, l.p0, c, l.fach].join('|'); if (seen.has(k)) return; seen.add(k);
-      (T[tn] = T[tn] || { name: tn, plan: false, homeroom: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, cls: c, fach: l.fach, room: l.room, grp: l.grp }); });
+      (T[tn] = T[tn] || { name: tn, plan: false, homeroom: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, cls: c, fach: l.fach, room: l.room, grp: l.grp, mentor: l.mentor }); });
   });
   names.forEach(n => D.teachers[n].lessons.forEach(l => { const c = l.cls; if (!c || !CLS.test(c) || D.classes[c]) return;
-    (C[c] = C[c] || { name: c, plan: false, leader: '', deputy: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, teacher: n, room: l.room, grp: l.grp }); }));
+    (C[c] = C[c] || { name: c, plan: false, leader: '', deputy: '', lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, teacher: n, room: l.room, grp: l.grp, mentor: l.mentor }); }));
   Object.values(C).forEach(c => { c.leader = c.leader; });
   /* Klassenleitung aus Klassenplänen an Lehrkräfte hängen */
   Object.values(C).forEach(c => { [c.leader].forEach(l => { const tn = l && match(l); if (tn && T[tn] && !T[tn].homeroom) T[tn].homeroom = c.name; }); });
   /* Räume: aus allen Stunden (Lehrkräfte + Klassen) – wer ist wann in welchem Raum */
   const R = {}, rk = new Set();
-  const addR = (l, teacher, cls) => { const r = (l.room || '').trim(); if (!r) return; const k = [r, l.d, l.p0, l.p1, cls || '', teacher || ''].join('|'); if (rk.has(k)) return; rk.add(k);
+  const addR = (l, teacher, cls) => { const r = (l.room || '').trim(); if (!r || l.mentor) return; const k = [r, l.d, l.p0, l.p1, cls || '', teacher || ''].join('|'); if (rk.has(k)) return; rk.add(k);
     (R[r] = R[r] || { name: r, plan: true, lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, cls: cls || '', teacher: teacher || '', room: r, grp: l.grp }); };
   Object.values(T).forEach(t => t.lessons.forEach(l => addR(l, t.name, l.cls)));
   Object.values(C).forEach(c => c.lessons.forEach(l => { const tn = l.teacher ? (match(l.teacher) || l.teacher) : ''; if (!rk.has([(l.room || '').trim(), l.d, l.p0, l.p1, c.name, tn].join('|'))) addR(l, tn, c.name); }));
@@ -477,10 +508,23 @@ function persist() { applyMine(); const ok = store.set(KEY, DATA); if (!ok) toas
 
 /* ---------- Zeit ---------- */
 const mins = t => { const m = /^(\d+):(\d+)/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : null; };
-const per = n => DATA.periods.find(p => p.n === n);
+/* Kurzstunden (nur für den heutigen Tag): 3 × 30 Min. ab Schulbeginn, nach der Pause nochmal 3 × 30 Min. */
+const SHORTK = 'orario_short';
+const isoDay = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+let SHORTDAY = ''; try { SHORTDAY = store.get(SHORTK) || ''; } catch (e) {}
+const shortOn = () => SHORTDAY === isoDay();
+function shortPer(P) {
+  const f = P.length >= 6 ? mins(P[0].from) : null, b = P.length >= 6 ? mins(P[2].from) : null; if (f == null || b == null) return P;
+  const fm = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+  return P.map((p, i) => i < 3 ? Object.assign({}, p, { from: fm(f + 30 * i), to: fm(f + 30 * i + 30) }) : i < 6 ? Object.assign({}, p, { from: fm(b + 30 * (i - 3)), to: fm(b + 30 * (i - 3) + 30) }) : Object.assign({}, p, { out: true }));  /* Kurzstunden: Stunden ab 7 fallen heute aus */
+}
+const dutyAfter = x => shortOn() ? ({ 2: 3, 4: 6 }[x.after] || x.after) : x.after;
+const PER = () => shortOn() ? shortPer(DATA.periods) : DATA.periods;
+function setShort(on) { SHORTDAY = on ? isoDay() : ''; try { if (on) store.set(SHORTK, SHORTDAY); else store.del(SHORTK); } catch (e) {} try { window.parent && window.parent._shortChanged && window.parent._shortChanged(); } catch (e) {} }
+const per = n => PER().find(p => p.n === n);
 function nowSlot() {
   const n = new Date(), d = (n.getDay() + 6) % 7, m = n.getHours() * 60 + n.getMinutes(); let cur = null, next = null, last = null;
-  DATA.periods.forEach(p => { const a = mins(p.from), b = mins(p.to); if (a == null) return; if (m >= a && m < b) cur = p; else if (a > m && !next) next = p; if (b <= m) last = p; });
+  PER().forEach(p => { const a = p.out ? null : mins(p.from), b = mins(p.to); if (a == null) return; if (m >= a && m < b) cur = p; else if (a > m && !next) next = p; if (b <= m) last = p; });
   return { d, m, cur, next, last, weekend: d > 4 };
 }
 function resolve() {
@@ -489,11 +533,11 @@ function resolve() {
   if (n.weekend) return { d: 0, p: 1, state: 'weekend' };
   if (n.cur) return { d: n.d, p: n.cur.n, state: 'now' };
   if (n.next) return { d: n.d, p: n.next.n, state: 'break', n };
-  return { d: n.d, p: DATA.periods[DATA.periods.length - 1].n, state: 'over' };
+  return { d: n.d, p: PER()[PER().length - 1].n, state: 'over' };
 }
 const at = (E, d, p) => E.lessons.filter(l => l.d === d && l.p0 <= p && p <= l.p1);
 function nextLesson(E, d, p) {
-  const maxP = Math.max(...DATA.periods.map(x => x.n));
+  const maxP = Math.max(...PER().map(x => x.n));
   for (let k = 0; k < 7; k++) { const day = (d + k) % 7; if (day > 4) continue;
     const cand = E.lessons.filter(l => l.d === day && (k > 0 || l.p0 > p)).sort((a, b) => a.p0 - b.p0)[0]; if (cand) return cand; }
   return null;
@@ -527,13 +571,15 @@ function renderShell() {
   q.onkeydown = e => { if (e.key === 'Enter') { const f = filtered(); if (f && f.length) choose(f[0]); } };
 }
 function myName() { const m = store.get(ME_KEY); return m && IDX && IDX.T[m] ? m : null; }
-function drawMe() {
+function drawMe() { drawMe0(); const box = $('me'); if (box && shortOn()) { box.insertAdjacentHTML('afterbegin', `<div class="card shortb"><span>⏱ <b>${_('Heute Kurzstunden')}</b></span><button class="chip" type="button" id="shortOff">${_('Ausschalten')}</button></div>`); const b = $('shortOff'); if (b) b.onclick = () => { setShort(false); render(); }; } }
+function drawMe0() {
   const box = $('me'); if (!box) return; const me = myName();
   if (!me || (S.sel === me && S.tab === 't')) { box.innerHTML = me ? '' : (S.sel ? '' : `<p class="hint" style="margin:0 0 8px">${_('Tipp: Lege in den Einstellungen (⚙︎) fest, wer du bist – dann zeigt Orario dir immer, welche Klasse du gerade hast.')}</p>`); return; }
   const R = resolve(), L = at(IDX.T[me], R.d, R.p), q = per(R.p);
   const lbl = R.state === 'now' ? _('Jetzt') : R.state === 'break' ? _('Gleich') : R.state === 'pick' ? DAYS[R.d] + ' ' + PSHORT(R.p) : '';
   const txt = (lbl && L.length) ? L.map(l => `<b>${esc(l.cls || l.fach)}</b>${l.cls ? ' · ' + esc(l.fach) : ''}${l.room ? ' · ' + _('Raum') + ' ' + esc(l.room) : ''}`).join('  ·  ') : (R.state === 'now' || R.state === 'break' ? _('keine Stunde') : '');
-  box.innerHTML = `<div class="card" style="margin-bottom:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div><div class="hint">${_('Mein Plan')} · ${esc(me)}</div><div style="font-size:20px">${lbl ? '<span class="pill ok">' + lbl + '</span> ' : ''}${txt}</div></div><span class="grow"></span><button class="btn" type="button" id="meOpen">${_('Mein Wochenplan')}</button></div>`;
+  const dm = R.state === 'break' ? (IDX.T[me].duties || []).filter(x => x.d === R.d && dutyAfter(x) === R.p - 1) : [];
+  box.innerHTML = `<div class="card" style="margin-bottom:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div><div class="hint">${_('Mein Plan')} · ${esc(me)}</div><div style="font-size:20px">${lbl ? '<span class="pill ok">' + lbl + '</span> ' : ''}${txt}${dm.length ? ' · ' + _('Pausenaufsicht') + ': <b>' + dm.map(x => esc(x.place)).join(', ') + '</b>' : ''}</div></div><span class="grow"></span><button class="btn" type="button" id="meOpen">${_('Mein Wochenplan')}</button></div>`;
   $('meOpen').onclick = () => { S.tab = 't'; choose(me); };
 }
 function choose(name) { S.sel = name; S.q = ''; pushRecent(S.tab, name); render(); window.scrollTo({ top: 0 }); }
@@ -550,7 +596,7 @@ function drawChips() {
   else if (S.tab === 'c') { list = IDX.cnames; }
   else if (S.tab === 'r') {
     const R = resolve(), live = S.mode !== 'pick', fr = live && (R.state === 'over' || R.state === 'weekend') ? [] : freeRooms(R);
-    const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join(''), psel = DATA.periods.map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
+    const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join(''), psel = PER().map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
     extra = `<div class="card freebox"><div class="frhead"><b>${_('Raum frei')}</b><button class="chip" type="button" id="frNow" aria-pressed="${live}">${_('Jetzt')}</button><select id="frD" aria-label="${_('Tag')}">${dsel}</select><select id="frP" aria-label="${_('Stunde')}">${psel}</select></div>`
       + (fr.length ? `<div class="chips">${fr.map(n => `<button class="chip free" type="button" data-pick="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : `<p class="hint" style="margin:6px 0 0">${live && (R.state === 'over' || R.state === 'weekend') ? _('Unterricht für heute vorbei') + ' – ' + _('Wähle Tag und Stunde.') : _('Nichts gefunden.')}</p>`) + `</div>`;
     head = `<p class="hint" style="margin:10px 0 6px">${_('Alle Räume')}</p>`; list = IDX.rnames;
@@ -575,7 +621,7 @@ function lessonCard(E, l) {
   const t = S.tab === 't';
   const who = t ? (l.cls ? nameBtn('c', l.cls) : '') : (l.teacher ? nameBtn('t', IDX.match(l.teacher) || l.teacher, l.teacher) : '');
   const fach = l.fach ? `<b>${esc(l.fach)}</b>` : '';
-  return `<div class="les">${l.room ? (IDX.R[l.room] ? `<button class="rm lk" type="button" data-go="r:${esc(l.room)}" title="${_('Raumplan')}">${esc(l.room)}</button>` : `<span class="rm" title="${_('Raum')}">${esc(l.room)}</span>`) : ''}<div>${t ? `<b style="font-size:21px">${who || esc(l.fach)}</b>` : `<b style="font-size:21px">${esc(l.fach)}</b>`}</div><div>${t ? (l.cls ? esc(l.fach) : '') : who}${l.grp ? ` <span class="pill mut">${_('Gruppe')}</span>` : ''}</div><div class="hint">${PRANGE(l.p0, l.p1)} · ${_('bis {0}', esc(blockEnd(l)))}</div></div>`;
+  return `<div class="les">${l.room ? (IDX.R[l.room] ? `<button class="rm lk" type="button" data-go="r:${esc(l.room)}" title="${_('Raumplan')}">${esc(l.room)}</button>` : `<span class="rm" title="${_('Raum')}">${esc(l.room)}</span>`) : ''}<div>${t ? `<b style="font-size:21px">${who || esc(l.fach)}</b>` : `<b style="font-size:21px">${esc(l.fach)}</b>`}</div><div>${t ? (l.cls ? esc(l.fach) : '') : who}${l.grp ? ` <span class="pill mut">${_('Gruppe')}</span>` : ''}${l.mentor ? ` <span class="pill mut" title="${_('Betreuung einer Lehrkraft im Referendariat')}">${_('Betreuung')}</span>` : ''}</div><div class="hint">${PRANGE(l.p0, l.p1)} · ${_('bis {0}', esc(blockEnd(l)))}</div></div>`;
 }
 function drawDetail() {
   const box = $('detail'); if (!box) return;
@@ -594,7 +640,9 @@ function drawDetail() {
   else if (L.length) body = `<div class="res">${L.map(l => lessonCard(E, l)).join('')}</div>`;
   else { const nl = nextLesson(E, R.d, R.p), before = E.lessons.some(l => l.d === R.d && l.p1 < R.p), after = E.lessons.some(l => l.d === R.d && l.p0 > R.p);
     body = `<p style="font-size:20px;font-weight:700;margin:14px 0 2px">${S.tab === 'r' ? _('Raum frei') : t ? (before && after ? _('Freistunde') : _('Keine Stunde')) : _('Kein Unterricht')}</p>${nl ? `<p class="hint" style="margin:0">${_('Nächste Stunde: {0}', slotTxt(nl.d, nl.p0))}</p><div class="res">${lessonCard(E, nl)}</div>` : ''}`; }
-  const opts = DATA.periods.map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
+  const dutyNow = t && R.state === 'break' ? (E.duties || []).filter(x => x.d === R.d && dutyAfter(x) === R.p - 1) : [];
+  if (dutyNow.length) body = `<p class="dutyline">${_('Pausenaufsicht')}: <b>${dutyNow.map(x => esc(x.place)).join(', ')}</b></p>` + body;
+  const opts = PER().map(p => `<option value="${p.n}"${p.n === R.p ? ' selected' : ''}>${PLONG(p.n)}${p.from ? ' · ' + esc(p.from) : ''}</option>`).join('');
   const dsel = [0, 1, 2, 3, 4].map(i => `<option value="${i}"${i === R.d ? ' selected' : ''}>${DAYN[i]}</option>`).join('');
   box.innerHTML = `<div class="card"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div class="nowwho">${esc(S.sel)}${E.plan ? '' : ' <span class="pill mut" title="' + (t ? _('aus dem Klassenplan abgeleitet') : _('aus dem Lehrerplan abgeleitet')) + '">' + _('abgeleitet') + '</span>'}</div><div class="hint">${meta}</div></div><span class="grow"></span><button class="btn sec noprint" id="close" type="button">${_('Schließen')}</button></div><div style="margin-top:12px">${head}</div>${body}
   <div class="pick noprint"><button class="chip" type="button" id="bNow" aria-pressed="${S.mode === 'now'}" style="${S.mode === 'now' ? 'background:var(--blue);color:var(--onb,#fff);border-color:var(--blue)' : ''}">${_('Jetzt')}</button><select id="sD" aria-label="${_('Tag')}">${dsel}</select><select id="sP" aria-label="${_('Stunde')}">${opts}</select></div></div>
@@ -622,7 +670,7 @@ function commitMine(me, before) {
 function editLesson(d, p, idx) {
   const me = myName(); if (!me) return; const E = DATA.teachers[me], here = E.lessons.filter(l => l.d === d && l.p0 <= p && p <= l.p1);
   const cur = idx === 'new' ? null : here[idx || 0] || null;
-  const P = DATA.periods, pOpt = v => P.map(q => `<option value="${q.n}"${q.n === v ? ' selected' : ''}>${PLONG(q.n)}${q.from ? ' · ' + esc(q.from) : ''}</option>`).join('');
+  const P = PER(), pOpt = v => P.map(q => `<option value="${q.n}"${q.n === v ? ' selected' : ''}>${PLONG(q.n)}${q.from ? ' · ' + esc(q.from) : ''}</option>`).join('');
   const sw = here.length ? `<div class="chips" style="margin-bottom:10px">${here.map((l, i) => `<button class="chip" type="button" data-sw="${i}" aria-pressed="${cur === l}">${esc(l.cls || l.fach)}</button>`).join('')}<button class="chip" type="button" data-sw="new" aria-pressed="${!cur}">+ ${_('Weitere Stunde')}</button></div>` : '';
   openSheet(`<h3>${cur ? _('Stunde ändern') : _('Neue Stunde')}</h3>${sw}
   <div class="pick"><label class="hint" for="eD">${_('Tag')}</label><select id="eD">${[0, 1, 2, 3, 4, 5].map(i => `<option value="${i}"${i === (cur ? cur.d : d) ? ' selected' : ''}>${DAYN[i]}</option>`).join('')}</select>
@@ -641,15 +689,18 @@ function editLesson(d, p, idx) {
   };
   if ($('eX')) $('eX').onclick = () => { const before = JSON.parse(JSON.stringify(E.lessons)); E.lessons.splice(E.lessons.indexOf(cur), 1); commitMine(me, before); closeSheet(); render(); };
 }
-function gapBefore(i) { const P = DATA.periods; if (i < 1) return null; const a = mins(P[i - 1].to), b = mins(P[i].from); return a != null && b != null && b - a >= 10 ? { from: P[i - 1].to, to: P[i].from } : null; }
+function gapBefore(i) { const P = PER(); if (i < 1) return null; const a = mins(P[i - 1].to), b = mins(P[i].from); return a != null && b != null && b - a >= 10 ? { from: P[i - 1].to, to: P[i].from } : null; }
 function weekTable(E, R) {
-  const t = S.tab === 't', P = DATA.periods, today = (new Date().getDay() + 6) % 7, edit = S.edit && t && E === IDX.T[myName()];
+  const t = S.tab === 't', P = PER(), today = (new Date().getDay() + 6) % 7, edit = S.edit && t && E === IDX.T[myName()];
   const used5 = E.lessons.some(l => l.d === 5);
   const days = used5 ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4];
   let h = '<table class="wk' + (edit ? ' ed' : '') + '"><thead><tr><th style="width:62px"></th>' + days.map(d => `<th class="${d === today ? 'td' : ''}">${DAYN[d]}</th>`).join('') + '</tr></thead><tbody>';
   const skip = {};
   P.forEach((p, i) => {
-    const gp = gapBefore(i); if (gp) h += `<tr class="brk"><td colspan="${days.length + 1}">${_('Pause')} · ${esc(gp.from)}–${esc(gp.to)}</td></tr>`;
+    const gp = gapBefore(i);
+    if (gp) { const dd = t && i > 0 ? (E.duties || []).filter(x => dutyAfter(x) === P[i - 1].n) : [];
+      if (dd.length) h += `<tr class="brk du"><td class="pn">${_('Pause')}</td>${days.map(d => { const x = dd.find(y => y.d === d); return `<td>${x ? `<span class="duty" title="${_('Pausenaufsicht')} · ${esc(gp.from)}–${esc(gp.to)}">${_('Aufsicht')}: ${esc(x.place)}</span>` : ''}</td>`; }).join('')}</tr>`;
+      else h += `<tr class="brk"><td colspan="${days.length + 1}">${_('Pause')} · ${esc(gp.from)}–${esc(gp.to)}</td></tr>`; }
     h += `<tr><td class="pn"><b>${p.n}</b>${esc(p.from)}</td>`;
     days.forEach(d => {
       if (skip[d + ',' + p.n]) return;
@@ -657,8 +708,8 @@ function weekTable(E, R) {
       if (L.length) { const key = L.map(l => l.p0 + l.p1 + l.fach + (l.cls || l.teacher || '')).join('|');
         for (let j = i + 1; j < P.length; j++) { if (gapBefore(j)) break; const L2 = at(E, d, P[j].n); if (L2.length === L.length && L2.map(l => l.p0 + l.p1 + l.fach + (l.cls || l.teacher || '')).join('|') === key && L.every(l => l.p1 >= P[j].n)) { span++; skip[d + ',' + P[j].n] = 1; } else break; } }
       let sel = false; for (let k = 0; k < span; k++) if (R.d === d && R.p === P[i + k].n) sel = true;
-      const rr = S.tab === 'r', cell = L.map(l => `<div class="e${l.grp ? ' g' : ''}" data-li="${E.lessons.indexOf(l)}">${rr ? '' : `<i>${esc(l.room)}</i>`}<b>${esc(rr ? (l.cls || l.fach) : t ? (l.cls || l.fach) : l.fach)}</b><br><span class="hint">${esc(rr ? (l.teacher || '') : t ? (l.cls ? l.fach : '') : l.teacher)}</span></div>`).join('');
-      h += `<td class="${L.length ? 'ce' : 'em'}${sel ? ' sel' : ''}" rowspan="${span}" data-slot="${d},${p.n}">${cell}</td>`;
+      const rr = S.tab === 'r', cell = L.map(l => `<div class="e${l.grp ? ' g' : ''}${l.mentor ? ' m' : ''}"${l.mentor ? ` title="${_('Betreuung')}"` : ''} data-li="${E.lessons.indexOf(l)}">${rr ? '' : `<i>${esc(l.room)}</i>`}<b>${esc(rr ? (l.cls || l.fach) : t ? (l.cls || l.fach) : l.fach)}</b><br><span class="hint">${esc(rr ? (l.teacher || '') : t ? (l.cls ? l.fach : '') : l.teacher)}</span></div>`).join('');
+      h += `<td class="${L.length ? 'ce' : 'em'}${sel ? ' sel' : ''}${p.out && d === today ? ' cx' : ''}" rowspan="${span}" data-slot="${d},${p.n}">${cell}</td>`;
     });
     h += '</tr>';
   });
@@ -686,7 +737,7 @@ function enableDrag(box, me) {
     if (!drag || e.pointerId !== drag.pid) return; const D0 = drag; drag = null; clearHi(); document.body.classList.remove('dragging'); if (D0.ghost) D0.ghost.remove();
     if (!D0.on) return; D0.ev.classList.remove('lifted'); box._suppress = true; setTimeout(() => { box._suppress = false; }, 50);
     const td = cancel ? null : cellAt(e.clientX, e.clientY); if (!td) return;
-    const [nd, tp] = td.dataset.slot.split(',').map(Number), l = D0.l, len = l.p1 - l.p0, np0 = tp - D0.off, np1 = np0 + len, ns = DATA.periods.map(x => x.n);
+    const [nd, tp] = td.dataset.slot.split(',').map(Number), l = D0.l, len = l.p1 - l.p0, np0 = tp - D0.off, np1 = np0 + len, ns = PER().map(x => x.n);
     if (np0 < Math.min(...ns) || np1 > Math.max(...ns)) return toastMsg(_('Dort ist kein Platz im Stundenraster.'));
     if (nd === l.d && np0 === l.p0) return;
     const before = JSON.parse(JSON.stringify(E.lessons)), hit = E.lessons.filter(o => o !== l && o.d === nd && o.p0 <= np1 && np0 <= o.p1);
@@ -730,7 +781,7 @@ function aggregate(recs) {
     if (!r.ok) { R.bad.push(_('{0}, Seite {1}: {2}', r.file, r.page, r.why)); return; }
     if (!R.periods) { R.periods = r.periods; R.year = r.year; R.valid = r.valid; R.stamp = r.stamp; }
     r.warn.forEach(w => R.warn.push(`${r.name}: ${w}`));
-    if (r.type === 'teacher') { const o = R.teachers[r.name] = R.teachers[r.name] || { homeroom: '', lessons: [] }; o.homeroom = o.homeroom || r.homeroom; o.lessons.push(...r.lessons); }
+    if (r.type === 'teacher') { const o = R.teachers[r.name] = R.teachers[r.name] || { homeroom: '', lessons: [], duties: [] }; o.homeroom = o.homeroom || r.homeroom; o.lessons.push(...r.lessons); o.duties.push(...(r.duties || [])); }
     else { const nm = OrarioParse.normClass(r.name), o = R.classes[nm] = R.classes[nm] || { leader: r.leader, deputy: r.deputy, lessons: [] }; o.lessons.push(...r.lessons); }
   });
   R.nT = Object.keys(R.teachers).length; R.nC = Object.keys(R.classes).length;
@@ -764,11 +815,13 @@ function restoreJson(f) {
 function settings() {
   const prev = store.get(PREV), n = DATA ? Object.keys(DATA.teachers).length : 0, c = DATA ? Object.keys(DATA.classes).length : 0;
   openSheet(`<h3>${_('Pläne und Daten')}</h3>${DATA ? `<div class="stat"><span>${_('Schuljahr')}</span><b>${esc(DATA.year || '–')}</b><span>${_('Stand')}</span><b>${esc(DATA.stamp || '–')}</b><span>${_('gültig ab')}</span><b>${esc(DATA.valid || '–')}</b><span>${_('Lehrkräfte / Klassen')}</span><b>${n} / ${c}</b></div>` : `<p class="hint">${_('Noch keine Pläne eingelesen.')}</p>`}
+  ${DATA ? `<div class="pick"><button class="chip" type="button" id="sShort" aria-pressed="${shortOn()}">⏱ ${_('Heute Kurzstunden')}</button></div><p class="hint" style="margin:-4px 0 12px">${_('Nur für heute: drei Stunden à 30 Minuten, nach der Pause nochmal drei.')}</p>` : ''}
   <p class="hint">${_('Neues Schuljahr? Einfach die neuen Untis-PDFs einlesen – sie ersetzen die alten. Der vorherige Stand bleibt als Sicherung erhalten.')}</p>
   ${DATA ? `<div class="pick"><label for="sMe" class="hint">${_('Das bin ich:')}</label><select id="sMe"><option value="">${_('– nicht festgelegt –')}</option>${IDX.tnames.map(n => `<option${n === myName() ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>` : ''}<div class="row"><button class="btn" id="sImp" type="button">${_('Pläne einlesen …')}</button>${prev ? `<button class="btn sec" id="sPrev" type="button">${_('Vorherigen Stand zurückholen')}</button>` : ''}</div>
   <div class="row">${DATA ? `<button class="btn sec" id="sExp" type="button">${_('Daten sichern (Datei)')}</button>` : ''}<button class="btn sec" id="sRes" type="button">${_('Sicherung einspielen …')}</button>${DATA ? `<button class="btn danger" id="sDel" type="button">${_('Alles löschen')}</button>` : ''}</div>
   <p class="hint" style="margin-top:16px">${_('Alle Pläne bleiben auf diesem Gerät – nichts wird hochgeladen.')} Orario ${VERSION} · theis</p><div class="row"><button class="btn sec" id="sClose" type="button">${_('Schließen')}</button></div>`);
   $('sClose').onclick = closeSheet; $('sImp').onclick = () => { closeSheet(); $('file').click(); }; $('sRes').onclick = () => { closeSheet(); $('file').click(); };
+  if ($('sShort')) $('sShort').onclick = () => { setShort(!shortOn()); closeSheet(); render(); };
   if ($('sMe')) $('sMe').onchange = () => { if ($('sMe').value) store.set(ME_KEY, $('sMe').value); else store.del(ME_KEY); render(); };
   if ($('sPrev')) $('sPrev').onclick = () => { const p = store.get(PREV); if (!validData(p)) return; store.set(PREV, DATA); DATA = p; persist(); IDX = buildIndex(DATA); S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; closeSheet(); render(); };
   if ($('sExp')) $('sExp').onclick = () => { const b = new Blob([JSON.stringify(DATA)], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'orario-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
@@ -790,6 +843,7 @@ function loadDemo() {
       if (!ok) continue; for (let k = 0; k < len; k++) { cb[d + ',' + (p + k)] = 1; tbusy[s[2] + d + ',' + (p + k)] = 1; }
       const l = { d, p0: p, p1: p + len - 1, fach: s[0], room: rooms[s[0]] }; classes[c].lessons.push({ ...l, teacher: s[2] }); teachers[s[2]].lessons.push({ ...l, cls: c }); need -= len; } });
   });
+  if (teachers['Muster']) { teachers['Muster'].duties = [{ d: 3, after: 2, place: 'Mensa' }, { d: 1, after: 4, place: 'OG 1' }, { d: 0, after: 2, place: 'EG' }]; teachers['Muster'].lessons.push({ d: 4, p0: 7, p1: 7, cls: '9F', fach: 'E', room: '', grp: false, mentor: true }); }
   DATA = { v: 1, demo: true, year: '2026/2027', valid: '14.9.2026', stamp: _('Beispieldaten'), periods, teachers, classes, importedAt: Date.now(), files: [] };
   persist(); IDX = buildIndex(DATA); S = { tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; render();
 }
@@ -807,6 +861,7 @@ setInterval(() => { if (DATA && S.mode === 'now' && !document.hidden && $('sheet
 function embTheme() { if (!EMB) return; try { document.documentElement.dataset.skin = parent.document.documentElement.dataset.skin || ''; const P = parent.document.documentElement, cs = parent.getComputedStyle(P), r = document.documentElement, map = { '--blue': '--blue', '--bg': '--canvas', '--solid': '--glass-solid', '--tx': '--label', '--tx2': '--label-2', '--glass': '--glass', '--fill': '--fill', '--line': '--hair', '--onb': '--on-accent' };
   Object.keys(map).forEach(k => { const v = cs.getPropertyValue(map[k]).trim(); if (v) r.style.setProperty(k, v); }); r.style.setProperty('--blue-t', 'color-mix(in srgb,var(--blue) 14%,transparent)'); const dk = P.dataset.theme === 'dark' || (P.dataset.theme !== 'light' && parent.matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = dk ? 'dark' : 'light'; r.style.colorScheme = dk ? 'dark' : 'light'; try { parent.document.getElementById('stFrame').style.colorScheme = dk ? 'dark' : 'light'; } catch (e) {} r.style.background = document.body.style.background = 'var(--bg)'; document.body.classList.add('emb'); const ff = parent.getComputedStyle(parent.document.body).fontFamily; if (ff) document.body.style.fontFamily = ff; } catch (e) {} }
 embTheme(); window._orTheme = embTheme;
+window._orShortSync = function () { try { SHORTDAY = store.get(SHORTK) || ''; } catch (e) { SHORTDAY = ''; } if (DATA) render(); };
 window._orHome = function () { if (!DATA) return; closeSheet(); S = { init: true, tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; const me = myName(); if (me) S.sel = me; render(); try { window.scrollTo(0, 0); document.querySelectorAll('*').forEach(e => { if (e.scrollTop) e.scrollTop = 0; }); } catch (e) {} };
 load(); render();
 /* Querformat am Handy: direkt zum Wochenplan */
