@@ -17,8 +17,9 @@
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "1.7.0",
-  "url": "https://theisapps.de/voce/"
+  "version": "1.8.0",
+  "url": "https://theisapps.de/voce/",
+  "notes": "Neu: Seitenleiste mit Start-Übersicht, Hinweis beim Bewerten, welche Gruppe gerade dran ist, sieben Designs für Karten, Pläne und Aushänge, Aussprache-Hilfe, zwölf Farbwelten."
  },
  "foliva": {
   "version": "0.9.11",
