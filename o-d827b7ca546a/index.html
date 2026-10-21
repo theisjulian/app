@@ -254,8 +254,17 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
   }
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = async () => {
     const t = b.dataset.t; if (t === 'more') { $('sheet').hidden = false; return; }
+    if (t === tab) { home(t); return; }
     show(t);
   });
+  /* Nochmal auf den aktiven Reiter: zurück zum Startbildschirm */
+  function home(t) {
+    try {
+      const w = $('fG').contentWindow;
+      if (t === 'o') { const f = w.document.getElementById('phOr'); f && f.contentWindow && f.contentWindow._orHome && f.contentWindow._orHome(); }
+      else { w.document.querySelectorAll('dialog[open]').forEach(d => { try { d.close(); } catch (e) {} }); w._view && w._view('dash'); w.scrollTo(0, 0); }
+    } catch (e) {}
+  }
   function schedulePush() { if (!cfg || !cfg.repo) { dirty = false; setStat('ok', 'Nur auf diesem iPhone gesichert'); return; } clearTimeout(pushT); pushT = setTimeout(push, 1500); }
   async function push(tries) {
     if (!cfg || !cfg.repo || !pw) return; if (busy) { pushT = setTimeout(push, 1500); return; } busy = true; setStat('wait', 'Wird abgeglichen …');
