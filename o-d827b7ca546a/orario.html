@@ -651,7 +651,7 @@ function drawDetail() {
   $('bNow').onclick = () => { S.mode = 'now'; drawDetail(); };
   $('sD').onchange = () => { S.mode = 'pick'; S.d = +$('sD').value; S.p = +$('sP').value; drawDetail(); };
   $('sP').onchange = () => { S.mode = 'pick'; S.d = +$('sD').value; S.p = +$('sP').value; drawDetail(); };
-  const pb = $('pdfBtn'); if (pb) pb.onclick = () => { try { parent._planPrint({ tab: S.tab, name: S.sel, lessons: E.lessons, leader: E.leader || '', deputy: E.deputy || '', homeroom: E.homeroom || '', periods: DATA.periods, year: DATA.year || '', valid: DATA.valid || '' }); } catch (e) {} };
+  const pb = $('pdfBtn'); if (pb) pb.onclick = () => { try { parent._planPrint({ tab: S.tab, name: S.sel, lessons: E.lessons.filter(l => !l.mentor), leader: E.leader || '', deputy: E.deputy || '', homeroom: E.homeroom || '', periods: DATA.periods, year: DATA.year || '', valid: DATA.valid || '' }); } catch (e) {} };
   const eb = $('edBtn'); if (eb) eb.onclick = () => { S.edit = !S.edit; drawDetail(); };
   const er = $('edReset'); if (er) er.onclick = () => resetMine();
   box.querySelectorAll('[data-slot]').forEach(td => td.onclick = () => { if (box._suppress) return; const [d, p] = td.dataset.slot.split(',').map(Number); if (S.edit && own) return editLesson(d, p); S.mode = 'pick'; S.d = d; S.p = p; drawDetail(); });
