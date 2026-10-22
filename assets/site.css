@@ -27,6 +27,7 @@ a{color:inherit}img,video,svg{max-width:100%}img{height:auto}
 .bar .w{display:flex;align-items:center;justify-content:space-between;gap:16px;height:72px}
 .brand{display:flex;color:var(--ink)}.brand svg{height:26px;width:auto;display:block}
 .logo .dot,.brand .dot{fill:var(--dot);transition:fill .25s}
+.logo,.brand svg,.theislogo{overflow:visible}
 .bar nav{display:flex;align-items:center;gap:26px;font-size:16px;font-weight:500}
 .bar nav a.l{text-decoration:none;color:var(--grey)}.bar nav a.l:hover,.bar nav a.l[aria-current]{color:var(--ink)}
 
