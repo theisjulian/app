@@ -523,7 +523,7 @@ html[data-namo-font="atkinson"]{--lg-font:'Atkinson Hyperlegible',system-ui,-app
 .rz{border:1.5px solid var(--lg-line);border-radius:18px;padding:12px;background:var(--lg-card);display:flex;flex-direction:column;gap:8px;transition:border-color .15s,background .15s,box-shadow .15s}
 .rz.over{border-color:var(--lg-accent);background:color-mix(in srgb,var(--lg-accent) 9%,var(--lg-card));box-shadow:0 0 0 3px color-mix(in srgb,var(--lg-accent) 20%,transparent)}
 .has-pick .rz:not(.full):not(.over-cap){border-color:color-mix(in srgb,var(--lg-accent) 55%,var(--lg-line));cursor:pointer}
-.rz header{display:flex;align-items:center;gap:8px}
+.rz .rz-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .room-name{display:inline-flex;align-items:center;gap:6px;border:0!important;background:transparent!important;padding:2px 6px 2px 0!important;font-weight:700;font-size:16px;color:var(--lg-ink)!important;min-height:0;text-align:left}
 .room-name svg{width:14px;height:14px;opacity:.45;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .room-name:disabled{opacity:1}
@@ -798,7 +798,172 @@ body.ns-open{overflow:hidden}
 .invite-card .field{display:grid;gap:8px;margin:14px 0 6px}
 .invite-card form .primary{margin-top:10px}
 
-</style></head><body><header><button class="brand brand-home" type="button" data-action="home" aria-label="’namo · Startseite">’namo.</button><div class="theis-mark"><svg class="logo" role="img" aria-label="theis" xmlns="http://www.w3.org/2000/svg" viewBox="0 -1 228.1 75.2"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" fill="#2F5BEA" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/></g></svg></div><div class="topnote">Dein persönlicher Reisebereich<br>14.–19. März 2027</div></header><main class="shell"><div class="notice"><b>Privater Arbeitsentwurf · nur auf diesem Gerät.</b> Noch kein Login und kein Geräteabgleich. Enthält Verträge und Personendaten: diese Datei nicht öffentlich hochladen. Unter „Sicherung“ kannst du alles exportieren.</div><section class="hero"><div><h1>Bologna<br>&amp; <i>Venedig.</i></h1><p id="intro"></p><span class="pill">14.–19. MÄRZ 2027</span></div><div class="route"><svg viewBox="0 0 440 145" fill="none" stroke="#547061" stroke-width="1.5" aria-hidden="true"><path d="M10 115h420M40 115V46h18v69m8 0V22h19v93M70 22l5-12 6 12M20 115V80h92v35m-78-35V65h55v15M128 104c75-80 95-80 160-18" stroke-dasharray="4 6"/><path d="M290 115V61h95v54m-85-54V43h75v18m-67-18 30-22 30 22m-51 72V77h13v38m12 0V77h13v38m13 0V77h12v38M394 115V18h14v97m-15-97 8-13 8 13m8 80q-10 20-34 20m-114 5q25-10 50 0t50 0t50 0t45 0"/><circle cx="128" cy="104" r="4" fill="#ce6e45"/><circle cx="288" cy="86" r="4" fill="#ce6e45"/></svg><div class="route-labels"><div>14. — 17. März<b>Bologna</b></div><div>17. — 19. März<b>Venedig</b></div></div></div></section><div id="stats" class="stats"></div><nav id="nav"></nav><section id="view"><div class="card">Reisedaten werden geladen …</div></section><div class="footer"><div class="theis-mark" style="margin:0 auto 18px"><svg class="logo" role="img" aria-label="theis" xmlns="http://www.w3.org/2000/svg" viewBox="0 -1 228.1 75.2"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" fill="#2F5BEA" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/></g></svg></div>© 2026 · ’namo · Bologna &amp; Venedig · <span id="saved">Noch nicht gespeichert</span></div></main><section id="report"></section><dialog id="dialog"><form id="form"><div id="formbody"></div><div class="actions"><button type="button" id="cancel">Abbrechen</button><button class="primary">Speichern</button></div></form></dialog><input type="file" hidden id="upload" multiple accept="application/pdf,image/jpeg,image/png"><input type="file" hidden id="restore" accept="application/json"><div id="toast" class="toast" hidden role="status"></div><script src="assets/jspdf-4.2.1.umd.min.js"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script><script>window.ANDIAMO_ONLINE=true;</script><script id="seed" type="application/json">{"version": 1, "settings": {"students": 22, "teachers": 2, "payers": 22, "contribution": 0, "reserve": 10}, "costs": [], "income": [], "tasks": [], "notes": "", "docs": [], "people": [], "schedule": [], "rooms": [], "contacts": [], "packing": [], "rollcalls": [], "release": 2}</script><script>
+/* Update 19 · Handschrift-Schriften (lokal, offline nutzbar), Zimmernummer, Bank-Hinweis, Begrüßung */
+@font-face{font-family:'Permanent Marker';font-weight:400;font-style:normal;font-display:swap;src:url('assets/fonts/permanent-marker-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Caveat';font-weight:700;font-style:normal;font-display:swap;src:url('assets/fonts/caveat-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Homemade Apple';font-weight:400;font-style:normal;font-display:swap;src:url('assets/fonts/homemade-apple-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Kalam';font-weight:700;font-style:normal;font-display:swap;src:url('assets/fonts/kalam-latin-700-normal.woff2') format('woff2')}
+
+/* Zimmerkachel: Nummer als kleines Etikett neben dem Namen */
+.rz .room-no{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:99px;background:var(--lg-soft,var(--lg-accent-bg,#e3f2f2));color:var(--lg-accent-text,var(--lg-accent,#08707d));white-space:nowrap}
+.rz .rz-head .room-name{min-width:0;overflow-wrap:anywhere}
+.rz .rz-head .pill.cap{margin-left:auto}
+
+/* Bank-Hinweis */
+.bank-hint{margin-top:10px;border-top:1px solid var(--lg-line,#dfe8e9);padding-top:8px}
+.bank-hint summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--lg-accent-text,var(--lg-accent,#08707d))}
+.bank-hint p{margin:6px 0 0}
+
+/* Begrüßung */
+.namo-welcome{position:fixed;inset:0;z-index:4000;display:grid;place-items:center;padding:24px;cursor:pointer;opacity:0;animation:nw-in .4s ease forwards;
+ background:color-mix(in srgb,var(--lg-bg,#fff) 93%,transparent);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
+.namo-welcome.out{animation:nw-out .5s ease forwards}
+.nw-box{display:grid;justify-items:center;gap:2px;text-align:center;max-width:100%}
+.nw-ciao{font-size:clamp(28px,8vw,44px);font-weight:700;letter-spacing:-.025em;color:var(--lg-ink,#0f2a2e);opacity:0;transform:translateY(10px);animation:nw-rise .55s .1s cubic-bezier(.2,.7,.2,1) forwards}
+.nw-svg{display:block;max-width:92vw;overflow:visible}
+.nw-svg text{font-family:var(--nw-font);font-size:var(--nw-size);fill:transparent;stroke:var(--nw-stroke);stroke-width:var(--nw-w);stroke-linecap:round;stroke-linejoin:round}
+.nw-svg .nw-l{stroke-dasharray:1600;stroke-dashoffset:1600;
+ animation:nw-draw 1s calc(.55s + var(--i)*var(--nw-step)) cubic-bezier(.45,0,.25,1) forwards,nw-fill .55s calc(1.1s + var(--nw-n)*var(--nw-step)) ease forwards}
+.nw-svg .nw-under{fill:none;stroke:var(--nw-stroke);stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;
+ animation:nw-underline .7s calc(1.2s + var(--nw-n)*var(--nw-step)) cubic-bezier(.4,0,.2,1) forwards}
+@keyframes nw-in{to{opacity:1}}
+@keyframes nw-out{from{opacity:1}to{opacity:0}}
+@keyframes nw-rise{to{opacity:1;transform:none}}
+@keyframes nw-draw{to{stroke-dashoffset:0}}
+@keyframes nw-fill{to{fill:var(--nw-fill)}}
+@keyframes nw-underline{to{stroke-dashoffset:0}}
+
+/* Neon: Leuchtröhre mit leichtem Flackern */
+.namo-welcome[data-nw="neon"] .nw-svg{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--lg-accent,#ff3ea5) 85%,transparent)) drop-shadow(0 0 22px color-mix(in srgb,var(--lg-accent,#ff3ea5) 55%,transparent))}
+.namo-welcome[data-nw="neon"] .nw-svg .nw-under{stroke:var(--lg-accent2,#2f6bff)}
+.namo-welcome[data-nw="neon"] .nw-svg text{paint-order:stroke}
+.namo-welcome[data-nw="neon"] .nw-svg{animation:nw-flicker 2.6s 2.6s ease-in-out 1}
+@keyframes nw-flicker{0%,18%,22%,62%,100%{opacity:1}20%{opacity:.55}24%{opacity:.85}64%{opacity:.7}}
+/* Klar: ruhige Tinte auf Papier */
+.namo-welcome[data-nw="clear"] .nw-ciao{font-weight:600}
+/* Reduzierte Bewegung: die Begrüßung wird gar nicht erst angezeigt (siehe Skript); falls doch, ohne Animation */
+@media (prefers-reduced-motion:reduce){.namo-welcome,.nw-ciao,.nw-svg .nw-l,.nw-svg .nw-under{animation:none!important;opacity:1!important;transform:none!important;stroke-dashoffset:0!important;fill:var(--nw-fill)}}
+
+/* „Noch ohne Zimmer“: leer = kompakt und nicht klebend; mit Namen = klebend, aber höchstens ein Drittel des Bildschirms */
+.room-pool:has(.pool-empty){position:static;box-shadow:none}
+.room-pool:has(.pool-empty) .pool-search{display:none}
+.room-pool:not(:has(.pool-empty)){max-height:36vh;overflow:auto;overscroll-behavior:contain}
+
+/* Update 20 · vier neue Designs aus dem gemeinsamen theis-System: Terrakotta, Salbei, Heft, Graphit (hell und dunkel) */
+@font-face{font-family:'Shadows Into Light';font-weight:400;font-style:normal;font-display:swap;src:url('assets/fonts/shadows-into-light-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Patrick Hand';font-weight:400;font-style:normal;font-display:swap;src:url('assets/fonts/patrick-hand-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Nothing You Could Do';font-weight:400;font-style:normal;font-display:swap;src:url('assets/fonts/nothing-you-could-do-latin-400-normal.woff2') format('woff2')}
+
+/* ---- Terrakotta: warmer Ton, Sonnenuntergang über Bologna ---- */
+html[data-namo-style="terrakotta"]:not([data-andiamo-theme="dark"]){
+ --lg-bg:#f6eee4;--lg-card:#fffcf7;--lg-card2:#fbf6ef;--lg-ink:#2b1d14;--lg-muted:#6f5a4b;--lg-line:#ead9c6;--lg-soft:#f8e6d6;--lg-field:#fbf6ef;
+ --lg-accent:#b9491f;--lg-accent-ink:#ffffff;--lg-accent-text:#a63f18;--lg-grad:linear-gradient(150deg,#e8873f 0%,#b9491f 100%);
+ --lg-side:#2b1a10;--lg-side-ink:#f0dcc8;--lg-side-on:rgba(232,135,63,.26);--lg-hero:linear-gradient(140deg,#3a2012 0%,#8a3716 100%);--lg-hero-accent:#ffc78a;
+ --lg-ok-bg:#e3f1e2;--lg-ok:#26692f;--lg-warn-bg:#fcecc9;--lg-warn:#7a5000;--lg-bad:#b3261e;--lg-bo:#b9491f;--lg-ve:#3d7f8a;
+ --lg-ann-bg:#fbe3cc;--lg-ann:#8f3a12;
+ --lg-bo-bg:linear-gradient(150deg,#e8873f 0%,#b9491f 100%);--lg-ve-bg:linear-gradient(150deg,#4e9aa6 0%,#2e6f7a 100%);
+ --lg-shadow:0 1px 0 rgba(43,29,20,.04),0 10px 26px -20px rgba(120,60,20,.4);
+}
+html[data-namo-style="terrakotta"][data-andiamo-theme="dark"]{
+ --lg-bg:#16100c;--lg-card:#241a14;--lg-card2:#1d140f;--lg-ink:#f6ece2;--lg-muted:#c0a994;--lg-line:#3a2b20;--lg-soft:#33221a;--lg-field:#1a110c;
+ --lg-accent:#ff8a57;--lg-accent-ink:#1d120b;--lg-accent-text:#ffa57d;--lg-grad:linear-gradient(150deg,#f0803c 0%,#a8401a 100%);
+ --lg-side:#0f0a07;--lg-side-ink:#e6d3c0;--lg-side-on:rgba(255,138,87,.2);--lg-hero:linear-gradient(140deg,#22140c 0%,#6a2c12 100%);--lg-hero-accent:#ffc78a;
+ --lg-ok-bg:#1d3a22;--lg-ok:#9fe3a9;--lg-warn-bg:#3d2d0e;--lg-warn:#f5cf7d;--lg-bad:#ff8077;--lg-bo:#ff8a57;--lg-ve:#6bb6c2;
+ --lg-ann-bg:#3b2012;--lg-ann:#ffb787;
+ --lg-bo-bg:linear-gradient(150deg,#d9743a 0%,#9c3a18 100%);--lg-ve-bg:linear-gradient(150deg,#3e8793 0%,#25606a 100%);
+ --lg-shadow:none;
+}
+html[data-namo-style="terrakotta"] h1,html[data-namo-style="terrakotta"] h2{letter-spacing:-.015em}
+html[data-namo-style="terrakotta"] .card{border-radius:18px!important}
+
+/* ---- Salbei: ruhiges Grün ---- */
+html[data-namo-style="salbei"]:not([data-andiamo-theme="dark"]){
+ --lg-bg:#edf1ea;--lg-card:#fbfcfa;--lg-card2:#f6f8f4;--lg-ink:#1b2a20;--lg-muted:#58695d;--lg-line:#dbe4d6;--lg-soft:#e3eddd;--lg-field:#f6f8f4;
+ --lg-accent:#3b7a57;--lg-accent-ink:#ffffff;--lg-accent-text:#2f6a49;--lg-grad:linear-gradient(150deg,#6bae88 0%,#3b7a57 100%);
+ --lg-side:#17261c;--lg-side-ink:#d9e8dc;--lg-side-on:rgba(109,192,143,.24);--lg-hero:linear-gradient(140deg,#17261c 0%,#2f5a42 100%);--lg-hero-accent:#b6e6c9;
+ --lg-ok-bg:#dff1e4;--lg-ok:#216a3a;--lg-warn-bg:#fbefd2;--lg-warn:#7a5200;--lg-bad:#b3382a;--lg-bo:#c9611b;--lg-ve:#2f7f86;
+ --lg-ann-bg:#e6f1d6;--lg-ann:#3f6a1c;
+ --lg-bo-bg:linear-gradient(150deg,#d97a2f 0%,#b2551a 100%);--lg-ve-bg:linear-gradient(150deg,#4a9fa6 0%,#2b7a82 100%);
+ --lg-shadow:0 1px 0 rgba(27,42,32,.04),0 10px 26px -20px rgba(30,70,40,.35);
+}
+html[data-namo-style="salbei"][data-andiamo-theme="dark"]{
+ --lg-bg:#0f1511;--lg-card:#1a2420;--lg-card2:#151d18;--lg-ink:#e8f0e9;--lg-muted:#a3b5a8;--lg-line:#2a372f;--lg-soft:#22312a;--lg-field:#121a15;
+ --lg-accent:#6dc08f;--lg-accent-ink:#0f1511;--lg-accent-text:#86d3a5;--lg-grad:linear-gradient(150deg,#58a87a 0%,#2f6e4d 100%);
+ --lg-side:#0a100c;--lg-side-ink:#c5d6ca;--lg-side-on:rgba(109,192,143,.2);--lg-hero:linear-gradient(140deg,#14201a 0%,#27503a 100%);--lg-hero-accent:#b6e6c9;
+ --lg-ok-bg:#1b3a27;--lg-ok:#a6e8bf;--lg-warn-bg:#3b3012;--lg-warn:#f1d38b;--lg-bad:#ff8a7c;--lg-bo:#e08a45;--lg-ve:#5db6bd;
+ --lg-ann-bg:#223419;--lg-ann:#b9e08f;
+ --lg-bo-bg:linear-gradient(150deg,#c46f28 0%,#964a14 100%);--lg-ve-bg:linear-gradient(150deg,#3a8f96 0%,#24666c 100%);
+ --lg-shadow:none;
+}
+
+/* ---- Heft: Papier, Tinte, Karomuster; dunkel = grüne Schultafel ---- */
+html[data-namo-style="heft"]:not([data-andiamo-theme="dark"]){
+ --lg-bg:#f4efe2;--lg-card:#fffcf4;--lg-card2:#fbf7ec;--lg-ink:#23253a;--lg-muted:#666a80;--lg-line:#e4dcc6;--lg-soft:#efe8d2;--lg-field:#fbf7ec;
+ --lg-accent:#2c4a9a;--lg-accent-ink:#ffffff;--lg-accent-text:#27428a;--lg-grad:linear-gradient(150deg,#5a7bd0 0%,#2c4a9a 100%);
+ --lg-side:#fbf7ec;--lg-side-ink:#23253a;--lg-side-on:rgba(44,74,154,.12);--lg-side-on-ink:#27428a;--lg-side-hover:rgba(35,37,58,.05);--lg-hero:linear-gradient(140deg,#23356e 0%,#2c4a9a 100%);--lg-hero-accent:#ffe08a;
+ --lg-ok-bg:#e1f1e4;--lg-ok:#22662f;--lg-warn-bg:#fbeccb;--lg-warn:#7a5200;--lg-bad:#c0392b;--lg-bo:#c0392b;--lg-ve:#2c4a9a;
+ --lg-ann-bg:#fdecc8;--lg-ann:#7a4f00;
+ --lg-bo-bg:linear-gradient(150deg,#d9604f 0%,#b0372a 100%);--lg-ve-bg:linear-gradient(150deg,#5a7bd0 0%,#2c4a9a 100%);
+ --lg-shadow:0 1px 0 rgba(35,37,58,.05),0 2px 0 rgba(90,70,30,.06);
+}
+html[data-namo-style="heft"][data-andiamo-theme="dark"]{
+ --lg-bg:#1d2924;--lg-card:#26352d;--lg-card2:#21302a;--lg-ink:#eef2e8;--lg-muted:#b2bfae;--lg-line:#34463c;--lg-soft:#2d4036;--lg-field:#1a251f;
+ --lg-accent:#f2d36b;--lg-accent-ink:#1d2924;--lg-accent-text:#f5dd8a;--lg-grad:linear-gradient(150deg,#f2d36b 0%,#c9a43a 100%);
+ --lg-side:#16201b;--lg-side-ink:#dbe5d4;--lg-side-on:rgba(242,211,107,.2);--lg-hero:linear-gradient(140deg,#1a2620 0%,#2f4a3b 100%);--lg-hero-accent:#f2d36b;
+ --lg-ok-bg:#1f4a2c;--lg-ok:#aeeabd;--lg-warn-bg:#4a3a12;--lg-warn:#f5d58a;--lg-bad:#ff9a90;--lg-bo:#ee8a7a;--lg-ve:#f2d36b;
+ --lg-ann-bg:#3a3516;--lg-ann:#f5dd8a;
+ --lg-bo-bg:linear-gradient(150deg,#c4584a 0%,#963024 100%);--lg-ve-bg:linear-gradient(150deg,#8d7a2c 0%,#6a5a18 100%);
+ --lg-shadow:none;
+}
+html[data-namo-style="heft"] body{background-image:linear-gradient(color-mix(in srgb,var(--lg-ink) 6%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--lg-ink) 6%,transparent) 1px,transparent 1px);background-size:22px 22px;background-attachment:fixed}
+html[data-namo-style="heft"] .card,html[data-namo-style="heft"] .stat{border-radius:10px!important}
+
+/* ---- Graphit: hoher Kontrast, Raster, eckig – gut lesbar bei Sonne ---- */
+html[data-namo-style="graphit"]:not([data-andiamo-theme="dark"]){
+ --lg-bg:#ffffff;--lg-card:#ffffff;--lg-card2:#f3f3f3;--lg-ink:#000000;--lg-muted:#454545;--lg-line:#000000;--lg-soft:#ececec;--lg-field:#ffffff;
+ --lg-accent:#0040d0;--lg-accent-ink:#ffffff;--lg-accent-text:#0038b8;--lg-grad:#0040d0;
+ --lg-side:#ffffff;--lg-side-ink:#000000;--lg-side-on:#000000;--lg-side-on-ink:#ffffff;--lg-side-hover:#ececec;--lg-hero:#000000;--lg-hero-accent:#9fc0ff;
+ --lg-ok-bg:#dff3e5;--lg-ok:#005c26;--lg-warn-bg:#fff0cc;--lg-warn:#6b3a00;--lg-bad:#c4001a;--lg-bo:#c4001a;--lg-ve:#0040d0;
+ --lg-ann-bg:#fff0cc;--lg-ann:#6b3a00;
+ --lg-bo-bg:#c4001a;--lg-ve-bg:#0040d0;--lg-shadow:none;
+}
+html[data-namo-style="graphit"][data-andiamo-theme="dark"]{
+ --lg-bg:#000000;--lg-card:#0b0b0b;--lg-card2:#161616;--lg-ink:#ffffff;--lg-muted:#c4c4c4;--lg-line:#ffffff;--lg-soft:#1c1c1c;--lg-field:#000000;
+ --lg-accent:#6aa8ff;--lg-accent-ink:#000000;--lg-accent-text:#8fbcff;--lg-grad:#6aa8ff;
+ --lg-side:#000000;--lg-side-ink:#ffffff;--lg-side-on:#ffffff;--lg-side-on-ink:#000000;--lg-side-hover:#1c1c1c;--lg-hero:#101010;--lg-hero-accent:#9fc0ff;
+ --lg-ok-bg:#0f3a1c;--lg-ok:#7dffa3;--lg-warn-bg:#3d2a00;--lg-warn:#ffd36e;--lg-bad:#ff7a6e;--lg-bo:#ff7a6e;--lg-ve:#6aa8ff;
+ --lg-ann-bg:#3d2a00;--lg-ann:#ffd36e;
+ --lg-bo-bg:#a8231a;--lg-ve-bg:#1f56c4;--lg-shadow:none;
+}
+html[data-namo-style="graphit"] body{background-image:linear-gradient(color-mix(in srgb,var(--lg-ink) 5%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--lg-ink) 5%,transparent) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed}
+html[data-namo-style="graphit"] .card,html[data-namo-style="graphit"] .stat{border-radius:2px!important;border:1px solid var(--lg-ink)!important;box-shadow:none!important}
+html[data-namo-style="graphit"] button,html[data-namo-style="graphit"] .button,html[data-namo-style="graphit"] input,html[data-namo-style="graphit"] select,html[data-namo-style="graphit"] textarea{border-radius:2px!important}
+html[data-namo-style="graphit"] :focus-visible{outline:3px solid var(--lg-accent);outline-offset:2px}
+
+/* Auswahl: acht Designs in zwei Reihen mit je vier Kacheln */
+.style-pick{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:420px){.style-pick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sw-terrakotta{background:linear-gradient(135deg,#2b1a10 0 34%,#e8873f 34% 67%,#f6eee4 67%)}
+.sw-salbei{background:linear-gradient(135deg,#17261c 0 34%,#6bae88 34% 67%,#edf1ea 67%)}
+.sw-heft{background:linear-gradient(135deg,#23356e 0 34%,#ffe08a 34% 67%,#f4efe2 67%);box-shadow:inset 0 0 0 1px #e4dcc6}
+.sw-graphit{background:linear-gradient(135deg,#000 0 34%,#0040d0 34% 67%,#fff 67%);box-shadow:inset 0 0 0 2px #000}
+
+/* Elternbrief-Leiste und Haken */
+.letter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px}
+.letter-bar button{min-height:34px;padding:4px 12px;font-size:13px}
+.letter-bar button.on{border-color:var(--lg-accent);background:var(--lg-soft);color:var(--lg-accent-text);font-weight:700}
+.ptable input[data-letter]{width:22px;height:22px;accent-color:var(--lg-accent)}
+
+/* Startseite auf Reise */
+.st-countdown{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 8px;padding:10px 14px;border-radius:14px;background:var(--lg-soft);color:var(--lg-accent-text)}
+.st-countdown b{font-size:20px;letter-spacing:-.02em}
+.st-countdown span{font-size:14px;color:var(--lg-ink)}
+.st-later ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:0}
+.st-later li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--lg-line)}
+.st-later li:first-child{border-top:0}
+.st-later time{font-weight:700;color:var(--lg-accent-text);font-variant-numeric:tabular-nums}
+
+</style></head><body><header><button class="brand brand-home" type="button" data-action="home" aria-label="’namo · Startseite">’namo.</button><div class="theis-mark"><svg class="logo" role="img" aria-label="theis" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228.1 71.9"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" fill="#2F5BEA" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/></g></svg></div><div class="topnote">Dein persönlicher Reisebereich<br>14.–19. März 2027</div></header><main class="shell"><div class="notice"><b>Privater Arbeitsentwurf · nur auf diesem Gerät.</b> Noch kein Login und kein Geräteabgleich. Enthält Verträge und Personendaten: diese Datei nicht öffentlich hochladen. Unter „Sicherung“ kannst du alles exportieren.</div><section class="hero"><div><h1>Bologna<br>&amp; <i>Venedig.</i></h1><p id="intro"></p><span class="pill">14.–19. MÄRZ 2027</span></div><div class="route"><svg viewBox="0 0 440 145" fill="none" stroke="#547061" stroke-width="1.5" aria-hidden="true"><path d="M10 115h420M40 115V46h18v69m8 0V22h19v93M70 22l5-12 6 12M20 115V80h92v35m-78-35V65h55v15M128 104c75-80 95-80 160-18" stroke-dasharray="4 6"/><path d="M290 115V61h95v54m-85-54V43h75v18m-67-18 30-22 30 22m-51 72V77h13v38m12 0V77h13v38m13 0V77h12v38M394 115V18h14v97m-15-97 8-13 8 13m8 80q-10 20-34 20m-114 5q25-10 50 0t50 0t50 0t45 0"/><circle cx="128" cy="104" r="4" fill="#ce6e45"/><circle cx="288" cy="86" r="4" fill="#ce6e45"/></svg><div class="route-labels"><div>14. — 17. März<b>Bologna</b></div><div>17. — 19. März<b>Venedig</b></div></div></div></section><div id="stats" class="stats"></div><nav id="nav"></nav><section id="view"><div class="card">Reisedaten werden geladen …</div></section><div class="footer"><div class="theis-mark" style="margin:0 auto 18px"><svg class="logo" role="img" aria-label="theis" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 228.1 71.9"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" fill="#2F5BEA" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/></g></svg></div>© 2026 · ’namo · Bologna &amp; Venedig · <span id="saved">Noch nicht gespeichert</span></div></main><section id="report"></section><dialog id="dialog"><form id="form"><div id="formbody"></div><div class="actions"><button type="button" id="cancel">Abbrechen</button><button class="primary">Speichern</button></div></form></dialog><input type="file" hidden id="upload" multiple accept="application/pdf,image/jpeg,image/png"><input type="file" hidden id="restore" accept="application/json"><div id="toast" class="toast" hidden role="status"></div><script src="assets/jspdf-4.2.1.umd.min.js"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script><script>window.ANDIAMO_ONLINE=true;</script><script id="seed" type="application/json">{"version": 1, "settings": {"students": 22, "teachers": 2, "payers": 22, "contribution": 0, "reserve": 10}, "costs": [], "income": [], "tasks": [], "notes": "", "docs": [], "people": [], "schedule": [], "rooms": [], "contacts": [], "packing": [], "rollcalls": [], "release": 2}</script><script>
 'use strict';
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const euro=c=>c===null?'noch offen':new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(c/100),date=d=>d?new Intl.DateTimeFormat('de-DE').format(new Date(d+'T12:00:00')):'ohne Termin',uid=()=>crypto.randomUUID(),clone=o=>JSON.parse(JSON.stringify(o));
@@ -961,7 +1126,7 @@ function buildTripPDF({mode='names',teachers=true,people,rooms=[],language='de',
  let cols,rows,widths;
  const role=p=>p.role==='Lehrkraft'?T('Lehrkraft','Docente'):p.gender==='m'?T('Schüler','Studente'):T('Schülerin','Studentessa');
  if(mode==='detail'){cols=[T('Name / Rolle','Nome / Ruolo'),T('Telefon / Notfallkontakt','Telefono / Emergenza'),T('Zimmer','Camere'),T('Ticketgruppen','Gruppi biglietti')];widths=[49,66,32,31];rows=ps.map(p=>[p.name+'\n'+role(p),(p.phone||'-')+'\n'+(p.emergencyName||T('Notfallkontakt offen','Contatto da aggiungere'))+'\n'+(p.emergencyPhone||'-'),'BO: '+(p.roomB||'-')+'\nVE: '+(p.roomV||'-'),T('Hin: ','Andata: ')+(p.ticketOut||'-')+'\n'+T('Rück: ','Ritorno: ')+(p.returning===false?T('separat','separato'):(p.ticketBack||'-'))])}
- else if(mode==='rooms'){cols=[T('Unterkunft','Alloggio'),T('Zimmer','Camera'),T('Name','Nome'),T('Rolle','Ruolo')];widths=[32,42,76,28];rows=['Bologna','Venedig'].flatMap(city=>ps.map(p=>[city==='Venedig'?T('Venedig','Venezia'):city,p[city==='Bologna'?'roomB':'roomV']||T('Noch offen','Da assegnare'),p.name,role(p)]).sort((a,b)=>a[1].localeCompare(b[1])))}
+ else if(mode==='rooms'){cols=[T('Unterkunft','Alloggio'),T('Zimmer','Camera'),T('Name','Nome'),T('Rolle','Ruolo')];widths=[32,42,76,28];rows=['Bologna','Venedig'].flatMap(city=>ps.map(p=>[city==='Venedig'?T('Venedig','Venezia'):city,roomShow(city,p[city==='Bologna'?'roomB':'roomV'])||T('Noch offen','Da assegnare'),p.name,role(p)]).sort((a,b)=>a[1].localeCompare(b[1])))}
  else if(mode==='tickets'){cols=[T('Fahrt','Tratta'),T('Gruppe','Gruppo'),T('Name','Nome')];widths=[43,27,108];rows=[[T('Hinfahrt','Andata'),'ticketOut'],[T('Rückfahrt','Ritorno'),'ticketBack']].flatMap(([label,key])=>ps.filter(p=>key!=='ticketBack'||p.returning!==false).map(p=>[label,p[key]||T('Offen','Da assegnare'),p.name]).sort((a,b)=>a[1].localeCompare(b[1])))}
  else if(mode==='diet'){const dl={vegetarisch:T('vegetarisch','vegetariano'),vegan:T('vegan','vegano'),ohneSchwein:T('ohne Schweinefleisch','senza maiale'),andere:T('andere (siehe Hinweis)','altro (vedi nota)')};cols=[T('Name','Nome'),T('Rolle','Ruolo'),T('Ernährung','Alimentazione'),T('Allergien / Unverträglichkeiten','Allergie / intolleranze')];widths=[50,26,38,64];rows=ps.filter(p=>p.diet||p.allergies).map(p=>[p.name,role(p),dl[p.diet]||'-',p.allergies||'-'])}
  else if(mode==='contacts'){cols=[T('Name','Nome'),T('Eigenes Telefon','Telefono personale'),T('Notfallkontakt','Contatto di emergenza')];widths=[58,43,77];rows=ps.map(p=>[p.name,p.phone||'-',(p.emergencyName||'-')+'\n'+(p.emergencyPhone||'-')])}
@@ -985,7 +1150,7 @@ const L=(de,it)=>uiLanguage==='it'?it:de;
 function canEditTrip(){return !window.ANDIAMO_ONLINE||(typeof identity!=='undefined'&&['admin','teacher_edit'].includes(identity?.role))}
 function isTripAdmin(){return !window.ANDIAMO_ONLINE||(typeof identity!=='undefined'&&identity?.role==='admin')}
 function bankReference(bank,person){return (bank.reference||'').replaceAll('{name}',person.name||'').replaceAll('{id}',person.id||'')}
-function bankCard(bank,person){if(!bank?.holder||!bank?.iban||!bank?.reference)return '';return `<div class="card"><h3>${L('Überweisung an die Schule','Bonifico alla scuola')}</h3><dl><dt>${L('Kontoinhaber','Intestatario')}</dt><dd>${esc(bank.holder)}</dd><dt>IBAN</dt><dd style="overflow-wrap:anywhere">${esc(bank.iban.replace(/(.{4})/g,'$1 ').trim())}</dd>${bank.bic?`<dt>BIC</dt><dd>${esc(bank.bic)}</dd>`:''}<dt>${L('Verwendungszweck','Causale')}</dt><dd>${esc(bankReference(bank,person))}</dd></dl><p class="small muted">${L('Bitte den Verwendungszweck genau übernehmen. Deine Zahlung wird nach Prüfung durch die Reiseleitung bestätigt.','Riporta esattamente la causale. Il pagamento verrà confermato dai docenti dopo la verifica.')}</p></div>`}
+function bankCard(bank,person){if(!bank?.holder||!bank?.iban||!bank?.reference)return '';return `<div class="card"><h3>${L('Überweisung an die Schule','Bonifico alla scuola')}</h3><dl><dt>${L('Kontoinhaber','Intestatario')}</dt><dd>${esc(bank.holder)}</dd><dt>IBAN</dt><dd style="overflow-wrap:anywhere">${esc(bank.iban.replace(/(.{4})/g,'$1 ').trim())}</dd>${bank.bic?`<dt>BIC</dt><dd>${esc(bank.bic)}</dd>`:''}<dt>${L('Verwendungszweck','Causale')}</dt><dd>${esc(bankReference(bank,person))}</dd></dl><p class="small muted">${L('Bitte den Verwendungszweck genau übernehmen. Deine Zahlung wird nach Prüfung durch die Reiseleitung bestätigt.','Riporta esattamente la causale. Il pagamento verrà confermato dai docenti dopo la verifica.')}</p><details class="bank-hint"><summary>${L('Warnung der Bank beim Überweisen?','Avviso della banca durante il bonifico?')}</summary><p class="small">${L('Banken zeigen seit einiger Zeit aus Sicherheitsgründen die Meldung „Der Name des Zahlungsempfängers stimmt nicht mit dem für die IBAN hinterlegten Namen überein“. Dann einfach auf „Trotzdem fortfahren“ (oder ähnlich) tippen: Solange die IBAN stimmt, kommt das Geld an.','Da qualche tempo le banche mostrano, per sicurezza, l’avviso «Il nome del beneficiario non corrisponde al nome associato all’IBAN». Tocca semplicemente «Continua comunque»: finché l’IBAN è corretto, il denaro arriva.')}</p></details></div>`}
 function validIBAN(value){const s=value.replace(/\s/g,'').toUpperCase();if(!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s))return false;let rem=0;for(const c of s.slice(4)+s.slice(0,4)){const n=/[A-Z]/.test(c)?String(c.charCodeAt(0)-55):c;for(const d of n)rem=(rem*10+Number(d))%97}return rem===1}
 actions.banksettings=()=>{if(!isTripAdmin())throw Error(L('Nur für Admin','Solo amministratore'));const b=state.settings.bank||{};showForm(L('Überweisungsdaten der Schule','Coordinate bancarie della scuola'),`<p>${L('Werden bei „Mein Reisebeitrag“ angezeigt, sobald Kontoinhaber, IBAN und Verwendungszweck ausgefüllt sind.','Vengono mostrate in “La mia quota” quando intestatario, IBAN e causale sono compilati.')}</p>`+field(L('Kontoinhaber','Intestatario'),'holder',b.holder||'','text','maxlength="200"')+field('IBAN','iban',b.iban||'','text','maxlength="42" autocomplete="off"')+field(L('BIC · optional','BIC · facoltativo'),'bic',b.bic||'','text','maxlength="11"')+field(L('Verwendungszweck · {name} wird ersetzt','Causale · {name} viene sostituito'),'reference',b.reference||'','text','maxlength="250"')+`<p class="small muted">${L('Beispiel: Studienfahrt 2027 – {name}. Zum Ausblenden alle Felder leeren.','Esempio: Viaggio 2027 – {name}. Per nascondere, svuota tutti i campi.')}</p>`,async f=>{if(f.iban&&!validIBAN(f.iban))throw Error(L('Bitte IBAN prüfen.','Controlla l’IBAN.'));if(f.bic&&!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(f.bic.toUpperCase()))throw Error('BIC');state.settings.bank={holder:f.holder.trim(),iban:f.iban.replace(/\s/g,'').toUpperCase(),bic:f.bic.toUpperCase(),reference:f.reference.trim()}})};
 const tripPreferences=actions.preferences;actions.preferences=()=>{tripPreferences();const submit=$('#prefform').onsubmit;$('#prefform').onsubmit=e=>{submit(e);if(state)render()};if(state?.settings&&isTripAdmin()){const anchor=$('#prefform .actions'),b=document.createElement('button');b.type='button';b.textContent=L('Überweisungsdaten der Schule','Coordinate bancarie della scuola');b.onclick=()=>{$('#preferences').close();actions.banksettings()};anchor.before(b)}};
@@ -1108,7 +1273,7 @@ const lgRender=render;render=function(){lgRender();document.body.dataset.tab=tab
 let peopleFilter='';
 function peopleTable(){const q=peopleFilter.trim().toLowerCase();const rows=state.people.map(p=>{const docs=['consent','idChecked','insurance'].filter(k=>p[k]).length,due=contributionDue(p),paid=contributionPaid(p.id);const back=p.returning===false?L('keine','nessuno'):(p.ticketBack||'—');const hay=[p.name,p.role,p.roomB,p.roomV].join(' ').toLowerCase();return `<tr class="${p.active?'':'inactive'}" data-search="${esc(hay)}" ${q&&!hay.includes(q)?'hidden':''}>
  <td class="first"><div class="who"><span class="avatar">${esc(p.name.split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase())}</span><div><b>${esc(p.name)}</b><small>${esc(tr(p.role))} · ${p.active?L('aktiv','attiva'):L('zurückgetreten','ritirata')}</small></div></div></td>
- <td data-l="${L('Zimmer BO / VE','Camere BO / VE')}">${esc(p.roomB||'—')} · ${esc(p.roomV||'—')}</td>
+ <td data-l="${L('Zimmer BO / VE','Camere BO / VE')}">${esc(roomShow('Bologna',p.roomB)||'—')} · ${esc(roomShow('Venedig',p.roomV)||'—')}</td>
  <td data-l="${L('Hin / Rück','Andata / Ritorno')}">${esc(p.ticketOut||'—')} / ${esc(back)}</td>
  <td data-l="${L('Notfallkontakt','Contatto di emergenza')}"><span class="pill ${p.emergencyPhone?'ok':'warn'}">${p.emergencyPhone?L('hinterlegt','presente'):L('fehlt','manca')}</span></td>
  <td data-l="${L('Unterlagen','Documenti')}"><span class="pill ${docs===3?'ok':''}">${docs}/3</span></td>
@@ -1156,7 +1321,7 @@ function peopleSummary(){const a=activePeople(),st=a.filter(p=>p.role!=='Lehrkra
 peopleTable=function(){const q=peopleFilter.trim().toLowerCase(),editable=canEditTrip();const rows=state.people.map(p=>{const docs=['consent','idChecked','insurance'].filter(k=>p[k]).length,due=contributionDue(p),paid=contributionPaid(p.id);const back=p.returning===false?L('keine','nessuno'):(p.ticketBack||'—');const hay=[p.name,p.role,p.roomB,p.roomV,dietLabel(p.diet),p.allergies].join(' ').toLowerCase();return `<tr class="${p.active?'':'inactive'} ${editable?'clickable':''}" data-pid="${esc(p.id)}" data-search="${esc(hay)}" ${q&&!hay.includes(q)?'hidden':''} ${editable?`tabindex="0" aria-label="${esc(p.name)} ${L('bearbeiten','modifica')}"`:''}>
  <td class="first"><div class="who"><span class="avatar">${esc(p.name.split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase())}</span><div><b>${esc(p.name)}</b>${p.active?'':`<small>${L('zurückgetreten','ritirata')}</small>`}</div></div></td>
  <td data-l="${L('Rolle','Ruolo')}"><span class="pill ${p.role==='Lehrkraft'?'role-t':''}">${roleLabel(p)}</span></td>
- <td data-l="${L('Zimmer','Camere')}" class="rooms2"><span><small>BO</small> ${esc(p.roomB||'—')}</span><span><small>VE</small> ${esc(p.roomV||'—')}</span></td>
+ <td data-l="${L('Zimmer','Camere')}" class="rooms2"><span><small>BO</small> ${esc(roomShow('Bologna',p.roomB)||'—')}</span><span><small>VE</small> ${esc(roomShow('Venedig',p.roomV)||'—')}</span></td>
  <td data-l="${L('Hin / Rück','Andata / Ritorno')}">${esc(p.ticketOut||'—')} / ${esc(back)}</td>
  <td data-l="${L('Essen','Pasti')}">${dietCell(p)}</td>
  <td data-l="${L('Notfallkontakt','Contatto di emergenza')}"><span class="pill ${p.emergencyPhone?'ok':'warn'}">${p.emergencyPhone?L('ok','ok'):L('fehlt','manca')}</span></td>
@@ -1448,8 +1613,8 @@ function roomChipHTML(p,city,placed,edit){const sel=pickedPerson===p.id&&pickedC
 roomBoard=function(city){const key=roomKey(city),rooms=state.rooms.filter(r=>r.city===city),edit=canEditTrip(),people=activePeople().slice().sort(comparePeople);
  const unplaced=people.filter(p=>!rooms.some(x=>x.name===p[key]));
  const zone=r=>{const ps=people.filter(p=>p[key]===r.name),full=ps.length>=r.capacity,over=ps.length>r.capacity;
-  return `<article class="rz ${over?'over-cap':full?'full':''}" data-room="${esc(r.id)}" data-city="${city}"><header><button type="button" class="room-name" data-rc="rename" data-id="${esc(r.id)}" ${edit?'':'disabled'} title="${L('Name oder Zimmernummer ändern','Cambia nome o numero')}">${esc(r.name)}${edit?PENCIL:''}</button><span class="pill cap">${ps.length} / ${r.capacity}</span>${edit?`<button type="button" class="rz-more" data-action="room" data-id="${esc(r.id)}" aria-label="${L('Plätze, Hinweis, Zimmer löschen','Posti, nota, elimina camera')}">⋯</button>`:''}</header><div class="rz-list">${ps.map(p=>roomChipHTML(p,city,true,edit)).join('')||`<p class="rz-empty">${edit?L('Leer – Namen hierher ziehen oder tippen','Vuota – trascina o tocca un nome'):L('Leer','Vuota')}</p>`}</div>${edit?`<button type="button" class="rz-drop" data-rc="drop">${L('Hierher','Qui')}</button>`:''}</article>`};
- return `<div class="card room-card ${pickedPerson&&pickedCity===city?'has-pick':''}" data-city="${city}"><h2>${city==='Bologna'?'Bologna':L('Venedig','Venezia')} · ${L('Zimmerplan','Piano camere')}</h2><p class="small muted">${edit?L('Am Punktegriff ziehen oder Namen antippen und dann ein Zimmer antippen. Auf den Zimmernamen tippen zum Umbenennen, z. B. mit der echten Zimmernummer.','Trascina dal puntino oppure tocca un nome e poi una camera. Tocca il nome della camera per rinominarla, ad es. con il numero reale.'):''}</p><p class="pick-hint" aria-live="polite">${pickHintText(city)}</p>
+  return `<article class="rz ${over?'over-cap':full?'full':''}" data-room="${esc(r.id)}" data-city="${city}"><div class="rz-head"><button type="button" class="room-name" data-rc="rename" data-id="${esc(r.id)}" ${edit?'':'disabled'} title="${L('Name und Zimmernummer bearbeiten','Modifica nome e numero')}">${esc(r.name)}${edit?PENCIL:''}</button>${r.number?`<span class="room-no" title="${L('Zimmernummer','Numero camera')}">${esc(r.number)}</span>`:''}<span class="pill cap">${ps.length} / ${r.capacity}</span>${edit?`<button type="button" class="rz-more" data-action="room" data-id="${esc(r.id)}" aria-label="${L('Plätze, Hinweis, Zimmer löschen','Posti, nota, elimina camera')}">⋯</button>`:''}</div><div class="rz-list">${ps.map(p=>roomChipHTML(p,city,true,edit)).join('')||`<p class="rz-empty">${edit?L('Leer – Namen hierher ziehen oder tippen','Vuota – trascina o tocca un nome'):L('Leer','Vuota')}</p>`}</div>${edit?`<button type="button" class="rz-drop" data-rc="drop">${L('Hierher','Qui')}</button>`:''}</article>`};
+ return `<div class="card room-card ${pickedPerson&&pickedCity===city?'has-pick':''}" data-city="${city}"><h2>${city==='Bologna'?'Bologna':L('Venedig','Venezia')} · ${L('Zimmerplan','Piano camere')}</h2><p class="small muted">${edit?L('Am Punktegriff ziehen oder Namen antippen und dann ein Zimmer antippen. Auf den Zimmernamen tippen, um Namen und Zimmernummer zu bearbeiten.','Trascina dal puntino oppure tocca un nome e poi una camera. Tocca il nome della camera per modificare nome e numero.'):''}</p><p class="pick-hint" aria-live="polite">${pickHintText(city)}</p>
  <div class="room-pool" data-room="" data-city="${city}"><div class="pool-head"><b>${L('Noch ohne Zimmer','Senza camera')}</b><span class="pill">${unplaced.length}</span><input class="pool-search" type="search" id="pool-search-${city}" data-city="${city}" value="${esc(poolQuery)}" placeholder="${L('Suchen …','Cerca …')}" aria-label="${L('Name suchen','Cerca nome')}"></div>${unplaced.length?`<div class="pool-chips">${unplaced.map(p=>roomChipHTML(p,city,false,edit)).join('')}</div>`:`<p class="pool-empty">${L('Alle haben ein Zimmer. 🎉','Tutti hanno una camera.')}</p>`}</div>
  <div class="rz-grid">${rooms.map(zone).join('')||`<p class="muted">${L('Noch keine Zimmer angelegt.','Nessuna camera creata.')}</p>`}</div></div>`};
 function pickHintText(city){if(!pickedPerson||pickedCity!==city)return '';const p=state.people.find(x=>x.id===pickedPerson);return p?displayName(p)+' – '+L('jetzt ein Zimmer antippen','ora tocca una camera'):''}
@@ -1716,7 +1881,7 @@ function buildDetailPDF({teachers=true,people,language='de',logo,docs=[]}){
   let yy=y+15.5;const w=W-25;
   yy+=kv(x0+3,yy,T('Telefon','Telefono'),p.phone,w);
   yy+=kv(x0+3,yy,T('Notfall','Emergenza'),[p.emergencyName,p.emergencyPhone].filter(Boolean).join(' · '),w);
-  yy+=kv(x0+3,yy,T('Zimmer','Camera'),'BO '+(p.roomB||'-')+'   VE '+(p.roomV||'-'),w);
+  yy+=kv(x0+3,yy,T('Zimmer','Camera'),'BO '+(roomShow('Bologna',p.roomB)||'-')+'   VE '+(roomShow('Venedig',p.roomV)||'-'),w);
   yy+=kv(x0+3,yy,T('Zug','Treno'),T('Hin ','And. ')+(p.ticketOut||'-')+'   '+T('Rück ','Rit. ')+(p.returning===false?T('separat','separato'):(p.ticketBack||'-')),w);
   const food=[dl[p.diet]||'',p.allergies?T('Allergie: ','Allergia: ')+p.allergies:''].filter(Boolean).join(' · ');
   yy+=kv(x0+3,yy,T('Essen','Cibo'),food||'-',w);
@@ -1944,6 +2109,171 @@ actions.ics=()=>{const items=(state.schedule||[]).filter(x=>x.shared).map(x=>({.
 function tripToolsCard(){if(!canEditTrip())return '';const last=[...(state.rollcalls||[])].pop();
  return `<div class="card trip-tools"><div class="row"><h2>${L('Unterwegs','In viaggio')}</h2></div><p class="small muted">${last?L(`Letzte Zählung: ${new Date(last.at).toLocaleString('de-DE',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})} · ${last.present.length} von ${last.total}`,`Ultimo appello: ${new Date(last.at).toLocaleString('it-IT',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})} · ${last.present.length} su ${last.total}`):L('Namen antippen – fertig. Die Zählung ist nur für Lehrkräfte sichtbar. Die .ics-Datei ist der Stand von heute.','Tocca i nomi – fatto. L’appello è visibile solo ai docenti.')}</p><div class="actions">${btn(L('Zählung starten','Avvia appello'),'count','','primary')}${btn(L('Wer fehlt noch?','Cosa manca?'),'gaps')}${btn(L('Kalender (.ics)','Calendario (.ics)'),'ics')}</div></div>`}
 const u17Over=views['Übersicht'];views['Übersicht']=()=>{const base=u17Over();if(!canEditTrip())return base;const i=base.indexOf('<div class="card open-points');return i<0?tripToolsCard()+base:base.slice(0,i)+tripToolsCard()+base.slice(i)};
+
+/* Update 19 · Zimmernummer, repariertes Zimmerkachel-Layout, Begrüßung mit „live gezeichnetem“ Vornamen */
+
+/* ---- Zimmer: Nummer neben dem Namen ---- */
+function roomShow(city,name){
+ if(!name)return name||'';
+ try{const r=(typeof state!=='undefined'&&state&&Array.isArray(state.rooms)?state.rooms:[]).find(x=>x.city===city&&x.name===name);return r&&r.number?name+' · Nr. '+r.number:name}catch{return name}
+}
+/* Ein Tipp auf den Zimmernamen öffnet jetzt einen Dialog mit Name, Zimmernummer, Plätzen und Hinweis (statt nur das Namensfeld). */
+startRename=function(id){roomForm(id)};
+const u19RoomForm=roomForm;
+roomForm=function(id){
+ u19RoomForm(id);
+ const nameInp=document.querySelector('#form [name="name"]');if(!nameInp)return;
+ const c=(state.rooms||[]).find(x=>x.id===id)||{},lab=nameInp.closest('label');
+ if(lab&&lab.firstChild&&lab.firstChild.nodeType===3)lab.firstChild.textContent=L('Name des Zimmers','Nome della camera');
+ if(!document.querySelector('#form [name="number"]')){
+  const n=document.createElement('label');n.className='field';
+  n.innerHTML=L('Zimmernummer (optional)','Numero della camera (facoltativo)')+'<input name="number" type="text" maxlength="12" autocomplete="off" placeholder="'+L('z. B. 214','es. 214')+'">';
+  n.querySelector('input').value=c.number||'';
+  if(lab)lab.after(n);
+ }
+ const h=saveHandler;
+ saveHandler=async f=>{f.number=String(f.number||'').trim().slice(0,12);return h(f)};
+};
+
+/* ---- Begrüßung: „Ciao,“ und der Vorname wird in einer zum Design passenden Handschrift gezeichnet ---- */
+const NW_GAP=10*60*1000;
+const NW_THEMES={
+ clear:{font:"'Homemade Apple', cursive",size:74,weight:400,stroke:'var(--lg-ink,#14181d)',fill:'var(--lg-ink,#14181d)',w:1.2,under:(W)=>`M0 10 C ${W*.25} -2, ${W*.55} 16, ${W} 4`,uw:2.4},
+ laguna:{font:"'Caveat', cursive",size:120,weight:700,stroke:'var(--lg-accent,#0b7f8e)',fill:'var(--lg-accent,#0b7f8e)',w:1.6,under:(W)=>{const s=W/6;let d=`M0 8`;for(let i=0;i<6;i++)d+=` q ${s/2} ${i%2?10:-10} ${s} 0`;return d},uw:3.2},
+ lime:{font:"'Kalam', cursive",size:104,weight:700,stroke:'var(--lg-accent,#4f8a14)',fill:'var(--lg-accent,#4f8a14)',w:1.5,under:(W)=>{const s=W/10;let d=`M0 8`;for(let i=0;i<10;i++)d+=` l ${s} ${i%2?-9:9}`;return d},uw:3},
+ neon:{font:"'Permanent Marker', cursive",size:112,weight:400,stroke:'var(--lg-accent,#ff3ea5)',fill:'rgba(255,255,255,.92)',w:2.6,under:(W)=>`M0 6 L ${W} 6 M${W*.12} 16 L ${W*.88} 16`,uw:4,glow:true}
+};
+function nwStyle(){return document.documentElement.dataset.namoStyle||'laguna'}
+function nwEnabled(){
+ try{if(localStorage.getItem('namo-welcome')==='off')return false}catch{}
+ if(document.documentElement.dataset.namoMotion==='off')return false;
+ try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return false}catch{}
+ return true;
+}
+function nwDue(){try{return Date.now()-(+sessionStorage.getItem('namo-welcome-at')||0)>NW_GAP}catch{return true}}
+function nwMark(){try{sessionStorage.setItem('namo-welcome-at',String(Date.now()))}catch{}}
+function nwFirst(full){
+ const s=String(full||'').trim();if(!s)return '';
+ let f=typeof nameParts==='function'?(nameParts(s).first||''):s.split(/\s+/)[0];
+ f=String(f||s).trim().split(/\s+/)[0]||'';
+ return f.slice(0,16);
+}
+function nwSvgText(txt){return String(txt).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+async function namoWelcome(first){
+ if(!first||!nwEnabled()||!nwDue()||document.querySelector('.namo-welcome')||document.querySelector('dialog[open]'))return;
+ nwMark();
+ const th=NW_THEMES[nwStyle()]||NW_THEMES.laguna,letters=[...first];
+ try{await Promise.race([document.fonts.load(`${th.weight} ${th.size}px ${th.font.split(',')[0]}`,first),new Promise(r=>setTimeout(r,1200))])}catch{}
+ if(document.querySelector('.namo-welcome'))return;
+ const step=Math.min(.13,1.1/letters.length),total=letters.length;
+ const el=document.createElement('div');el.className='namo-welcome';el.setAttribute('role','img');el.setAttribute('aria-label','Ciao, '+first);
+ el.dataset.nw=nwStyle();
+ el.innerHTML=`<div class="nw-box"><div class="nw-ciao">Ciao,</div><svg class="nw-svg" aria-hidden="true" style="--nw-font:${th.font};--nw-size:${th.size}px;--nw-w:${th.w};--nw-stroke:${th.stroke};--nw-fill:${th.fill};--nw-step:${step}s;--nw-n:${total}"><text x="0" y="0" text-anchor="start">${letters.map((c,i)=>`<tspan class="nw-l" style="--i:${i}">${nwSvgText(c)}</tspan>`).join('')}</text><path class="nw-under" pathLength="1"/></svg></div>`;
+ document.body.appendChild(el);
+ const svg=el.querySelector('svg'),text=svg.querySelector('text'),under=svg.querySelector('.nw-under');
+ const bb=text.getBBox(),pad=18,W=Math.max(40,bb.width);
+ text.setAttribute('x',String(-bb.x));text.setAttribute('y',String(-bb.y));
+ const uy=bb.height+4;
+ under.setAttribute('d',th.under(W));under.setAttribute('transform',`translate(0 ${uy})`);under.style.strokeWidth=th.uw;
+ svg.setAttribute('viewBox',`${-pad} ${-pad} ${W+pad*2} ${uy+pad*2+22}`);
+ svg.style.width=Math.min(W+pad*2,Math.min(innerWidth*.9,640))+'px';svg.style.height='auto';
+ const close=()=>{if(el._closing)return;el._closing=true;el.classList.add('out');setTimeout(()=>el.remove(),520)};
+ el.addEventListener('click',close);document.addEventListener('keydown',function k(e){if(!document.body.contains(el)){document.removeEventListener('keydown',k);return}if(['Escape',' ','Enter'].includes(e.key))close()});
+ setTimeout(close,(.55+total*step+.9+.5+.7+.9)*1000);
+}
+/* Name der Person, die gerade die Startseite sieht */
+function nwHomeName(){
+ try{
+  if(typeof tab!=='undefined'&&tab==='Übersicht'&&typeof state!=='undefined'&&state&&Array.isArray(state.people)){
+   const id=(typeof identity!=='undefined'&&identity&&identity.personId)||'';
+   const p=id?state.people.find(x=>x.id===id):null;
+   if(p&&document.querySelector('main'))return nwFirst(p.name);
+   if(!p&&document.querySelector('main')){let n='';try{n=localStorage.getItem('namo-welcome-name')||''}catch{}return nwFirst(n)}
+  }
+ }catch{}
+ return '';
+}
+if(typeof render==='function'){const o=render;render=function(){const r=o.apply(this,arguments);try{const n=nwHomeName();if(n)setTimeout(()=>namoWelcome(n),160)}catch{}return r}}
+let nwHiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){nwHiddenAt=Date.now();return}
+ if(nwHiddenAt&&Date.now()-nwHiddenAt>5*60*1000){try{sessionStorage.removeItem('namo-welcome-at')}catch{}try{const n=nwHomeName()||(typeof nwStudentName==='function'?nwStudentName():'');if(n)setTimeout(()=>namoWelcome(n),260)}catch{}}
+});
+/* Schalter unter „Darstellung“ */
+const u19Prefs=actions.preferences;
+actions.preferences=()=>{
+ u19Prefs();
+ const form=document.getElementById('prefform');if(!form||form.querySelector('#pref-welcome'))return;
+ const anchor=form.querySelector('#pref-motion')?.closest('label')||form.querySelector('.font-pick')?.closest('.field')||form.querySelector('.style-pick')?.closest('.field');if(!anchor)return;
+ let off=false;try{off=localStorage.getItem('namo-welcome')==='off'}catch{}
+ anchor.insertAdjacentHTML('afterend',`<label class="field checkline" style="grid-column:1/-1"><input type="checkbox" id="pref-welcome" ${off?'':'checked'}> ${L('Begrüßung beim Start','Saluto all’avvio')}<span class="small muted">${L('„Ciao“ und dein Vorname werden in einer zum Design passenden Handschrift gezeichnet. Gilt nur auf diesem Gerät.','«Ciao» e il tuo nome vengono scritti a mano nello stile del tema. Vale solo su questo dispositivo.')}</span></label>`);
+ if(typeof identity!=='undefined'&&identity&&identity.role!=='student'&&!identity.personId){let nm='';try{nm=localStorage.getItem('namo-welcome-name')||''}catch{}
+  form.querySelector('#pref-welcome').closest('label').insertAdjacentHTML('afterend',`<label class="field" style="grid-column:1/-1">${L('Dein Vorname für die Begrüßung','Il tuo nome per il saluto')}<input id="pref-welcome-name" type="text" maxlength="16" autocomplete="given-name" value="${esc(nm)}"></label>`);
+  form.querySelector('#pref-welcome-name').onchange=e=>{try{localStorage.setItem('namo-welcome-name',e.target.value.trim().slice(0,16))}catch{}}}
+ form.querySelector('#pref-welcome').onchange=e=>{try{localStorage.setItem('namo-welcome',e.target.checked?'on':'off')}catch{}if(e.target.checked){try{sessionStorage.removeItem('namo-welcome-at')}catch{}const n=nwHomeName()||(typeof nwStudentName==='function'?nwStudentName():'');if(n)setTimeout(()=>namoWelcome(n),400)}};
+};
+
+/* Update 20 · neue Designs registrieren (Terrakotta, Salbei, Heft, Graphit) */
+(function(){
+ const add=[['terrakotta','Terrakotta','Terracotta'],['salbei','Salbei','Salvia'],['heft','Heft','Quaderno'],['graphit','Graphit','Grafite']];
+ const meta={terrakotta:['#f6eee4','#16100c'],salbei:['#edf1ea','#0f1511'],heft:['#f4efe2','#1d2924'],graphit:['#ffffff','#000000']};
+ add.forEach(([k,de,it])=>{if(!STYLE_META[k])STYLE_META[k]=meta[k];if(!NAMO_STYLES.some(s=>s[0]===k))NAMO_STYLES.push([k,L(de,it)])});
+ /* Begrüßungsschriften */
+ if(typeof NW_THEMES!=='undefined'){
+  const ink=(f,size,w)=>({font:f,size,weight:400,stroke:'var(--lg-accent,#b9491f)',fill:'var(--lg-accent,#b9491f)',w});
+  NW_THEMES.terrakotta=Object.assign(ink("'Nothing You Could Do', cursive",84,1.3),{under:W=>`M0 8 C ${W*.3} -4, ${W*.6} 18, ${W} 2`,uw:2.8});
+  NW_THEMES.salbei=Object.assign(ink("'Patrick Hand', cursive",112,1.5),{under:W=>{const s=W/5;let d='M0 8';for(let i=0;i<5;i++)d+=` q ${s/2} ${i%2?7:-7} ${s} 0`;return d},uw:3});
+  NW_THEMES.heft=Object.assign(ink("'Shadows Into Light', cursive",124,1.6),{stroke:'var(--lg-ink,#23253a)',fill:'var(--lg-ink,#23253a)',under:W=>`M0 8 L ${W} 8 M${W*.06} 16 L ${W*.94} 16`,uw:2.6});
+  NW_THEMES.graphit=Object.assign(ink("'Permanent Marker', cursive",100,1.8),{stroke:'var(--lg-ink,#000)',fill:'var(--lg-ink,#000)',under:W=>`M0 8 L ${W} 8`,uw:5});
+ }
+try{applyTheme()}catch{}
+})();
+
+/* ---- Elternbrief-Rückmeldung je Person: Haken direkt in der Liste, Zähler, Filter „Brief fehlt“ ----
+   Neues Feld p.letter (true/false) und p.letterAt (Datum). Bestehende Daten bleiben unverändert; fehlt das Feld, gilt „offen“. */
+let u20LetterOnly=false;
+const u20PeopleTable=peopleTable;
+peopleTable=function(){
+ const html=u20PeopleTable();
+ try{
+  const act=state.people.filter(p=>p.active&&p.role==='Schüler:in'),done=act.filter(p=>p.letter).length,editable=canEditTrip();
+  const doc=new DOMParser().parseFromString('<body>'+html+'</body>','text/html');
+  const th=[...doc.querySelectorAll('.ptable thead th')],ix=th.findIndex(t=>/Unterlagen|Documenti/.test(t.textContent));
+  if(ix<0)return html;
+  const nh=doc.createElement('th');nh.textContent=L('Brief','Lettera');th[ix].after(nh);
+  doc.querySelectorAll('.ptable tbody tr[data-pid]').forEach(tr=>{
+   const p=state.people.find(x=>x.id===tr.dataset.pid);if(!p)return;
+   const td=doc.createElement('td');td.setAttribute('data-l',L('Elternbrief abgegeben','Lettera consegnata'));
+   if(p.role==='Schüler:in'){td.innerHTML=`<input type="checkbox" data-letter="${esc(p.id)}" aria-label="${esc(p.name)}: ${L('Elternbrief abgegeben','lettera ai genitori consegnata')}" ${p.letter?'checked':''} ${editable&&p.active?'':'disabled'}>`}
+   else td.textContent='–';
+   tr.children[ix].after(td);
+   if(u20LetterOnly&&(p.role!=='Schüler:in'||p.letter||!p.active))tr.setAttribute('hidden','');
+  });
+  const tools=doc.querySelector('.people-tools');
+  if(tools)tools.insertAdjacentHTML('afterend',`<div class="letter-bar"><span class="pill ${done===act.length&&act.length?'ok':''}">${L('Elternbrief','Lettera ai genitori')} ${done}/${act.length}</span>${act.length-done>0?`<button type="button" data-letterfilter class="${u20LetterOnly?'on':''}" aria-pressed="${u20LetterOnly}">${u20LetterOnly?L('Alle zeigen','Mostra tutti'):L('Nur Brief fehlt','Solo mancanti')+' ('+(act.length-done)+')'}</button>`:''}</div>`);
+  return doc.body.innerHTML;
+ }catch{return html}
+};
+document.addEventListener('change',async e=>{
+ const id=e.target?.dataset?.letter;if(!id)return;
+ e.stopImmediatePropagation();
+ if(typeof cloudSaving!=='undefined'&&cloudSaving){render();toast(L('Speichern läuft. Bitte anschließend erneut ändern.','Salvataggio in corso. Riprova subito dopo.'));return}
+ const p=state.people.find(x=>x.id===id);if(!p)return;
+ const was=!!p.letter,wasAt=p.letterAt;
+ p.letter=e.target.checked;p.letterAt=p.letter?new Date().toLocaleDateString('sv-SE'):'';
+ try{await persist();render()}catch(err){p.letter=was;p.letterAt=wasAt;render();toast(err.message||String(err))}
+},true);
+document.addEventListener('click',e=>{const b=e.target.closest?.('[data-letterfilter]');if(!b)return;u20LetterOnly=!u20LetterOnly;render()});
+/* Auch im Personenformular: Auswahl „Elternbrief abgegeben“ */
+const u20Person=actions.person;
+actions.person=id=>{
+ u20Person(id);
+ const sel=document.querySelector('#formbody select[name="consent"]')?.closest('label');if(!sel||document.querySelector('#formbody [name="letter"]'))return;
+ const p=state.people.find(x=>x.id===id)||{};if(p.role==='Lehrkraft')return;
+ sel.insertAdjacentHTML('beforebegin',`<label class="field">${L('Elternbrief abgegeben','Lettera consegnata')}<select name="letter"><option value="offen">${L('offen','aperta')}</option><option value="ja" ${p.letter?'selected':''}>${L('ja','sì')}</option></select></label>`);
+ const h=saveHandler;
+ saveHandler=async f=>{const v=f.letter==='ja';delete f.letter;await h(f);const t=id?state.people.find(x=>x.id===id):state.people[state.people.length-1];if(t&&t.role!=='Lehrkraft'){if(!!t.letter!==v){t.letter=v;t.letterAt=v?new Date().toLocaleDateString('sv-SE'):''}}};
+};
 
 let cloud,cloudUser,cloudRevision=0,cloudLocked=false,cloudSaving=false,lastRemoteAt='';
 function loginView(message=''){document.querySelector('main').hidden=true;let gate=$('#cloudgate');if(!gate){gate=document.createElement('section');gate.id='cloudgate';gate.className='shell';document.body.append(gate)}gate.innerHTML=`<div class="card" style="max-width:470px;margin:40px auto"><div class="eyebrow brandmark">’namo.</div><div class="eyebrow">DEIN REISEORGANISATOR</div><h2 style="margin-top:15px">Gut ankommen.</h2><p class="muted small">Bitte mit deinem persönlichen Reisekonto anmelden.</p><form id="loginform">${field('E-Mail','email','','email','required autocomplete="username"')}${field('Passwort','password','','password','required autocomplete="current-password"')}<button class="primary">Anmelden</button><p class="small" id="loginstatus" role="status">${esc(message)}</p></form></div>`;$('#loginform').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;$('#loginstatus').textContent='Anmeldung läuft …';try{const f=new FormData(e.target),{data,error}=await cloud.auth.signInWithPassword({email:String(f.get('email')),password:String(f.get('password'))});e.target.reset();if(error)throw error;cloudUser=data.user;await loadRemote();gate.remove();document.querySelector('main').hidden=false}catch(err){$('#loginstatus').textContent='Anmeldung oder Laden fehlgeschlagen. Bitte Zugang und Einrichtung prüfen.';console.error(err)}finally{b.disabled=false}}}
@@ -2310,6 +2640,41 @@ actions.stics=()=>{if(!studentData)return;const items=(studentData.schedule||[])
 async function reportOffline(){try{if(identity?.role!=='student'||offlineMode||previewPerson||!offlineSaved||!offlineSaved.size)return;if(localStorage.getItem('namo-offline-reported')===String(studentData?.person?.id))return;const {error}=await cloud.rpc('andiamo_student_offline');if(!error)localStorage.setItem('namo-offline-reported',String(studentData?.person?.id))}catch{}}
 {const o=actions.stoffline;actions.stoffline=async(...a)=>{const r=await o(...a);try{localStorage.removeItem('namo-offline-reported')}catch{}reportOffline();return r}}
 setTimeout(reportOffline,4000);
+
+/* Update 19 (online) · Zimmernummer für Schülerinnen, Begrüßung auf der Schüler-Startseite */
+const u19StRooms=typeof stRooms==='function'?stRooms:null;
+if(u19StRooms)stRooms=function(){
+ const sd=typeof studentData!=='undefined'?studentData:null,p=sd&&sd.person,n=sd&&sd.roomNumbers;
+ if(!p||!n)return u19StRooms();
+ const b=p.roomB,v=p.roomV;
+ try{if(n.roomB&&b)p.roomB=b+' · Nr. '+n.roomB;if(n.roomV&&v)p.roomV=v+' · Nr. '+n.roomV;return u19StRooms()}finally{p.roomB=b;p.roomV=v}
+};
+function nwStudentName(){
+ try{if(typeof identity!=='undefined'&&identity&&identity.role==='student'&&typeof studentData!=='undefined'&&studentData&&studentData.person&&studentTab==='today')return nwFirst(studentData.person.name)}catch{}
+ return '';
+}
+if(typeof renderStudent==='function'){const o=renderStudent;renderStudent=function(){const r=o.apply(this,arguments);try{const n=nwStudentName();if(n)setTimeout(()=>namoWelcome(n),160)}catch{}return r}}
+
+/* Update 20 (online) · Startseite auf Reise: Countdown zum nächsten Punkt und „Heute danach“ */
+const u20StNext=typeof stNextCard==='function'?stNextCard:null;
+if(u20StNext)stNextCard=function(){
+ const base=u20StNext();
+ try{
+  const sched=(studentData&&studentData.schedule)||[];
+  const v=liveProgram(sched),x=v.current[0]||v.next;if(!x)return base;
+  const clock=tripClock(new Date());if(!clock||x.date!==clock.day||!x.time)return base;
+  const toMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(String(t||''));return m?(+m[1])*60+(+m[2]):null};
+  const now=toMin(clock.time),at=toMin(x.time),isNow=v.current.includes(x);
+  let strip='';
+  if(now!=null&&at!=null){
+   const d=at-now,txt=isNow?L('läuft','in corso'):d<=0?L('jetzt','adesso'):d<60?L('in '+d+' Min','tra '+d+' min'):L('in '+Math.floor(d/60)+' Std '+(d%60?(d%60)+' Min':''),'tra '+Math.floor(d/60)+' h '+(d%60?(d%60)+' min':''));
+   strip=`<div class="st-countdown"><b>${esc(txt.trim())}</b>${x.place&&!trainNumber(x)?`<span>${lgIcon('pin')||''} ${esc(x.place)}</span>`:''}</div>`;
+  }
+  const later=stSorted().filter(y=>y.date===clock.day&&y!==x&&y.time&&toMin(y.time)>(at??-1)).slice(0,4);
+  const list=later.length?`<div class="card st-later"><h3>${L('Heute danach','Oggi dopo')}</h3><ul>${later.map(y=>`<li><time>${esc(y.time)}</time><span>${esc(y.title)}</span></li>`).join('')}</ul></div>`:'';
+  return strip+base+list;
+ }catch{return base}
+};
 
 init().catch(e=>{document.querySelector('main').innerHTML='<div class="card"><h2>Verbindung nicht verfügbar.</h2><p>Bitte Internetverbindung und Supabase-Einrichtung prüfen und die Seite neu laden.</p></div>';console.error(e)});
 // Unterbindet weitere Schreibaktionen, während ein Serverstand gespeichert wird.
