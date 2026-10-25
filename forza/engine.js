@@ -180,7 +180,7 @@
   /* Haltungs- und Mobilitätsblock: rotiert zwischen BWS, Brust/Nacken, je Einheit höchstens n Übungen */
   function mobilityPick(ctx, P, n) {
     const have = new Set((ctx.items || []));
-    const all = ctx.exercises.filter((e) => e.active && e.dosage_profile === 'M' && !(e.content && e.content.einsatz) && !((ctx.userEx || {})[e.id] || {}).hidden && available(e, [...have]).ok && !(ctx.painEx || new Set()).has(e.id));
+    const all = ctx.exercises.filter((e) => e.active && e.dosage_profile === 'M' && !(e.content && e.content.einsatz) && !(ctx.studio && e.content && e.content.zuhause) && !((ctx.userEx || {})[e.id] || {}).hidden && available(e, [...have]).ok && !(ctx.painEx || new Set()).has(e.id));
     const lastUse = {};
     (ctx.sessions || []).forEach((s) => (s.session_exercises || []).forEach((se) => { if (!lastUse[se.exercise_id] || s.session_date > lastUse[se.exercise_id]) lastUse[se.exercise_id] = s.session_date; }));
     const groups = [['mobilitaet_bws'], ['mobilitaet_nacken'], ['mobilitaet_bws', 'mobilitaet_nacken']];
@@ -376,7 +376,7 @@
     });
     // Supersätze: aufeinanderfolgende Nicht-Grundübungen mit verschiedenen Muskeln im Wechsel
     let total;
-    if (tight) {
+    if (ctx.superset === 'immer' || (tight && ctx.superset !== 'aus')) {
       for (let i = 0; i < items.length - 1; i++) {
         const a = items[i], b = items[i + 1];
         if (a.pair_with || a.profile === 'G' || b.profile === 'G' || a.muscle === b.muscle) continue;

@@ -281,3 +281,16 @@ html[data-mode=light]{--c-rad:oklch(.58 .14 calc(var(--hue,125) + 130));--c-wan:
 .tile.on[style*="--c-"]{animation:none}
 
 html[data-mode=light] .chip:not(.on){border-color:var(--line)}
+
+/* Fokus-Ansicht beim Training: groß, ruhig, ohne Navigation */
+.app:has(.fx-on) .bnav,.app:has(.fx-on) .side{display:none}
+.app:has(.fx-on) .main{padding-bottom:40px;max-width:760px;margin:0 auto}
+.app:has(.fx-on) .h1{font-size:32px}
+.app:has(.fx-on) .card{padding:22px}
+.app:has(.fx-on) .stepper button{min-height:68px;min-width:68px;font-size:30px}
+.app:has(.fx-on) .stepper input{font-size:36px;min-height:68px}
+.app:has(.fx-on) .btn{min-height:58px;font-size:18px}
+.app:has(.fx-on) .btn.sm{min-height:44px;font-size:15px}
+.app:has(.fx-on) .setrow{padding:20px}
+.app:has(.fx-on) .chip{padding:12px 18px;font-size:17px}
+.app:has(.fx-on){grid-template-columns:minmax(0,1fr)}

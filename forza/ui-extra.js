@@ -12,7 +12,7 @@
     F.ls.set('variant-' + t, (F.ls.get('variant-' + t, 0) || 0) + 1);
     F.render(); if (F.fx && F.fx.pulse) F.fx.pulse(); F.toast('Andere Übungen gewählt');
   };
-  F.acts.swapOne = (t) => { const k = 'excl-' + F.today(), a = F.ls.get(k, []); a.push(t.dataset.id); F.ls.set(k, a); F.render(); F.toast('Ersatz gewählt'); };
+  F.acts.swapOne = (t) => { F.ui.exOpen = true; const k = 'excl-' + F.today(), a = F.ls.get(k, []); a.push(t.dataset.id); F.ls.set(k, a); F.render(); F.toast('Ersatz gewählt'); };
   F.acts.rerollReset = () => { const t = F.today(); F.ls.set('variant-' + t, 0); F.ls.set('avoid-' + t, []); F.ls.set('excl-' + t, []); F.render(); };
 
   /* ---------- Einstellungen: Darstellung sofort sichtbar ---------- */
@@ -326,7 +326,7 @@
     const box = document.createElement('div'); box.innerHTML = html;
     const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? [...grid.children] : [];
     const fold = (keepWhy) => { // Übungsliste einklappen
-      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
+      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; if (F.ui.exOpen) det.open = true; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
       if (!keepWhy) hero.querySelectorAll('.small.mute').forEach((e) => { if (/Warum/.test(e.textContent)) e.remove(); });
     };
     const weekCard = cols[0] && cols[0].children[0], actCard = cols[0] && cols[0].children[1], barCard = cols[1] && cols[1].children[0];
@@ -343,15 +343,27 @@
   F.acts.dash = (t) => { F.setLook('dash', t.dataset.v); F.render(); };
 
   /* ---------- Spontan eine Übung hinzufügen ---------- */
+  const norm = (x) => String(x || '').toLowerCase().replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const SYN = { bauch: ['rumpf', 'crunch', 'core'], bauchmuskel: ['rumpf'], bauchmuskeln: ['rumpf'], sixpack: ['rumpf'], core: ['rumpf'], po: ['gesaess'], popo: ['gesaess'], hintern: ['gesaess'], arme: ['bizeps', 'trizeps', 'unterarm'], arm: ['bizeps', 'trizeps'], bein: ['quadrizeps', 'beinbeuger', 'hamstrings'], beine: ['quadrizeps', 'beinbeuger', 'hamstrings'], oberschenkel: ['quadrizeps', 'beinbeuger'], schulter: ['schulter'], ruecken: ['ruecken', 'lat'], brustmuskel: ['brust'], zuhause: ['koerpergewicht', 'band', 'matte'], heim: ['koerpergewicht', 'band', 'matte'], ohne: ['koerpergewicht'], hantel: ['kurzhantel', 'langhantel'], kabel: ['kabelzug'], maschine: ['maschine', 'presse', 'pec', 'beinbeuger', 'leg'], plank: ['stutz', 'plank'], stuetz: ['stutz', 'plank'], liegestutz: ['liegestutz'], klimmzug: ['klimmzug', 'chin'], dehnen: ['dehn'] };
   const addList = (q) => {
-    const s = F.openSession(), have = new Set(s.session_exercises.map((e) => e.exercise_id)), ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
-    const needle = (q || '').toLowerCase().trim();
-    const all = F.S.exercises.filter((e) => !have.has(e.id) && E.eligible(e, ctx) && e.dosage_profile !== 'M' && (!needle || e.name.toLowerCase().includes(needle) || e.muscles_primary.some((m) => (E.LABEL[m] || '').toLowerCase().includes(needle))));
-    const groups = {}; all.forEach((e) => (groups[e.muscles_primary[0]] = groups[e.muscles_primary[0]] || []).push(e));
+    const s = F.openSession(), have = new Set(s.session_exercises.map((e) => e.exercise_id)), items = F.items().items, ctx = { items, userEx: F.S.userEx, painEx: F.painSet() };
+    const toks = norm(q).split(/[\s,]+/).filter(Boolean);
+    const hay = (e) => norm([e.name, e.pattern, (e.muscles_primary || []).concat(e.muscles_secondary || []).map((m) => (E.LABEL[m] || '') + ' ' + m).join(' '), (e.equipment || []).join(' '), (e.equipment_alt || []).join(' ')].join(' ').replace(/_/g, ''));
+    const hits = F.S.exercises.filter((e) => e.active && !have.has(e.id) && !((F.S.userEx[e.id] || {}).hidden) && E.available(e, items).ok && (toks.length || e.dosage_profile !== 'M')).map((e) => {
+      const h = hay(e), n = norm(e.name); let sc = 0;
+      for (const t of toks) { const alts = [t].concat(SYN[t] || []); const m = alts.findIndex((x) => h.includes(x.replace(/_/g, ''))); if (m < 0) return null; sc += n.startsWith(t) ? 3 : n.includes(t) ? 2 : 1; }
+      return { e, sc };
+    }).filter(Boolean);
+    if (toks.length) {
+      hits.sort((a, b) => b.sc - a.sc || a.e.name.localeCompare(b.e.name, 'de'));
+      const one = (x) => { const e = x.e; return `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${(e.muscles_primary || []).map((m) => E.LABEL[m] || m).join(', ')}${e.tier !== 'geprueft' && e.dosage_profile !== 'M' ? ' · Entwurf' : ''}${e.dosage_profile === 'M' ? ' · Mobilität' : ''}</div></div></button>`; };
+      return hits.length ? `<div class="list">${hits.slice(0, 60).map(one).join('')}</div>` : '<div class="mute" style="padding:10px 0">Nichts gefunden. Versuche es mit dem Muskel (z. B. Bauch, Rücken), dem Gerät (Kabel, Kurzhantel) oder einem Teil des Namens.</div>';
+    }
+    const groups = {}; hits.forEach((x) => (groups[x.e.muscles_primary[0]] = groups[x.e.muscles_primary[0]] || []).push(x.e));
     const keys = Object.keys(groups).sort((a, b) => (E.LABEL[a] || a).localeCompare(E.LABEL[b] || b, 'de'));
-    return keys.map((m) => `<div class="eyebrow" style="margin:12px 0 4px">${E.LABEL[m] || m}</div><div class="list">${groups[m].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b></div></button>`).join('')}</div>`).join('') || '<div class="mute">Nichts gefunden. Entwürfe lassen sich im Katalog freigeben.</div>';
+    return keys.map((m) => `<div class="eyebrow" style="margin:12px 0 4px">${E.LABEL[m] || m}</div><div class="list">${groups[m].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b>${e.tier !== 'geprueft' ? '<div class="small mute">Entwurf</div>' : ''}</div></button>`).join('')}</div>`).join('') || '<div class="mute">Mit dieser Ausstattung gibt es nichts zum Hinzufügen.</div>';
   };
-  F.acts.addExAsk = () => { F.modal(`<div class="h2">Übung hinzufügen</div><input id="ax-q" type="search" placeholder="Suchen: Name oder Muskel" data-in="axq" data-live="1" style="width:100%;margin:6px 0"><div id="ax-list" style="max-height:55vh;overflow:auto">${addList('')}</div>`); };
+  F.acts.addExAsk = () => { F.modal(`<div class="h2">Übung hinzufügen</div><input id="ax-q" type="search" placeholder="Suchen: Name, Muskel (Bauch, Rücken), Gerät" autocomplete="off" data-in="axq" data-live="1" style="width:100%;margin:6px 0"><div id="ax-list" style="max-height:55vh;overflow:auto">${addList('')}</div>`); };
   F.ins.axq = (t) => { const l = document.getElementById('ax-list'); if (l) l.innerHTML = addList(t.value); };
   F.acts.addEx = async (t) => {
     const s = F.openSession(), ex = F.S.exById[t.dataset.ex]; if (!s || !ex) return;
