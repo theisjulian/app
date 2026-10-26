@@ -10,7 +10,7 @@
   F.acts.start = async () => {
     if (F.openSession()) return F.go('training');
     const sg0 = F.suggestion(); if (sg0.rest || sg0.empty || !sg0.items.length) return F.toast('Heute kein Vorschlag möglich.');
-    const sg = Object.assign({}, sg0, { items: sg0.items.concat(sg0.mobility || []) });
+    const sg = sg0; // Haltungsblock wird am Ende angeboten, nicht fest eingeplant
     const sess = await F.insert('sessions', { session_date: F.today(), kind: 'kraft', title: sg.title, split_day: sg.split_day, status: 'geplant', source: 'manuell', form: F.ls.get('form-' + F.today(), 'normal'), planned_minutes: sg.minutes, equipment_profile_id: F.items().id, rule_version: sg.rule_version, started_at: new Date().toISOString() });
     const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: it.load_text + (it.pair_with ? ' · Superset mit «' + it.pair_with + '»: im Wechsel, Pause erst nach beiden.' : '') }))).select();
     if (ses.error) throw ses.error;
@@ -118,7 +118,7 @@
     if (F.rest) return topBar(s, dnEx) + restScreen(s);
     if (!exs[F.ui.tr.ei] || !isOpen(exs[F.ui.tr.ei])) { const i = nextOpen(s, F.ui.tr.ei || 0); if (i >= 0) F.ui.tr.ei = i; }
     const se = exs[F.ui.tr.ei];
-    if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button><button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
+    if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button>${postureOffer(s)}<button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : 'kg';
     const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
@@ -276,10 +276,22 @@
   F.acts.painAsk = (t) => F.modal(`<div class="h2">Schmerz melden</div><p>Hör bei stechendem oder zunehmendem Schmerz mit der Übung auf. forza schlägt sie dann 14 Tage lang nicht vor.</p><p class="small mute">Das ist keine ärztliche Beurteilung. Bei anhaltenden Beschwerden lass es abklären.</p><div class="row gap"><button class="btn danger grow" data-act="painSave" data-id="${t.dataset.id}">Melden</button><button class="btn ghost grow" data-act="close">Abbrechen</button></div>`);
   F.acts.painSave = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const target = se.sets.find((x) => !x.done) || se.sets[se.sets.length - 1]; await F.update('sets', target.id, { pain: true }); F.closeModal(); await F.load(); F.toast('Eingetragen. Diese Übung wird pausiert.'); F.render(); };
 
+  /* Haltungsblock: ein Angebot am Ende statt fester Übungen in der Liste */
+  const postureEx = (s) => { const P = E.params(F.S.params); if (!P.posture_block || !s || s.kind !== 'kraft' || s.session_exercises.some((se) => (F.S.exById[se.exercise_id] || {}).dosage_profile === 'M')) return [];
+    return E.mobilityPick({ exercises: F.S.exercises, items: F.items().items, userEx: F.S.userEx, painEx: F.painSet(), sessions: F.S.sessions, goals: [], studio: F.items().kind === 'studio' }, P, 3); };
+  const postureOffer = (s) => { const l = postureEx(s); return l.length ? `<button class="btn block" style="margin-top:10px" data-act="addPosture">Haltung anhängen · ${l.length} Übungen, ca. 4 min</button>` : ''; };
+  F.acts.addPosture = async () => {
+    const s = F.openSession(), items = postureEx(s); if (!items.length) return;
+    const ses = await F.sb.from('session_exercises').insert(items.map((it, i) => ({ session_id: s.id, exercise_id: it.exercise_id, position: s.session_exercises.length + i, planned_sets: it.sets, planned_reps: it.reps.join('–'), why: it.load_text }))).select(); if (ses.error) throw ses.error;
+    const rows = []; ses.data.forEach((se, i) => { for (let n = 1; n <= items[i].sets; n++) rows.push({ session_exercise_id: se.id, set_no: n }); });
+    const sr = await F.sb.from('sets').insert(rows); if (sr.error) throw sr.error;
+    const at = s.session_exercises.length; F.closeModal(); await F.load(); F.ui.tr.ei = at; F.render(); window.scrollTo(0, 0);
+  };
+
   /* Beenden */
   F.acts.finishAsk = () => {
     const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000)), n = s.session_exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
-    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div><label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button><button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
+    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div><label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button>${postureOffer(s)}<button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
   };
   F.acts.finish = async () => {
     const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000));

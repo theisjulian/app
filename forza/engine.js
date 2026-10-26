@@ -440,9 +440,11 @@
     const goals = ctx.goals || [];
     if (goals.includes('Kraft') && items.some((i) => i.prio === 'schwerpunkt' && i.profile === 'G')) reasons.push('Ziel Kraft: Schwerpunkt-Grundübungen mit 3 × 4–6 und längerer Pause.');
     if (goals.includes('Muskelaufbau')) reasons.push('Ziel Muskelaufbau: Wiederholungen meist 6–15 mit 1–3 Reserve, Wochenziel 6–10 Sätze je Muskelgruppe.');
+    if (goals.includes('Radfahren unterstützen')) reasons.push('Ziel Radfahren: Nach langen oder harten Fahrten werden Beintage zurückgestellt, Oberkörper und Rumpf bleiben regelmäßig dran.');
+    if (goals.includes('Rücken und Schulter') && P.posture_block) reasons.push('Ziel Rücken und Schulter: Am Ende wird ein kurzer Haltungsblock angeboten.');
     if (goals.includes('Fettabbau')) reasons.push('Ziel Fettabbau: Gewichte und Satzzahl halten, nicht kürzen. Ob mehr Volumen im Defizit mehr Muskeln erhält, ist offen.');
     const mobility = P.posture_block ? mobilityPick(ctx, P, 3) : [];
-    return { rest: false, title: day.name, split_day: day.name, minutes: total + (mobility.length ? 4 : 0), items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P, variant, stable: !variant, template: !!tplSlots };
+    return { rest: false, title: day.name, split_day: day.name, minutes: total, items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P, variant, stable: !variant, template: !!tplSlots };
   }
 
   /* Energie: immer Schätzung mit Methode */
