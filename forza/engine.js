@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.2';
+  const RULE_VERSION = 'forza-regeln-1.3';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -188,7 +188,7 @@
         const pr = prioOf(ctx.priorities, m, ctx.today);
         const since = stats.last[m] === undefined ? 14 : Math.min(stats.last[m], 14);
         const sets = stats.sets7[m] || 0;
-        const def = BIG.includes(m) ? Math.max(0, P.corridor_min - sets) : 0;
+        const def = BIG.includes(m) || pr === 'schwerpunkt' ? Math.max(0, P.corridor_min - sets) : 0;
         score += (since + def) * PRIO_W[pr];
         parts.push(m);
       }
@@ -320,7 +320,7 @@
     const setsFor = (e, m, prio) => {
       const pf = profOf(e.dosage_profile, P, ctx.goals, prio);
       let n = pf.sets;
-      if (e.dosage_profile === 'G' && prio === 'schwerpunkt' && !P.dose_G_sets) n = Math.max(n, 3);
+      if (prio === 'schwerpunkt' && ['G', 'A', 'S'].includes(e.dosage_profile || 'A') && !P['dose_' + (e.dosage_profile || 'A') + '_sets']) n = Math.max(n, 3);
       if (prio === 'erhalt') n = Math.max(1, n - 1);
       if (calm && n >= 3) n -= P.calm_sets_minus;
       return n;
@@ -373,6 +373,25 @@
         used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t });
       }
     }
+    // Schwerpunkt unter dem Wochenziel, aber heute nicht dran (z. B. Waden am Push-Tag): 2 Sätze einer Zusatzübung am Ende.
+    // Nur mit 48 h Erholung seit der letzten vollen Belastung, nicht für Beine nach langer Fahrt, höchstens zwei Muskeln je Einheit.
+    const carried = [];
+    const carryOver = () => {
+      const legs = ['quadrizeps', 'hamstrings', 'gesaess', 'waden'], afterRide = ctx.rideHoursAgo !== null && ctx.rideHoursAgo < P.leg_after_ride_hours;
+      const cand = [...new Set((ctx.priorities || []).map((p) => p.muscle_group))].filter((m) => prioOf(ctx.priorities, m, today) === 'schwerpunkt' && !day.focus.includes(m));
+      for (const m of cand) {
+        if (carried.length >= 2) break;
+        const have = (stats.sets7[m] || 0) + chosen.filter((c) => c.ex.muscles_primary.includes(m)).reduce((n, c) => n + c.sets, 0);
+        if (have >= P.corridor_min || (stats.last[m] !== undefined && stats.last[m] < P.min_rest_hours_same_muscle / 24) || (afterRide && legs.includes(m))) continue;
+        const e = elig.filter((x) => !usedEx.has(x.id) && x.muscles_primary[0] === m && ['A', 'S'].includes(x.dosage_profile || 'A')).sort((a, b) => rank(b, m) - rank(a, m) || (a.name < b.name ? -1 : 1))[0];
+        if (!e) continue;
+        const n = 2, t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t, carry: true });
+        carried.push(`${LABEL[m]} (${stats.sets7[m] || 0} von ${P.corridor_min} Sätzen diese Woche)`);
+      }
+    };
+    if (tplSlots) carryOver();
     // Restzeit füllen: bleibt bei der Vorlage deutlich Zeit übrig, kommen Zusatzübungen für die Fokus-Muskeln dazu
     // (Schwerpunkte zuerst, höchstens 3 Übungen je Schwerpunkt bzw. 2 sonst, kein Bewegungsmuster doppelt)
     if (tplSlots) {
@@ -407,6 +426,7 @@
         chosen.push({ muscle: m, ex: e, sets: n, prio, minutes: t });
       }
     }
+    if (!tplSlots) carryOver();
     // Reihenfolge: G vor A vor S/C/I/T, dann Priorität
     const ord = { G: 0, A: 1, S: 2, C: 3, I: 3, T: 3 };
     if (!tplSlots) chosen.sort((a, b) => ord[a.ex.dosage_profile || 'A'] - ord[b.ex.dosage_profile || 'A']);
@@ -424,7 +444,7 @@
         exercise_id: c.ex.id, name: c.ex.name, code: c.ex.code, muscle: c.muscle, sets: c.sets,
         profile: c.ex.dosage_profile, reps: pf.reps || null, secs: pf.secs || null, perSide: !!pf.perSide,
         rir: pf.rir ? [rirLo, rirHi] : null, rest_s: P[pf.rest], load_kg: kg, load_convention: c.ex.load_convention,
-        load_text: ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio
+        load_text: (c.carry ? 'Schwerpunkt unter dem Wochenziel: kurz mitgenommen. ' : '') + ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio, carry: !!c.carry
       };
     });
     // Supersätze: aufeinanderfolgende Nicht-Grundübungen mit verschiedenen Muskeln im Wechsel
@@ -445,6 +465,7 @@
       total = Math.round(t);
       if (items.some((i) => i.pair_with)) reasons.push('Zeit knapp: Zusatzübungen laufen als Supersatz im Wechsel, das spart Zeit bei gleicher Satzzahl.');
     } else total = Math.round(4 + items.reduce((s, i) => s + estMin(exById[i.exercise_id], i.sets), 0));
+    if (carried.length) reasons.push(`Schwerpunkt unter dem Wochenziel, daher am Ende 2 Sätze extra: ${carried.join(', ')}.`);
     if (calm) reasons.push('Ruhigere Tagesform: eine Reserve mehr und bei 3+ Sätzen ein Satz weniger.');
     const gaps = focus.filter((m) => !chosen.some((c) => c.muscle === m) && BIG.includes(m));
     if (gaps.length) reasons.push(`Wegen Zeit oder Ausstattung nicht abgedeckt: ${gaps.map((m) => LABEL[m]).join(', ')}.`);

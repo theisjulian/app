@@ -30,6 +30,17 @@ const pushCat = [mk('a', 'Schrägbank', 'brust', 'schraeg_druecken', 'G'), mk('b
 const pushBase = { exercises: pushCat, items: ['kabelzug'], split: { days: [{ name: 'Push', focus: ['brust', 'schulter_vorn', 'schulter_seitlich', 'trizeps'], minutes: 55 }] }, sessions: [], absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null };
 const p45 = E.suggest({ ...pushBase, minutes: 30 }), p60 = E.suggest({ ...pushBase, minutes: 60 });
 assert(p60.items.length > p45.items.length, 'mehr Zeit, mehr Übungen'); assert(p60.minutes <= 63, 'Zeitrahmen eingehalten: ' + p60.minutes);
+// Schwerpunkt Waden bei Push/Pull/Beine: am Push-Tag 2 Sätze extra, Zusatzübungen mit Schwerpunkt 3 Sätze
+const calf = mk('w', 'Wadenheben', 'waden', 'wadenheben', 'A'), ppl = { days: [{ name: 'Push', focus: ['brust', 'schulter_vorn', 'schulter_seitlich', 'trizeps'], minutes: 55 }] };
+const legDay = (k) => ({ session_date: k, kind: 'kraft', status: 'bestaetigt', split_day: 'Beine', session_exercises: [{ exercise_id: 'w', sets: [1, 2, 3].map(() => ({ done: true, load_kg: 50, reps: 12 })) }] });
+const wBase = { ...pushBase, exercises: pushCat.concat([calf]), split: ppl, priorities: [{ muscle_group: 'waden', level: 'schwerpunkt', valid_from: '2026-01-01' }], sessions: [legDay('2026-10-25')] };
+const wp = E.suggest(wBase), wi = wp.items.find((i) => i.name === 'Wadenheben');
+assert(wi && wi.sets === 2 && wi.carry, 'Waden am Push-Tag mitgenommen'); assert(wp.reasons.some((r) => /Waden \(3 von 6/.test(r)));
+assert(!E.suggest({ ...wBase, rideHoursAgo: 5 }).items.some((i) => i.name === 'Wadenheben'), 'nicht nach langer Fahrt');
+assert(!E.suggest({ ...wBase, sessions: [legDay('2026-10-27')] }).items.some((i) => i.name === 'Wadenheben'), 'nicht ohne 48 h Erholung');
+assert(!E.suggest({ ...wBase, sessions: [legDay('2026-10-25'), legDay('2026-10-23')] }).items.some((i) => i.name === 'Wadenheben'), 'Wochenziel erreicht');
+const legs = E.suggest({ ...wBase, split: { days: [{ name: 'Beine', focus: ['quadrizeps', 'waden'], minutes: 55 }] }, sessions: [] });
+assert.equal(legs.items.find((i) => i.name === 'Wadenheben').sets, 3, 'Schwerpunkt: Zusatzübung 3 Sätze');
 console.log('eigenständige Tests ok');
 
 const katalog = process.argv[2];

@@ -72,7 +72,7 @@
     }
     const st = E.muscleStats(S.sessions, S.exById, today, F.activeSplit()).sets7;
     const P = E.params(S.params);
-    const bars = MUSC.filter((m) => E.BIG.includes(m) || ['waden', 'rotatoren'].includes(m)).map((m) => { const n = st[m] || 0, mx = 14; return `<div style="margin:9px 0"><div class="row between small"><span>${E.LABEL[m]}</span><span class="mute">${n} Sätze</span></div><div class="bar" style="margin-top:5px"><div class="band" style="left:${P.corridor_min / mx * 100}%;width:${(P.corridor_max - P.corridor_min) / mx * 100}%"></div><i style="width:${Math.min(100, n / mx * 100)}%"></i></div></div>`; }).join('');
+    const bars = MUSC.filter((m) => E.BIG.includes(m) || ['waden', 'rotatoren'].includes(m) || E.prioOf(S.priorities, m, today) === 'schwerpunkt').map((m) => { const n = st[m] || 0, mx = 14; return `<div style="margin:9px 0"><div class="row between small"><span>${E.LABEL[m]}</span><span class="mute">${n} Sätze</span></div><div class="bar" style="margin-top:5px"><div class="band" style="left:${P.corridor_min / mx * 100}%;width:${(P.corridor_max - P.corridor_min) / mx * 100}%"></div><i style="width:${Math.min(100, n / mx * 100)}%"></i></div></div>`; }).join('');
     const recent = recentList(5);
     h += `<div class="grid2"><div><div class="card"><div class="h2">Letzte 7 Tage</div><div class="week">${tiles.join('')}</div><div class="small mute" style="margin-top:10px">K Kraft · R Rad · W Wandern · P Pause</div></div>
       <div class="card"><div class="h2">Aktivitäten</div>${recent || '<div class="mute">Noch nichts eingetragen.</div>'}</div></div>
