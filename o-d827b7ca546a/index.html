@@ -147,7 +147,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     return (await r.json()).content.sha;
   }
   /* Was abgeglichen wird: nur echte Daten. Einstellungen, Aussehen, Ansicht und Sicherungskopien bleiben je Gerät. */
-  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine)$/.test(k);
+  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine|gb_events)$/.test(k);
   /* Große Datenbestände werden nie durch einen Abgleich gelöscht – Löschen geht nur am jeweiligen Gerät. */
   const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1 };
   const parse = s => { try { return JSON.parse(s); } catch (e) { return undefined; } };
@@ -161,6 +161,7 @@ details{margin-top:12px}summary{color:var(--blue);font-size:15px;padding:6px 4px
     if (k === 'gb_seen') return Array.isArray(d);
     if (/^gb_hist_/.test(k)) return Array.isArray(d);
     if (k === 'gb_sitz') return !!(d && typeof d === 'object');
+    if (k === 'gb_events') return !!(d && typeof d === 'object' && Array.isArray(d.ev) && d.ev.length <= 3000 && d.ev.every(e => e && typeof e.a === 'string' && typeof e.b === 'string' && typeof e.ti === 'string'));
     return true;
   }
   /* Nur gültige Einträge {v, t} der abgeglichenen Schlüssel behalten */
