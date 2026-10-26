@@ -51,17 +51,17 @@
     const ride = S.activities.find((a) => RIDE.includes(a.sport) && (Date.now() - new Date(a.start_at).getTime()) < 30 * 3600000 && ((a.kilojoules || 0) > 600 || (a.moving_s || 0) > 5400));
     if (ride && !F.ls.get('legs-' + today, null)) h += `<div class="card"><div class="eyebrow">Nach der Radfahrt</div><div style="margin:4px 0 10px"><b>Wie fühlen sich deine Beine an?</b></div><div class="row wrap gap">${[['frisch', 'Frisch'], ['mued', 'Etwas müde'], ['schwer', 'Schwer']].map(([k, l]) => `<button class="chip" data-act="legs" data-v="${k}">${l}</button>`).join('')}</div></div>`;
     else if (F.ls.get('legs-' + today, null) && ride) h += `<div class="small mute" style="margin:-4px 0 12px">Beine: ${{ frisch: 'frisch', mued: 'etwas müde', schwer: 'schwer' }[F.ls.get('legs-' + today)]} · <button class="small" style="color:var(--a)" data-act="legs" data-v="">ändern</button></div>`;
-    h += `<div class="row wrap gap" style="margin-bottom:12px"><button class="chip" data-act="placeMenu">${F.icon.dumb.replace('<svg', '<svg width="16" height="16"')} ${esc(place.name)} ▾</button>${[30, 45, 60].map((m) => `<button class="chip ${mins === m ? 'on' : ''}" data-act="minutes" data-m="${m}">${m} min</button>`).join('')}${mins ? '<button class="chip" data-act="minutes" data-m="">frei</button>' : ''}<button class="chip" data-act="mobMenu">Mobilität</button><button class="chip" data-act="supCycle" title="Supersätze: Auto, immer oder aus">Supersätze: ${{ auto: 'Auto', immer: 'immer', aus: 'aus' }[F.ls.get('superset', 'auto')]}</button></div>`;
+    h += `<div class="chipbar" data-noswipe><button class="chip" data-act="placeMenu">${F.icon.dumb.replace('<svg', '<svg width="16" height="16"')} ${esc(place.name)} ▾</button>${[30, 45, 60].map((m) => `<button class="chip ${mins === m ? 'on' : ''}" data-act="minutes" data-m="${m}">${m} min</button>`).join('')}${mins ? '<button class="chip" data-act="minutes" data-m="">frei</button>' : ''}<button class="chip" data-act="mobMenu">Mobilität</button><button class="chip" data-act="supCycle" title="Supersätze: Auto, immer oder aus">Supersätze: ${{ auto: 'Auto', immer: 'immer', aus: 'aus' }[F.ls.get('superset', 'auto')]}</button></div>`;
     // Hero
     if (sg.rest) h += `<div class="hero"><div class="eyebrow mute">Vorschlag für heute</div><div class="h1" style="margin:6px 0 8px">${esc(sg.title)}</div>${sg.reasons.map((r) => `<div class="mute">${esc(r)}</div>`).join('')}</div>`;
     else if (sg.empty) h += `<div class="hero"><div class="h2">${esc(sg.title)}</div><div class="mute">${esc(sg.reasons[0])}</div><button class="btn pri" style="margin-top:12px" data-act="nav" data-r="mehr/split">Split wählen</button></div>`;
-    else h += `<div class="hero"><div class="row between"><div class="eyebrow mute">Vorschlag für heute</div><div class="seg" role="group" aria-label="Tagesform"><button class="${form === 'normal' ? 'on' : ''}" data-act="form" data-v="normal">Normal</button><button class="${form === 'ruhiger' ? 'on' : ''}" data-act="form" data-v="ruhiger">Ruhiger</button></div></div>
-      <div class="h1" style="margin:8px 0 2px">${esc(sg.title)}</div><div class="mute">ca. ${sg.minutes} Minuten · ${sg.items.length} Übungen${sg.reentry ? ' · Wiedereinstieg' : ''}</div>
-      <div style="margin-top:10px">${sg.items.map((it, i) => `<div class="exrow"><div class="exn">${i + 1}</div><div class="grow"><b>${esc(it.name)}</b>${it.pair_with ? '<span class="badge" style="margin-left:6px">Superset</span>' : ''}<div class="mute small">${it.sets} × ${it.reps ? it.reps[0] + '–' + it.reps[1] + (it.perSide ? ' je Seite' : '') : it.secs ? it.secs[0] + '–' + it.secs[1] + (F.E.PROFILES[it.profile] === F.E.PROFILES.T ? ' s oder m' : ' s') : ''}${it.rir ? ' · Reserve ' + it.rir[0] + '–' + it.rir[1] : ''}</div></div><button class="mute" data-act="swapOne" data-id="${it.exercise_id}" aria-label="Diese Übung austauschen" title="Austauschen">↻</button><button class="mute" data-act="help" data-id="${it.exercise_id}" aria-label="Hilfe">${F.icon.info.replace('<svg', '<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"')}</button></div>`).join('')}</div>
-      ${sg.mobility && sg.mobility.length ? `<div class="mobi"><div class="eyebrow mute" style="margin-bottom:4px">Zum Abschluss, ca. 4 Minuten · Haltung</div>${sg.mobility.map((m) => `<div class="small">${esc(m.name)} · ${m.sets} × ${m.reps[0]}–${m.reps[1]}</div>`).join('')}</div>` : ''}
-      <div class="small mute" style="margin:12px 0"><b style="color:#eef1f6">Warum?</b> ${sg.reasons.map(esc).join(' ')}</div>
-      <button class="btn pri block" data-act="start">Training starten</button><div class="row gap" style="margin-top:8px"><button class="btn ghost grow" style="border-color:rgba(255,255,255,.25);color:#eef1f6" data-act="pickDay">Anderer Tag</button><button class="btn ghost dice grow" style="border-color:rgba(255,255,255,.25);color:#eef1f6" data-act="reroll" aria-label="Variieren">${F.icon.dice || '↻'} Variieren</button></div>
-      <div class="small mute" style="margin-top:8px">${sg.variant ? 'Variante ' + sg.variant + ' · <button style="color:var(--a)" data-act="rerollReset">zur festen Reihenfolge</button>' : 'Feste Reihenfolge für ' + esc(sg.title) + ' · „Variieren“ bietet Alternativen'}</div></div>`;
+    else h += `<div class="hero"><div class="row between"><div class="eyebrow mute">Vorschlag</div><div class="seg" role="group" aria-label="Tagesform"><button class="${form === 'normal' ? 'on' : ''}" data-act="form" data-v="normal">Normal</button><button class="${form === 'ruhiger' ? 'on' : ''}" data-act="form" data-v="ruhiger">Ruhiger</button></div></div>
+      <div class="h1" style="margin:8px 0 2px">${esc(sg.title)}</div><div class="mute">ca. ${sg.minutes}${mins ? ' von ' + mins : ''} Minuten · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}${sg.reentry ? ' · Wiedereinstieg' : ''}</div>
+      <div style="margin-top:10px">${sg.items.map((it, i) => `<div class="exrow"><div class="exn">${i + 1}</div><div class="grow"><b>${esc(it.name)}</b>${it.pair_with ? '<span class="badge" style="margin-left:6px">Superset</span>' : ''}<div class="mute small">${it.sets} × ${it.reps ? it.reps[0] + '–' + it.reps[1] + (it.perSide ? ' je Seite' : '') : it.secs ? it.secs[0] + '–' + it.secs[1] + (F.E.PROFILES[it.profile] === F.E.PROFILES.T ? ' s oder m' : ' s') : ''}${it.rir ? ' · Reserve ' + it.rir[0] + '–' + it.rir[1] : ''}${it.load_kg ? ' · ' + F.fmt(it.load_kg) + ' kg' + (it.load_convention === 'je_hand' ? ' je Hand' : '') : ''}</div></div><button class="icbtn" data-act="swapOne" data-id="${it.exercise_id}" aria-label="Diese Übung austauschen" title="Austauschen">${F.icon.swap}</button><button class="icbtn" data-act="help" data-id="${it.exercise_id}" aria-label="Hilfe" title="Hilfe">${F.icon.info}</button></div>`).join('')}</div>
+      ${sg.mobility && sg.mobility.length ? `<div class="mobi"><div class="eyebrow mute" style="margin-bottom:4px">Optional zum Abschluss, ca. 4 Minuten · Haltung</div>${sg.mobility.map((m) => `<div class="small">${esc(m.name)} · ${m.sets} × ${m.reps[0]}–${m.reps[1]}</div>`).join('')}</div>` : ''}
+      <div class="small mute why" style="margin:12px 0"><b>Warum?</b> ${sg.reasons.map(esc).join(' ')}</div>
+      <button class="btn pri block" data-act="start">Training starten</button><div class="row gap" style="margin-top:8px"><button class="btn ghost hero-ghost grow" data-act="pickDay">Anderer Tag</button><button class="btn ghost hero-ghost dice grow" data-act="reroll" aria-label="Variieren">${F.icon.dice || '↻'} Variieren</button></div>
+      ${sg.variant ? `<div class="small mute" style="margin-top:10px;text-align:center">Variante ${sg.variant} · <button class="lnk" data-act="rerollReset">zur festen Reihenfolge</button></div>` : ''}</div>`;
     // Woche
     const tiles = []; for (let i = 6; i >= 0; i--) {
       const ds = F.addDays(today, -i), ss = S.sessions.filter((s) => s.session_date === ds && s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status));
@@ -72,7 +72,7 @@
     }
     const st = E.muscleStats(S.sessions, S.exById, today, F.activeSplit()).sets7;
     const P = E.params(S.params);
-    const bars = MUSC.filter((m) => E.BIG.includes(m) || ['waden', 'rotatoren'].includes(m)).map((m) => { const n = st[m] || 0, mx = 14; return `<div style="margin:9px 0"><div class="row between small"><span>${E.LABEL[m]}</span><span class="mute">${n} Sätze</span></div><div class="bar" style="margin-top:5px"><div class="band" style="left:${P.corridor_min / mx * 100}%;width:${(P.corridor_max - P.corridor_min) / mx * 100}%"></div><i style="width:${Math.min(100, n / mx * 100)}%"></i></div></div>`; }).join('');
+    const bars = MUSC.filter((m) => E.BIG.includes(m) || ['waden', 'rotatoren'].includes(m) || E.prioOf(S.priorities, m, today) === 'schwerpunkt').map((m) => { const n = st[m] || 0, mx = 14; return `<div style="margin:9px 0"><div class="row between small"><span>${E.LABEL[m]}</span><span class="mute">${n} Sätze</span></div><div class="bar" style="margin-top:5px"><div class="band" style="left:${P.corridor_min / mx * 100}%;width:${(P.corridor_max - P.corridor_min) / mx * 100}%"></div><i style="width:${Math.min(100, n / mx * 100)}%"></i></div></div>`; }).join('');
     const recent = recentList(5);
     h += `<div class="grid2"><div><div class="card"><div class="h2">Letzte 7 Tage</div><div class="week">${tiles.join('')}</div><div class="small mute" style="margin-top:10px">K Kraft · R Rad · W Wandern · P Pause</div></div>
       <div class="card"><div class="h2">Aktivitäten</div>${recent || '<div class="mute">Noch nichts eingetragen.</div>'}</div></div>
@@ -146,43 +146,11 @@
     await F.insert('sessions', { session_date: t.dataset.d, kind: 'kraft', title: day || 'Krafttraining', split_day: day || null, status: 'bestaetigt', source: 'manuell', duration_min: min, note: document.getElementById('e-note').value || 'Details unbekannt' });
     F.closeModal(); await F.refresh(); F.toast('Gespeichert');
   };
-  F.acts.saveAbs = async () => {
-    const from = document.getElementById('a-from').value, to = document.getElementById('a-to').value; if (!from || !to || to < from) return F.toast('Bitte einen gültigen Zeitraum wählen.');
-    await F.insert('absences', { from_date: from, to_date: to, kind: document.getElementById('a-kind').value, note: document.getElementById('a-note').value || null });
-    F.closeModal(); await F.refresh(); F.toast('Gespeichert');
-  };
   F.acts.delSession = async (t) => { if (!confirm('Diesen Eintrag löschen? Er bleibt im Änderungsprotokoll erhalten.')) return; await F.del('sessions', t.dataset.id); await F.refresh(); };
   F.acts.delAbs = async (t) => { await F.del('absences', t.dataset.id); await F.refresh(); };
 
   /* ---------- Fortschritt ---------- */
-  F.ui.prog = { ex: null };
-  function lineChart(pts, unit) {
-    if (pts.length < 2) return '<div class="mute small">Noch zu wenig Daten für einen Verlauf.</div>';
-    const W = 320, H = 150, p = 28, xs = pts.map((q) => new Date(q.d).getTime()), ys = pts.map((q) => q.v);
-    const x0 = Math.min(...xs), x1 = Math.max(...xs) || x0 + 1, y0 = Math.min(...ys) * 0.97, y1 = Math.max(...ys) * 1.03 || 1;
-    const X = (v) => p + (x1 === x0 ? 0 : (v - x0) / (x1 - x0)) * (W - p - 8), Y = (v) => H - p - (y1 === y0 ? 0 : (v - y0) / (y1 - y0)) * (H - p - 10);
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}"><line class="gr" x1="${p}" x2="${W - 8}" y1="${H - p}" y2="${H - p}"/><text x="2" y="${Y(y1) + 8}">${Math.round(y1)}</text><text x="2" y="${Y(y0)}">${Math.round(y0)}</text><polyline class="ln" points="${pts.map((q) => X(new Date(q.d).getTime()) + ',' + Y(q.v)).join(' ')}"/>${pts.map((q) => `<circle class="pt" cx="${X(new Date(q.d).getTime())}" cy="${Y(q.v)}" r="3.5"/>`).join('')}<text x="${p}" y="${H - 8}">${F.dshort(pts[0].d)}</text><text x="${W - 8}" y="${H - 8}" text-anchor="end">${F.dshort(pts[pts.length - 1].d)}</text></svg><div class="small mute">${unit}</div>`;
-  }
-  F.views.fortschritt = () => {
-    const S = F.S, today = F.today();
-    const byEx = {};
-    for (const s of S.sessions) if (['gefuehrt', 'bestaetigt'].includes(s.status)) for (const se of s.session_exercises) {
-      const ex = S.exById[se.exercise_id]; if (!ex) continue;
-      const done = se.sets.filter((x) => x.done && x.load_kg !== null && x.reps !== null && ex.load_convention !== 'koerper' && ex.load_convention !== 'zeit');
-      if (!done.length) continue;
-      const best = Math.max(...done.map((x) => E.e1rm(Number(x.load_kg), x.reps) || 0));
-      (byEx[se.exercise_id] = byEx[se.exercise_id] || []).push({ d: s.session_date, v: Math.round(best * 10) / 10, top: Math.max(...done.map((x) => Number(x.load_kg))) });
-    }
-    const ids = Object.keys(byEx);
-    let sel = F.ui.prog.ex && byEx[F.ui.prog.ex] ? F.ui.prog.ex : ids[0];
-    const wk = []; for (let i = 7; i >= 0; i--) { const a = F.addDays(today, -(i * 7 + 6)), b = F.addDays(today, -i * 7); wk.push({ l: F.dshort(b), n: S.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && s.session_date >= a && s.session_date <= b).length, r: S.activities.filter((x) => RIDE.includes(x.sport) && x.start_at.slice(0, 10) >= a && x.start_at.slice(0, 10) <= b).length }); }
-    const mx = Math.max(3, ...wk.map((w) => w.n + w.r));
-    const weights = S.weights.map((w) => ({ d: w.measured_on, v: Number(w.weight_kg) }));
-    return `<div class="h1" style="margin-bottom:14px">Fortschritt</div>
-      <div class="card"><div class="h2">Wochen im Überblick</div><div class="row" style="align-items:flex-end;gap:8px;height:110px">${wk.map((w) => `<div class="grow" style="text-align:center"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.r / mx * 80}px;background:var(--c-rad);border-radius:6px"></div><div style="height:${w.n / mx * 80}px;background:var(--a);border-radius:6px"></div></div><div class="small mute">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:var(--c-rad);font-weight:700">Rad</span> (Einheiten je Woche)</div></div>
-      <div class="card"><div class="h2">Kraftverlauf</div>${ids.length ? `<label class="f"><select data-in="progEx">${ids.map((id) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(S.exById[id].name)}</option>`).join('')}</select></label>${lineChart(byEx[sel], 'Geschätzte Maximalkraft (Epley) aus dem besten Satz je Einheit' + (S.exById[sel].load_convention === 'je_hand' ? ' · Gewicht je Hand' : ''))}` : '<div class="mute">Sobald du Sätze mit Gewicht und Wiederholungen protokollierst, erscheint hier dein Verlauf. Aus den übernommenen Einheiten gibt es bewusst keine Werte.</div>'}</div>
-      <div class="card"><div class="row between"><div class="h2">Körpergewicht</div><button class="btn sm" data-act="addWeight">Eintragen</button></div>${lineChart(weights, 'kg')}<div class="small mute">Zuletzt ${F.fmt(F.weightNow())} kg${weights.length ? ' am ' + F.dshort(weights[weights.length - 1].d) : ''}. Das Gewicht fließt in die Energieschätzung ein.</div></div>`;
-  };
+  /* Fortschritt: Ansicht in ui-extra.js */
   F.ins.progEx = (t) => { F.ui.prog.ex = t.value; F.render(); };
   F.acts.addWeight = () => F.modal(`<div class="h2">Körpergewicht</div><label class="f"><span>Datum</span><input id="w-d" type="date" value="${F.today()}"></label><label class="f"><span>Gewicht in kg</span><input id="w-v" type="text" inputmode="decimal" value="${F.fmt(F.weightNow())}"></label><button class="btn pri block" data-act="saveWeight">Speichern</button>`);
   F.acts.saveWeight = async () => {

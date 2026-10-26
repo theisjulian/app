@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.1';
+  const RULE_VERSION = 'forza-regeln-1.3';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -99,7 +99,7 @@
       const perM = {};
       for (const se of s.session_exercises || []) {
         const ex = exById[se.exercise_id]; if (!ex || ex.dosage_profile === 'M') continue;
-        const nSets = (se.sets || []).filter((x) => x.done).length || 0;
+        const nSets = workSets(se.sets).length;
         for (const m of ex.muscles_primary) perM[m] = (perM[m] || 0) + nSets;
       }
       for (const m in perM) {
@@ -112,12 +112,46 @@
     return { last, sets7 };
   }
 
+  /* Arbeitssätze: abgeschlossene Sätze ohne die Aufwärmsätze. Wer sich hochsteigert (z. B. 70, 90, 95, 105, 110 kg),
+     soll die leichten Sätze weder als Wochenvolumen noch für die Steigerung angerechnet bekommen. Grenze: 75 % der Höchstlast. */
+  function workSets(sets) {
+    const done = (sets || []).filter((x) => x.done), loads = done.map((x) => Number(x.load_kg)).filter((v) => v > 0);
+    if (!loads.length) return done;
+    const cut = Math.max(...loads) * 0.75;
+    return done.filter((x) => x.load_kg === null || Number(x.load_kg) >= cut);
+  }
+
+  /* Aufwärmen vor Grundübungen (nicht protokolliert): zwei bis drei Stufen bis knapp unter die Arbeitslast */
+  function warmup(kg, conv, P) {
+    if (!kg || !['gesamt', 'je_hand'].includes(conv)) return [];
+    const hand = conv === 'je_hand', step = hand ? P.load_step_hand : P.load_step_total, min = hand ? 4 : 20;
+    if (kg < (hand ? 10 : 40)) return [];
+    const plan = hand ? [[0.5, 8], [0.75, 4]] : [[0.5, 8], [0.7, 5], [0.85, 3]], out = [];
+    for (const [f, reps] of plan) {
+      const w = Math.max(min, Math.round(kg * f / step) * step);
+      if (w < kg && !out.some((o) => o.kg === w)) out.push({ kg: w, reps });
+    }
+    return out;
+  }
+
+  /* Zielwiederholungen für einen Satz (nur Vorschlag, gespeichert wird erst beim Abschließen):
+     gleiche Last wie beim letzten Mal → eine Wiederholung mehr bis zum oberen Ende, sonst unteres Ende des Bereichs */
+  function repTarget(range, last, kg, setNo) {
+    if (!range) return null;
+    const [lo, hi] = range;
+    if (!last || kg === null || kg === undefined) return lo;
+    const same = last.sets.filter((x) => Number(x.load_kg) === Number(kg));
+    if (!same.length) return lo;
+    const ref = same[Math.min(same.length, Math.max(1, setNo)) - 1];
+    return Math.max(lo, Math.min(hi, ref.reps + 1));
+  }
+
   function lastWorkSets(sessions, exId) {
     const arr = sessions.filter((s) => ['gefuehrt', 'bestaetigt'].includes(s.status))
       .sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
     for (const s of arr) for (const se of s.session_exercises || []) {
       if (se.exercise_id === exId) {
-        const sets = (se.sets || []).filter((x) => x.done && x.load_kg !== null && x.reps !== null);
+        const sets = workSets(se.sets).filter((x) => x.load_kg !== null && x.reps !== null);
         if (sets.length) return { date: s.session_date, sets };
       }
     }
@@ -128,8 +162,11 @@
   function loadSuggestion(ex, prof, last, P, calm) {
     const step = ex.load_convention === 'je_hand' ? P.load_step_hand : P.load_step_total;
     if (!last) return { kg: null, text: 'Erstkalibrierung: leichter starten, 3–4 Wiederholungen Reserve; Gewicht notieren.', first: true };
-    const top = Math.max(...last.sets.map((s) => s.load_kg));
-    const topSets = last.sets.filter((s) => s.load_kg === top);
+    // Arbeitsgewicht: die schwerste Last, mit der das untere Ende des Bereichs geschafft wurde
+    // (wer sich auf 110 kg × 4 hochsteigert, bekommt 105 kg vorgeschlagen, wenn dort 6 Wiederholungen gingen)
+    const inRange = prof.reps ? last.sets.filter((s) => s.reps >= prof.reps[0]) : [];
+    const top = Math.max(...(inRange.length ? inRange : last.sets).map((s) => Number(s.load_kg)));
+    const topSets = last.sets.filter((s) => Number(s.load_kg) === top);
     const hit = prof.reps && topSets.length >= 2 && topSets.every((s) => s.reps >= prof.reps[1] && (s.rir === null || s.rir >= prof.rir[0]));
     let kg = top;
     let text = `Zuletzt ${fmt(top)} kg${ex.load_convention === 'je_hand' ? ' je Hand' : ''} (${last.date.slice(8, 10)}.${last.date.slice(5, 7)}.).`;
@@ -151,7 +188,7 @@
         const pr = prioOf(ctx.priorities, m, ctx.today);
         const since = stats.last[m] === undefined ? 14 : Math.min(stats.last[m], 14);
         const sets = stats.sets7[m] || 0;
-        const def = BIG.includes(m) ? Math.max(0, P.corridor_min - sets) : 0;
+        const def = BIG.includes(m) || pr === 'schwerpunkt' ? Math.max(0, P.corridor_min - sets) : 0;
         score += (since + def) * PRIO_W[pr];
         parts.push(m);
       }
@@ -200,6 +237,8 @@
     'Unterkörper': [['quadrizeps', 'G', ['kniebeuge']], ['hamstrings', 'G', ['huefte_beugen']], ['quadrizeps', 'G', ['beinpresse', 'ausfallschritt']], ['hamstrings', 'A', ['beinbeugen']], ['quadrizeps', 'A', ['kniestrecken']], ['waden', 'A', ['wadenheben']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
     'Push': [['brust', 'G', ['schraeg_druecken']], ['brust', 'G', ['horizontal_druecken']], ['brust', 'A', ['brust_fliegen']], ['schulter_seitlich', 'A', ['seitheben']], ['trizeps', 'A', ['trizeps_strecken']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]],
     'Ganzkörper': [['quadrizeps', 'G', ['beinpresse', 'kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['brust', 'G', ['schraeg_druecken', 'horizontal_druecken']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen', 'huefte_beugen']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
+    'Pull': [['lat', 'G', ['vertikal_ziehen']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['schulter_hinten', 'A', ['reverse_fly']], ['rotatoren', 'S', ['rotation']], ['schulter_hinten', 'S', ['horizontal_ziehen', 'schulterblatt']], ['bizeps', 'A', ['curl']]],
+    'Beine': [['quadrizeps', 'G', ['kniebeuge']], ['hamstrings', 'G', ['huefte_beugen']], ['quadrizeps', 'G', ['ausfallschritt', 'beinpresse']], ['hamstrings', 'A', ['beinbeugen']], ['quadrizeps', 'A', ['kniestrecken']], ['waden', 'A', ['wadenheben']], ['gesaess', 'A', ['huefte_strecken']]],
     'Lower + Pull': [['quadrizeps', 'G', ['kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['quadrizeps', 'G', ['beinpresse']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen']], ['waden', 'A', ['wadenheben']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]]
   };
 
@@ -281,7 +320,7 @@
     const setsFor = (e, m, prio) => {
       const pf = profOf(e.dosage_profile, P, ctx.goals, prio);
       let n = pf.sets;
-      if (e.dosage_profile === 'G' && prio === 'schwerpunkt' && !P.dose_G_sets) n = Math.max(n, 3);
+      if (prio === 'schwerpunkt' && ['G', 'A', 'S'].includes(e.dosage_profile || 'A') && !P['dose_' + (e.dosage_profile || 'A') + '_sets']) n = Math.max(n, 3);
       if (prio === 'erhalt') n = Math.max(1, n - 1);
       if (calm && n >= 3) n -= P.calm_sets_minus;
       return n;
@@ -334,6 +373,39 @@
         used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t });
       }
     }
+    // Schwerpunkt unter dem Wochenziel, aber heute nicht dran (z. B. Waden am Push-Tag): 2 Sätze einer Zusatzübung am Ende.
+    // Nur mit 48 h Erholung seit der letzten vollen Belastung, nicht für Beine nach langer Fahrt, höchstens zwei Muskeln je Einheit.
+    const carried = [];
+    const carryOver = () => {
+      const legs = ['quadrizeps', 'hamstrings', 'gesaess', 'waden'], afterRide = ctx.rideHoursAgo !== null && ctx.rideHoursAgo < P.leg_after_ride_hours;
+      const cand = [...new Set((ctx.priorities || []).map((p) => p.muscle_group))].filter((m) => prioOf(ctx.priorities, m, today) === 'schwerpunkt' && !day.focus.includes(m));
+      for (const m of cand) {
+        if (carried.length >= 2) break;
+        const have = (stats.sets7[m] || 0) + chosen.filter((c) => c.ex.muscles_primary.includes(m)).reduce((n, c) => n + c.sets, 0);
+        if (have >= P.corridor_min || (stats.last[m] !== undefined && stats.last[m] < P.min_rest_hours_same_muscle / 24) || (afterRide && legs.includes(m))) continue;
+        const e = elig.filter((x) => !usedEx.has(x.id) && x.muscles_primary[0] === m && ['A', 'S'].includes(x.dosage_profile || 'A')).sort((a, b) => rank(b, m) - rank(a, m) || (a.name < b.name ? -1 : 1))[0];
+        if (!e) continue;
+        const n = 2, t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t, carry: true });
+        carried.push(`${LABEL[m]} (${stats.sets7[m] || 0} von ${P.corridor_min} Sätzen diese Woche)`);
+      }
+    };
+    if (tplSlots) carryOver();
+    // Restzeit füllen: bleibt bei der Vorlage deutlich Zeit übrig, kommen Zusatzübungen für die Fokus-Muskeln dazu
+    // (Schwerpunkte zuerst, höchstens 3 Übungen je Schwerpunkt bzw. 2 sonst, kein Bewegungsmuster doppelt)
+    if (tplSlots) {
+      for (let pass = 0; pass < 2; pass++) for (const m of focus) {
+        if (used >= minutes - 6) break;
+        const prio = prioOf(ctx.priorities, m, today), have = chosen.filter((c) => c.ex.muscles_primary.includes(m)).length;
+        if (have >= (prio === 'schwerpunkt' ? 3 : 2) || (pass === 0 && have >= 1 && prio !== 'schwerpunkt')) continue;
+        const e = elig.filter((x) => !usedEx.has(x.id) && !usedPattern.has(x.pattern) && x.muscles_primary[0] === m && ['A', 'S'].includes(x.dosage_profile || 'A')).sort((a, b) => rank(b, m) - rank(a, m) || (a.name < b.name ? -1 : 1))[0];
+        if (!e) continue;
+        const n = setsFor(e, m, prio), t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio, minutes: t });
+      }
+    }
     // Reihenfolge der Runden: erst Grundbewegungen je Muskel, dann Zusatz, dann Stabilität
     const rounds = [['G'], ['A'], ['S', 'C', 'I', 'T']];
     for (const rd of (tplSlots ? [] : rounds)) {
@@ -354,6 +426,7 @@
         chosen.push({ muscle: m, ex: e, sets: n, prio, minutes: t });
       }
     }
+    if (!tplSlots) carryOver();
     // Reihenfolge: G vor A vor S/C/I/T, dann Priorität
     const ord = { G: 0, A: 1, S: 2, C: 3, I: 3, T: 3 };
     if (!tplSlots) chosen.sort((a, b) => ord[a.ex.dosage_profile || 'A'] - ord[b.ex.dosage_profile || 'A']);
@@ -371,7 +444,7 @@
         exercise_id: c.ex.id, name: c.ex.name, code: c.ex.code, muscle: c.muscle, sets: c.sets,
         profile: c.ex.dosage_profile, reps: pf.reps || null, secs: pf.secs || null, perSide: !!pf.perSide,
         rir: pf.rir ? [rirLo, rirHi] : null, rest_s: P[pf.rest], load_kg: kg, load_convention: c.ex.load_convention,
-        load_text: ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio
+        load_text: (c.carry ? 'Schwerpunkt unter dem Wochenziel: kurz mitgenommen. ' : '') + ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio, carry: !!c.carry
       };
     });
     // Supersätze: aufeinanderfolgende Nicht-Grundübungen mit verschiedenen Muskeln im Wechsel
@@ -392,6 +465,7 @@
       total = Math.round(t);
       if (items.some((i) => i.pair_with)) reasons.push('Zeit knapp: Zusatzübungen laufen als Supersatz im Wechsel, das spart Zeit bei gleicher Satzzahl.');
     } else total = Math.round(4 + items.reduce((s, i) => s + estMin(exById[i.exercise_id], i.sets), 0));
+    if (carried.length) reasons.push(`Schwerpunkt unter dem Wochenziel, daher am Ende 2 Sätze extra: ${carried.join(', ')}.`);
     if (calm) reasons.push('Ruhigere Tagesform: eine Reserve mehr und bei 3+ Sätzen ein Satz weniger.');
     const gaps = focus.filter((m) => !chosen.some((c) => c.muscle === m) && BIG.includes(m));
     if (gaps.length) reasons.push(`Wegen Zeit oder Ausstattung nicht abgedeckt: ${gaps.map((m) => LABEL[m]).join(', ')}.`);
@@ -401,9 +475,11 @@
     const goals = ctx.goals || [];
     if (goals.includes('Kraft') && items.some((i) => i.prio === 'schwerpunkt' && i.profile === 'G')) reasons.push('Ziel Kraft: Schwerpunkt-Grundübungen mit 3 × 4–6 und längerer Pause.');
     if (goals.includes('Muskelaufbau')) reasons.push('Ziel Muskelaufbau: Wiederholungen meist 6–15 mit 1–3 Reserve, Wochenziel 6–10 Sätze je Muskelgruppe.');
+    if (goals.includes('Radfahren unterstützen')) reasons.push('Ziel Radfahren: Nach langen oder harten Fahrten werden Beintage zurückgestellt, Oberkörper und Rumpf bleiben regelmäßig dran.');
+    if (goals.includes('Rücken und Schulter') && P.posture_block) reasons.push('Ziel Rücken und Schulter: Am Ende wird ein kurzer Haltungsblock angeboten.');
     if (goals.includes('Fettabbau')) reasons.push('Ziel Fettabbau: Gewichte und Satzzahl halten, nicht kürzen. Ob mehr Volumen im Defizit mehr Muskeln erhält, ist offen.');
     const mobility = P.posture_block ? mobilityPick(ctx, P, 3) : [];
-    return { rest: false, title: day.name, split_day: day.name, minutes: total + (mobility.length ? 4 : 0), items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P, variant, stable: !variant, template: !!tplSlots };
+    return { rest: false, title: day.name, split_day: day.name, minutes: total, items, mobility, reasons, reentry, rule_version: RULE_VERSION, params: P, variant, stable: !variant, template: !!tplSlots };
   }
 
   /* Energie: immer Schätzung mit Methode */
@@ -418,6 +494,6 @@
 
   function e1rm(kg, reps) { return reps && kg ? kg * (1 + reps / 30) : null; }
 
-  const api = { TEMPLATES, mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
+  const api = { workSets, warmup, repTarget, TEMPLATES, mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
   if (typeof module !== 'undefined') module.exports = api; else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

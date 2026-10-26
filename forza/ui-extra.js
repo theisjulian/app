@@ -31,27 +31,10 @@
   F.views.mehr = (args) => {
     const [sub] = args || [];
     if (sub) return baseMehr(args);
-    return baseMehr(args).replace('<div class="h1" style="margin-bottom:14px">Mehr</div>', `<div class="h1" style="margin-bottom:14px">Einstellungen</div><div class="eyebrow" style="margin:0 2px 8px">Darstellung</div>${lookCards()}<div class="eyebrow" style="margin:6px 2px 8px">Training & Konto</div>`)
+    // Erst das, was man oft braucht (Training, Konto), dann die Darstellung
+    return baseMehr(args).replace('<div class="h1" style="margin-bottom:14px">Mehr</div>', `<div class="h1" style="margin-bottom:14px">Einstellungen</div><div class="eyebrow" style="margin:0 2px 8px">Training & Konto</div>`)
+      .replace('<button class="btn ghost block" data-act="logout">', `<div class="eyebrow" style="margin:6px 2px 8px">Darstellung</div>${lookCards()}<button class="btn ghost block" data-act="logout">`)
       .replace(/<button class="it" data-act="nav" data-r="mehr\/darstellung">[\s\S]*?<\/button>/, '');
-  };
-
-  /* ---------- Training: Zentrale ---------- */
-  F.ui.tr = F.ui.tr || { ei: 0 };
-  const baseTraining = F.views.training;
-  const setLine = (se) => (se.sets || []).filter((x) => x.done).map((x) => (x.load_kg !== null ? F.fmt(Number(x.load_kg)) + ' kg × ' : '') + (x.reps !== null ? x.reps : (x.secs ? x.secs + ' s' : '?'))).join(' · ');
-  F.views.training = () => {
-    if (F.openSession()) return baseTraining();
-    const S = F.S, sg = F.suggestion();
-    const done = S.sessions.filter((x) => x.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(x.status)).sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
-    const card = (ic, t, s, act, extra = '') => `<button class="it" data-act="${act}" ${extra}><div class="ico">${ic}</div><div class="grow"><b>${t}</b><div class="small mute">${s}</div></div>${arrow}</button>`;
-    return `<div class="h1" style="margin-bottom:4px">Training</div><p class="mute" style="margin-top:0">Hier startest du eine Einheit und siehst, was du schon gemacht hast.</p>
-      <div class="card list">
-        ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} Übungen`, 'start')}
-        ${card(F.icon.kalender, 'Anderen Tag wählen', 'Oberkörper, Unterkörper, Push …', 'pickDay')}
-        ${card(F.icon.heute, 'Mobilität', 'Aufwärmen · Dehnen · Sanft · Haltung', 'mobMenu')}
-        ${card(F.icon.plus, 'Einheit nachtragen', 'Auch für frühere Tage', 'addEntry', `data-d="${F.today()}"`)}
-      </div>
-      <div class="card"><div class="h2">Bisherige Einheiten</div>${done.slice(0, 20).map((x) => `<details class="hist"><summary><div class="grow"><b>${esc(x.title || 'Training')}</b><div class="small mute">${F.dlabel(x.session_date)}${x.duration_min ? ' · ' + x.duration_min + ' min' : ''}${x.session_exercises.length ? ' · ' + x.session_exercises.length + ' Übungen' : ' · Details unbekannt'}</div></div></summary>${x.session_exercises.length ? x.session_exercises.map((se) => `<div class="small" style="padding:4px 0"><b>${esc((S.exById[se.exercise_id] || {}).name || '?')}</b><div class="mute">${setLine(se) || 'keine Sätze erfasst'}</div></div>`).join('') : '<div class="small mute" style="padding:4px 0">Zu dieser Einheit sind keine Übungen oder Sätze bekannt. Du kannst sie über „Einheit nachtragen“ ergänzen oder die Einheit so lassen.</div>'}</details>`).join('') || '<div class="mute">Noch nichts.</div>'}</div>`;
   };
 
   /* ---------- Fortschritt: Zeiträume ---------- */
@@ -326,7 +309,7 @@
     const box = document.createElement('div'); box.innerHTML = html;
     const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? [...grid.children] : [];
     const fold = (keepWhy) => { // Übungsliste einklappen
-      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; if (F.ui.exOpen) det.open = true; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
+      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; if (F.ui.exOpen) det.open = true; det.innerHTML = `<summary><span class="sh">${rows.length} Übungen anzeigen</span><span class="hd">Übungen ausblenden</span></summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
       if (!keepWhy) hero.querySelectorAll('.small.mute').forEach((e) => { if (/Warum/.test(e.textContent)) e.remove(); });
     };
     const weekCard = cols[0] && cols[0].children[0], actCard = cols[0] && cols[0].children[1], barCard = cols[1] && cols[1].children[0];
@@ -334,10 +317,10 @@
     if (v === 'woche') {
       fold(true); const st = stats('woche'); if (grid) grid.remove();
       const ov = document.createElement('div'); ov.innerHTML = F.weekOverview();
-      if (hero) { const kids = [...ov.children]; hero.before(kids[0], kids[1]); const chips = box.querySelector('[data-act=placeMenu]'); const row = chips && chips.closest('.row'); if (row) hero.before(row);
+      if (hero) { const kids = [...ov.children]; hero.before(kids[0], kids[1]); const chips = box.querySelector('[data-act=placeMenu]'); const row = chips && chips.closest('.chipbar'); if (row) hero.before(row);
         let tail = hero; [kids[2], weekCard, actCard].filter(Boolean).forEach((el) => { tail.after(el); tail = el; }); if (barCard) tail.after(barCard); }
     }
-    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) { hero.before(barCard); const chips = box.querySelector('[data-act=placeMenu]'), row = chips && chips.closest('.row'); if (row) hero.before(row); } }
+    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) { hero.before(barCard); const chips = box.querySelector('[data-act=placeMenu]'), row = chips && chips.closest('.chipbar'); if (row) hero.before(row); } }
     return box.innerHTML;
   };
   F.acts.dash = (t) => { F.setLook('dash', t.dataset.v); F.render(); };
@@ -364,7 +347,8 @@
     return keys.map((m) => `<div class="eyebrow" style="margin:12px 0 4px">${E.LABEL[m] || m}</div><div class="list">${groups[m].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b>${e.tier !== 'geprueft' ? '<div class="small mute">Entwurf</div>' : ''}</div></button>`).join('')}</div>`).join('') || '<div class="mute">Mit dieser Ausstattung gibt es nichts zum Hinzufügen.</div>';
   };
   F.acts.addExAsk = () => { F.modal(`<div class="h2">Übung hinzufügen</div><input id="ax-q" type="search" placeholder="Suchen: Name, Muskel (Bauch, Rücken), Gerät" autocomplete="off" data-in="axq" data-live="1" style="width:100%;margin:6px 0"><div id="ax-list" style="max-height:55vh;overflow:auto">${addList('')}</div>`); };
-  F.ins.axq = (t) => { const l = document.getElementById('ax-list'); if (l) l.innerHTML = addList(t.value); };
+  // nur bei geänderter Suche neu aufbauen: beim Antippen eines Treffers feuert sonst „change“ und der Tipp geht ins Leere
+  F.ins.axq = (t) => { const l = document.getElementById('ax-list'); if (!l || l.dataset.q === t.value) return; l.dataset.q = t.value; l.innerHTML = addList(t.value); };
   F.acts.addEx = async (t) => {
     const s = F.openSession(), ex = F.S.exById[t.dataset.ex]; if (!s || !ex) return;
     const P = E.params(F.S.params), prio = E.prioOf(F.S.priorities, ex.muscles_primary[0], F.today()), pf = E.profOf(ex.dosage_profile, P, (F.S.profile && F.S.profile.goals) || [], prio);
@@ -374,14 +358,11 @@
     const sr = await F.sb.from('sets').insert(rows); if (sr.error) throw sr.error;
     F.closeModal(); await F.load(); F.ui.tr.ei = F.openSession().session_exercises.length - 1; F.render(); window.scrollTo(0, 0); F.toast('Hinzugefügt · zählt für künftige Vorschläge');
   };
-  const tv = F.views.training;
-  F.views.training = () => { const h = tv(); const s = F.openSession(); if (!s) return h; const dn = s.session_exercises.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length;
-    return '<div class="row between" style="margin-bottom:8px"><button class="btn sm" data-act="trOverview" style="gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Übersicht · ' + dn + '/' + s.session_exercises.length + '</button></div>' + h + '<button class="btn ghost block" style="margin:6px 0 18px" data-act="addExAsk">+ Übung hinzufügen</button>'; };
   F.acts.trOverview = () => {
     const s = F.openSession(); if (!s) return; const exs = s.session_exercises, cur = F.ui.tr.ei;
     const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
     const row = (e, i) => { const ex = F.S.exById[e.exercise_id] || { name: '?' }, d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length, on = i === cur;
-      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
+      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;padding:12px 10px;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
     F.modal(`<div class="row between"><div class="h2">Dein Training</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
       <div class="small mute" style="margin:2px 0 8px">${dn} von ${tot} Sätzen · ${exs.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length} von ${exs.length} Übungen erledigt</div>
       <div style="height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:${pct}%;background:var(--grad,var(--a));border-radius:99px"></i></div>

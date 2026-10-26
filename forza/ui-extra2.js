@@ -83,7 +83,7 @@
     if (now) note = `<div class="card ur-card"><div class="eyebrow">${KIND[now.kind]}${now.note ? ' · ' + esc(now.note) : ''}</div><div style="margin-top:4px"><b>Bis ${F.dshort(now.to_date)}</b> · <span class="mute">${MODE[now.mode] || MODE.eigengewicht}</span></div></div>`;
     else if (nxt) { const n = Math.round((F.dparse(nxt.from_date) - F.dparse(today)) / 864e5); if (n <= 14) note = `<div class="small mute" style="margin:-6px 2px 12px">${KIND[nxt.kind]}${nxt.note ? ' (' + esc(nxt.note) + ')' : ''} in ${n} ${n === 1 ? 'Tag' : 'Tagen'}</div>`; }
     if (note && first) first.insertAdjacentHTML('afterend', note);
-    box.insertAdjacentHTML('beforeend', `<div class="row gap wrap" style="justify-content:center;margin:6px 0 18px"><button class="chip" data-act="fitMenu">Heute nicht fit?</button><button class="chip" data-act="mobMenu">Mobilität</button></div>`);
+    box.insertAdjacentHTML('beforeend', `<div class="row gap wrap" style="justify-content:center;margin:6px 0 18px"><button class="chip" data-act="fitMenu">Heute nicht fit?</button></div>`);
     return box.innerHTML;
   };
 
@@ -128,21 +128,16 @@
     F.closeModal(); await F.refresh(); F.toast('Gute Besserung. Eingetragen.');
   };
 
-  /* ---------- Supersätze, Fokus-Ansicht, Ersetzen ---------- */
+  /* ---------- Supersätze, Fokus-Ansicht (Bildschirm bleibt an) ---------- */
   document.addEventListener('toggle', (e) => { if (e.target.classList && e.target.classList.contains('exfold')) F.ui.exOpen = e.target.open; }, true);
   F.acts.supCycle = () => { const o = ['auto', 'immer', 'aus'], c = F.ls.get('superset', 'auto'); const n = o[(o.indexOf(c) + 1) % 3]; F.ls.set('superset', n); F.ui.exOpen = true; F.render(); F.toast({ auto: 'Supersätze: automatisch bei knapper Zeit (bis 45 min)', immer: 'Supersätze: immer, wo es passt', aus: 'Supersätze: aus' }[n]); };
   let wl = null;
   const wake = async (on) => { try { if (on && navigator.wakeLock) wl = await navigator.wakeLock.request('screen'); else if (wl) { await wl.release(); wl = null; } } catch (e) { /* optional */ } };
+  F.wake = wake;
   F.acts.focusToggle = async () => {
-    const on = !F.ls.get('focus', false); F.ls.set('focus', on); wake(on);
+    const on = !F.focusOn(); F.ls.set('focus', on); wake(on);
     try { if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (e) { /* iPhone: kein Vollbild-API */ }
     F.render(); window.scrollTo(0, 0);
   };
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && F.ls.get('focus', false) && F.openSession()) wake(true); });
-  const trv = F.views.training;
-  F.views.training = () => {
-    const h = trv(); if (!F.openSession()) return h;
-    const on = F.ls.get('focus', false);
-    return `${on ? '<div class="fx-on"></div>' : ''}<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn sm ghost" data-act="focusToggle" aria-pressed="${on}">${on ? 'Fokus beenden' : 'Fokus-Ansicht'}</button></div>` + h;
-  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && F.focusOn() && F.openSession()) wake(true); });
 })();
