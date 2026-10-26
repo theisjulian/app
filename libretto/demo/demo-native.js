@@ -5,11 +5,13 @@
 (function () {
   'use strict';
   let mem = null;                                   // aktueller Stand, nur im Arbeitsspeicher
+  const cfg = {};                                   // Einstellungen (Farbwelt usw.), ebenfalls nur im Arbeitsspeicher
+  try { const st = localStorage.getItem('theis-stil'); if (st === 'neon' || st === 'heft') { cfg.skin = st; document.documentElement.setAttribute('data-skin', st); } } catch (e) {}   // startet im Stil der Website
   let go; const ready = new Promise(r => { go = r; });
   const X = window.__librettoDemo = { version: '0.9.9', start: go, locked: () => {}, preview: () => {} };
   const t0 = Date.now(), MIN = 60000, DAY = 864e5;
   const status = () => ({ exists: true, unlocked: !!mem, backupDir: 'USB-Stick „Schule“ (Beispiel)', lastLocal: t0 - 4 * MIN, lastExternal: t0 - 4 * MIN, lastExternalError: null,
-    autoLock: 10, created: new Date(t0 - 21 * DAY).toISOString(), updateCheck: true, prevVersion: null });
+    autoLock: 10, created: new Date(t0 - 21 * DAY).toISOString(), updateCheck: true, prevVersion: null, ...cfg });
   const policy = () => ({ betaEnd: '2099-12-31', daysLeft: 9999, expired: false, outdated: false, message: '', url: '../' });
   const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const code = () => { let s = ''; for (let i = 0; i < 24; i++) s += ALPH[Math.floor(Math.random() * 32)]; return s.match(/.{6}/g).join('-'); };
@@ -34,7 +36,7 @@
     openBackupDir: async () => { X.locked('Der Sicherungsordner'); },
     pickBackup: async () => { X.locked('Das Wiederherstellen einer Sicherung'); return null; },
     restore: async () => ({ ok: false, error: 'In der Demo nicht verfügbar.' }),
-    setCfg: async () => status(),
+    setCfg: async c => { Object.assign(cfg, c); return status(); },
     saveFile: async name => { X.locked(/\.docx$/.test(name) ? 'Der Word-Export' : /\.json$/.test(name) ? 'Der Klassen-Export' : 'Der Excel-Export'); return { ok: false }; },
     savePdf: async (name, html, landscape) => { X.preview(name, html, landscape); return { ok: false }; },
     version: async () => X.version,

@@ -1,4 +1,4 @@
-/* theis, Website ab Update 31 („Studio“). Farben aus dem Logo: Schwarz und Blau vom i-Punkt. Zweiter Stil „Neon“ wie in ’namo. Hell/Dunkel folgt dem Gerät. */
+/* theis, Website ab Update 31 („Studio“). Farben aus dem Logo: Schwarz und Blau vom i-Punkt. Weitere Stile: „Neon“ wie in ’namo. und „Schulheft“ (dunkel: Tafel) wie in Libretto. Hell/Dunkel folgt dem Gerät. */
 @font-face{font-family:SG;src:url(fonts/schibsted-grotesk-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:SG;src:url(fonts/schibsted-grotesk-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
 @font-face{font-family:SG;src:url(fonts/schibsted-grotesk-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
@@ -11,8 +11,8 @@
 :root{--bg:#fff;--ink:#111214;--grey:#5a6070;--line:#e5e8ee;--surf:#f3f5f9;--blue:#2f5bea;--blueSoft:#e9eefe;--onblue:#fff;--dot:#2f5bea;--shadow:0 40px 80px -30px rgba(17,18,20,.45);--shot:0 20px 50px -22px rgba(17,18,20,.35);color-scheme:light}
 @media(prefers-color-scheme:dark){:root{--bg:#121520;--ink:#eef0f4;--grey:#a2a8b6;--line:#272c39;--surf:#1a1e2a;--blue:#7d9bff;--blueSoft:#1f2741;--onblue:#0c1330;--dot:#6f8fff;--shadow:0 40px 80px -30px rgba(0,0,0,.7);--shot:0 20px 50px -22px rgba(0,0,0,.6);color-scheme:dark}}
 /* Neon (wie ’namo.): Pastell-Lila, Neon-Pink, Elektroblau */
-:root[data-style=neon]{--bg:#f6f0ff;--ink:#22103a;--grey:#6c5a86;--line:#e7dcf7;--surf:#efe3ff;--blue:#d4127a;--blueSoft:#ffe4f3;--onblue:#fff;--dot:#ff3ea5;--grad:linear-gradient(120deg,#ff3ea5 0%,#8a3ffc 55%,#2f6bff 100%)}
-@media(prefers-color-scheme:dark){:root[data-style=neon]{--bg:#0e0818;--ink:#f4ecff;--grey:#b3a3cf;--line:#2e2045;--surf:#1a1029;--blue:#ff3ea5;--blueSoft:#2a1640;--onblue:#1a0414;--dot:#ff3ea5}}
+:root[data-style=neon]{--bg:#f6f0ff;--ink:#22103a;--grey:#6c5a86;--line:#e7dcf7;--surf:#efe3ff;--blue:#d4127a;--blueSoft:#ffe4f3;--onblue:#fff;--dot:#ff3ea5;--grad:linear-gradient(120deg,#e81e8c 0%,#8a3ffc 55%,#2f6bff 100%)}
+@media(prefers-color-scheme:dark){:root[data-style=neon]{--bg:#0e0818;--ink:#f4ecff;--grey:#b3a3cf;--line:#2e2045;--surf:#1a1029;--blue:#ff3ea5;--blueSoft:#2a1640;--onblue:#1a0414;--dot:#ff3ea5;--grad:linear-gradient(120deg,#ff3ea5 0%,#8a3ffc 55%,#2f6bff 100%)}}
 
 *{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.6 SG,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;transition:background-color .25s,color .25s}
@@ -41,14 +41,18 @@ a{color:inherit}img,video,svg{max-width:100%}img{height:auto}
 .bar nav .btn{padding:9px 18px}
 .btns{display:flex;flex-wrap:wrap;gap:10px}
 
-/* Schalter Neon */
-.sw{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--grey);padding:6px 2px}
-.sw .knob{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);transition:background .2s;flex:none}
-.sw .knob::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
-.sw[aria-checked=true] .knob{background:linear-gradient(120deg,#ff3ea5,#8a3ffc 55%,#2f6bff)}
-.sw[aria-checked=true] .knob::after{transform:translateX(16px)}
-.sw[aria-checked=true]{color:var(--ink)}
-.sw:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:8px}
+/* Stil-Auswahl: Klar, Neon, Heft */
+.pick{display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:var(--surf);box-shadow:inset 0 0 0 1px var(--line)}
+.pick button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 6px;border-radius:999px;font-size:14px;font-weight:500;line-height:1.2;color:var(--grey);transition:background-color .2s,color .2s,box-shadow .2s}
+.pick button:hover{color:var(--ink)}
+.pick button[aria-checked=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 4px rgba(17,18,20,.14)}
+.pick button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.pick i{width:18px;height:18px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+.pick button:hover i{transform:scale(1.12)}
+.pick .k{background:linear-gradient(135deg,#fff 50%,#2f5bea 50%)}
+.pick .n{background:linear-gradient(120deg,#ff3ea5,#8a3ffc 55%,#2f6bff)}
+.pick .h{background-color:#f8f4e8;background-image:linear-gradient(#b9c8de 1px,transparent 1px),linear-gradient(90deg,#b9c8de 1px,transparent 1px);background-size:5px 5px;background-position:-1px -1px;box-shadow:inset 0 0 0 1px #c9cfd8,inset 3px 0 0 #e08a85}
+@media(max-width:1180px){.pick button{padding:5px}.pick button span{display:none}}
 #tip{position:fixed;z-index:30;top:84px;right:max(20px,calc((100vw - 1280px)/2 + 40px));width:340px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:18px 18px 16px;box-shadow:0 24px 50px -20px rgba(17,18,20,.35);animation:tip .35s cubic-bezier(.2,.7,.2,1) both}
 #tip p{margin:0 0 14px;font-size:16px;color:var(--grey)}#tip b{display:block;color:var(--ink);font-size:17px;margin-bottom:2px}
 #tip div{display:flex;gap:8px}#tip .btn{font-size:15px;padding:9px 16px}
@@ -141,7 +145,7 @@ section.s{padding-top:130px}
 .ah .id{display:flex;align-items:center;gap:18px;margin-bottom:22px}.ah .id img{width:72px;height:72px;border-radius:17px}
 .badge{font-size:15px;font-weight:600;color:var(--app);background:var(--tint);padding:5px 12px;border-radius:999px}
 .ah .r>p{font-size:20px;color:var(--grey);margin-bottom:22px}
-.ah .small{margin:12px 0 0}
+.ah .small,.ah .r>p.small{margin:14px 0 0;font-size:15px;color:var(--grey)}
 .app-stage{margin-top:56px;background:var(--tint);border-radius:32px;padding:64px 9% 0;overflow:hidden}
 .app-stage.plain{padding:40px}.app-stage.plain img{display:block;width:100%;height:auto}
 .facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:40px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -218,12 +222,12 @@ footer .copy span{display:inline-flex;align-items:center;gap:8px}footer .copy sv
 @media(max-width:1060px){.show{display:block}.idx{display:none}.panel{min-height:0;padding:28px 0}.steps.five{grid-template-columns:1fr 1fr}}
 @media(max-width:820px){
  body{font-size:17px}.w{padding:0 20px}.doc{padding:32px 20px 0}
- .bar .w{height:64px}.bar nav{gap:14px}.bar nav a.l,.sw .lbl{display:none}
+ .bar .w{height:64px}.bar nav{gap:14px}.bar nav a.l{display:none}
  #tip{left:16px;right:16px;width:auto;top:auto;bottom:calc(16px + env(safe-area-inset-bottom))}
  section.s{padding-top:88px}.lead{font-size:19px}
  .hero{padding-top:36px}.hero .top{display:block}.hero .top .r{margin-top:22px}
  .stage{height:auto;padding:36px 20px 0;margin-top:40px;border-radius:24px}.stage .laptop{width:100%}.stage .phone{--pw:118px;top:auto;bottom:-70px;right:12px}
- .dock{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px}.dock .small{grid-column:1/-1;margin:4px 0 0}
+ .dock{display:block;margin-top:20px}.dock a{display:none}.dock .small{margin:0}
  .panel .pic{padding:24px 0 0 24px;border-radius:20px}.panel .pic.ph{padding:16px}.panel .meta{display:block}.panel .meta .btn{margin-top:16px}.panel h3{font-size:24px}.nm img{width:42px;height:42px}
  .steps,.steps.five{grid-template-columns:1fr}.safe{grid-template-columns:1fr;padding:40px 24px;gap:28px;border-radius:24px}
  .me{grid-template-columns:1fr;gap:24px}.face{width:150px;height:150px}.me .big{font-size:21px}
@@ -293,6 +297,7 @@ html.vt-circle .bar{view-transition-name:none}
  .appstrip a[aria-current]::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--dot);margin-left:2px}
  .bar.on{border-bottom-color:transparent}
  .panel{scroll-margin-top:140px}
+ .mail{scroll-margin-top:150px}
 }
 @media(min-width:821px) and (prefers-reduced-motion:reduce){.appstrip img{transition:none}}
 
@@ -310,3 +315,79 @@ html.vt-circle .bar{view-transition-name:none}
  :root[data-style=neon] .doodle path:nth-child(6){animation-delay:1.7s}:root[data-style=neon] .doodle path:nth-child(7){animation-delay:2s}:root[data-style=neon] .doodle path:nth-child(8){animation-delay:2.3s}
 }
 @keyframes scrib{to{stroke-dashoffset:0}}
+
+/* ===== Stil „Schulheft“ (ab Update 34): hell kariertes Heft, dunkel Tafel. Farben wie die Farbwelt „Schulheft / Tafel“ in Libretto ===== */
+:root[data-style=heft]{--bg:#f7f3e8;--ink:#23253a;--grey:#5a5b6e;--line:#e2d9c4;--surf:#fffdf6;--blue:#2c4a9a;--blueSoft:#fff1a8;--onblue:#fff;--dot:#c0392b;
+ --karo:rgba(44,74,154,.12);--rand:rgba(192,57,43,.42);--mark:#ffe36e;--sheet:0 1px 0 rgba(110,90,50,.10),0 12px 26px -16px rgba(35,37,58,.32);color-scheme:light}
+@media(prefers-color-scheme:dark){:root[data-style=heft]{--bg:#1d2924;--ink:#eef2e8;--grey:#b3bdb2;--line:#34453d;--surf:#24332c;--blue:#f2d36b;--blueSoft:#2a3a33;--onblue:#1d2924;--dot:#ff8a80;
+ --karo:rgba(255,255,255,.035);--rand:rgba(255,138,128,.3);--mark:#f2d36b;--sheet:0 0 0 1px #33443c,0 14px 28px -18px rgba(0,0,0,.6);color-scheme:dark}}
+/* Karopapier (5 mm) und Heftrand; an der Tafel ein Hauch Kreidestaub */
+:root[data-style=heft] body{background-image:linear-gradient(var(--karo) 1px,transparent 1px),linear-gradient(90deg,var(--karo) 1px,transparent 1px);background-size:20px 20px;background-position:-1px -1px}
+@media(prefers-color-scheme:dark){:root[data-style=heft] body{background-image:radial-gradient(120% 70% at 25% 0%,rgba(255,255,255,.05),transparent 60%),linear-gradient(var(--karo) 1px,transparent 1px),linear-gradient(90deg,var(--karo) 1px,transparent 1px);background-size:auto,20px 20px,20px 20px;background-attachment:fixed,scroll,scroll}}
+@media(min-width:1100px){:root[data-style=heft] body::before{content:"";position:fixed;top:0;bottom:0;left:max(12px,calc((100vw - 1280px)/2 + 12px));width:5px;border-left:1.5px solid var(--rand);border-right:1.5px solid var(--rand);pointer-events:none;z-index:1}}
+/* Textmarker auf einem Wort der Überschrift; an der Tafel ein Kreidestrich darunter */
+:root[data-style=heft] .hl{position:relative;z-index:0;white-space:nowrap}
+:root[data-style=heft] .hl::before{content:"";position:absolute;z-index:-1;left:-.08em;right:-.1em;top:.5em;bottom:.04em;background:var(--mark);border-radius:.12em .4em .18em .5em;transform:rotate(-1.2deg) skewX(-8deg);transform-origin:0 50%;animation:hl .75s .3s cubic-bezier(.3,.7,.2,1) both}
+@keyframes hl{from{transform:rotate(-1.2deg) skewX(-8deg) scaleX(0)}}
+@media(prefers-color-scheme:dark){:root[data-style=heft] .hl::before{top:auto;height:.09em;bottom:-.04em;border-radius:99px;opacity:.85}}
+/* Überschriften der Textseiten: mit Lineal rot unterstrichen */
+:root[data-style=heft] .doc h1{text-decoration:underline 3px var(--dot);text-underline-offset:.16em;text-decoration-skip-ink:none}
+:root[data-style=heft] .e404 h1{text-decoration:underline wavy 2px var(--dot);text-underline-offset:.22em}
+/* Karten und Bilder wie Blätter auf dem Heft */
+:root[data-style=heft] .steps li,:root[data-style=heft] .grid>div,:root[data-style=heft] .box,:root[data-style=heft] .inst li,:root[data-style=heft] .mail,:root[data-style=heft] .pic,:root[data-style=heft] .stage,:root[data-style=heft] .app-stage,:root[data-style=heft] .vid,:root[data-style=heft] .next{--tint:var(--surf);--ntint:var(--surf);background:var(--surf);box-shadow:var(--sheet)}
+:root[data-style=heft] .steps li::before{background:none;color:var(--dot);box-shadow:inset 0 0 0 2px var(--dot)}
+:root[data-style=heft] .inst li::before{background:none;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+:root[data-style=heft] .ticks li::before{border-color:var(--dot)}
+:root[data-style=heft] .badge{background:var(--surf);box-shadow:inset 0 0 0 1.5px currentColor}
+:root[data-style=heft] .seg{background:var(--surf);box-shadow:var(--sheet)}:root[data-style=heft] .seg button[aria-selected=true]{background:var(--bg)}
+:root[data-style=heft] .idx a.on{background:color-mix(in srgb,var(--mark) 55%,transparent)}
+:root[data-style=heft] .btn.line{box-shadow:inset 0 0 0 1.5px var(--ink)}
+:root[data-style=heft] .btn.sec{background:var(--surf);box-shadow:var(--sheet)}:root[data-style=heft] .btn.sec:hover{background:var(--surf);box-shadow:0 0 0 1.5px var(--line),var(--sheet)}
+:root[data-style=heft] .pick{background:var(--surf)}
+/* „Ihre Daten bleiben auf Ihrem Gerät“ als Klebezettel */
+:root[data-style=heft] .safe{box-shadow:0 18px 30px -22px rgba(35,37,58,.5)}
+:root[data-style=heft] .safe li{border-top-color:color-mix(in srgb,var(--ink) 14%,transparent)}
+@media(prefers-color-scheme:dark){
+ :root[data-style=heft] .idx a.on{background:var(--surf);box-shadow:inset 3px 0 0 var(--blue)}
+ :root[data-style=heft] .safe{background:#2c3d35;box-shadow:0 0 0 1px #3a4d44,0 18px 30px -22px rgba(0,0,0,.6)}
+}
+
+/* Markierter Text: im Heft Textmarker, an der Tafel Kreidegelb, in Neon Pink */
+::selection{background:color-mix(in srgb,var(--blue) 24%,transparent)}
+:root[data-style=heft] ::selection{background:color-mix(in srgb,var(--mark) 70%,transparent);color:var(--ink)}
+
+/* Impressum, Heft: Lehrkraft korrigiert mit Rotstift (an der Tafel mit Kreide) */
+.doodle-heft{display:none}
+@media(min-width:1340px){
+ :root[data-style=heft] .has-doodle{position:relative}
+ :root[data-style=heft] .doodle-heft{display:block;position:absolute;left:calc(100% + 30px);top:24px;width:260px;height:auto;overflow:visible;pointer-events:none;color:var(--dot)}
+ :root[data-style=heft] .doodle-heft path{stroke-dasharray:1;stroke-dashoffset:0}
+}
+@media(min-width:1340px) and (prefers-color-scheme:dark){:root[data-style=heft] .doodle-heft{color:#eef2e8;opacity:.86}:root[data-style=heft] .doodle-heft g{filter:url(#kreide)}}
+@media(min-width:1340px) and (prefers-reduced-motion:no-preference){
+ :root[data-style=heft] .doodle-heft path{stroke-dashoffset:1;animation:scrib .7s cubic-bezier(.5,.1,.3,1) forwards}
+ :root[data-style=heft] .doodle-heft path:nth-child(2){animation-delay:.6s}:root[data-style=heft] .doodle-heft path:nth-child(3){animation-delay:1.25s}
+ :root[data-style=heft] .doodle-heft path:nth-child(4){animation-delay:1.55s}:root[data-style=heft] .doodle-heft path:nth-child(5){animation-delay:1.8s}
+}
+
+/* Danke-Seite, Heft: Lob-Stempel wie im Schulheft */
+.stamp{display:none}
+:root[data-style=heft] .stamp{display:block;width:150px;height:150px;margin:-10px auto 18px;color:var(--dot);transform:rotate(-12deg);animation:stamp .5s .5s cubic-bezier(.3,1.5,.5,1) both}
+:root[data-style=heft] .stamp text{font:700 13.5px SG,system-ui,sans-serif;letter-spacing:.16em;fill:currentColor}
+@keyframes stamp{from{opacity:0;transform:rotate(-20deg) scale(1.9)}60%{opacity:1}}
+
+/* Bildschirmfotos vergrößern: Bild wächst aus seiner Position heraus */
+.zoom{cursor:zoom-in}
+.zoom:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+dialog.lb{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:clamp(16px,4vw,56px) clamp(12px,4vw,56px);border:0;background:none;color:var(--ink);overflow:hidden;cursor:zoom-out}
+dialog.lb[open]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+dialog.lb::backdrop{background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);animation:lbf .3s ease both}
+dialog.lb.out::backdrop{animation:lbf .25s ease reverse both}
+@keyframes lbf{from{opacity:0}}
+.lb img{display:block;min-height:0;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:var(--shadow);transform-origin:0 0}
+.lb p{margin:0;flex:none;font-size:15px;color:var(--grey);text-align:center;max-width:70ch;transition:opacity .2s}
+.lb .x{all:unset;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--surf);color:var(--ink);box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.lb .x:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.lb .x svg{width:18px;height:18px}
+html:has(dialog.lb[open]){overflow:hidden}
+.pick button[aria-checked=true] i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
