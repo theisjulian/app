@@ -1082,6 +1082,25 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
  .ov-main .live-program .split{grid-template-columns:1fr 1fr}
  .stats .stat{min-height:0!important}
 }
+
+/* ---- Reiseroute ---- */
+.rt-svg{display:block;width:100%;height:auto;max-height:200px;overflow:visible;color:var(--lg-hero-accent,#7ee5e9)}
+.rt-svg path,.rt-svg circle{stroke:currentColor}
+.rt-svg .f{fill:currentColor;fill-opacity:.12;stroke:none!important}
+.rt-svg .rt-line{stroke-dasharray:3 7;stroke-width:2.2}
+.rt-svg .rt-back{stroke-dasharray:2 8;opacity:.55}
+.rt-svg .rt-dot{fill:var(--lg-bo,#ce6e45)!important;stroke:none!important}
+.rt-svg .rt-dot.now{animation:rt-pulse 2.4s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.rt-svg .rt-t{font-size:15px;fill:currentColor;stroke:none!important;opacity:.75;font-family:var(--lg-font)}
+@keyframes rt-pulse{0%{filter:drop-shadow(0 0 0 currentColor)}50%{filter:drop-shadow(0 0 7px var(--lg-bo,#ce6e45))}100%{filter:drop-shadow(0 0 0 currentColor)}}
+@media (prefers-reduced-motion:reduce){.rt-svg .rt-dot.now{animation:none}}
+.rt-labels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.rt-labels>div{display:grid;gap:2px}.rt-labels>div:nth-child(2){text-align:center}.rt-labels>div:nth-child(3){text-align:right}
+.rt-labels small{font-size:12px;opacity:.8}.rt-labels b{font-size:15px}
+.hero .route .route-labels{display:none}
+.st-route .rt-svg{color:var(--lg-accent-text,var(--lg-accent));max-height:170px;margin-top:6px}
+.st-route .row{align-items:center}
+.st-route .rt-labels small{color:var(--lg-muted)}
 /* ===== Update 21 · Ende (CSS) ===== */
 </style></head><body><div id="namodemo" role="region" aria-label="Demo-Hinweis"><b>Demo</b><span class="nd-t">Erfundene Reise, nichts wird gespeichert.</span>
 <label class="nd-r"><span>Ansicht</span><select id="nd-role" aria-label="Rolle wählen">
@@ -3075,6 +3094,51 @@ function u21Dashboard(){
  };
  let wide=innerWidth>=U21_WIDE;
  addEventListener('resize',()=>{const w=innerWidth>=U21_WIDE;if(w!==wide){wide=w;try{if(state&&identity&&identity.role!=='student'&&tab==='Übersicht')render()}catch{}}});
+}
+
+/* --- Programm-Symbole: alle vorhandenen Illustrationen auswählbar, Bus ergänzt, allgemeine Begriffe erkannt --- */
+NAMO_ILLU.bus='<path class="f" d="M10 44V20q0-6 6-6h32q6 0 6 6v24z"/><path d="M10 44V20q0-6 6-6h32q6 0 6 6v24zM4 54h56"/><rect x="15" y="20" width="34" height="11" rx="2"/><path d="M32 20v11M15 38h5M44 38h5M26 14v-4h12v4"/><circle cx="20" cy="47" r="4"/><circle cx="44" cy="47" r="4"/>';
+{
+ const have=new Set(ILLU_CHOICES.map(c=>c[0]));
+ [['bus','Bus / Transfer','Autobus / transfer'],['dome','Kuppel / Basilika','Cupola / basilica'],['campanile','Glockenturm','Campanile'],['palazzo','Palast / Rathaus','Palazzo / municipio'],['arcade','Arkaden','Portici'],['bridge','Brücke','Ponte'],['glass','Glas / Werkstatt','Vetro / laboratorio'],['houses','Bunte Häuser','Case colorate'],['umbrella','Strand','Spiaggia']]
+  .forEach(c=>{if(!have.has(c[0]))ILLU_CHOICES.splice(ILLU_CHOICES.length-1,0,c)});
+ const ik=illuKind;
+ illuKind=function(x){
+  const k=ik(x);if(k||!x||x.illu==='none')return k;
+  const t=placeNorm((x.title||'')+' '+(x.place||''));
+  const R=[[/\bbus\b|busfahrt|transfer|pullman|autobus/,'bus'],[/kuppel|basilika|basilica|cupola/,'dome'],[/glockenturm|campanile/,'campanile'],[/kirche|chiesa|\bdom\b|duomo|kathedrale|cattedrale|kloster|abtei/,'church'],
+   [/museum|museo|galerie|galleria|ausstellung|mostra|universitat|universita|bibliothek|biblioteca/,'museum'],[/markt|mercato/,'market'],[/\bturm\b|torre/,'tower'],[/brucke|ponte\b/,'bridge'],
+   [/palast|palazzo|rathaus|municipio/,'palazzo'],[/arkaden|portici|laubengang/,'arcade'],[/strand|spiaggia|baden|\blido\b|\bmeer\b/,'umbrella'],[/\bglas\b|vetro|glasblas/,'glass'],
+   [/gondel|gondola|traghetto/,'boat'],[/treffpunkt|treffen|ritrovo|sammelpunkt|abfahrt|partenza/,'landmark']];
+  for(const [re,kind] of R)if(re.test(t))return kind;
+  return '';
+ };
+}
+
+/* --- Reiseroute als Linien-Grafik: München → Bologna → Venedig → München (Titelbild der Leitung und „Heute“ der Schülerinnen) --- */
+function u21RouteStop(){
+ try{const d=tripClock().day;if(d<'2027-03-14')return 'muc';if(d<'2027-03-17')return 'bo';if(d<='2027-03-19')return 've';return 'home'}catch{return 'muc'}
+}
+function u21RouteSVG(){
+ const now=u21RouteStop(),dot=(k,x,y)=>`<circle class="rt-dot${now===k||(k==='muc'&&now==='home')?' now':''}" cx="${x}" cy="${y}" r="6"/>`;
+ return `<svg class="rt-svg" viewBox="8 8 522 186" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${esc(L('Reiseroute: München, Bologna, Venedig und zurück nach München','Itinerario: Monaco, Bologna, Venezia e ritorno a Monaco'))}">
+<g class="rt-city"><path class="f" d="M38 118V74l37-16 37 16v44z"/><path d="M38 118V74l37-16 37 16v44"/><path class="f" d="M50 118V44h16v74zM84 118V44h16v74z"/><path d="M50 118V44h16v74M84 118V44h16v74M50 44a8 10 0 0 1 16 0M84 44a8 10 0 0 1 16 0M58 34v-6M92 34v-6"/><path d="M54 58h8M88 58h8M54 70h8M88 70h8M69 118v-16a6 6 0 0 1 12 0v16"/><path d="M20 118V96l9-7 9 7M112 118V98l9-7 9 7"/></g>
+<g class="rt-city" transform="translate(-30 0)"><path class="f" d="M268 118V24h13v94z"/><path d="M268 118V24h13v94M266 24h17M268 24v-5h4v5M277 24v-5h4v5M271 40h7M271 56h7M271 72h7"/><g transform="rotate(5 293 118)"><path class="f" d="M287 118V62h12v56z"/><path d="M287 118V62h12v56M285 62h16"/></g><path d="M232 118V96h112v22M232 96l8-7h96l8 7"/><path d="M240 118v-11a6 6 0 0 1 12 0v11M258 118v-11a6 6 0 0 1 12 0v11M306 118v-11a6 6 0 0 1 12 0v11M324 118v-11a6 6 0 0 1 12 0v11"/></g>
+<g class="rt-city" transform="translate(-66 0)"><path class="f" d="M494 118V44h15v74z"/><path d="M494 118V44h15v74M492 44h19M492 60h19M494 44l7.5-16 7.5 16M501.5 28v-7M498 52h7"/><path class="f" d="M520 118V90h62v28z"/><path d="M520 118V90h62v28M524 90a9 9 0 0 1 18 0M542 90a9 9 0 0 1 18 0M560 90a9 9 0 0 1 18 0M533 81v-4M551 81v-4M569 81v-4M528 118v-12a5 5 0 0 1 10 0v12M546 118v-12a5 5 0 0 1 10 0v12M564 118v-12a5 5 0 0 1 10 0v12"/><path d="M450 128q6-4 12 0t12 0 12 0 12 0 12 0 12 0 12 0 12 0 12 0 12 0 12 0 12 0"/><path d="M456 112q22 9 46 0M456 112l-4-6M502 112l3-7M478 116v-7"/></g>
+<path class="rt-line" d="M120 106Q160 54 198 104"/><path class="rt-line" d="M318 104Q352 54 382 104"/><path class="rt-back" d="M424 142Q260 200 92 142"/><path class="rt-back" d="M100 135l-8 5 9 3"/>
+${dot('muc',75,108).replace('cy="108"','cy="128"')}${dot('bo',245,128)}${dot('ve',435,128)}
+<text class="rt-t" x="258" y="186" text-anchor="middle">${esc(L('Rückfahrt 19. März','Ritorno 19 marzo'))}</text></svg>
+<div class="rt-labels"><div><small>${esc(L('Abfahrt 14. März','Partenza 14 marzo'))}</small><b>${esc(L('München','Monaco'))}</b></div><div><small>14.–17. ${esc(L('März','marzo'))}</small><b>Bologna</b></div><div><small>17.–19. ${esc(L('März','marzo'))}</small><b>${esc(L('Venedig','Venezia'))}</b></div></div>`;
+}
+{
+ const r=render;
+ render=function(){const out=r.apply(this,arguments);try{const el=document.querySelector('.hero .route');if(el&&!el.querySelector('.rt-svg'))el.innerHTML=u21RouteSVG()}catch{}return out};
+ const sp=stPanel;
+ stPanel=function(){
+  const html=sp();if(studentTab!=='today')return html;
+  const card=`<div class="card st-route"><div class="row"><h2>${esc(L('Unsere Route','Il nostro itinerario'))}</h2><span class="pill">${esc(stCountdown())}</span></div>${u21RouteSVG()}</div>`;
+  const i=html.indexOf('<div id="st-rooms">');return i<0?html+card:html.slice(0,i)+card+html.slice(i);
+ };
 }
 /* ===== Update 21 · Ende ===== */
 init().catch(e=>{document.querySelector('main').innerHTML='<div class="card"><h2>Verbindung nicht verfügbar.</h2><p>Bitte Internetverbindung und Supabase-Einrichtung prüfen und die Seite neu laden.</p></div>';console.error(e)});
