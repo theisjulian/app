@@ -707,8 +707,8 @@ body.ov-on{overflow:hidden}
 .viewBtn[data-v="schilder"] .vp i{box-shadow:inset 0 9px 0 rgba(0,0,0,.18)}
 .viewBtn .vp i:nth-child(n){transition:none}
 
-html[data-view="farbig"] .tile{background:linear-gradient(160deg,var(--hue),color-mix(in srgb,var(--hue) 68%,#000));color:#fff;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 28px -14px var(--hue)}
-html[data-view="farbig"] .tile h3 b{color:#fff}
+html[data-view="farbig"] .tile,html[data-view="farbig"][data-skin] .tile{background:linear-gradient(160deg,var(--hue),color-mix(in srgb,var(--hue) 68%,#000))!important;color:#fff!important;border:0!important;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 28px -14px var(--hue)!important}
+html[data-view="farbig"] .tile h3 b,html[data-view="farbig"][data-skin] .tile h3 b{color:#fff!important}html[data-view="farbig"] .tile h3 b::before{background:#fff!important}
 html[data-view="farbig"] .tile h3 small{background:rgba(255,255,255,.24);color:#fff}
 html[data-view="farbig"] .tile .lockbtn{color:#fff}
 html[data-view="farbig"] .tile li.rep::after{background:#fff}
@@ -1068,6 +1068,48 @@ input::placeholder,textarea::placeholder,.ovtask::placeholder,.sizes input::plac
 .phor{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:80;background:var(--canvas)}.phor[hidden]{display:none}
 
 .dnav .dsh{font-size:15px}.dnav .dsh.on{background:var(--accent,#0a84ff);color:#fff}
+
+/* ===== Dashboard-Darstellungen, Termine, Kalender ===== */
+.devs{display:grid;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--sep,rgba(128,128,128,.2))}
+.dev{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;font-size:14px;line-height:1.35}
+.dev .dtm{min-width:44px;font-variant-numeric:tabular-nums;color:var(--label-2);font-weight:600}
+.dev.end{color:var(--orange)}.dev.hol{color:var(--green);font-weight:600;display:block}
+.dsh2{padding:4px 10px;font-size:12.5px;border-radius:999px}
+.l-compact .dday,.l-time .dday{grid-column:span 12!important;grid-row:auto!important}
+.l-compact .dcal,.l-time .dcal,.l-classes .dcal{grid-column:span 12}
+.l-classes .dclasses{grid-column:span 12}.l-classes .dday{grid-column:span 12!important;grid-row:auto!important}
+.dlist.tl{position:relative;margin-left:6px;padding-left:16px;border-left:3px solid var(--fill-2,rgba(128,128,128,.25));gap:0}
+.dlist.tl .drow{position:relative}.dlist.tl .drow::before{content:"";position:absolute;left:-25px;top:50%;width:11px;height:11px;margin-top:-5px;border-radius:50%;background:var(--label-3,#aab)}
+.dlist.tl .drow.live::before{background:#e0405a;box-shadow:0 0 0 5px color-mix(in srgb,#e0405a 25%,transparent)}
+.tlnow{position:relative;display:flex;align-items:center;gap:8px;color:#e0405a;font-weight:700;font-size:12.5px;margin:2px 0}
+.tlnow::before{content:"";position:absolute;left:-23px;width:9px;height:9px;border-radius:50%;background:#e0405a}
+.tlnow::after{content:"";flex:1;height:2px;background:#e0405a;opacity:.6}
+/* Fokus */
+.dfoc{grid-column:span 12;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:34px 20px 26px}
+.dring2{--p:0;width:min(46vw,230px);height:min(46vw,230px);border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--blue) calc(var(--p)*1%),var(--fill-2,rgba(128,128,128,.22)) 0);transition:background .6s}
+.dring2 i{width:80%;height:80%;border-radius:50%;background:var(--bg-elev,var(--card,#fff));display:grid;place-items:center;font-style:normal;font-size:clamp(30px,6vw,48px);font-weight:700;letter-spacing:-.03em;color:var(--label)}
+.dfoct{font-size:clamp(24px,4.4vw,40px);font-weight:700;letter-spacing:-.03em;margin-top:8px}
+.dfocs{font-size:18px;color:var(--label-2)}.dfocs.s2{font-size:15px}
+.dfoc .dacts{justify-content:center}.dfoc .dwhite{background:var(--blue);color:var(--on-accent,#fff)}.dfoc .dglass{background:var(--fill);color:var(--label)}
+.dfoc .devs{width:min(100%,520px);text-align:left}
+@media (prefers-reduced-motion:no-preference){.dring2{animation:dpulse 4s ease-in-out infinite}@keyframes dpulse{50%{transform:scale(1.025)}}}
+/* Kalender */
+.dmonth{grid-column:span 12;display:flex;flex-direction:column;gap:10px}
+.dmg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.dmh{text-align:center;font-size:12px;color:var(--label-2);font-weight:600;padding:2px 0}
+.dcell{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:6px 7px;border:0;border-radius:12px;background:var(--fill);color:var(--label);font:inherit;text-align:left;cursor:pointer;overflow:hidden}
+.dcell b{font-size:13px}.dcell small{font-size:10.5px;line-height:1.15;opacity:.9;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.dcell.out{opacity:.4}.dcell.we{background:var(--fill-2,rgba(128,128,128,.16));color:var(--label-2)}
+.dcell.fr{background:color-mix(in srgb,var(--green) 20%,transparent)}.dcell.fe{background:color-mix(in srgb,#ff3b5c 18%,transparent)}.dcell.ev{background:color-mix(in srgb,var(--orange) 20%,transparent)}
+.dcell.td{outline:2px solid var(--blue)}.dcell.sel{box-shadow:inset 0 0 0 2px var(--label-2)}
+.dmdet{margin-top:6px;display:grid;gap:6px}
+@media (max-width:700px){.dcell{min-height:46px;padding:4px}.dcell small{display:none}.dfoc{padding:24px 14px}}
+.dev.nt{grid-template-columns:1fr}
+.dring2 i{flex-direction:column;line-height:1.05}.dring2 i b{font-size:clamp(34px,7vw,56px);font-weight:700}.dring2 i small{font-size:13px;font-weight:500;color:var(--label-2);letter-spacing:0}
+
+.dhr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.dlsel{appearance:none;-webkit-appearance:none;border:0;border-radius:999px;padding:9px 14px;background:var(--fill);color:var(--label);font:inherit;font-size:14px;font-weight:600;cursor:pointer;max-width:100%}
+@media (max-width:700px){.dhr{justify-content:flex-start}}
 
 /* ===== Theme-Charakter (Okt. 2026) =====
    Jedes Theme verändert nicht nur Farben, sondern Hintergrund, Formen, Ränder, Schatten, Überschriften,
@@ -3612,6 +3654,17 @@ Object.assign(X, {
   setName: ['Dein Name', 'Your name', 'Il tuo nome', 'Ton nom', 'Tu nombre'],
   setNameNote: ['Erscheint auf PDFs und in der Begrüßung im Dashboard.', 'Appears on PDFs and in the dashboard greeting.', 'Compare nei PDF e nel saluto della dashboard.', 'Apparaît sur les PDF et dans l’accueil du tableau de bord.', 'Aparece en los PDF y en el saludo del panel.'],
   setNamePh: ['z. B. Frau Meier', 'e.g. Ms Smith', 'es. Prof. Rossi', 'p. ex. Mme Martin', 'p. ej. Sra. García'],
+  dThen: ['Danach', 'Next', 'Poi', 'Ensuite', 'Después'],
+  dLayout: ['Darstellung der Übersicht', 'Overview layout', 'Aspetto della panoramica', 'Affichage de l’aperçu', 'Diseño del resumen'],
+  dlStd: ['Standard', 'Standard', 'Standard', 'Standard', 'Estándar'],
+  dlCompact: ['Kompakt', 'Compact', 'Compatta', 'Compact', 'Compacta'],
+  dlFocus: ['Fokus (groß, fürs Pult)', 'Focus (large, for the desk)', 'Focus (grande, per la cattedra)', 'Focus (grand, pour le bureau)', 'Enfoque (grande, para el escritorio)'],
+  dlTime: ['Zeitleiste', 'Timeline', 'Linea del tempo', 'Frise', 'Cronología'],
+  dlClasses: ['Klassen zuerst', 'Classes first', 'Prima le classi', 'Classes d’abord', 'Clases primero'],
+  dlMonth: ['Kalender', 'Calendar', 'Calendario', 'Calendrier', 'Calendario'],
+  dNowMark: ['Jetzt', 'Now', 'Adesso', 'Maintenant', 'Ahora'],
+  dPickSet: ['„Wer ist dran?“ anzeigen', 'Show “Who’s next?”', 'Mostra «Chi è il prossimo?»', 'Afficher « À qui le tour ? »', 'Mostrar «¿A quién le toca?»'],
+  dMin: ['Min.', 'min', 'min', 'min', 'min'],
   dfNews: ['Nachrichten', 'News', 'Notizie', 'Actualités', 'Noticias'],
   nwTitle: ['Nachrichten des Tages', 'News of the day', 'Notizie del giorno', 'L’actualité du jour', 'Noticias del día'],
   nwSet: ['Nachrichten des Tages im Dashboard', 'News of the day in the dashboard', 'Notizie del giorno nella dashboard', 'Actualité du jour dans le tableau de bord', 'Noticias del día en el panel'],
@@ -3744,9 +3797,17 @@ Object.assign(X, {
   const nwLab = el('label', 'row'); nwLab.style.padding = '11px 0'; const nwT = el('span', ''); const nwSw = el('input', 'sw'); nwSw.type = 'checkbox'; nwLab.append(nwT, nwSw);
   const nwNote = el('p', 'note'); nwNote.style.margin = '0'; nwRow.append(nwLab, nwNote); genPane.appendChild(nwRow);
   nwSw.checked = !!wt.news; nwSw.onchange = () => { wt.news = nwSw.checked; saveTool(); if (wt.view === 'dash') renderDash(); };
-  const syncSet = () => { nameIn.value = nm(); nwSw.checked = !!wt.news; };
+  const LAYS = [['std', 'dlStd'], ['compact', 'dlCompact'], ['focus', 'dlFocus'], ['time', 'dlTime'], ['classes', 'dlClasses'], ['month', 'dlMonth']];
+  const lyRow = el('div', ''); lyRow.style.marginTop = '20px'; const lyT = el('h3', ''); lyT.style.margin = '0 0 8px'; const lySel = el('select', 'ovtask'); lySel.style.cssText = 'width:100%;text-align:left;font-size:16px';
+  LAYS.forEach(([k]) => { const o = el('option'); o.value = k; lySel.appendChild(o); });
+  const pkLab = el('label', 'row'); pkLab.style.padding = '11px 0'; const pkT = el('span', ''); const pkSw = el('input', 'sw'); pkSw.type = 'checkbox'; pkLab.append(pkT, pkSw);
+  lyRow.append(lyT, lySel, pkLab); genPane.insertBefore(lyRow, nwRow);
+  const applyPick = () => { const b = $d('pkBtn'); if (b) b.hidden = !!wt.pickOff; };
+  lySel.onchange = () => { wt.dashLayout = lySel.value; saveTool(); if (wt.view === 'dash') renderDash(); };
+  pkSw.onchange = () => { wt.pickOff = !pkSw.checked; saveTool(); applyPick(); if (wt.view === 'dash') renderDash(); };
+  const syncSet = () => { nameIn.value = nm(); nwSw.checked = !!wt.news; lySel.value = wt.dashLayout; pkSw.checked = !wt.pickOff; };
   setBtn.addEventListener('click', syncSet); prof.addEventListener('click', syncSet); const _os = window._openSet; window._openSet = t => { syncSet(); _os(t); };
-  const labelSet = () => { nwT.textContent = x('nwSet'); nwNote.textContent = x('nwNote'); nameIn.placeholder = x('setNamePh'); };
+  const labelSet = () => { lyT.textContent = x('dLayout'); LAYS.forEach(([k, l], i) => { lySel.options[i].textContent = x(l); }); pkT.textContent = x('dPickSet'); nwT.textContent = x('nwSet'); nwNote.textContent = x('nwNote'); nameIn.placeholder = x('setNamePh'); };
 
   /* ===== Daten ===== */
   function meDay() { const D = jget('orario_v1'), n = jget('orario_me'); return D && n && D.teachers && D.teachers[n] ? { D, n } : null; }
@@ -3827,7 +3888,7 @@ Object.assign(X, {
   function tile(icon, label, hue, fn, off) { const b = el('button', 'dtile'); b.type = 'button'; b.style.setProperty('--th', hue); b.innerHTML = '<i>' + icon + '</i><span></span>'; b.lastChild.textContent = label; b.onclick = fn; if (off) b.disabled = true; return b; }
   function tools(host) {
     const g = el('div', 'dtiles');
-    g.append(tile(IC.groups, x('dOpenCls'), 'var(--g1)', () => setView('groups')), tile(IC.pick, x('pk'), 'var(--g5)', () => $d('pkBtn').click()), tile(IC.clock, x('cl'), 'var(--g4)', () => $d('clBtn').click()),
+    g.append(tile(IC.groups, x('dOpenCls'), 'var(--g1)', () => setView('groups')), ...(wt.pickOff ? [] : [tile(IC.pick, x('pk'), 'var(--g5)', () => $d('pkBtn').click())]), tile(IC.clock, x('cl'), 'var(--g4)', () => $d('clBtn').click()),
       tile(IC.beam, lastResult ? x('dBeamer') : x('dBeamerOff'), 'var(--g3)', () => { setView('groups'); const f = $d('fsBtn'); if (f) f.click(); }, !lastResult));
     if (wt.seat && wt.seat.on) g.append(tile(IC.seat, x('sp'), 'var(--g6)', () => $d('spBtn').click()));
     if (wt.plan && wt.plan.on) g.append(tile(IC.plan, x('stOn'), 'var(--g8)', () => $d('stBtn').click()));
@@ -3844,7 +3905,58 @@ Object.assign(X, {
     const pn = plansN(n); if (pn > 1) row.append(el('span', 'dchip', pn + ' ' + x('dPlansN'))); return row; };
 
   /* ===== Fokus: Heute ===== */
+  const layoutOf = () => LAYS.some(l => l[0] === wt.dashLayout) ? wt.dashLayout : 'std';
+  const hm2 = m => { const h = Math.floor(m / 60), mi = m % 60; return (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi; };
+  /* Termine eines Tages (aus dem importierten Schulkalender) */
+  function evLines(host, d, withShort) {
+    if (!window._cal || !window._cal.evOn) return; const E = window._cal.evOn(d); if (!E.length) return;
+    const box = el('div', 'devs'); E.slice(0, 6).forEach(e => {
+      const r = el('div', 'dev' + (e.tm ? '' : ' nt')); if (e.tm) r.append(el('span', 'dtm', e.tm)); r.append(el('span', 'dtx', e.ti)); box.appendChild(r);
+      if (e.end) { const c = el('div', 'dev end'); c.append(el('span', 'dtm', '⏱'), el('span', 'dtx', x('evEnd').split('{0}').join(e.end)));
+        if (withShort && e.short && window._shortSet && !(window._shortOn && window._shortOn())) c.appendChild(btn('dnb dsh2', x('evShort'), () => { window._shortSet(true); renderDash(); })); box.appendChild(c); }
+    });
+    if (E.length > 6) box.appendChild(el('div', 'dev', '+' + (E.length - 6))); host.appendChild(box);
+  }
+  /* Fokus: groß, fürs Pult / den Beamer */
+  function viewFocus(host) {
+    const T0 = wt.plan && wt.plan.on ? today() : null, c = el('div', 'dcard glass dfoc');
+    const FRI = window._cal && window._cal.free(new Date()); let cur = null, nxt = null; if (T0 && !FRI) { cur = T0.rows.find(r => T0.m >= r.a && T0.m < r.b); nxt = T0.rows.find(r => r.a > T0.m); }
+    const f = cur || nxt, ring = el('div', 'dring2'); ring.style.setProperty('--p', cur ? Math.round((T0.m - cur.a) / (cur.b - cur.a) * 100) : 0);
+    const ri = el('i', ''); if (cur && !FRI) { ri.appendChild(el('b', '', String(cur.b - T0.m))); ri.appendChild(el('small', '', x('dLeft'))); } else ri.textContent = FRI ? '–' : nxt ? nxt.from : '–'; ring.appendChild(ri);
+    c.appendChild(ring);
+    c.appendChild(el('div', 'dfoct', FRI ? x(FRI.key) : f ? f.cls + (f.fach ? ' · ' + f.fach : '') : (T0 ? x('dFree') : (settings.cls || '—'))));
+    if (f && f.room) c.appendChild(el('div', 'dfocs', (cur ? '' : x('dNext') + ' · ') + f.room));
+    const after = cur ? nxt : (nxt && T0.rows.find(r => r.a > nxt.a));
+    if (after) c.appendChild(el('div', 'dfocs s2', x('dThen') + ': ' + after.cls + (after.fach ? ' · ' + after.fach : '') + ' · ' + after.from + (after.room ? ' · ' + after.room : '')));
+    if (FRI) c.appendChild(el('div', 'dfocs s2', fillC('calBack', fmtD(window._cal.backDay(new Date())))));
+    const acts = el('div', 'dacts'), mine = f && findCls(f.cls);
+    acts.append(btn('dwhite', x('dOpenCls'), () => pickCls(mine || settings.cls, true)), btn('dglass', '10 ' + x('minute'), () => quickTimer(10)), ...(wt.pickOff ? [] : [btn('dglass', x('pk'), () => { if (mine && mine !== settings.cls) pickCls(mine); $d('pkBtn').click(); })]));
+    c.appendChild(acts); evLines(c, new Date(), true); host.appendChild(c);
+  }
+  /* Kalender: Monat mit Ferien, Feiertagen und Terminen */
+  let monOff = 0, monSel = null;
+  function viewMonth(host) {
+    const C = window._cal, now = new Date(); now.setHours(12, 0, 0, 0); const m0 = new Date(now.getFullYear(), now.getMonth() + monOff, 1, 12);
+    const c = card(null, 'dcard glass dmonth'), nav = el('div', 'dnav');
+    const pv = btn('dnb', '‹', () => { monOff--; monSel = null; renderDash(); }), nx = btn('dnb', '›', () => { monOff++; monSel = null; renderDash(); });
+    const lb = el('span', 'dnl', m0.toLocaleDateString(LOC[lx()], { month: 'long', year: 'numeric' })); nav.append(pv, lb, nx);
+    if (monOff) nav.appendChild(btn('dnb', x('calToday'), () => { monOff = 0; monSel = null; renderDash(); })); c.appendChild(nav);
+    const g = el('div', 'dmg'); for (let i = 0; i < 7; i++) g.appendChild(el('div', 'dmh', new Date(2024, 0, 1 + i, 12).toLocaleDateString(LOC[lx()], { weekday: 'short' })));
+    const off = (m0.getDay() + 6) % 7, nd = new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate(), rows = Math.ceil((off + nd) / 7), sel = monSel || (monOff ? m0 : now);
+    for (let i = 0; i < rows * 7; i++) {
+      const d = new Date(m0.getFullYear(), m0.getMonth(), 1 - off + i, 12), inM = d.getMonth() === m0.getMonth(), fr = C ? C.info(d) : null, E = C && C.evOn ? C.evOn(d) : [];
+      const cell = el('button', 'dcell' + (inM ? '' : ' out') + (d.toDateString() === now.toDateString() ? ' td' : '') + (d.toDateString() === sel.toDateString() ? ' sel' : '') + (fr ? ' ' + (fr.kind === 'we' ? 'we' : fr.kind === 'feiertag' ? 'fe' : 'fr') : (E.length ? ' ev' : ''))); cell.type = 'button';
+      cell.appendChild(el('b', '', String(d.getDate()))); const lab = fr && fr.kind !== 'we' ? x(fr.key) : E.length ? E[0].ti : ''; if (lab) cell.appendChild(el('small', '', lab));
+      cell.onclick = () => { monSel = d; renderDash(); }; g.appendChild(cell);
+    }
+    c.appendChild(g);
+    const det = el('div', 'dmdet'); det.appendChild(el('h3', 'dh', fmtD(sel)));
+    const fr = C ? C.info(sel) : null; if (fr) det.appendChild(el('div', 'dev' + (fr.kind === 'we' ? '' : ' hol'), x(fr.key)));
+    const before = det.children.length; evLines(det, sel, sel.toDateString() === now.toDateString());
+    if (det.children.length === before + 0 && !fr) det.appendChild(el('p', 'dnote', x('evNoDay'))); c.appendChild(det); host.appendChild(c);
+  }
   function viewToday(host) {
+    const L = layoutOf(); if (L === 'month') return viewMonth(host); if (L === 'focus') return viewFocus(host);
     const T0 = wt.plan && wt.plan.on ? today() : null, hero = el('div', 'dhero');
     const FRI = window._cal && window._cal.free(new Date()); if (FRI && T0) T0.rows = [];
     let cur = null, nxt = null; if (T0) { cur = T0.rows.find(r => T0.m >= r.a && T0.m < r.b); nxt = T0.rows.find(r => r.a > T0.m); }
@@ -3854,13 +3966,14 @@ Object.assign(X, {
     if (FRI) hero.append(el('div', 'dsub', fillC('calBack', fmtD(window._cal.backDay(new Date())))));
     if (f) {
       hero.append(el('div', 'dsub', f.from + ' – ' + f.to + (f.room ? ' · ' + f.room : '')));
-      if (cur) { const pr = el('div', 'dprog'), bar = el('i'); bar.style.width = Math.max(4, Math.min(100, (T0.m - cur.a) / (cur.b - cur.a) * 100)) + '%'; pr.appendChild(bar); hero.append(pr, el('div', 'dsub s2', (cur.b - T0.m) + ' ' + x('dLeft'))); }
+      if (cur) { const pr = el('div', 'dprog'), bar = el('i'); bar.style.width = Math.max(4, Math.min(100, (T0.m - cur.a) / (cur.b - cur.a) * 100)) + '%'; pr.appendChild(bar); hero.append(pr, el('div', 'dsub s2', (cur.b - T0.m) + ' ' + x('dLeft') + (nxt ? ' · ' + x('dThen') + ': ' + nxt.cls + ' · ' + nxt.from : ''))); }
     } else if (T0 && !FRI) hero.append(el('div', 'dsub', x('dFree')));
     const acts = el('div', 'dacts'); const mine = f && findCls(f.cls);
-    acts.append(btn('dwhite', x('dOpenCls'), () => pickCls(mine || settings.cls, true)), btn('dglass', '10 ' + x('minute'), () => quickTimer(10)), btn('dglass', x('pk'), () => { if (mine && mine !== settings.cls) pickCls(mine); $d('pkBtn').click(); }));
+    acts.append(btn('dwhite', x('dOpenCls'), () => pickCls(mine || settings.cls, true)), btn('dglass', '10 ' + x('minute'), () => quickTimer(10)), ...(wt.pickOff ? [] : [btn('dglass', x('pk'), () => { if (mine && mine !== settings.cls) pickCls(mine); $d('pkBtn').click(); })]));
     hero.append(acts); if (shown) hero.append(chipsOf(shown));
     if (window._cal) { const ob = window._cal.obs(new Date()); if (ob.length) { const cw = el('div', 'dchips'); ob.forEach(o => { const b2 = el('button', 'dchip'); b2.type = 'button'; b2.style.cursor = 'pointer'; b2.textContent = x('calToday') + ': ' + x(o.key); b2.onclick = () => window._cal.show(o.key, o.a, o.b, o.c); cw.appendChild(b2); }); hero.append(cw); } }
-    host.appendChild(hero);
+    if (L === 'std') host.appendChild(hero);
+    if (L === 'classes') viewClasses(host);
     const day = card(x('dDay'), 'dday');
     const TD = T0 && dOff ? today(dOff) : T0, dd = dayAt(dOff), fr = window._cal && window._cal.info ? window._cal.info(dd) : null;
     if (T0) {
@@ -3877,23 +3990,29 @@ Object.assign(X, {
     else if (!T0) { day.append(el('p', 'dnote', x('dNoMe')), btn('dgo', x('dOpenPlan'), () => $d('stBtn').click())); }
     else if (fr && fr.kind !== 'we' && (dOff || !TD.rows.length)) day.append(el('p', 'dnote dfree', fillC('dFreeDay', x(fr.key))));
     else if (!TD.rows.length) day.append(el('p', 'dnote', dOff || (new Date().getDay() % 6 === 0) ? (new Date(dd).getDay() % 6 === 0 ? x('dWeekend') : x('dNoLessonDay')) : x('dNoLesson')));
-    else { const ul = el('div', 'dlist'); TD.rows.forEach(r => {
+    else { const ul = el('div', 'dlist' + (L === 'time' ? ' tl' : '')); let mk = false; TD.rows.forEach(r => {
+      if (L === 'time' && !dOff && !mk && TD.m >= r.a && TD.m < r.b) mk = true;
+      if (L === 'time' && !dOff && !mk && TD.m < r.a) { mk = true; ul.appendChild(el('div', 'tlnow', x('dNowMark') + ' · ' + hm2(TD.m))); }
       const m2 = findCls(r.cls), live = TD.m >= r.a && TD.m < r.b, past = TD.m >= r.b; const row = el('button', 'drow' + (live ? ' live' : '') + (past ? ' past' : '')); row.type = 'button';
       const dot = el('i', 'ddot'); dot.style.background = m2 ? hueOf(m2) : 'var(--label-3)';
       row.append(el('span', 'dtm', r.from), dot, el('span', 'dtx', r.cls + (r.fach ? ' · ' + r.fach : '')), el('span', 'dro', r.room || '')); row.disabled = !m2; if (m2) row.onclick = () => pickCls(m2, true); ul.appendChild(row); }); day.appendChild(ul); }
-    host.appendChild(day);
-    const q = card(x('dQuick'), 'dquick'); tools(q); host.appendChild(q);
+    evLines(day, dd, !dOff); host.appendChild(day);
+    if (L === 'std') { const q = card(x('dQuick'), 'dquick'); tools(q); host.appendChild(q); }
     calCard(host);
-    newsCard(host, 4, false);
+    if (L === 'std') newsCard(host, 4, false);
   }
   function fillC(k, v) { return x(k).split('{0}').join(v).replace(/\.\.$/, '.'); }
   function fmtD(d) { try { return d.toLocaleDateString(LOC[lx()], { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return ''; } }
   function calCard(host) {
-    if (!window._cal) return; const up = window._cal.upcoming(new Date(), 6); if (!up.length) return;
-    const c = card(x('calNext'), 'dcal'), ul = el('div', 'dlist');
+    if (!window._cal) return; let up = window._cal.upcoming(new Date(), 6);
+    if (window._cal.evNext) { const ev = window._cal.evNext(new Date(), 8, 40).filter(e => e.days >= 1).map(e => ({ ti: e.ti, a: e.a, b: e.b, days: e.days, kind: 'ev', tm: e.tm })); up = up.concat(ev).sort((p, q) => p.a - q.a).slice(0, 8); }
+    if (!up.length) return;
+    const c = card(window._cal.evCount && window._cal.evCount() ? x('evMore') : x('calNext'), 'dcal'), ul = el('div', 'dlist');
     up.forEach(u => { const row = el('button', 'drow'); row.type = 'button'; const dot = el('i', 'ddot'); dot.style.background = u.kind === 'ferien' || u.kind === 'frei' ? 'var(--green)' : u.kind === 'feiertag' ? 'var(--orange, #ff9f0a)' : u.c === 'j' ? 'var(--blue)' : u.c === 'm' ? 'var(--purple, #af52de)' : 'var(--label-3)';
-      row.append(el('span', 'dtm', u.days === 1 ? x('calTom') : fillC('calIn', u.days)), dot, el('span', 'dtx', x(u.key)), el('span', 'dro', u.b.getTime() !== u.a.getTime() ? fmtD(u.a) + ' – ' + fmtD(u.b) : fmtD(u.a))); row.onclick = () => window._cal.show(u.key, u.a, u.b, u.c); ul.appendChild(row); });
-    c.append(ul, el('p', 'dnote', x('calNote'))); host.appendChild(c);
+      row.append(el('span', 'dtm', u.days === 1 ? x('calTom') : fillC('calIn', u.days)), dot, el('span', 'dtx', u.ti || x(u.key)), el('span', 'dro', u.b.getTime() !== u.a.getTime() ? fmtD(u.a) + ' – ' + fmtD(u.b) : fmtD(u.a))); if (u.kind === 'ev') row.disabled = true; else row.onclick = () => window._cal.show(u.key, u.a, u.b, u.c); ul.appendChild(row); });
+    c.append(ul, el('p', 'dnote', x('calNote')));
+    if (window._cal.importPick && !window._cal.evCount()) c.appendChild(btn('dgo', x('evImp'), () => window._cal.importPick()));
+    host.appendChild(c);
   }
 
   /* ===== Fokus: Klassen ===== */
@@ -3931,10 +4050,15 @@ Object.assign(X, {
     tt.append(el('h2', 'dgreet', x(g) + (fn ? ', ' + fn : '')), el('p', 'ddate', new Date().toLocaleDateString(LOC[lx()], { weekday: 'long', day: 'numeric', month: 'long' })));
     const seg = el('div', 'seg dfocus'); seg.setAttribute('role', 'tablist');
     [['today', 'dfToday'], ['classes', 'dfClasses'], ['teach', 'dfTeach'], ['news', 'dfNews']].forEach(([k, lab]) => { const bb = btn('', x(lab), () => { wt.dashFocus = k; saveTool(); renderDash(); }); bb.setAttribute('role', 'tab'); bb.setAttribute('aria-pressed', wt.dashFocus === k); seg.appendChild(bb); });
-    head.append(tt, seg); dash.appendChild(head);
-    const body = el('div', 'dbody f-' + wt.dashFocus + (wt.plan && wt.plan.on ? '' : ' noplan')); dash.appendChild(body);
+    const lsel = el('select', 'dlsel'); lsel.setAttribute('aria-label', x('dLayout')); lsel.title = x('dLayout');
+    LAYS.forEach(([k, l]) => { const o = el('option', '', '▦ ' + x(l).replace(/ \(.*\)$/, '')); o.value = k; lsel.appendChild(o); }); lsel.value = layoutOf();
+    lsel.onchange = () => { wt.dashLayout = lsel.value; saveTool(); renderDash(); };
+    const hr2 = el('div', 'dhr'); hr2.append(seg, lsel);
+    head.append(tt, hr2); dash.appendChild(head);
+    const body = el('div', 'dbody f-' + wt.dashFocus + ' l-' + layoutOf() + (wt.plan && wt.plan.on ? '' : ' noplan')); dash.appendChild(body);
     ({ today: viewToday, classes: viewClasses, teach: viewTeach, news: viewNews })[wt.dashFocus](body);
   }
+  applyPick();
   wt.dashFocus = ['today', 'classes', 'teach', 'news'].includes(wt.dashFocus) ? wt.dashFocus : 'today';
 
   const _ab = window._wAfterBoard; window._wAfterBoard = function () { _ab(); sbDraw(); if (wt.view === 'dash') renderDash(); };
@@ -4306,6 +4430,21 @@ const EV = {
 };
 const FERD = {"BW":[["H","2026-10-26","2026-10-30"],["B","2026-10-31","2026-10-31"],["W","2026-12-23","2027-01-09"],["O","2027-03-30","2027-04-03"],["B","2027-03-25","2027-03-25"],["P","2027-05-18","2027-05-29"],["S","2027-07-29","2027-09-11"],["H","2027-11-02","2027-11-06"],["W","2027-12-23","2028-01-08"],["B","2028-04-13","2028-04-13"],["O","2028-04-18","2028-04-22"],["P","2028-06-06","2028-06-17"],["S","2028-07-27","2028-09-09"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["O","2029-03-26","2029-04-07"],["P","2029-05-22","2029-06-01"],["S","2029-07-26","2029-09-08"]],"BY":[["H","2026-11-02","2026-11-06"],["W","2026-12-24","2027-01-08"],["F","2027-02-08","2027-02-12"],["O","2027-03-22","2027-04-02"],["P","2027-05-18","2027-05-28"],["S","2027-08-02","2027-09-13"],["H","2027-11-02","2027-11-05"],["W","2027-12-24","2028-01-07"],["F","2028-02-28","2028-03-03"],["O","2028-04-10","2028-04-21"],["P","2028-06-06","2028-06-16"],["S","2028-07-31","2028-09-11"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-06-01"],["S","2029-07-30","2029-09-10"],["H","2029-10-29","2029-11-02"],["W","2029-12-24","2030-01-04"],["F","2030-03-04","2030-03-08"],["O","2030-04-15","2030-04-26"],["P","2030-06-11","2030-06-21"],["S","2030-07-29","2030-09-09"]],"BE":[["H","2026-10-19","2026-10-31"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-18","2027-05-19"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-22","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["P","2028-06-01","2028-06-02"],["S","2028-07-01","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["B","2029-03-09","2029-03-09"],["O","2029-03-26","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-22","2029-05-25"],["S","2029-07-01","2029-08-11"]],"BB":[["H","2026-10-19","2026-10-30"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["S","2028-06-29","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["O","2029-03-26","2029-04-06"],["B","2029-05-22","2029-05-22"],["S","2029-06-28","2029-08-11"]],"HB":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-08","2027-08-18"],["H","2027-10-18","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"HH":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-01"],["B","2027-01-29","2027-01-29"],["F","2027-03-01","2027-03-12"],["P","2027-05-07","2027-05-14"],["S","2027-07-01","2027-08-11"],["H","2027-10-11","2027-10-22"],["W","2027-12-20","2027-12-31"],["B","2028-01-28","2028-01-28"],["F","2028-03-06","2028-03-17"],["P","2028-05-22","2028-05-26"],["S","2028-07-03","2028-08-11"],["H","2028-10-02","2028-10-13"],["B","2028-10-30","2028-10-30"],["W","2028-12-18","2028-12-29"],["B","2029-02-02","2029-02-02"],["F","2029-03-05","2029-03-16"],["P","2029-05-11","2029-05-18"],["S","2029-07-02","2029-08-10"]],"HE":[["H","2026-10-05","2026-10-17"],["W","2026-12-23","2027-01-12"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-16"],["W","2027-12-23","2028-01-11"],["O","2028-04-03","2028-04-14"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-27","2029-01-12"],["O","2029-03-29","2029-04-13"],["S","2029-07-16","2029-08-24"]],"MV":[["H","2026-10-15","2026-10-24"],["W","2026-12-21","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-24","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-14","2027-05-18"],["S","2027-07-05","2027-08-14"],["H","2027-10-14","2027-10-23"],["W","2027-12-22","2028-01-04"],["F","2028-02-05","2028-02-18"],["O","2028-04-12","2028-04-21"],["B","2028-05-26","2028-05-26"],["P","2028-06-02","2028-06-06"],["S","2028-06-26","2028-08-05"],["H","2028-10-23","2028-10-28"],["B","2028-10-02","2028-10-02"],["B","2028-10-30","2028-10-30"],["W","2028-12-22","2029-01-02"],["F","2029-02-05","2029-02-16"],["B","2029-03-09","2029-03-09"],["O","2029-03-28","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-18","2029-05-22"],["S","2029-06-18","2029-07-28"]],"NI":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-02","2027-08-12"],["H","2027-10-16","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"NW":[["H","2026-10-17","2026-10-31"],["W","2026-12-23","2027-01-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-19","2027-08-31"],["H","2027-10-23","2027-11-06"],["W","2027-12-24","2028-01-08"],["O","2028-04-10","2028-04-22"],["S","2028-07-10","2028-08-22"],["H","2028-10-23","2028-11-04"],["W","2028-12-21","2029-01-05"],["O","2029-03-26","2029-04-07"],["B","2029-05-22","2029-05-22"],["S","2029-07-02","2029-08-14"]],"RP":[["H","2026-10-05","2026-10-16"],["W","2026-12-23","2027-01-08"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-23","2028-01-07"],["O","2028-04-10","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-21","2029-01-08"],["O","2029-03-26","2029-04-06"],["S","2029-07-16","2029-08-24"]],"SL":[["H","2026-10-05","2026-10-16"],["W","2026-12-21","2026-12-31"],["F","2027-02-08","2027-02-12"],["O","2027-03-30","2027-04-09"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-20","2027-12-31"],["F","2028-02-21","2028-02-29"],["O","2028-04-12","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-20","2029-01-02"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-05-25"],["S","2029-07-16","2029-08-24"]],"SN":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-26","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-15","2027-05-18"],["S","2027-07-10","2027-08-20"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-01"],["F","2028-02-14","2028-02-26"],["O","2028-04-14","2028-04-22"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-03"],["F","2029-02-05","2029-02-16"],["O","2029-03-29","2029-04-06"],["B","2029-05-11","2029-05-11"],["P","2029-05-19","2029-05-22"],["S","2029-07-21","2029-08-31"]],"ST":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-03-27"],["P","2027-05-15","2027-05-22"],["S","2027-07-10","2027-08-20"],["H","2027-10-18","2027-10-23"],["W","2027-12-20","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-10","2028-04-22"],["P","2028-06-03","2028-06-10"],["S","2028-07-22","2028-09-01"],["H","2028-10-30","2028-11-03"],["B","2028-10-02","2028-10-02"],["W","2028-12-21","2029-01-02"],["F","2029-02-05","2029-02-10"],["O","2029-03-26","2029-03-31"],["B","2029-04-30","2029-04-30"],["P","2029-05-11","2029-05-25"],["S","2029-07-21","2029-08-31"]],"SH":[["H","2026-10-12","2026-10-24"],["W","2026-12-21","2027-01-06"],["O","2027-03-30","2027-04-10"],["B","2027-05-07","2027-05-07"],["S","2027-07-03","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-08"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-06-24","2028-08-04"],["H","2028-10-16","2028-10-30"],["W","2028-12-21","2029-01-05"],["O","2029-03-23","2029-04-06"],["B","2029-05-11","2029-05-11"],["S","2029-06-23","2029-08-03"]],"TH":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["S","2027-07-10","2027-08-20"],["H","2027-10-09","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-17"],["O","2029-03-26","2029-04-07"],["B","2029-05-11","2029-05-11"],["S","2029-07-21","2029-08-31"]]};
 const REL = [["j","jRosch","2026-09-12","2026-09-13"],["j","jKippur","2026-09-21","2026-09-21"],["j","jSukkot","2026-09-26","2026-10-02"],["j","jSimchat","2026-10-04","2026-10-04"],["j","jChanukka","2026-12-05","2026-12-12"],["m","mRamadan","2027-02-08","2027-02-08"],["m","mQadr","2027-03-06","2027-03-06"],["m","mFitr","2027-03-09","2027-03-11"],["j","jPurim","2027-03-23","2027-03-23"],["j","jPessach","2027-04-22","2027-04-29"],["m","mAdha","2027-05-16","2027-05-19"],["m","mNeujahr","2027-06-06","2027-06-06"],["j","jSchawuot","2027-06-11","2027-06-12"],["m","mAschura","2027-06-15","2027-06-15"],["m","mMawlid","2027-08-14","2027-08-14"],["j","jRosch","2027-10-02","2027-10-03"],["j","jKippur","2027-10-11","2027-10-11"],["j","jSukkot","2027-10-16","2027-10-22"],["j","jSimchat","2027-10-24","2027-10-24"],["j","jChanukka","2027-12-25","2028-01-01"],["m","mRamadan","2028-01-28","2028-01-28"],["m","mQadr","2028-02-23","2028-02-23"],["m","mFitr","2028-02-26","2028-02-28"],["j","jPurim","2028-03-12","2028-03-12"],["j","jPessach","2028-04-11","2028-04-18"],["m","mAdha","2028-05-05","2028-05-08"],["m","mNeujahr","2028-05-25","2028-05-25"],["j","jSchawuot","2028-05-31","2028-06-01"],["m","mAschura","2028-06-03","2028-06-03"],["m","mMawlid","2028-08-03","2028-08-03"],["j","jRosch","2028-09-21","2028-09-22"],["j","jKippur","2028-09-30","2028-09-30"],["j","jSukkot","2028-10-05","2028-10-11"],["j","jSimchat","2028-10-13","2028-10-13"],["j","jChanukka","2028-12-13","2028-12-20"],["m","mRamadan","2029-01-16","2029-01-16"],["m","mQadr","2029-02-11","2029-02-11"],["m","mFitr","2029-02-14","2029-02-16"],["j","jPurim","2029-03-01","2029-03-01"],["j","jPessach","2029-03-31","2029-04-07"],["m","mAdha","2029-04-24","2029-04-27"],["m","mNeujahr","2029-05-14","2029-05-14"],["j","jSchawuot","2029-05-20","2029-05-21"],["m","mAschura","2029-05-23","2029-05-23"],["m","mMawlid","2029-07-24","2029-07-24"],["j","jRosch","2029-09-10","2029-09-11"],["j","jKippur","2029-09-19","2029-09-19"],["j","jSukkot","2029-09-24","2029-09-30"],["j","jSimchat","2029-10-02","2029-10-02"],["j","jChanukka","2029-12-02","2029-12-09"],["m","mRamadan","2030-01-05","2030-01-05"],["m","mQadr","2030-01-31","2030-01-31"],["m","mFitr","2030-02-04","2030-02-06"],["j","jPurim","2030-03-19","2030-03-19"],["m","mAdha","2030-04-13","2030-04-16"],["j","jPessach","2030-04-18","2030-04-25"],["m","mNeujahr","2030-05-03","2030-05-03"],["m","mAschura","2030-05-12","2030-05-12"],["j","jSchawuot","2030-06-07","2030-06-08"],["m","mMawlid","2030-07-13","2030-07-13"],["j","jRosch","2030-09-28","2030-09-29"],["j","jKippur","2030-10-07","2030-10-07"],["j","jSukkot","2030-10-12","2030-10-18"],["j","jSimchat","2030-10-20","2030-10-20"],["j","jChanukka","2030-12-21","2030-12-28"],["m","mRamadan","2030-12-26","2030-12-26"]];
+
+Object.assign(X, {
+  evImp: ['Schulkalender importieren (CSV)', 'Import school calendar (CSV)', 'Importa calendario scolastico (CSV)', 'Importer le calendrier scolaire (CSV)', 'Importar calendario escolar (CSV)'],
+  evDel: ['Entfernen', 'Remove', 'Rimuovi', 'Supprimer', 'Quitar'],
+  evMine: ['Nur Termine für meine Klassen', 'Only events for my classes', 'Solo eventi per le mie classi', 'Seulement les événements de mes classes', 'Solo eventos de mis clases'],
+  evNote: ['Die Datei bleibt nur auf diesem Gerät. Gespeichert werden nur Titel, Datum und Uhrzeit – keine Namen oder Beschreibungen.', 'The file stays on this device only. Only title, date and time are saved – no names or descriptions.', 'Il file resta solo su questo dispositivo. Si salvano solo titolo, data e ora – nessun nome o descrizione.', 'Le fichier reste sur cet appareil. Seuls le titre, la date et l’heure sont enregistrés – ni noms ni descriptions.', 'El archivo queda solo en este dispositivo. Solo se guardan título, fecha y hora, sin nombres ni descripciones.'],
+  evCount: ['{0} Termine geladen', '{0} events loaded', '{0} eventi caricati', '{0} événements chargés', '{0} eventos cargados'],
+  evBad: ['Diese Datei konnte nicht gelesen werden.', 'This file could not be read.', 'Impossibile leggere questo file.', 'Ce fichier n’a pas pu être lu.', 'No se pudo leer este archivo.'],
+  evNone: ['Noch kein Kalender geladen.', 'No calendar loaded yet.', 'Nessun calendario caricato.', 'Aucun calendrier chargé.', 'Aún no hay calendario.'],
+  evEnd: ['Unterrichtsschluss {0}', 'School ends {0}', 'Fine lezioni {0}', 'Fin des cours {0}', 'Fin de clases {0}'],
+  evShort: ['Kurzstunden einschalten', 'Turn on short lessons', 'Attiva le lezioni brevi', 'Activer les cours courts', 'Activar clases cortas'],
+  evTitle: ['Termine', 'Events', 'Eventi', 'Événements', 'Eventos'],
+  evNoDay: ['Nichts eingetragen.', 'Nothing scheduled.', 'Niente in programma.', 'Rien de prévu.', 'Nada previsto.'],
+  evMore: ['Das steht an', 'Coming up', 'In arrivo', 'À venir', 'Próximamente']
+});
 (function () {
   const LANDS = { BW: 'Baden-Württemberg', BY: 'Bayern', BE: 'Berlin', BB: 'Brandenburg', HB: 'Bremen', HH: 'Hamburg', HE: 'Hessen', MV: 'Mecklenburg-Vorpommern', NI: 'Niedersachsen', NW: 'Nordrhein-Westfalen', RP: 'Rheinland-Pfalz', SL: 'Saarland', SN: 'Sachsen', ST: 'Sachsen-Anhalt', SH: 'Schleswig-Holstein', TH: 'Thüringen' };
   const FKEY = { H: 'fHerbst', W: 'fWeih', O: 'fOstern', P: 'fPfingsten', S: 'fSommer', B: 'fBrueck' };
@@ -4380,7 +4519,60 @@ const REL = [["j","jRosch","2026-09-12","2026-09-13"],["j","jKippur","2026-09-21
     document.body.appendChild(dlg); dlg.showModal(); dlg.querySelector('#calX').onclick = () => dlg.close();
     const cp = dlg.querySelector('#calCp'); if (cp) cp.onclick = () => { try { navigator.clipboard.writeText(wish); } catch (e) {} toast(x('calCopied'), 1500); };
   }
-  window._cal = { info, free, backDay, upcoming, obs, show, holidays: (y) => holidays(y, cfg().land), LANDS };
+
+  /* ===== Schulkalender (CSV-Import): nur Titel, Datum, Uhrzeit ===== */
+  function csvRows(t) {
+    t = String(t).replace(/^﻿/, ''); const first = t.split(/\r?\n/)[0] || ''; const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';' : ',';
+    const rows = []; let r = [], f = '', q = false;
+    for (let i = 0; i < t.length; i++) { const c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true; else if (c === sep) { r.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; r.push(f); f = ''; rows.push(r); r = []; }
+      else f += c; }
+    if (f !== '' || r.length) { r.push(f); rows.push(r); } return rows.filter(a => a.some(v => v.trim()));
+  }
+  function evImport(text) {
+    const rows = csvRows(text); if (rows.length < 2) return -1;
+    const h = rows[0].map(v => v.trim().toLowerCase()), ix = (...n) => h.findIndex(v => n.indexOf(v) >= 0);
+    const iT = ix('titel', 'title', 'subject', 'summary'), iS = ix('start', 'beginn', 'start date'), iE = ix('ende', 'end', 'end date'); if (iT < 0 || iS < 0) return -1;
+    const out = [], seen = {};
+    rows.slice(1).forEach(r => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/.exec((r[iS] || '').trim()); if (!m) return;
+      const e = iE >= 0 ? /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/.exec((r[iE] || '').trim()) : null;
+      const ti = String(r[iT] || '').replace(/\s+/g, ' ').replace(/[\s;]+$/, '').trim(); if (!ti) return;
+      const a = m[1] + '-' + m[2] + '-' + m[3], b = e ? e[1] + '-' + e[2] + '-' + e[3] : a;
+      const ev = { a, b: b < a ? a : b, ti: ti.slice(0, 220) }; if (m[4]) ev.tm = pad(+m[4]) + ':' + m[5]; if (e && e[4] && b === a) ev.te = pad(+e[4]) + ':' + e[5];
+      const k = a + '|' + ev.b + '|' + (ev.tm || '') + '|' + ti; if (seen[k]) return; seen[k] = 1; out.push(ev);
+    });
+    if (!out.length) return -1; out.sort((p, q) => p.a < q.a ? -1 : p.a > q.a ? 1 : (p.tm || '') < (q.tm || '') ? -1 : 1);
+    cfg().ev = out; return out.length;
+  }
+  function myCls() { return Object.keys(classes).map(n => { const q = /^Q\s*(1[23])/i.exec(n.trim()), m = /^(\d{1,2})\s*([A-Za-z]*)/.exec(n.trim()); return q ? { g: +q[1], l: '' } : m ? { g: +m[1], l: m[2].toLowerCase() } : null; }).filter(Boolean); }
+  function evHint(t) {
+    const G = new Set(), K = []; let m;
+    const rg = /(?:Jgst\.?|Jahrgangsstufen?)\s*((?:\d{1,2}\.?\s*(?:,|\/|und|oder|bis|–|-)?\s*)+)/gi;
+    while ((m = rg.exec(t))) { const toks = m[1].match(/\d{1,2}|bis|–|-/gi) || []; for (let i = 0; i < toks.length; i++) { if (/^\d/.test(toks[i])) { const a = +toks[i], bs = toks[i + 1] && /bis|–|-/i.test(toks[i + 1]) && toks[i + 2] ? +toks[i + 2] : null; if (bs) { for (let g = a; g <= bs; g++) G.add(g); i += 2; } else G.add(a); } } }
+    const r2 = /(\d{1,2})\.\s*(?:und|bis|oder)\s*(\d{1,2})\.\s*(?:Klassen|Jahrgangsstufen)/gi; while ((m = r2.exec(t))) { const a = +m[1], b = +m[2]; if (/bis/i.test(m[0])) for (let g = a; g <= b; g++) G.add(g); else { G.add(a); G.add(b); } }
+    const r3 = /(\d{1,2})\.\s*(?:Jahrgangsstufe|Klasse|Jgst)/gi; while ((m = r3.exec(t))) G.add(+m[1]);
+    const rk = /Klassen?\s+((?:\d{1,2}[a-z]\b[\s,\/]*(?:und\s*)?)+)/gi; while ((m = rk.exec(t))) { const rr = /(\d{1,2})([a-z])/gi; let z; while ((z = rr.exec(m[1]))) K.push({ g: +z[1], l: z[2].toLowerCase() }); }
+    const rq = /\bQ\s?(1[23])\b/g; while ((m = rq.exec(t))) G.add(+m[1]);
+    if (/Fünftkl/i.test(t)) G.add(5);
+    return G.size || K.length ? { G, K } : null;
+  }
+  const HC = new Map();
+  function evMineOk(ev) {
+    if (cfg().evAll) return true; let h = HC.get(ev.ti); if (h === undefined) { h = evHint(ev.ti); HC.set(ev.ti, h); } if (!h) return true; const my = myCls(); if (!my.length) return true;
+    return [...h.G].some(g => my.some(c => c.g === g)) || h.K.some(k => my.some(c => c.g === k.g && (c.l.indexOf(k.l) >= 0)));
+  }
+  function evInfo(ev) {
+    const o = { ti: ev.ti, a: pd(ev.a), b: pd(ev.b), tm: ev.tm || '', te: ev.te || '' };
+    const m = /Unterrichtsschluss[^:;]*?:\s*(\d{1,2})[.:](\d{2})\s*Uhr/i.exec(ev.ti); if (m) { o.end = pad(+m[1]) + ':' + m[2]; o.short = /nach\s*6\s*Kurzstunden/i.test(ev.ti); }
+    return o;
+  }
+  const evOk = ev => { if (/ferien\b/i.test(ev.ti)) { const i = info(pd(ev.a)); if (i && i.kind !== 'we') return false; } return evMineOk(ev); };
+  function evOn(d) { d = iso(day0(d)); return (cfg().ev || []).filter(e => e.a <= d && e.b >= d && evOk(e)).map(evInfo); }
+  function evNext(d, n, days) { const a = iso(day0(d)), z = iso(add(day0(d), days || 30)); return (cfg().ev || []).filter(e => e.b >= a && e.a <= z && e.a >= a && evOk(e)).slice(0, n).map(evInfo).map(o => ({ ...o, days: Math.round((o.a - day0(d)) / 864e5) })); }
+  window._cal = { evOn, evNext, evCount: () => (cfg().ev || []).length, info, free, backDay, upcoming, obs, show, holidays: (y) => holidays(y, cfg().land), LANDS };
 
   /* ===== Einstellungen ===== */
   const gen = document.querySelector('[data-pane="gen"]'), q = id => document.getElementById(id);
@@ -4391,11 +4583,21 @@ const REL = [["j","jRosch","2026-09-12","2026-09-13"],["j","jKippur","2026-09-21
   const rj = row('calJewSw'), rm = row('calMusSw'), note = mk('p', 'note'), note2 = mk('p', 'note'); note.style.margin = '0 0 8px'; note2.style.margin = '0';
   sec.append(h3, sel, note, rj.l, rm.l, note2); gen.appendChild(sec);
   const lab = () => { h3.textContent = x('calSet') + ' · ' + x('calLand'); note.textContent = x('calSetNote'); rj.s.textContent = x('calJew'); rm.s.textContent = x('calMus'); note2.textContent = x('calRelNote'); };
-  const sync = () => { const c = cfg(); sel.value = c.land; rj.i.checked = !!c.jew; rm.i.checked = !!c.mus; };
+  const sync = () => { const c = cfg(); sel.value = c.land; rj.i.checked = !!c.jew; rm.i.checked = !!c.mus; try { evLab(); } catch (e) {} };
   const redo = () => { saveTool(); try { window._renderDash && window._renderDash(); } catch (e) {} };
   sel.onchange = () => { cfg().land = sel.value; redo(); }; rj.i.onchange = () => { cfg().jew = rj.i.checked; redo(); }; rm.i.onchange = () => { cfg().mus = rm.i.checked; redo(); };
+
+  const evSec = mk('div'); evSec.style.marginTop = '14px';
+  const evB = mk('button', 'ovtask'), evD = mk('button', 'ovtask'), evF = mk('input'), evR = mk('div'), evM = row('evMineSw'), evN = mk('p', 'note'), evC = mk('p', 'note');
+  evF.type = 'file'; evF.accept = '.csv,.txt,text/csv,text/plain'; evF.hidden = true; evB.type = evD.type = 'button'; evR.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:6px 0'; evN.style.margin = '0'; evC.style.margin = '4px 0';
+  evR.append(evB, evD, evF); evSec.append(evR, evC, evM.l, evN); gen.appendChild(evSec);
+  const evLab = () => { evB.textContent = x('evImp'); evD.textContent = x('evDel'); evM.s.textContent = x('evMine'); evN.textContent = x('evNote'); const n = window._cal.evCount(); evC.textContent = n ? x('evCount').split('{0}').join(n) : x('evNone'); evD.hidden = !n; evM.i.checked = !cfg().evAll; };
+  evB.onclick = () => evF.click(); window._cal.importPick = () => evF.click();
+  evF.onchange = () => { const f = evF.files && evF.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const n = evImport(String(rd.result || '')); if (n < 0) toast(x('evBad'), 2600); else { saveTool(); toast(x('evCount').split('{0}').join(n), 2200); } evF.value = ''; evLab(); redo(); }; rd.onerror = () => toast(x('evBad'), 2600); rd.readAsText(f, 'utf-8'); };
+  evD.onclick = () => { delete cfg().ev; saveTool(); evLab(); redo(); };
+  evM.i.onchange = () => { cfg().evAll = !evM.i.checked; saveTool(); redo(); };
   const setBtn = q('setBtn'); if (setBtn) setBtn.addEventListener('click', sync); const _os = window._openSet; window._openSet = t => { sync(); _os && _os(t); };
-  const _ax = applyX; applyX = function () { _ax(); lab(); }; lab(); sync();
+  const _ax = applyX; applyX = function () { _ax(); lab(); evLab(); }; lab(); sync(); evLab();
 })();
 
 /* ===== W14: Stundenplan als PDF (Orario → Drucken im Gruppo-Design) ===== */
