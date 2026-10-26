@@ -23,6 +23,13 @@ const sq = { id: 'k', load_convention: 'gesamt', muscles_primary: ['quadrizeps']
 const hist = [{ session_date: '2026-10-25', kind: 'kraft', status: 'bestaetigt', session_exercises: [{ exercise_id: 'k', sets: ramp }] }];
 const sgK = E.suggest({ exercises: [Object.assign({ name: 'Kniebeuge', pattern: 'kniebeuge', equipment: ['langhantel'], equipment_alt: [], tier: 'geprueft', active: true }, sq)], items: ['langhantel'], split: { days: [{ name: 'Beine', focus: ['quadrizeps'], minutes: 30 }] }, sessions: hist, absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null });
 assert.equal(sgK.items[0].load_kg, 105, 'Arbeitsgewicht: schwerste Last im Zielbereich');
+// Restzeit wird gefüllt: Push mit 60 Minuten bekommt mehr als die Vorlage allein
+const mk = (id, name, m, pat, dp, lc = 'gesamt') => ({ id, name, muscles_primary: [m], pattern: pat, equipment: ['kabelzug'], equipment_alt: [], dosage_profile: dp, load_convention: lc, tier: 'geprueft', active: true });
+const pushCat = [mk('a', 'Schrägbank', 'brust', 'schraeg_druecken', 'G'), mk('b', 'Bank flach', 'brust', 'horizontal_druecken', 'G'), mk('c', 'Fly', 'brust', 'brust_fliegen', 'A'), mk('d', 'Seitheben', 'schulter_seitlich', 'seitheben', 'A'), mk('e', 'Trizeps', 'trizeps', 'trizeps_strecken', 'A'), mk('f', 'Außenrotation', 'rotatoren', 'rotation', 'S'),
+  mk('g', 'Schulterdrücken', 'schulter_vorn', 'vertikal_druecken', 'A'), mk('h', 'Trizeps über Kopf', 'trizeps', 'trizeps_ueberkopf', 'A'), mk('i', 'Frontheben', 'schulter_vorn', 'frontheben', 'A')];
+const pushBase = { exercises: pushCat, items: ['kabelzug'], split: { days: [{ name: 'Push', focus: ['brust', 'schulter_vorn', 'schulter_seitlich', 'trizeps'], minutes: 55 }] }, sessions: [], absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null };
+const p45 = E.suggest({ ...pushBase, minutes: 30 }), p60 = E.suggest({ ...pushBase, minutes: 60 });
+assert(p60.items.length > p45.items.length, 'mehr Zeit, mehr Übungen'); assert(p60.minutes <= 63, 'Zeitrahmen eingehalten: ' + p60.minutes);
 console.log('eigenständige Tests ok');
 
 const katalog = process.argv[2];

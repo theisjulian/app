@@ -373,6 +373,20 @@
         used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio: 'schwerpunkt', minutes: t });
       }
     }
+    // Restzeit füllen: bleibt bei der Vorlage deutlich Zeit übrig, kommen Zusatzübungen für die Fokus-Muskeln dazu
+    // (Schwerpunkte zuerst, höchstens 3 Übungen je Schwerpunkt bzw. 2 sonst, kein Bewegungsmuster doppelt)
+    if (tplSlots) {
+      for (let pass = 0; pass < 2; pass++) for (const m of focus) {
+        if (used >= minutes - 6) break;
+        const prio = prioOf(ctx.priorities, m, today), have = chosen.filter((c) => c.ex.muscles_primary.includes(m)).length;
+        if (have >= (prio === 'schwerpunkt' ? 3 : 2) || (pass === 0 && have >= 1 && prio !== 'schwerpunkt')) continue;
+        const e = elig.filter((x) => !usedEx.has(x.id) && !usedPattern.has(x.pattern) && x.muscles_primary[0] === m && ['A', 'S'].includes(x.dosage_profile || 'A')).sort((a, b) => rank(b, m) - rank(a, m) || (a.name < b.name ? -1 : 1))[0];
+        if (!e) continue;
+        const n = setsFor(e, m, prio), t = estMin(e, n);
+        if (used + t > minutes + 3) continue;
+        used += t; usedEx.add(e.id); usedPattern.add(e.pattern); chosen.push({ muscle: m, ex: e, sets: n, prio, minutes: t });
+      }
+    }
     // Reihenfolge der Runden: erst Grundbewegungen je Muskel, dann Zusatz, dann Stabilität
     const rounds = [['G'], ['A'], ['S', 'C', 'I', 'T']];
     for (const rd of (tplSlots ? [] : rounds)) {

@@ -31,7 +31,9 @@
   F.views.mehr = (args) => {
     const [sub] = args || [];
     if (sub) return baseMehr(args);
-    return baseMehr(args).replace('<div class="h1" style="margin-bottom:14px">Mehr</div>', `<div class="h1" style="margin-bottom:14px">Einstellungen</div><div class="eyebrow" style="margin:0 2px 8px">Darstellung</div>${lookCards()}<div class="eyebrow" style="margin:6px 2px 8px">Training & Konto</div>`)
+    // Erst das, was man oft braucht (Training, Konto), dann die Darstellung
+    return baseMehr(args).replace('<div class="h1" style="margin-bottom:14px">Mehr</div>', `<div class="h1" style="margin-bottom:14px">Einstellungen</div><div class="eyebrow" style="margin:0 2px 8px">Training & Konto</div>`)
+      .replace('<button class="btn ghost block" data-act="logout">', `<div class="eyebrow" style="margin:6px 2px 8px">Darstellung</div>${lookCards()}<button class="btn ghost block" data-act="logout">`)
       .replace(/<button class="it" data-act="nav" data-r="mehr\/darstellung">[\s\S]*?<\/button>/, '');
   };
 
@@ -307,7 +309,7 @@
     const box = document.createElement('div'); box.innerHTML = html;
     const hero = box.querySelector('.hero'), grid = box.querySelector('.grid2'), cols = grid ? [...grid.children] : [];
     const fold = (keepWhy) => { // Übungsliste einklappen
-      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; if (F.ui.exOpen) det.open = true; det.innerHTML = `<summary>${rows.length} Übungen anzeigen</summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
+      if (!hero) return; const rows = hero.querySelectorAll('.exrow'); if (rows.length) { const det = document.createElement('details'); det.className = 'exfold'; if (F.ui.exOpen) det.open = true; det.innerHTML = `<summary><span class="sh">${rows.length} Übungen anzeigen</span><span class="hd">Übungen ausblenden</span></summary>`; rows[0].parentNode.insertBefore(det, rows[0]); rows.forEach((r) => det.appendChild(r)); const mobi = hero.querySelector('.mobi'); if (mobi) det.appendChild(mobi); }
       if (!keepWhy) hero.querySelectorAll('.small.mute').forEach((e) => { if (/Warum/.test(e.textContent)) e.remove(); });
     };
     const weekCard = cols[0] && cols[0].children[0], actCard = cols[0] && cols[0].children[1], barCard = cols[1] && cols[1].children[0];
@@ -315,10 +317,10 @@
     if (v === 'woche') {
       fold(true); const st = stats('woche'); if (grid) grid.remove();
       const ov = document.createElement('div'); ov.innerHTML = F.weekOverview();
-      if (hero) { const kids = [...ov.children]; hero.before(kids[0], kids[1]); const chips = box.querySelector('[data-act=placeMenu]'); const row = chips && chips.closest('.row'); if (row) hero.before(row);
+      if (hero) { const kids = [...ov.children]; hero.before(kids[0], kids[1]); const chips = box.querySelector('[data-act=placeMenu]'); const row = chips && chips.closest('.chipbar'); if (row) hero.before(row);
         let tail = hero; [kids[2], weekCard, actCard].filter(Boolean).forEach((el) => { tail.after(el); tail = el; }); if (barCard) tail.after(barCard); }
     }
-    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) { hero.before(barCard); const chips = box.querySelector('[data-act=placeMenu]'), row = chips && chips.closest('.row'); if (row) hero.before(row); } }
+    if (v === 'training') { fold(true); if (grid) grid.remove(); if (hero && barCard) { hero.before(barCard); const chips = box.querySelector('[data-act=placeMenu]'), row = chips && chips.closest('.chipbar'); if (row) hero.before(row); } }
     return box.innerHTML;
   };
   F.acts.dash = (t) => { F.setLook('dash', t.dataset.v); F.render(); };
@@ -360,7 +362,7 @@
     const s = F.openSession(); if (!s) return; const exs = s.session_exercises, cur = F.ui.tr.ei;
     const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
     const row = (e, i) => { const ex = F.S.exById[e.exercise_id] || { name: '?' }, d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length, on = i === cur;
-      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
+      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;padding:12px 10px;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
     F.modal(`<div class="row between"><div class="h2">Dein Training</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
       <div class="small mute" style="margin:2px 0 8px">${dn} von ${tot} Sätzen · ${exs.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length} von ${exs.length} Übungen erledigt</div>
       <div style="height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:${pct}%;background:var(--grad,var(--a));border-radius:99px"></i></div>

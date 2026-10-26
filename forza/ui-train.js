@@ -65,13 +65,13 @@
     const card = (ic, t, sub, act, extra = '') => `<button class="it" data-act="${act}" ${extra}><div class="ico">${ic}</div><div class="grow"><b>${t}</b><div class="small mute">${sub}</div></div>${arrow}</button>`;
     return `<div class="h1" style="margin-bottom:4px">Training</div><p class="mute" style="margin-top:0">Hier startest du eine Einheit und siehst, was du schon gemacht hast.</p>
       <div class="card list">
-        ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} Übungen`, 'start')}
-        ${card(F.icon.kalender, 'Anderen Tag wählen', 'Oberkörper, Unterkörper, Push …', 'pickDay')}
+        ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}`, 'start')}
+        ${card(F.icon.kalender, 'Anderen Tag wählen', esc((F.activeSplit() ? F.activeSplit().days.map((d) => d.name) : []).join(' · ') || 'Erst einen Split wählen'), 'pickDay')}
         ${card(F.icon.plus, 'Freies Training', 'Leer starten und Übungen selbst hinzufügen', 'startFree')}
         ${card(F.icon.heute, 'Mobilität', 'Aufwärmen · Dehnen · Sanft · Haltung', 'mobMenu')}
         ${card(F.icon.note, 'Einheit nachtragen', 'Auch für frühere Tage', 'addEntry', `data-d="${F.today()}"`)}
       </div>
-      <div class="card"><div class="h2">Bisherige Einheiten</div>${done.slice(0, 20).map((x) => `<details class="hist"><summary><div class="grow"><b>${esc(x.title || 'Training')}</b><div class="small mute">${F.dlabel(x.session_date)}${x.duration_min ? ' · ' + x.duration_min + ' min' : ''}${x.session_exercises.length ? ' · ' + x.session_exercises.length + ' Übungen' : ' · Details unbekannt'}</div></div></summary>${x.session_exercises.length ? x.session_exercises.map((se) => `<div class="small" style="padding:4px 0"><b>${esc((S.exById[se.exercise_id] || {}).name || '?')}</b><div class="mute">${setLine(se) || 'keine Sätze erfasst'}</div></div>`).join('') + `<button class="btn sm" style="margin-top:6px" data-act="repeatSession" data-id="${x.id}">Diese Einheit wiederholen</button>` : '<div class="small mute" style="padding:4px 0">Zu dieser Einheit sind keine Übungen oder Sätze bekannt. Du kannst sie über „Einheit nachtragen“ ergänzen oder die Einheit so lassen.</div>'}</details>`).join('') || '<div class="mute">Noch nichts.</div>'}</div>`;
+      <div class="card"><div class="h2">Bisherige Einheiten</div>${done.slice(0, 20).map((x) => `<details class="hist"><summary><div class="grow"><b>${esc(x.title || 'Training')}</b><div class="small mute">${F.dlabel(x.session_date)}${x.duration_min ? ' · ' + x.duration_min + ' min' : ''}${x.session_exercises.length ? ' · ' + x.session_exercises.length + (x.session_exercises.length === 1 ? ' Übung' : ' Übungen') : ' · Details unbekannt'}</div></div></summary>${x.session_exercises.length ? x.session_exercises.map((se) => `<div class="small" style="padding:4px 0"><b>${esc((S.exById[se.exercise_id] || {}).name || '?')}</b><div class="mute">${setLine(se) || 'keine Sätze erfasst'}</div></div>`).join('') + `<button class="btn sm" style="margin-top:6px" data-act="repeatSession" data-id="${x.id}">Diese Einheit wiederholen</button>` : '<div class="small mute" style="padding:4px 0">Zu dieser Einheit sind keine Übungen oder Sätze bekannt. Du kannst sie über „Einheit nachtragen“ ergänzen oder die Einheit so lassen.</div>'}</details>`).join('') || '<div class="mute">Noch nichts.</div>'}</div>`;
   };
   F.views.training = () => {
     const s = F.openSession();
@@ -79,7 +79,7 @@
     if (!s.session_exercises.length) return `${topBar(s, 0)}<div class="card"><div class="h2">Noch keine Übung</div><div class="mute" style="margin-bottom:12px">Füge die erste Übung hinzu. forza merkt sich deine Gewichte für das nächste Mal.</div><button class="btn pri block" data-act="addExAsk">+ Übung hinzufügen</button></div><button class="btn ghost block" data-act="finishAsk">Beenden</button>`;
     return F.focusOn() ? focusView(s) : listView(s);
   };
-  const topBar = (s, dn) => { const on = F.focusOn(); return `${on ? '<div class="fx-on"></div>' : ''}<div class="row between" style="margin-bottom:10px;gap:8px"><button class="btn sm" data-act="trOverview" style="gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>${dn}/${s.session_exercises.length}</button><div class="row gap"><button class="btn sm ghost" data-act="voiceToggle" aria-pressed="${!!F.ls.get('voice', false)}" title="Ansagen nach der Pause"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/>${F.ls.get('voice', false) ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg></button><button class="btn sm ghost" data-act="focusToggle" aria-pressed="${on}">${on ? 'Liste' : 'Fokus'}</button><button class="btn sm ghost" data-act="finishAsk">Beenden</button></div></div>`; };
+  const topBar = (s, dn) => { const on = F.focusOn(); return `${on ? '<div class="fx-on"></div>' : ''}<div class="row between" style="margin-bottom:10px;gap:8px"><button class="btn sm" data-act="trOverview" style="gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>${dn}/${s.session_exercises.length}</button><div class="row gap"><button class="btn sm ghost" data-act="voiceToggle" aria-pressed="${!!F.ls.get('voice', false)}" title="Ansagen nach der Pause"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/>${F.ls.get('voice', false) ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg></button><button class="btn sm ghost" data-act="focusToggle" aria-pressed="${on}">${on ? 'Liste' : 'Fokus'}</button><button class="btn sm ghost" data-act="finishAsk">Beenden</button></div></div>${(() => { const tot = s.session_exercises.reduce((n, e) => n + e.sets.length, 0), d = s.session_exercises.reduce((n, e) => n + doneN(e), 0); return tot && on ? `<div class="sprog" role="progressbar" aria-valuemin="0" aria-valuemax="${tot}" aria-valuenow="${d}" aria-label="${d} von ${tot} Sätzen"><i style="width:${d / tot * 100}%"></i></div>` : ''; })()}`; };
 
   /* Listenansicht: alle Sätze einer Übung, zum genauen Eintragen und Nachtragen */
   const listView = (s) => {
@@ -94,8 +94,9 @@
       <div class="card"><div class="row between wrap"><div class="small mute">Übung ${F.ui.tr.ei + 1} von ${exs.length} · ${doneN(se)}/${se.sets.length} Sätze</div><span class="badge">${pf.label}</span></div>
         <div style="margin:8px 0 2px">Ziel: <b>${se.planned_sets} × ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}</b>${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
         ${se.why ? `<div class="small mute">${esc(se.why)}</div>` : ''}${warmupLine(se, ex)}
-        <div class="row wrap gap" style="margin-top:12px"><button class="btn sm" data-act="help" data-id="${se.exercise_id}">${ico('info')} Hilfe</button><button class="btn sm" data-act="swapAsk" data-id="${se.id}">${ico('swap')} Ersetzen</button><button class="btn sm" data-act="noteAsk" data-id="${se.id}">${ico('note')} Notiz</button><button class="btn sm danger" data-act="painAsk" data-id="${se.id}">${ico('warn')} Schmerz</button></div>${se.note ? `<div class="small" style="margin-top:10px">Notiz: ${esc(se.note)}</div>` : ''}</div>
-      ${se.sets.map((st, i) => { const tg = st.done ? {} : F.setTarget(se, st); return `<div class="setrow ${st.done ? 'done' : i === firstOpen ? 'cur' : ''}" data-sid="${st.id}">
+        <div class="tools4"><button data-act="help" data-id="${se.exercise_id}">${ico('info', 20)}<span>Hilfe</span></button><button data-act="swapAsk" data-id="${se.id}">${ico('swap', 20)}<span>Ersetzen</span></button><button data-act="noteAsk" data-id="${se.id}">${ico('note', 20)}<span>Notiz</span></button><button class="bad" data-act="painAsk" data-id="${se.id}">${ico('warn', 20)}<span>Schmerz</span></button></div>${se.note ? `<div class="small" style="margin-top:10px">Notiz: ${esc(se.note)}</div>` : ''}</div>
+      ${se.sets.map((st, i) => { if (st.done) return `<div class="setrow done compact" data-sid="${st.id}"><span class="sn">${F.icon.check.replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6"')}</span><div class="grow"><b>Satz ${st.set_no}</b><span class="mute"> · ${[st.load_kg !== null && !noLoad(ex) ? F.fmt(Number(st.load_kg)) + ' kg' : '', timed ? (st.seconds ? st.seconds + ' s' : '') : st.reps !== null ? st.reps + ' Wdh.' : ''].filter(Boolean).join(' × ') || 'ohne Werte'}${st.rir !== null && st.rir !== undefined ? ' · Reserve ' + st.rir : ''}${st.pain ? ' · Schmerz' : ''}</span></div><button class="btn sm ghost" data-act="undo" data-s="${st.id}">Ändern</button></div>`;
+        const tg = F.setTarget(se, st); return `<div class="setrow ${st.done ? 'done' : i === firstOpen ? 'cur' : ''}" data-sid="${st.id}">
         <div class="row between" style="margin-bottom:10px"><b>Satz ${st.set_no}${st.pain ? ' · Schmerz gemeldet' : ''}</b>${st.done ? '<span class="badge ok">erledigt</span>' : ''}</div>
         <div class="row gap">${noLoad(ex) ? '' : `<div class="grow"><div class="small mute" style="margin-bottom:4px">${unit}${ex.load_convention === 'je_hand' && st.load_kg ? ' (= ' + F.fmt(st.load_kg * 2) + ' gesamt)' : ''}</div><div class="stepper"><button data-act="step" data-f="load_kg" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="decimal" data-in="setVal" data-f="load_kg" data-s="${st.id}" value="${st.load_kg === null ? '' : F.fmt(st.load_kg)}" placeholder="${tg.load_kg !== null && tg.load_kg !== undefined ? F.fmt(tg.load_kg) : '–'}"><button data-act="step" data-f="load_kg" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`}
         <div class="grow"><div class="small mute" style="margin-bottom:4px">${timed ? 'Sekunden / Meter' : 'Wiederholungen'}</div><div class="stepper"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="numeric" data-in="setVal" data-f="${timed ? 'seconds' : 'reps'}" data-s="${st.id}" value="${(timed ? st.seconds : st.reps) ?? ''}" placeholder="${(timed ? tg.seconds : tg.reps) ?? '–'}"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div></div>
@@ -113,17 +114,18 @@
   };
 
   /* Fokus: nur der nächste Satz, Werte vorgeschlagen, ein Tipp zum Abhaken. Danach läuft die Pause von selbst. */
+  const enter = (key) => { const on = F.ui.tr.key !== key; F.ui.tr.key = key; return on ? ' fz-enter' : ''; };
   const focusView = (s) => {
     const exs = s.session_exercises, dnEx = exs.filter((e) => e.sets.length && !isOpen(e)).length;
-    if (F.rest) return topBar(s, dnEx) + restScreen(s);
+    if (F.rest) return topBar(s, dnEx) + restScreen(s, enter('rest'));
     if (!exs[F.ui.tr.ei] || !isOpen(exs[F.ui.tr.ei])) { const i = nextOpen(s, F.ui.tr.ei || 0); if (i >= 0) F.ui.tr.ei = i; }
     const se = exs[F.ui.tr.ei];
-    if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button>${postureOffer(s)}<button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
+    if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done${enter('done')}"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button>${postureOffer(s)}<button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : 'kg';
     const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
     const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="${im}" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
-    return topBar(s, dnEx) + `<div class="fz">
+    return topBar(s, dnEx) + `<div class="fz${enter(st.id)}">
       <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}${pair ? ' · Superset mit ' + esc((F.S.exById[pair.exercise_id] || {}).name || '') : ''}</div>
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
@@ -140,10 +142,12 @@
     const v = tg.timed ? (tg.seconds ? tg.seconds + ' s' : '') : (tg.reps ? tg.reps + ' Wdh.' : '');
     return `<div class="fz-next"><span class="eyebrow">Als Nächstes</span><b>${esc(ex.name)}</b><span class="mute">Satz ${st.set_no} von ${se.sets.length}${tg.load_kg !== null && !noLoad(ex) ? ' · ' + F.fmt(tg.load_kg) + ' kg' : ''}${v ? ' × ' + v : ''}</span></div>`;
   };
-  const restScreen = (s) => {
+  const RING = 2 * Math.PI * 92;
+  const restScreen = (s, cls = '') => {
     const left = Math.max(0, Math.ceil((F.rest.end - Date.now()) / 1000)), last = F.ui.tr.last && findSet(F.ui.tr.last), ex = last && F.S.exById[last.se.exercise_id], rated = last && last.st.rir;
     const rate = last && ex && (E.PROFILES[ex.dosage_profile] || {}).rir ? `<div class="fz-rate"><span class="small mute">Wie war der Satz eben? (optional)</span><div class="row gap">${[[4, 'Locker'], [2, 'Passt'], [0, 'Am Limit']].map(([v, l]) => `<button class="chip ${rated === v ? 'on' : ''}" data-act="rate" data-v="${v}">${l}</button>`).join('')}</div></div>` : '';
-    return `<div class="fz fz-restbox"><div class="eyebrow">Pause</div><div class="fz-clock" id="rest-t">${mmss(left)}</div><div class="fz-prog"><i id="rest-p" style="width:${Math.min(100, (1 - left / F.rest.total) * 100)}%"></i></div>
+    const frac = Math.min(1, Math.max(0, left / F.rest.total));
+    return `<div class="fz fz-restbox${cls}"><div class="fz-ring"><svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="92"/><circle class="fg" id="rest-p" cx="100" cy="100" r="92" stroke-dasharray="${RING.toFixed(1)}" stroke-dashoffset="${(RING * (1 - frac)).toFixed(1)}"/></svg><div><div class="eyebrow">Pause</div><div class="fz-clock" id="rest-t">${mmss(left)}</div></div></div>
       <div class="row gap" style="margin:16px 0"><button class="btn grow" data-act="restAdd">+30 s</button><button class="btn pri grow" data-act="restStop">Weiter</button></div>${rate}${nextPreview(s)}</div>`;
   };
   const findSet = (id) => { for (const s of F.S.sessions) for (const se of s.session_exercises) for (const st of se.sets) if (st.id === id) return { s, se, st }; return null; };
@@ -160,6 +164,7 @@
     const step = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? F.E.params(F.S.params).load_step_hand : F.E.params(F.S.params).load_step_total) : fld === 'seconds' ? 5 : 1;
     if (v === null) { const tg = F.setTarget(f.se, f.st); v = tg[fld] ?? (fld === 'reps' ? (E.PROFILES[ex.dosage_profile]?.reps?.[0] ?? 8) : fld === 'seconds' ? 20 : 0); if ((tg[fld] === null || tg[fld] === undefined) && d > 0 && fld !== 'load_kg') { f.st[fld] = v; inp.value = v; return; } }
     v = Math.max(0, v + d * step); f.st[fld] = fld === 'load_kg' ? v : Math.round(v); inp.value = F.fmt(v);
+    inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
   };
   F.acts.rir = (t) => { const f = findSet(t.dataset.s); if (!f) return; f.st.rir = f.st.rir === Number(t.dataset.v) ? null : Number(t.dataset.v); F.render(); };
   /* Vorschlag in die leeren Felder übernehmen (nur das, was du nicht selbst geändert hast) */
@@ -167,7 +172,7 @@
   const saveDone = async (st) => { const r = await F.update('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() }); Object.assign(st, r); };
   F.acts.doneSet = async (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const st = f.st, ex = F.S.exById[f.se.exercise_id] || {}, pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A;
-    applyTarget(f.se, st, ex); F.sound.unlock(); if (F.focusOn() && F.wake) F.wake(true);
+    applyTarget(f.se, st, ex); F.sound.unlock(); try { navigator.vibrate && navigator.vibrate(12); } catch {} if (F.focusOn() && F.wake) F.wake(true);
     if (!noLoad(ex) && st.load_kg === null && pf.reps) { if (!confirm('Kein Gewicht eingetragen. Trotzdem abschließen? Das Gewicht bleibt dann „unbekannt“.')) return; }
     await saveDone(st); F.ui.tr.last = st.id;
     // nächsten offenen Satz mit dem Gewicht vorbelegen (nie erfundene Werte: nur Kopie des gerade Eingegebenen)
@@ -250,7 +255,8 @@
     if (!F.rest) return clearInterval(F._tk); const left = Math.ceil((F.rest.end - Date.now()) / 1000), el = document.getElementById('rest-t'), bar = document.getElementById('rest-p');
     if (left <= 0) return restOver(false);
     if (left <= 10 && !F.rest.warned) { F.rest.warned = true; F.sound.beep(1, 660); }
-    if (el) el.textContent = mmss(left); if (bar) bar.style.width = Math.min(100, (1 - left / F.rest.total) * 100) + '%';
+    if (el) el.textContent = mmss(left); if (bar) bar.style.strokeDashoffset = (2 * Math.PI * 92 * (1 - Math.min(1, left / F.rest.total))).toFixed(1);
+    if (el) el.classList.toggle('soon', left <= 10);
   }, 500); };
   F.acts.restAdd = () => { if (F.rest) { F.rest.end += 30000; F.rest.total += 30; F.rest.warned = false; } };
   F.acts.restStop = () => restOver(true);

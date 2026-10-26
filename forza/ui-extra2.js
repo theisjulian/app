@@ -83,7 +83,7 @@
     if (now) note = `<div class="card ur-card"><div class="eyebrow">${KIND[now.kind]}${now.note ? ' · ' + esc(now.note) : ''}</div><div style="margin-top:4px"><b>Bis ${F.dshort(now.to_date)}</b> · <span class="mute">${MODE[now.mode] || MODE.eigengewicht}</span></div></div>`;
     else if (nxt) { const n = Math.round((F.dparse(nxt.from_date) - F.dparse(today)) / 864e5); if (n <= 14) note = `<div class="small mute" style="margin:-6px 2px 12px">${KIND[nxt.kind]}${nxt.note ? ' (' + esc(nxt.note) + ')' : ''} in ${n} ${n === 1 ? 'Tag' : 'Tagen'}</div>`; }
     if (note && first) first.insertAdjacentHTML('afterend', note);
-    box.insertAdjacentHTML('beforeend', `<div class="row gap wrap" style="justify-content:center;margin:6px 0 18px"><button class="chip" data-act="fitMenu">Heute nicht fit?</button><button class="chip" data-act="mobMenu">Mobilität</button></div>`);
+    box.insertAdjacentHTML('beforeend', `<div class="row gap wrap" style="justify-content:center;margin:6px 0 18px"><button class="chip" data-act="fitMenu">Heute nicht fit?</button></div>`);
     return box.innerHTML;
   };
 

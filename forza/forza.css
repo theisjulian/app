@@ -54,7 +54,7 @@ h1,h2,h3{margin:0;letter-spacing:-.01em}
 .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--card2);color:var(--mute);font-weight:600}
 .badge.ok{color:var(--ok)}.badge.warn{color:var(--warn)}
 .hero{background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#eef1f6;border-radius:26px;padding:20px;margin-bottom:16px;box-shadow:var(--sh);border:1px solid var(--heroline,#2a3242)}
-.hero .mute{color:#aab3c4}
+.hero .mute{color:var(--hero-mute,#aab3c4)}
 .hero .seg{background:rgba(255,255,255,.08)}
 .hero .btn.pri{background:#c8f542;color:#12160a}
 html:not([data-theme=graphit]) .hero .btn.pri{background:var(--acc);color:var(--acc-ink)}
@@ -205,7 +205,7 @@ html[data-theme=tag][data-phase=abend]{--acc:#ff7a9a;--acc-ink:#2c0614;--acc-l:#
 html[data-theme=tag][data-phase=nacht]{--acc:#8fb4ff;--acc-ink:#06122e;--acc-l:#8fb4ff;--bg:#060a18;--bg2:#0b1128;--card:#111a38;--card2:#18234a;--line:#223060;--text:#e6ecff;--mute:#93a2cc;--hero1:#2c4a9e;--hero2:#050a1e;--heroline:#050a1e;--grad:linear-gradient(150deg,#6a8cff 0%,#3a2fb8 100%);--glow:radial-gradient(1.5px 1.5px at 20% 12%,#fff8,transparent),radial-gradient(1.5px 1.5px at 70% 8%,#fff7,transparent),radial-gradient(1px 1px at 45% 20%,#fff6,transparent),radial-gradient(1.5px 1.5px at 88% 24%,#fff6,transparent),radial-gradient(900px 500px at 85% -10%,rgba(80,100,255,.22),transparent 60%)}
 html[data-theme=tag] body{transition:background .8s}
 html[data-theme=tag][data-phase=mittag] .btn.pri,html[data-theme=tag][data-phase=mittag] .seg button.on,html[data-theme=tag][data-phase=mittag] .tile.on{color:#2d1d00}
-html[data-theme]:not([data-theme=graphit]) .hero{--mute:rgba(255,255,255,.8);color:#fff}
+html[data-theme]:not([data-theme=graphit]) .hero{--mute:rgba(255,255,255,.86);--hero-mute:rgba(255,255,255,.86);color:#fff}
 html[data-theme]:not([data-theme=graphit]) .hero summary,html[data-theme]:not([data-theme=graphit]) .hero .eyebrow{color:rgba(255,255,255,.85)}
 
 /* ===== Apple: eigene Formen, Listen, Schrift und Leisten (nur wenn Theme „Apple“ aktiv) ===== */
@@ -301,9 +301,79 @@ html[data-mode=light] .chip:not(.on){border-color:var(--line)}
 .fz-tools button{padding:10px 12px;border-radius:12px;color:var(--mute);font-size:14px}
 .fz-tools button:active{background:var(--card2)}.fz-tools .bad{color:var(--bad)}
 .fz-restbox{align-items:stretch;text-align:center;padding-top:18px}
-.fz-clock{font-size:clamp(84px,26vw,140px);font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;color:var(--a)}
-.fz-prog{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}.fz-prog i{display:block;height:100%;background:var(--a);border-radius:99px;transition:width .5s linear}
+.fz-ring{position:relative;width:min(78vw,300px);aspect-ratio:1;margin:4px auto 0;display:grid;place-items:center}
+.fz-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.fz-ring circle{fill:none;stroke-width:9;stroke-linecap:round}.fz-ring .bg{stroke:var(--card2)}.fz-ring .fg{stroke:var(--a);transition:stroke-dashoffset .5s linear}
+.fz-ring>div{text-align:center}
+.fz-clock{font-size:clamp(64px,19vw,96px);font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;color:var(--text);transition:color .3s}
+.fz-clock.soon{color:var(--a);animation:tickpulse 1s ease-in-out infinite}
+@keyframes tickpulse{50%{transform:scale(1.04)}}
 .fz-restbox .btn{min-height:60px;font-size:18px}
 .fz-rate{display:flex;flex-direction:column;align-items:center;gap:8px}.fz-rate .chip{padding:12px 16px}
 .fz-next{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:2px;margin-top:6px}.fz-next b{font-size:19px}
 .fz-done{text-align:center;padding-top:20px}.fz-done .ring{width:110px;height:110px;margin:0 auto 10px;display:block}
+
+/* ===== Feinschliff: Bedienung und Lesbarkeit ===== */
+:root{--ease:cubic-bezier(.2,.7,.2,1);--spring:cubic-bezier(.3,1.4,.5,1)}
+.chipbar{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 14px;padding:2px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.chipbar::-webkit-scrollbar{display:none}.chipbar .chip{flex:none;white-space:nowrap;scroll-snap-align:start;min-height:40px;padding:8px 14px}
+@media(min-width:900px){.chipbar{margin:0 0 14px;padding:2px 0 4px;flex-wrap:wrap}}
+.icbtn{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:12px;color:var(--mute);transition:background .2s,color .2s,transform .12s}
+.icbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icbtn:active{transform:scale(.9);background:rgba(255,255,255,.12)}
+.hero .icbtn{color:var(--hero-mute,#aab3c4)}
+.hero .exrow b{display:block;line-height:1.25}
+.hero .why b{color:inherit;filter:brightness(1.25)}
+html[data-theme]:not([data-theme=graphit]) .hero .why b{color:#fff;filter:none}
+.hero-ghost{border-color:rgba(255,255,255,.28)!important;color:inherit}
+.lnk{color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+details.exfold summary{list-style:none;display:flex;align-items:center;gap:8px;color:inherit;opacity:.9;font-weight:600;min-height:36px}
+details.exfold summary::-webkit-details-marker{display:none}
+details.exfold summary:before{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .25s var(--ease);margin:0 4px 2px 2px}
+details.exfold[open] summary:before{transform:rotate(45deg)}
+details.exfold .hd,details.exfold[open] .sh{display:none}details.exfold[open] .hd{display:inline}
+details.exfold[open] .exrow{animation:rise .35s var(--ease) both}
+.hero{position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:-40% -20% auto auto;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.12),transparent);pointer-events:none;animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(-30%,25%)}}
+.hero>*{position:relative;z-index:1}
+.btn,.chip,.seg button,.icbtn,.list .it,.fz-tools button{-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.list .it{border-radius:12px;transition:background .2s}.list .it:active{background:var(--card2)}
+.btn.pri:active{filter:brightness(.95)}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px;border-radius:10px}
+.bnav button{transition:color .2s}.bnav button svg{transition:transform .3s var(--spring)}.bnav button.on svg{transform:translateY(-2px) scale(1.08)}
+.bnav button.on:after{content:"";width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:-1px}
+.toast{font-weight:600}
+.noanim .hero:after{animation:none}@media(prefers-reduced-motion:reduce){.hero:after{animation:none}}
+/* Fokus: Fortschritt, Übergänge, Zahlen */
+.sprog{height:4px;border-radius:99px;background:var(--card2);overflow:hidden;margin:-2px 0 14px}.sprog i{display:block;height:100%;background:var(--grad,var(--a));border-radius:99px;transition:width .6s var(--ease)}
+.fz-enter{animation:fzin .38s var(--ease) both}
+@keyframes fzin{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+.fz-restbox.fz-enter{animation:fzup .4s var(--ease) both}@keyframes fzup{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.fz-done.fz-enter{animation:fzup .5s var(--ease) both}
+.stepper input{font-variant-numeric:tabular-nums}
+.stepper input.bump{animation:bump .25s var(--spring)}.stepper input.bump.up{--dy:-5px}.stepper input.bump.dn{--dy:5px}
+@keyframes bump{40%{transform:translateY(var(--dy,0)) scale(1.06)}}
+.stepper button{transition:background .15s,transform .1s}.stepper button:active{background:color-mix(in srgb,var(--a) 18%,transparent);transform:scale(.92)}
+.fz-go{position:relative;overflow:hidden;box-shadow:0 12px 30px -14px var(--acc)}
+.fz-go:active{transform:scale(.97)}
+.fz-go:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-100%);animation:sheen 3.6s 1.2s ease-in-out infinite}
+@keyframes sheen{40%,100%{transform:translateX(100%)}}
+.fz-next{animation:rise .45s .15s var(--ease) both}
+.noanim .fz-go:after,.noanim .fz-clock.soon{animation:none}
+@media(prefers-reduced-motion:reduce){.fz-enter,.fz-go:after,.fz-clock.soon,.stepper input.bump,.fz-next{animation:none!important}}
+/* Helle Themes: Flächen auf dem Hintergrund müssen sich abheben (vorher fast gleich hell) */
+html[data-mode=light]:not([data-theme]),html[data-theme=graphit][data-mode=light]{--card2:#e7eaf0}
+html[data-theme=klar][data-mode=light]{--card2:#e8e8ee}
+html[data-theme=apple][data-mode=light]{--card2:#e6e6eb}
+.fz .stepper{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.fz-warm{background:var(--card);border:1px solid var(--line)}
+.fz .fz-warm b{color:var(--a)}
+.tools4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.tools4 button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:var(--card2);font-size:12px;font-weight:600;color:var(--text);transition:transform .12s,background .2s}
+.tools4 button svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tools4 .bad{color:var(--bad)}.tools4 button:active{transform:scale(.94)}
+.setrow.compact{display:flex;align-items:center;gap:12px;padding:10px 12px;opacity:1}
+.setrow.compact .sn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok);flex:none;animation:popin .35s both}
+html[data-theme=apple][data-mode][data-font] .hero{--hero-mute:var(--mute)}html[data-theme=apple][data-mode][data-font] .hero .icbtn:active{background:var(--card2)}
+details.hist summary{align-items:center;gap:10px}details.hist summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .25s var(--ease);flex:none;margin-right:6px}
+details.hist[open] summary:after{transform:rotate(-135deg)}details.hist[open]>:not(summary){animation:rise .3s var(--ease) both}
