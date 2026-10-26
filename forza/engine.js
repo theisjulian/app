@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.3';
+  const RULE_VERSION = 'forza-regeln-1.4';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -99,7 +99,7 @@
       const perM = {};
       for (const se of s.session_exercises || []) {
         const ex = exById[se.exercise_id]; if (!ex || ex.dosage_profile === 'M') continue;
-        const nSets = workSets(se.sets).length;
+        const nSets = workSets(se.sets, ex.load_convention === 'unterstuetzt').length;
         for (const m of ex.muscles_primary) perM[m] = (perM[m] || 0) + nSets;
       }
       for (const m in perM) {
@@ -114,8 +114,10 @@
 
   /* Arbeitssätze: abgeschlossene Sätze ohne die Aufwärmsätze. Wer sich hochsteigert (z. B. 70, 90, 95, 105, 110 kg),
      soll die leichten Sätze weder als Wochenvolumen noch für die Steigerung angerechnet bekommen. Grenze: 75 % der Höchstlast. */
-  function workSets(sets) {
-    const done = (sets || []).filter((x) => x.done), loads = done.map((x) => Number(x.load_kg)).filter((v) => v > 0);
+  function workSets(sets, assisted) {
+    const done = (sets || []).filter((x) => x.done);
+    if (assisted) return done; // Maschine mit Unterstützung: mehr Gewicht = leichter, Aufwärmsätze lassen sich so nicht erkennen
+    const loads = done.map((x) => Number(x.load_kg)).filter((v) => v > 0);
     if (!loads.length) return done;
     const cut = Math.max(...loads) * 0.75;
     return done.filter((x) => x.load_kg === null || Number(x.load_kg) >= cut);
@@ -146,12 +148,12 @@
     return Math.max(lo, Math.min(hi, ref.reps + 1));
   }
 
-  function lastWorkSets(sessions, exId) {
+  function lastWorkSets(sessions, exId, assisted) {
     const arr = sessions.filter((s) => ['gefuehrt', 'bestaetigt'].includes(s.status))
       .sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
     for (const s of arr) for (const se of s.session_exercises || []) {
       if (se.exercise_id === exId) {
-        const sets = workSets(se.sets).filter((x) => x.load_kg !== null && x.reps !== null);
+        const sets = workSets(se.sets, assisted).filter((x) => x.load_kg !== null && x.reps !== null);
         if (sets.length) return { date: s.session_date, sets };
       }
     }
@@ -165,12 +167,15 @@
     // Arbeitsgewicht: die schwerste Last, mit der das untere Ende des Bereichs geschafft wurde
     // (wer sich auf 110 kg × 4 hochsteigert, bekommt 105 kg vorgeschlagen, wenn dort 6 Wiederholungen gingen)
     const inRange = prof.reps ? last.sets.filter((s) => s.reps >= prof.reps[0]) : [];
-    const top = Math.max(...(inRange.length ? inRange : last.sets).map((s) => Number(s.load_kg)));
+    const assisted = ex.load_convention === 'unterstuetzt'; // Unterstützung: weniger Gewicht ist schwerer
+    const pool = (inRange.length ? inRange : last.sets).map((s) => Number(s.load_kg));
+    const top = assisted ? Math.min(...pool) : Math.max(...pool);
     const topSets = last.sets.filter((s) => Number(s.load_kg) === top);
     const hit = prof.reps && topSets.length >= 2 && topSets.every((s) => s.reps >= prof.reps[1] && (s.rir === null || s.rir >= prof.rir[0]));
     let kg = top;
-    let text = `Zuletzt ${fmt(top)} kg${ex.load_convention === 'je_hand' ? ' je Hand' : ''} (${last.date.slice(8, 10)}.${last.date.slice(5, 7)}.).`;
-    if (hit && !calm) { kg = top + step; text += ` Oberer Bereich sicher erreicht, daher +${fmt(step)} kg.`; }
+    let text = `Zuletzt ${fmt(top)} kg${ex.load_convention === 'je_hand' ? ' je Hand' : assisted ? ' Unterstützung' : ''} (${last.date.slice(8, 10)}.${last.date.slice(5, 7)}.).`;
+    if (hit && !calm && assisted) { kg = Math.max(0, top - step); text += ` Oberer Bereich sicher erreicht, daher ${fmt(step)} kg weniger Unterstützung.`; }
+    else if (hit && !calm) { kg = top + step; text += ` Oberer Bereich sicher erreicht, daher +${fmt(step)} kg.`; }
     else text += ' Gleiches Gewicht, mehr Wiederholungen anpeilen.';
     if (calm) text += ' Ruhigere Tagesform: keine Steigerung.';
     return { kg, text, first: false };
@@ -433,7 +438,7 @@
 
     const items = chosen.map((c) => {
       const pf = profOf(c.ex.dosage_profile, P, ctx.goals, c.prio);
-      const last = lastWorkSets(ctx.sessions, c.ex.id);
+      const last = lastWorkSets(ctx.sessions, c.ex.id, c.ex.load_convention === 'unterstuetzt');
       const ls = loadSuggestion(c.ex, pf, last, P, calm || reentry);
       let rirLo = pf.rir ? pf.rir[0] : null, rirHi = pf.rir ? pf.rir[1] : null;
       if (pf.rir && (calm || reentry)) { rirLo += P.calm_reserve_add; rirHi += P.calm_reserve_add; }

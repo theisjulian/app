@@ -41,6 +41,11 @@ assert(!E.suggest({ ...wBase, sessions: [legDay('2026-10-27')] }).items.some((i)
 assert(!E.suggest({ ...wBase, sessions: [legDay('2026-10-25'), legDay('2026-10-23')] }).items.some((i) => i.name === 'Wadenheben'), 'Wochenziel erreicht');
 const legs = E.suggest({ ...wBase, split: { days: [{ name: 'Beine', focus: ['quadrizeps', 'waden'], minutes: 55 }] }, sessions: [] });
 assert.equal(legs.items.find((i) => i.name === 'Wadenheben').sets, 3, 'Schwerpunkt: Zusatzübung 3 Sätze');
+// Unterstützte Maschine: oberer Bereich erreicht → weniger Unterstützung
+const asst = { id: 'u', name: 'Unterstützter Klimmzug', muscles_primary: ['lat'], pattern: 'vertikal_ziehen', equipment: ['klimmzug_maschine'], equipment_alt: [], dosage_profile: 'G', load_convention: 'unterstuetzt', tier: 'geprueft', active: true };
+const aHist = [{ session_date: '2026-10-24', kind: 'kraft', status: 'bestaetigt', session_exercises: [{ exercise_id: 'u', sets: [40, 40].map((kg) => ({ done: true, load_kg: kg, reps: 10, rir: 2 })) }] }];
+const aS = E.suggest({ exercises: [asst], items: ['klimmzug_maschine'], split: { days: [{ name: 'Rücken', focus: ['lat'], minutes: 30 }] }, sessions: aHist, absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null });
+assert.equal(aS.items[0].load_kg, 37.5, 'weniger Unterstützung'); assert.deepEqual(E.warmup(40, 'unterstuetzt', P), []);
 console.log('eigenständige Tests ok');
 
 const katalog = process.argv[2];
