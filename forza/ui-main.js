@@ -146,43 +146,11 @@
     await F.insert('sessions', { session_date: t.dataset.d, kind: 'kraft', title: day || 'Krafttraining', split_day: day || null, status: 'bestaetigt', source: 'manuell', duration_min: min, note: document.getElementById('e-note').value || 'Details unbekannt' });
     F.closeModal(); await F.refresh(); F.toast('Gespeichert');
   };
-  F.acts.saveAbs = async () => {
-    const from = document.getElementById('a-from').value, to = document.getElementById('a-to').value; if (!from || !to || to < from) return F.toast('Bitte einen gültigen Zeitraum wählen.');
-    await F.insert('absences', { from_date: from, to_date: to, kind: document.getElementById('a-kind').value, note: document.getElementById('a-note').value || null });
-    F.closeModal(); await F.refresh(); F.toast('Gespeichert');
-  };
   F.acts.delSession = async (t) => { if (!confirm('Diesen Eintrag löschen? Er bleibt im Änderungsprotokoll erhalten.')) return; await F.del('sessions', t.dataset.id); await F.refresh(); };
   F.acts.delAbs = async (t) => { await F.del('absences', t.dataset.id); await F.refresh(); };
 
   /* ---------- Fortschritt ---------- */
-  F.ui.prog = { ex: null };
-  function lineChart(pts, unit) {
-    if (pts.length < 2) return '<div class="mute small">Noch zu wenig Daten für einen Verlauf.</div>';
-    const W = 320, H = 150, p = 28, xs = pts.map((q) => new Date(q.d).getTime()), ys = pts.map((q) => q.v);
-    const x0 = Math.min(...xs), x1 = Math.max(...xs) || x0 + 1, y0 = Math.min(...ys) * 0.97, y1 = Math.max(...ys) * 1.03 || 1;
-    const X = (v) => p + (x1 === x0 ? 0 : (v - x0) / (x1 - x0)) * (W - p - 8), Y = (v) => H - p - (y1 === y0 ? 0 : (v - y0) / (y1 - y0)) * (H - p - 10);
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}"><line class="gr" x1="${p}" x2="${W - 8}" y1="${H - p}" y2="${H - p}"/><text x="2" y="${Y(y1) + 8}">${Math.round(y1)}</text><text x="2" y="${Y(y0)}">${Math.round(y0)}</text><polyline class="ln" points="${pts.map((q) => X(new Date(q.d).getTime()) + ',' + Y(q.v)).join(' ')}"/>${pts.map((q) => `<circle class="pt" cx="${X(new Date(q.d).getTime())}" cy="${Y(q.v)}" r="3.5"/>`).join('')}<text x="${p}" y="${H - 8}">${F.dshort(pts[0].d)}</text><text x="${W - 8}" y="${H - 8}" text-anchor="end">${F.dshort(pts[pts.length - 1].d)}</text></svg><div class="small mute">${unit}</div>`;
-  }
-  F.views.fortschritt = () => {
-    const S = F.S, today = F.today();
-    const byEx = {};
-    for (const s of S.sessions) if (['gefuehrt', 'bestaetigt'].includes(s.status)) for (const se of s.session_exercises) {
-      const ex = S.exById[se.exercise_id]; if (!ex) continue;
-      const done = se.sets.filter((x) => x.done && x.load_kg !== null && x.reps !== null && ex.load_convention !== 'koerper' && ex.load_convention !== 'zeit');
-      if (!done.length) continue;
-      const best = Math.max(...done.map((x) => E.e1rm(Number(x.load_kg), x.reps) || 0));
-      (byEx[se.exercise_id] = byEx[se.exercise_id] || []).push({ d: s.session_date, v: Math.round(best * 10) / 10, top: Math.max(...done.map((x) => Number(x.load_kg))) });
-    }
-    const ids = Object.keys(byEx);
-    let sel = F.ui.prog.ex && byEx[F.ui.prog.ex] ? F.ui.prog.ex : ids[0];
-    const wk = []; for (let i = 7; i >= 0; i--) { const a = F.addDays(today, -(i * 7 + 6)), b = F.addDays(today, -i * 7); wk.push({ l: F.dshort(b), n: S.sessions.filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && s.session_date >= a && s.session_date <= b).length, r: S.activities.filter((x) => RIDE.includes(x.sport) && x.start_at.slice(0, 10) >= a && x.start_at.slice(0, 10) <= b).length }); }
-    const mx = Math.max(3, ...wk.map((w) => w.n + w.r));
-    const weights = S.weights.map((w) => ({ d: w.measured_on, v: Number(w.weight_kg) }));
-    return `<div class="h1" style="margin-bottom:14px">Fortschritt</div>
-      <div class="card"><div class="h2">Wochen im Überblick</div><div class="row" style="align-items:flex-end;gap:8px;height:110px">${wk.map((w) => `<div class="grow" style="text-align:center"><div style="display:flex;flex-direction:column;justify-content:flex-end;height:80px;gap:2px"><div style="height:${w.r / mx * 80}px;background:var(--c-rad);border-radius:6px"></div><div style="height:${w.n / mx * 80}px;background:var(--a);border-radius:6px"></div></div><div class="small mute">${w.l}</div></div>`).join('')}</div><div class="small mute" style="margin-top:8px"><span style="color:var(--a);font-weight:700">Kraft</span> · <span style="color:var(--c-rad);font-weight:700">Rad</span> (Einheiten je Woche)</div></div>
-      <div class="card"><div class="h2">Kraftverlauf</div>${ids.length ? `<label class="f"><select data-in="progEx">${ids.map((id) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(S.exById[id].name)}</option>`).join('')}</select></label>${lineChart(byEx[sel], 'Geschätzte Maximalkraft (Epley) aus dem besten Satz je Einheit' + (S.exById[sel].load_convention === 'je_hand' ? ' · Gewicht je Hand' : ''))}` : '<div class="mute">Sobald du Sätze mit Gewicht und Wiederholungen protokollierst, erscheint hier dein Verlauf. Aus den übernommenen Einheiten gibt es bewusst keine Werte.</div>'}</div>
-      <div class="card"><div class="row between"><div class="h2">Körpergewicht</div><button class="btn sm" data-act="addWeight">Eintragen</button></div>${lineChart(weights, 'kg')}<div class="small mute">Zuletzt ${F.fmt(F.weightNow())} kg${weights.length ? ' am ' + F.dshort(weights[weights.length - 1].d) : ''}. Das Gewicht fließt in die Energieschätzung ein.</div></div>`;
-  };
+  /* Fortschritt: Ansicht in ui-extra.js */
   F.ins.progEx = (t) => { F.ui.prog.ex = t.value; F.render(); };
   F.acts.addWeight = () => F.modal(`<div class="h2">Körpergewicht</div><label class="f"><span>Datum</span><input id="w-d" type="date" value="${F.today()}"></label><label class="f"><span>Gewicht in kg</span><input id="w-v" type="text" inputmode="decimal" value="${F.fmt(F.weightNow())}"></label><button class="btn pri block" data-act="saveWeight">Speichern</button>`);
   F.acts.saveWeight = async () => {

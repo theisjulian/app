@@ -128,21 +128,16 @@
     F.closeModal(); await F.refresh(); F.toast('Gute Besserung. Eingetragen.');
   };
 
-  /* ---------- Supersätze, Fokus-Ansicht, Ersetzen ---------- */
+  /* ---------- Supersätze, Fokus-Ansicht (Bildschirm bleibt an) ---------- */
   document.addEventListener('toggle', (e) => { if (e.target.classList && e.target.classList.contains('exfold')) F.ui.exOpen = e.target.open; }, true);
   F.acts.supCycle = () => { const o = ['auto', 'immer', 'aus'], c = F.ls.get('superset', 'auto'); const n = o[(o.indexOf(c) + 1) % 3]; F.ls.set('superset', n); F.ui.exOpen = true; F.render(); F.toast({ auto: 'Supersätze: automatisch bei knapper Zeit (bis 45 min)', immer: 'Supersätze: immer, wo es passt', aus: 'Supersätze: aus' }[n]); };
   let wl = null;
   const wake = async (on) => { try { if (on && navigator.wakeLock) wl = await navigator.wakeLock.request('screen'); else if (wl) { await wl.release(); wl = null; } } catch (e) { /* optional */ } };
+  F.wake = wake;
   F.acts.focusToggle = async () => {
-    const on = !F.ls.get('focus', false); F.ls.set('focus', on); wake(on);
+    const on = !F.focusOn(); F.ls.set('focus', on); wake(on);
     try { if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (e) { /* iPhone: kein Vollbild-API */ }
     F.render(); window.scrollTo(0, 0);
   };
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && F.ls.get('focus', false) && F.openSession()) wake(true); });
-  const trv = F.views.training;
-  F.views.training = () => {
-    const h = trv(); if (!F.openSession()) return h;
-    const on = F.ls.get('focus', false);
-    return `${on ? '<div class="fx-on"></div>' : ''}<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn sm ghost" data-act="focusToggle" aria-pressed="${on}">${on ? 'Fokus beenden' : 'Fokus-Ansicht'}</button></div>` + h;
-  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && F.focusOn() && F.openSession()) wake(true); });
 })();

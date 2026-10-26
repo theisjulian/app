@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.1';
+  const RULE_VERSION = 'forza-regeln-1.2';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -99,7 +99,7 @@
       const perM = {};
       for (const se of s.session_exercises || []) {
         const ex = exById[se.exercise_id]; if (!ex || ex.dosage_profile === 'M') continue;
-        const nSets = (se.sets || []).filter((x) => x.done).length || 0;
+        const nSets = workSets(se.sets).length;
         for (const m of ex.muscles_primary) perM[m] = (perM[m] || 0) + nSets;
       }
       for (const m in perM) {
@@ -112,12 +112,46 @@
     return { last, sets7 };
   }
 
+  /* Arbeitssätze: abgeschlossene Sätze ohne die Aufwärmsätze. Wer sich hochsteigert (z. B. 70, 90, 95, 105, 110 kg),
+     soll die leichten Sätze weder als Wochenvolumen noch für die Steigerung angerechnet bekommen. Grenze: 75 % der Höchstlast. */
+  function workSets(sets) {
+    const done = (sets || []).filter((x) => x.done), loads = done.map((x) => Number(x.load_kg)).filter((v) => v > 0);
+    if (!loads.length) return done;
+    const cut = Math.max(...loads) * 0.75;
+    return done.filter((x) => x.load_kg === null || Number(x.load_kg) >= cut);
+  }
+
+  /* Aufwärmen vor Grundübungen (nicht protokolliert): zwei bis drei Stufen bis knapp unter die Arbeitslast */
+  function warmup(kg, conv, P) {
+    if (!kg || !['gesamt', 'je_hand'].includes(conv)) return [];
+    const hand = conv === 'je_hand', step = hand ? P.load_step_hand : P.load_step_total, min = hand ? 4 : 20;
+    if (kg < (hand ? 10 : 40)) return [];
+    const plan = hand ? [[0.5, 8], [0.75, 4]] : [[0.5, 8], [0.7, 5], [0.85, 3]], out = [];
+    for (const [f, reps] of plan) {
+      const w = Math.max(min, Math.round(kg * f / step) * step);
+      if (w < kg && !out.some((o) => o.kg === w)) out.push({ kg: w, reps });
+    }
+    return out;
+  }
+
+  /* Zielwiederholungen für einen Satz (nur Vorschlag, gespeichert wird erst beim Abschließen):
+     gleiche Last wie beim letzten Mal → eine Wiederholung mehr bis zum oberen Ende, sonst unteres Ende des Bereichs */
+  function repTarget(range, last, kg, setNo) {
+    if (!range) return null;
+    const [lo, hi] = range;
+    if (!last || kg === null || kg === undefined) return lo;
+    const same = last.sets.filter((x) => Number(x.load_kg) === Number(kg));
+    if (!same.length) return lo;
+    const ref = same[Math.min(same.length, Math.max(1, setNo)) - 1];
+    return Math.max(lo, Math.min(hi, ref.reps + 1));
+  }
+
   function lastWorkSets(sessions, exId) {
     const arr = sessions.filter((s) => ['gefuehrt', 'bestaetigt'].includes(s.status))
       .sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
     for (const s of arr) for (const se of s.session_exercises || []) {
       if (se.exercise_id === exId) {
-        const sets = (se.sets || []).filter((x) => x.done && x.load_kg !== null && x.reps !== null);
+        const sets = workSets(se.sets).filter((x) => x.load_kg !== null && x.reps !== null);
         if (sets.length) return { date: s.session_date, sets };
       }
     }
@@ -128,8 +162,11 @@
   function loadSuggestion(ex, prof, last, P, calm) {
     const step = ex.load_convention === 'je_hand' ? P.load_step_hand : P.load_step_total;
     if (!last) return { kg: null, text: 'Erstkalibrierung: leichter starten, 3–4 Wiederholungen Reserve; Gewicht notieren.', first: true };
-    const top = Math.max(...last.sets.map((s) => s.load_kg));
-    const topSets = last.sets.filter((s) => s.load_kg === top);
+    // Arbeitsgewicht: die schwerste Last, mit der das untere Ende des Bereichs geschafft wurde
+    // (wer sich auf 110 kg × 4 hochsteigert, bekommt 105 kg vorgeschlagen, wenn dort 6 Wiederholungen gingen)
+    const inRange = prof.reps ? last.sets.filter((s) => s.reps >= prof.reps[0]) : [];
+    const top = Math.max(...(inRange.length ? inRange : last.sets).map((s) => Number(s.load_kg)));
+    const topSets = last.sets.filter((s) => Number(s.load_kg) === top);
     const hit = prof.reps && topSets.length >= 2 && topSets.every((s) => s.reps >= prof.reps[1] && (s.rir === null || s.rir >= prof.rir[0]));
     let kg = top;
     let text = `Zuletzt ${fmt(top)} kg${ex.load_convention === 'je_hand' ? ' je Hand' : ''} (${last.date.slice(8, 10)}.${last.date.slice(5, 7)}.).`;
@@ -200,6 +237,8 @@
     'Unterkörper': [['quadrizeps', 'G', ['kniebeuge']], ['hamstrings', 'G', ['huefte_beugen']], ['quadrizeps', 'G', ['beinpresse', 'ausfallschritt']], ['hamstrings', 'A', ['beinbeugen']], ['quadrizeps', 'A', ['kniestrecken']], ['waden', 'A', ['wadenheben']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
     'Push': [['brust', 'G', ['schraeg_druecken']], ['brust', 'G', ['horizontal_druecken']], ['brust', 'A', ['brust_fliegen']], ['schulter_seitlich', 'A', ['seitheben']], ['trizeps', 'A', ['trizeps_strecken']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]],
     'Ganzkörper': [['quadrizeps', 'G', ['beinpresse', 'kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['brust', 'G', ['schraeg_druecken', 'horizontal_druecken']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen', 'huefte_beugen']], ['rumpf', 'C', ['rumpf_dynamisch', 'anti_rotation']]],
+    'Pull': [['lat', 'G', ['vertikal_ziehen']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['schulter_hinten', 'A', ['reverse_fly']], ['rotatoren', 'S', ['rotation']], ['schulter_hinten', 'S', ['horizontal_ziehen', 'schulterblatt']], ['bizeps', 'A', ['curl']]],
+    'Beine': [['quadrizeps', 'G', ['kniebeuge']], ['hamstrings', 'G', ['huefte_beugen']], ['quadrizeps', 'G', ['ausfallschritt', 'beinpresse']], ['hamstrings', 'A', ['beinbeugen']], ['quadrizeps', 'A', ['kniestrecken']], ['waden', 'A', ['wadenheben']], ['gesaess', 'A', ['huefte_strecken']]],
     'Lower + Pull': [['quadrizeps', 'G', ['kniebeuge']], ['lat', 'G', ['vertikal_ziehen']], ['quadrizeps', 'G', ['beinpresse']], ['ruecken_hoch', 'G', ['horizontal_ziehen']], ['hamstrings', 'A', ['beinbeugen']], ['waden', 'A', ['wadenheben']], ['rotatoren', 'S', ['rotation', 'horizontal_ziehen']]]
   };
 
@@ -418,6 +457,6 @@
 
   function e1rm(kg, reps) { return reps && kg ? kg * (1 + reps / 30) : null; }
 
-  const api = { TEMPLATES, mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
+  const api = { workSets, warmup, repTarget, TEMPLATES, mobilityPick, profOf, RULE_VERSION, DEFAULTS, PROFILES, LABEL, BIG, prioOf, available, eligible, suggest, energy, e1rm, muscleStats, lastWorkSets, params, todayStr, dayDiff, fmt };
   if (typeof module !== 'undefined') module.exports = api; else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -103,7 +103,6 @@
     if (prof.kind === 'studio') return Object.assign({}, prof, { items: F.allItems() });
     return prof;
   };
-  F.allItems = () => { const set = new Set(); (F.S.exercises || []).forEach((e) => [...(e.equipment || []), ...(e.equipment_alt || [])].forEach((i) => i !== 'koerpergewicht' && set.add(i))); return [...set]; };
   F.openSession = () => F.S.sessions.find((s) => ['kraft', 'sonstiges'].includes(s.kind) && s.status === 'geplant' && s.started_at && !s.finished_at) || null;
 
   F.painSet = () => {
@@ -128,7 +127,7 @@
 
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
-  F.go = (r) => { location.hash = '#/' + r; };
+  F.go = (r) => { if (location.hash === '#/' + r) { F.closeModal(); F.render(); window.scrollTo(0, 0); } else location.hash = '#/' + r; }; // gleiche Adresse: kein hashchange, also selbst neu zeichnen
   F.render = () => {
     const root = document.getElementById('root');
     if (!F.user) { F.views.auth(root); return; }

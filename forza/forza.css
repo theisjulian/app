@@ -282,15 +282,28 @@ html[data-mode=light]{--c-rad:oklch(.58 .14 calc(var(--hue,125) + 130));--c-wan:
 
 html[data-mode=light] .chip:not(.on){border-color:var(--line)}
 
-/* Fokus-Ansicht beim Training: groß, ruhig, ohne Navigation */
+/* Fokus-Ansicht beim Training: ein Satz, große Ziele, ohne Navigation */
 .app:has(.fx-on) .bnav,.app:has(.fx-on) .side{display:none}
-.app:has(.fx-on) .main{padding-bottom:40px;max-width:760px;margin:0 auto}
-.app:has(.fx-on) .h1{font-size:32px}
-.app:has(.fx-on) .card{padding:22px}
-.app:has(.fx-on) .stepper button{min-height:68px;min-width:68px;font-size:30px}
-.app:has(.fx-on) .stepper input{font-size:36px;min-height:68px}
-.app:has(.fx-on) .btn{min-height:58px;font-size:18px}
-.app:has(.fx-on) .btn.sm{min-height:44px;font-size:15px}
-.app:has(.fx-on) .setrow{padding:20px}
-.app:has(.fx-on) .chip{padding:12px 18px;font-size:17px}
 .app:has(.fx-on){grid-template-columns:minmax(0,1fr)}
+.app:has(.fx-on) .main{padding-bottom:calc(28px + var(--sb));max-width:640px;margin:0 auto}
+.fz{display:flex;flex-direction:column;gap:12px;padding-top:6px}
+.fz-name{font-size:30px;line-height:1.12;margin:0}
+.fz-sub{color:var(--mute)}.fz-sub b{color:var(--text)}
+.fz-warm{background:var(--card2);border-radius:var(--r3);padding:10px 12px;font-size:14px;margin-top:8px}
+.fz-vals{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
+@media(min-width:420px){.fz-vals{grid-template-columns:1fr 1fr}}
+.fz-val span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.fz .stepper{border-radius:18px}
+.fz .stepper button{width:68px;height:76px;font-size:32px;flex:none}
+.fz .stepper input{font-size:38px;height:76px}
+.fz-go{min-height:84px;font-size:24px;border-radius:24px;gap:10px;margin-top:6px}
+.fz-tools{display:flex;flex-wrap:wrap;gap:6px 4px;justify-content:center}
+.fz-tools button{padding:10px 12px;border-radius:12px;color:var(--mute);font-size:14px}
+.fz-tools button:active{background:var(--card2)}.fz-tools .bad{color:var(--bad)}
+.fz-restbox{align-items:stretch;text-align:center;padding-top:18px}
+.fz-clock{font-size:clamp(84px,26vw,140px);font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;color:var(--a)}
+.fz-prog{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}.fz-prog i{display:block;height:100%;background:var(--a);border-radius:99px;transition:width .5s linear}
+.fz-restbox .btn{min-height:60px;font-size:18px}
+.fz-rate{display:flex;flex-direction:column;align-items:center;gap:8px}.fz-rate .chip{padding:12px 16px}
+.fz-next{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:2px;margin-top:6px}.fz-next b{font-size:19px}
+.fz-done{text-align:center;padding-top:20px}.fz-done .ring{width:110px;height:110px;margin:0 auto 10px;display:block}

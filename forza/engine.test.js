@@ -1,5 +1,33 @@
-const E = require('./engine.js'); const assert = require('assert');
-const cat = require('/tmp/claude-0/-home-claude/e666d325-a7aa-5e95-a6d8-de49952d2a50/scratchpad/cat/catalog_full.json');
+// Aufruf: node engine.test.js [Pfad zum Katalog-Export als JSON]. Ohne Katalog laufen nur die eigenständigen Tests.
+const E = require('./engine.js'); const assert = require('assert'); const fs = require('fs');
+
+/* ---------- eigenständig: Aufwärmsätze, Zielwiederholungen ---------- */
+const ramp = [70, 90, 95, 105, 110].map((kg, i) => ({ done: true, load_kg: kg, reps: [7, 6, 6, 6, 4][i], rir: null }));
+assert.deepEqual(E.workSets(ramp).map((x) => x.load_kg), [90, 95, 105, 110], 'Aufwärmsatz 70 kg zählt nicht');
+assert.equal(E.workSets([{ done: true, load_kg: null, reps: 10 }, { done: false, load_kg: null }]).length, 1, 'ohne Last: alle erledigten');
+const st = E.muscleStats([{ session_date: '2026-10-25', kind: 'kraft', status: 'bestaetigt', session_exercises: [{ exercise_id: 'k', sets: ramp }] }], { k: { muscles_primary: ['quadrizeps'], dosage_profile: 'G' } }, '2026-10-26');
+assert.equal(st.sets7.quadrizeps, 4);
+const P = E.params();
+assert.deepEqual(E.warmup(100, 'gesamt', P), [{ kg: 50, reps: 8 }, { kg: 70, reps: 5 }, { kg: 85, reps: 3 }]);
+assert.deepEqual(E.warmup(20, 'je_hand', P), [{ kg: 10, reps: 8 }, { kg: 15, reps: 4 }]);
+assert.deepEqual(E.warmup(30, 'gesamt', P), [], 'leichte Last: kein Aufwärmen');
+assert.deepEqual(E.warmup(60, 'koerper', P), []);
+const last = { sets: [{ load_kg: 95, reps: 6 }, { load_kg: 95, reps: 5 }] };
+assert.equal(E.repTarget([6, 10], last, 95, 1), 7, 'gleiche Last: +1');
+assert.equal(E.repTarget([6, 10], last, 95, 2), 6, 'nie unter den Bereich');
+assert.equal(E.repTarget([6, 10], last, 97.5, 1), 6, 'neue Last: unteres Ende');
+assert.equal(E.repTarget([6, 10], { sets: [{ load_kg: 95, reps: 10 }] }, 95, 1), 10, 'höchstens oberes Ende');
+assert.equal(E.repTarget([6, 10], null, null, 1), 6);
+assert.equal(E.repTarget(null, last, 95, 1), null);
+const sq = { id: 'k', load_convention: 'gesamt', muscles_primary: ['quadrizeps'], dosage_profile: 'G' };
+const hist = [{ session_date: '2026-10-25', kind: 'kraft', status: 'bestaetigt', session_exercises: [{ exercise_id: 'k', sets: ramp }] }];
+const sgK = E.suggest({ exercises: [Object.assign({ name: 'Kniebeuge', pattern: 'kniebeuge', equipment: ['langhantel'], equipment_alt: [], tier: 'geprueft', active: true }, sq)], items: ['langhantel'], split: { days: [{ name: 'Beine', focus: ['quadrizeps'], minutes: 30 }] }, sessions: hist, absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null });
+assert.equal(sgK.items[0].load_kg, 105, 'Arbeitsgewicht: schwerste Last im Zielbereich');
+console.log('eigenständige Tests ok');
+
+const katalog = process.argv[2];
+if (!katalog || !fs.existsSync(katalog)) { console.log('Kein Katalog angegeben: Vorschlagstests übersprungen.'); process.exit(0); }
+const cat = JSON.parse(fs.readFileSync(katalog, 'utf8'));
 const ex = cat.map((c, i) => ({ id: 'x' + i, code: c.code, name: c.name, muscles_primary: c.muscles_primary, muscles_secondary: c.muscles_secondary,
   pattern: c.pattern, equipment: c.equipment, equipment_alt: c.equipment_alt || [], dosage_profile: c.dosage, load_convention: c.load_convention, tier: c.tier, active: true }));
 const items = new Set(); ex.forEach((e) => e.equipment.forEach((i) => items.add(i)));
