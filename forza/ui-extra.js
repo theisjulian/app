@@ -60,9 +60,9 @@
       for (const se of s.session_exercises) {
         const ex = S.exById[se.exercise_id]; if (!ex) continue;
         for (const x of se.sets.filter((q) => q.done)) {
-          sets++; if (x.load_kg !== null && x.reps !== null) vol += Number(x.load_kg) * x.reps;
+          sets++; if (x.load_kg !== null && x.reps !== null && ex.load_convention !== 'unterstuetzt') vol += Number(x.load_kg) * x.reps;
           if (ex.dosage_profile !== 'M') ex.muscles_primary.forEach((m) => (muscle[m] = (muscle[m] || 0) + 1));
-          if (x.load_kg !== null && x.reps !== null && !['koerper', 'zeit'].includes(ex.load_convention)) {
+          if (x.load_kg !== null && x.reps !== null && !['koerper', 'zeit', 'unterstuetzt'].includes(ex.load_convention)) {
             const e1 = E.e1rm(Number(x.load_kg), x.reps); const l = (lifts[ex.id] = lifts[ex.id] || { name: ex.name, first: null, best: 0, firstD: s.session_date, lastD: s.session_date });
             if (l.first === null) l.first = e1; if (e1 > l.best) l.best = e1; l.lastD = s.session_date;
           }
@@ -131,7 +131,7 @@
     const byEx = {};
     for (const s of S.sessions) if (['gefuehrt', 'bestaetigt'].includes(s.status)) for (const se of s.session_exercises) {
       const ex = S.exById[se.exercise_id]; if (!ex) continue;
-      const dn = se.sets.filter((x) => x.done && x.load_kg !== null && x.reps !== null && !['koerper', 'zeit'].includes(ex.load_convention)); if (!dn.length) continue;
+      const dn = se.sets.filter((x) => x.done && x.load_kg !== null && x.reps !== null && !['koerper', 'zeit', 'unterstuetzt'].includes(ex.load_convention)); if (!dn.length) continue;
       (byEx[se.exercise_id] = byEx[se.exercise_id] || []).push({ d: s.session_date, v: Math.round(Math.max(...dn.map((x) => E.e1rm(Number(x.load_kg), x.reps) || 0)) * 10) / 10 });
     }
     const ids = Object.keys(byEx); const sel = F.ui.prog.ex && byEx[F.ui.prog.ex] ? F.ui.prog.ex : ids[0];
@@ -180,7 +180,7 @@
     for (const s of st.ses) for (const se of s.session_exercises) {
       const ex = F.S.exById[se.exercise_id]; if (!ex) continue; const o = (out[ex.id] = out[ex.id] || { ex, n: 0, sets: 0, reps: 0, vol: 0, top: null, e1: 0, last: null, lastD: '', pts: [] });
       const dn = se.sets.filter((x) => x.done); if (!dn.length) continue; o.n++; o.sets += dn.length; let best = 0;
-      dn.forEach((x) => { if (x.reps !== null) o.reps += x.reps; if (x.load_kg !== null && x.reps !== null) { o.vol += Number(x.load_kg) * x.reps; if (o.top === null || Number(x.load_kg) > o.top) o.top = Number(x.load_kg); const e1 = E.e1rm(Number(x.load_kg), x.reps) || 0; if (e1 > o.e1) o.e1 = e1; if (e1 > best) best = e1; } });
+      dn.forEach((x) => { if (x.reps !== null) o.reps += x.reps; if (x.load_kg !== null && x.reps !== null && ex.load_convention !== 'unterstuetzt') { o.vol += Number(x.load_kg) * x.reps; if (o.top === null || Number(x.load_kg) > o.top) o.top = Number(x.load_kg); const e1 = E.e1rm(Number(x.load_kg), x.reps) || 0; if (e1 > o.e1) o.e1 = e1; if (e1 > best) best = e1; } });
       if (s.session_date >= o.lastD) { o.lastD = s.session_date; const t = dn.filter((x) => x.load_kg !== null).pop(); o.last = t ? F.fmt(Number(t.load_kg)) + ' kg' : ''; }
       if (best) o.pts.push({ d: s.session_date, v: best });
     }
@@ -352,7 +352,7 @@
   F.acts.addEx = async (t) => {
     const s = F.openSession(), ex = F.S.exById[t.dataset.ex]; if (!s || !ex) return;
     const P = E.params(F.S.params), prio = E.prioOf(F.S.priorities, ex.muscles_primary[0], F.today()), pf = E.profOf(ex.dosage_profile, P, (F.S.profile && F.S.profile.goals) || [], prio);
-    const last = E.lastWorkSets(F.S.sessions, ex.id), kg = last ? Math.max(...last.sets.map((q) => Number(q.load_kg))) : null;
+    const asst = ex.load_convention === 'unterstuetzt', last = E.lastWorkSets(F.S.sessions, ex.id, asst), kg = last ? (asst ? Math.min : Math.max)(...last.sets.map((q) => Number(q.load_kg))) : null;
     const se = await F.insert('session_exercises', { session_id: s.id, exercise_id: ex.id, position: s.session_exercises.length, planned_sets: pf.sets, planned_reps: pf.reps ? pf.reps.join('–') : pf.secs ? pf.secs.join('–') + ' s' : null, planned_rir: pf.rir ? pf.rir.join('–') : null, why: 'Spontan hinzugefügt.' + (last ? ' Zuletzt ' + F.fmt(kg) + ' kg.' : ' Keine bekannte Last: leicht starten.') });
     const rows = []; for (let n = 1; n <= pf.sets; n++) rows.push({ session_exercise_id: se.id, set_no: n, load_kg: kg, load_per_hand: ex.load_convention === 'je_hand' });
     const sr = await F.sb.from('sets').insert(rows); if (sr.error) throw sr.error;

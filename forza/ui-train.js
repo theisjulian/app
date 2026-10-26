@@ -43,7 +43,7 @@
     const prev = se.sets.slice(0, Math.max(0, i)).reverse().find((x) => x.done);
     const load = st.load_kg !== null && st.load_kg !== undefined ? st.load_kg : prev ? prev.load_kg : null;
     if (k.timed) return { load_kg: load, seconds: st.seconds ?? (prev && prev.seconds) ?? (range ? range[0] : null), timed: true };
-    const reps = st.reps ?? (prev && prev.reps !== null && Number(prev.load_kg) === Number(load) ? prev.reps : E.repTarget(range, E.lastWorkSets(F.S.sessions, ex.id), load, st.set_no));
+    const reps = st.reps ?? (prev && prev.reps !== null && Number(prev.load_kg) === Number(load) ? prev.reps : E.repTarget(range, E.lastWorkSets(F.S.sessions, ex.id, ex.load_convention === 'unterstuetzt'), load, st.set_no));
     return { load_kg: load, reps, timed: false };
   };
   const partnerOf = (s, se) => { const m = /Superset mit «(.+?)»/.exec(se.why || ''); return m ? s.session_exercises.find((x) => x !== se && (F.S.exById[x.exercise_id] || {}).name === m[1]) || null : null; };
@@ -87,7 +87,7 @@
     const se = exs[F.ui.tr.ei], ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
     const firstOpen = se.sets.findIndex((x) => !x.done), open = se.sets.filter((x) => !x.done).length;
     const elapsed = Math.max(0, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000));
-    const unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : 'kg';
+    const unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung' : 'kg';
     const dnEx = exs.filter((e) => e.sets.length && !isOpen(e)).length;
     return `${topBar(s, dnEx)}<div style="margin-bottom:10px"><div class="eyebrow">${esc(s.title || 'Training')} · ${elapsed} min</div><div class="h1" style="font-size:24px">${esc(ex.name)}</div></div>
       <div class="row gap" style="margin-bottom:14px">${exs.map((e, i) => `<button class="grow" style="height:8px;border-radius:99px;background:${doneN(e) === e.sets.length ? 'var(--a)' : i === F.ui.tr.ei ? 'color-mix(in srgb,var(--a) 45%,var(--card2))' : 'var(--card2)'}" data-act="goEx" data-i="${i}" aria-label="Übung ${i + 1}"></button>`).join('')}</div>
@@ -122,7 +122,7 @@
     const se = exs[F.ui.tr.ei];
     if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done${enter('done')}"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button>${postureOffer(s)}<button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
-    const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : 'kg';
+    const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung (weniger = schwerer)' : 'kg';
     const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
     const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="${im}" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
     return topBar(s, dnEx) + `<div class="fz${enter(st.id)}">
@@ -306,7 +306,8 @@
     for (const se of s.session_exercises) {
       const ex = F.S.exById[se.exercise_id]; if (!ex) continue; const done = se.sets.filter((x) => x.done); sets += done.length;
       if (ex.dosage_profile === 'M') continue;
-      for (const x of done) if (x.load_kg !== null && x.reps !== null && !['koerper', 'zeit', 'keine'].includes(ex.load_convention)) vol += Number(x.load_kg) * x.reps * (ex.load_convention === 'je_hand' ? 2 : 1);
+      for (const x of done) if (x.load_kg !== null && x.reps !== null && !['koerper', 'zeit', 'keine', 'unterstuetzt'].includes(ex.load_convention)) vol += Number(x.load_kg) * x.reps * (ex.load_convention === 'je_hand' ? 2 : 1);
+      if (ex.load_convention === 'unterstuetzt') continue; // Maximalkraft-Schätzung ergibt mit Unterstützung keinen Sinn
       const best = Math.max(0, ...done.filter((x) => x.load_kg !== null && x.reps !== null).map((x) => E.e1rm(Number(x.load_kg), x.reps) || 0));
       let prev = 0; for (const o of F.S.sessions) if (o.id !== s.id && ['gefuehrt', 'bestaetigt'].includes(o.status)) for (const oe of o.session_exercises) if (oe.exercise_id === se.exercise_id) for (const y of oe.sets) if (y.done && y.load_kg !== null && y.reps !== null) prev = Math.max(prev, E.e1rm(Number(y.load_kg), y.reps) || 0);
       if (prev > 0 && best > prev + 0.01) prs.push(`${ex.name}: ca. ${F.fmt(Math.round(best * 10) / 10)} kg Maximalkraft (vorher ${F.fmt(Math.round(prev * 10) / 10)})`);
@@ -341,7 +342,7 @@
       <div class="row between wrap" style="margin-bottom:10px"><div><div class="h1" style="font-size:26px">${esc(ex.name)}</div><div class="mute">${ex.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${ex.code ? ' · ' + ex.code : ''}</div></div><span class="badge ${checked ? 'ok' : 'warn'}">${checked ? 'fachlich geprüft' : st.released ? 'Entwurf, von dir freigegeben' : 'Entwurf, nicht fachlich geprüft'}</span></div>
       ${anim ? `<div class="card" style="padding:12px">${ANIM[anim]()}<div class="small mute" style="margin-top:8px;text-align:center">Vereinfachte Skizze der Bewegung, kein Ersatz für die Beschreibung.</div></div>` : `<div class="card small mute">Für diese Übung gibt es noch keine Animation. Die Beschreibung unten erklärt den Ablauf.</div>`}
       ${T ? sec('Funktion und Ausstattung', T.funktion) + sec('Ausführung', T.ausfuehrung) + sec('Kontrolle und typische Probleme', T.kontrolle) + sec('Anpassen und ersetzen', T.anpassen) + sec('Dosierung und Tracking', T.dosierung) + sec('Aussagegrenzen', T.grenzen) + sec('Technikquellen', T.quellen) : sec('Ausführung', c.ausfuehrung) + sec('Typische Fehler', c.fehler) + sec('Hinweis', c.hinweis) + `<div class="card small mute">Diese Beschreibung ist ein Entwurf und wurde nicht fachlich geprüft.</div>`}
-      <div class="card"><div class="eyebrow" style="margin-bottom:6px">Ausstattung und Last</div><div class="small">${ex.equipment.map((e) => esc(F.itemLabel(e))).join(', ') || 'keine'}${ex.equipment_alt.length ? ' · Alternative: ' + ex.equipment_alt.map((e) => esc(F.itemLabel(e))).join(', ') : ''}<br>Lastangabe: ${{ gesamt: 'Gesamtgewicht', je_hand: 'je Hand', koerper: 'Körpergewicht', zusatz: 'Zusatzgewicht', zeit: 'Zeit', keine: 'ohne Last' }[ex.load_convention] || '–'}${pf ? '<br>Dosierungsprofil: ' + pf.label : ''}</div></div>
+      <div class="card"><div class="eyebrow" style="margin-bottom:6px">Ausstattung und Last</div><div class="small">${ex.equipment.map((e) => esc(F.itemLabel(e))).join(', ') || 'keine'}${ex.equipment_alt.length ? ' · Alternative: ' + ex.equipment_alt.map((e) => esc(F.itemLabel(e))).join(', ') : ''}<br>Lastangabe: ${{ gesamt: 'Gesamtgewicht', je_hand: 'je Hand', koerper: 'Körpergewicht', zusatz: 'Zusatzgewicht', unterstuetzt: 'Unterstützung (weniger Gewicht = schwerer)', zeit: 'Zeit', keine: 'ohne Last' }[ex.load_convention] || '–'}${pf ? '<br>Dosierungsprofil: ' + pf.label : ''}</div></div>
       <div class="warnbox card" style="border-color:var(--warn)"><b>Bei Schmerz stoppen.</b> Hör bei stechendem oder zunehmendem Schmerz auf und wähle eine andere Übung.</div>
       ${!checked ? `<div class="row gap"><button class="btn grow" data-act="releaseEx" data-id="${id}">${st.released ? 'Freigabe zurücknehmen' : 'Für Vorschläge freigeben'}</button></div>` : ''}`;
   };
