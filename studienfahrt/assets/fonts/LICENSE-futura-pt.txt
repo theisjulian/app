@@ -1,3 +1,0 @@
-Futura PT (ParaType). Die Schriftdateien wurden vom Betreiber der App bereitgestellt.
-Hinweis: Futura PT ist eine kommerzielle Schrift. Vor der Veroeffentlichung bitte pruefen, ob die Lizenz die Einbettung im Web (Webfont) erlaubt.
-Enthalten: Book (400), Demi (600), Bold (700), als Latin-Teilmenge (woff2).
