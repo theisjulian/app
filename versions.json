@@ -17,9 +17,9 @@
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "1.8.0",
+  "version": "1.8.1",
   "url": "https://theisapps.de/voce/",
-  "notes": "Neu: Seitenleiste mit Start-Übersicht, Hinweis beim Bewerten, welche Gruppe gerade dran ist, sieben Designs für Karten, Pläne und Aushänge, Aussprache-Hilfe, zwölf Farbwelten."
+  "notes": "Neu: Note und Worturteil passen immer zusammen, auch bei eigenem Notenschlüssel; Bausteine für das Worturteil nach den ISB-Beschreibungen; Hinweis, wenn ein von Hand geändertes Worturteil nicht mehr zu den Punkten passt; mehr Schutz vor Datenverlust; Bewertungsbögen in Word bleiben einseitig; neue Darstellung für Farbe, Modus und Schrift."
  },
  "foliva": {
   "version": "0.9.11",
