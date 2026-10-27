@@ -172,7 +172,7 @@ svg text{font-family:var(--f)}
 </section>
 
 <section class="tab" id="t-vorlagen">
-  <section class="card"><h2>Nachricht an Kolleginnen und Kollegen <span class="pill">bleibt in diesem Browser</span></h2>
+  <section class="card"><h2>Nachricht an Kolleginnen und Kollegen: Testversionen <span class="pill">bleibt in diesem Browser</span></h2>
     <div class="seg" id="m-app" role="group" aria-label="App"></div>
     <div class="small muted" style="margin:10px 0 12px" id="m-hint"></div>
     <div id="vlinks"></div>
@@ -256,7 +256,7 @@ var S={rel:null,vj:null,pages:null,latest:null},ISSUES=[];
 function demoRel(){var mk=function(tag,name,date,a,pre){return {tag_name:tag,name:name,published_at:date,prerelease:!!pre,assets:a.map(function(x){return {name:x[0],download_count:x[1]}})}};
  return [mk('v1.2.0','Gruppo 1.2.0','2026-10-19T10:00:00Z',[['Gruppen-Mac.zip',41],['Gruppen-Mac-Intel.zip',12],['Gruppen-Windows-Setup.exe',57]]),
  mk('v1.0.3','Gruppo 1.0.3','2026-09-20T10:00:00Z',[['Gruppen-Mac.zip',96],['Gruppen-Mac-Intel.zip',31],['Gruppen-Windows-Setup.exe',142],['Gruppen-Android.apk',64]]),
- mk('libretto-beta','Libretto 0.9.9 (Beta)','2026-10-15T10:00:00Z',[['Libretto-Mac.zip',37],['Libretto-Mac-Intel.zip',9],['Libretto-Windows-Setup.exe',44]],true),
+ mk('libretto-beta','Libretto 0.9.10 (Beta)','2026-10-15T10:00:00Z',[['Libretto-Mac.zip',37],['Libretto-Mac-Intel.zip',9],['Libretto-Windows-Setup.exe',44]],true),
  mk('1.8.1','Voce 1.8.1','2026-10-27T12:00:00Z',[['Voce-Mac.zip',6],['Voce-Mac-Intel.zip',2],['Voce-Windows-Setup.exe',3]]),
  mk('foliva-beta','Foliva 0.9.11 (Test)','2026-10-13T08:00:00Z',[['Foliva-Mac.zip',3],['Foliva-Mac-Intel.zip',1],['Foliva-Windows-Setup.exe',2]],true)]}
 function getRel(){if(DEMO)return Promise.resolve(demoRel());
@@ -266,7 +266,7 @@ function getRel(){if(DEMO)return Promise.resolve(demoRel());
 /* Welches Release GitHub gerade als „Latest“ führt: Links mit /releases/latest/ zeigen dorthin */
 function getLatest(){if(DEMO)return Promise.resolve({tag_name:'1.8.1'});
  return fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'}).then(function(r){return r.ok?r.json():null},function(){return null})}
-function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.9'},gruppen:{version:'1.2.0'},sportwahl:{version:'1.5.0'},viva:{version:'1.8.1'},foliva:{version:'0.9.11'}});
+function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.10'},gruppen:{version:'1.2.0'},sportwahl:{version:'1.5.0'},viva:{version:'1.8.1'},foliva:{version:'0.9.11'}});
  return fetch(SITE+'/versions.json?'+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('versions.json: '+r.status);return r.json()})}
 var PAGES=['/','/gruppen/','/libretto/','/libretto/demo/','/voce/','/foliva/','/namo/','/namo/demo/','/studienfahrt/','/sportwahl/','/sportwahl/app.html','/daje/','/gruppen/app.html','/versions.json','/datenschutz','/impressum','/lizenz'];
 function isAppPage(p){return APPS.some(function(a){return a.page===p})}
@@ -396,7 +396,7 @@ function web(){var st=load(),c=st.gc||window.THEIS_PRESET||{},el=$('web');
 
 /* ---------- Checkliste und Links ---------- */
 var CL=[
- ['Libretto-Dateien tauschen','Release <a href="https://github.com/'+REPO+'/releases/tag/libretto-beta" target="_blank" rel="noopener">libretto-beta</a> (Pre-Release): Libretto-Mac.zip, Libretto-Mac-Intel.zip, Libretto-Windows-Setup.exe ersetzen. Release-Namen mit Version, z. B. „Libretto 0.9.9 (Beta)“.'],
+ ['Libretto-Dateien tauschen','Release <a href="https://github.com/'+REPO+'/releases/tag/libretto-beta" target="_blank" rel="noopener">libretto-beta</a> (Pre-Release): Libretto-Mac.zip, Libretto-Mac-Intel.zip, Libretto-Windows-Setup.exe ersetzen. Release-Namen mit Version, z. B. „Libretto 0.9.10 (Beta)“.'],
  ['Gruppo veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit allen drei Dateien: Gruppen-Mac.zip, Gruppen-Mac-Intel.zip, Gruppen-Windows-Setup.exe. Name und Tag mit Version, z. B. „Gruppo 1.2.1“ und „1.2.1“. Die Website verlinkt fest auf das Release: im Website-Update die Links auf der Gruppo-Seite auf den neuen Tag setzen.'],
  ['Voce veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Voce-Mac.zip, Voce-Mac-Intel.zip, Voce-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name und Tag mit Version, z. B. „Voce 1.8.2“ und „1.8.2“. Im Website-Update die Links auf der Voce-Seite auf den neuen Tag setzen.'],
  ['Foliva-Testversion tauschen','Pre-Release <a href="https://github.com/'+REPO+'/releases/tag/foliva-beta" target="_blank" rel="noopener">foliva-beta</a> (beim ersten Mal neu anlegen, Haken „Set as a pre-release“): Foliva-Mac.zip, Foliva-Mac-Intel.zip, Foliva-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name z. B. „Foliva 0.9.11 (Test)“. Nicht auf der Website verlinken.'],
@@ -410,20 +410,18 @@ $('links').innerHTML=[['Releases','https://github.com/'+REPO+'/releases'],['Repo
 
 /* ---------- Vorlage ---------- */
 var MAILS={
- voce:{name:'Voce',pub:'/voce/',file:'Voce',sub:'Voce: mündliche Prüfungen in den Fremdsprachen, jetzt zum Herunterladen',
-  intro:'Voce, meine Anwendung für die mündlichen Schulaufgaben in den modernen Fremdsprachen, gibt es jetzt kostenlos zum Herunterladen. Voce hilft bei Prüfungsplan, Aufgabenkarten, Bewertung nach den Rastern des ISB (mit dessen Genehmigung) und den Bewertungsbögen in Word. Danke an alle, die die Testversion ausprobiert haben!'},
  foliva:{name:'Foliva',tag:'foliva-beta',file:'Foliva',sub:'Foliva (Testversion): Arbeitsblätter und Proben gestalten',
   intro:'ich habe ein Programm gebaut, mit dem man Arbeitsblätter und Proben gestaltet, und suche ein paar Testerinnen und Tester. Foliva erzeugt Aufgaben mit Lösungen nach deinen Vorgaben (Rechenpäckchen, Zahlenmauern, Lückentexte, Silben, Wortsuche und vieles mehr), macht das Lösungsblatt auf Knopfdruck und bringt über 300 Vorlagen für alle Schularten mit – auch Proben und Schulaufgaben mit Punkten und Notenschlüssel.'}};
-var MAPP='voce';
-function mlinks(k){var m=MAILS[k];if(m.pub)return [['Seite mit Download',SITE+m.pub+'#laden']];var b='https://github.com/'+REPO+'/releases/download/'+m.tag+'/';return [['Mac (Apple-Chip)',b+m.file+'-Mac.zip'],['Mac (Intel)',b+m.file+'-Mac-Intel.zip'],['Windows',b+m.file+'-Windows-Setup.exe']]}
-function mbody(k){var m=MAILS[k];if(m.pub)return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Voce läuft am Mac und unter Windows. Herunterladen und eine kurze Anleitung gibt es hier:\n\n'+SITE+m.pub+'#laden\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) einmal nach, weil die App nicht bei Apple und Microsoft registriert ist. Wie es geht, steht auf der Seite und in der angehängten Kurzanleitung (PDF, mit Bildern). Vor dem Einsatz mit echten Schülerdaten bitte die Freigabe der Schulleitung einholen. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian';return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Die Anwendung läuft am Mac und unter Windows:\n\n'+mlinks(k).map(function(l){return l[0]+': '+l[1]}).join('\n')+'\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) nach, weil die App noch nicht bei Apple und Microsoft registriert ist. Wie es geht, steht in der angehängten Kurzanleitung (PDF, mit Bildern). Es ist eine Testversion: Bitte sichere deine Daten regelmäßig und gib die Datei vorerst nicht weiter. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian'}
-/* Voce-Vorlage für die Veröffentlichung: neuer Speicherplatz, der alte Testversions-Entwurf (st.voce) bleibt in der Sicherung erhalten */
+var MAPP='foliva';
+function mlinks(k){var m=MAILS[k],b='https://github.com/'+REPO+'/releases/download/'+m.tag+'/';return [['Mac (Apple-Chip)',b+m.file+'-Mac.zip'],['Mac (Intel)',b+m.file+'-Mac-Intel.zip'],['Windows',b+m.file+'-Windows-Setup.exe']]}
+function mbody(k){var m=MAILS[k];return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Die Anwendung läuft am Mac und unter Windows:\n\n'+mlinks(k).map(function(l){return l[0]+': '+l[1]}).join('\n')+'\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) nach, weil die App noch nicht bei Apple und Microsoft registriert ist. Wie es geht, steht in der angehängten Kurzanleitung (PDF, mit Bildern). Es ist eine Testversion: Bitte sichere deine Daten regelmäßig und gib die Datei vorerst nicht weiter. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian'}
+/* Entwürfe je App; ein alter Voce-Entwurf (st.voce) bleibt in der Sicherung erhalten */
 function mget(k){var st=load();return (st.mail||{})[k]||{}}
 function mput(k,v){var st=load();st.mail=st.mail||{};if(v)st.mail[k]=v;else delete st.mail[k];store(st)}
 function vinit(){var k=MAPP,m=MAILS[k],v=mget(k),L=mlinks(k);
  $('m-app').innerHTML=Object.keys(MAILS).map(function(x){return '<button type="button" data-m="'+x+'" aria-pressed="'+(x===k)+'">'+MAILS[x].name+'</button>'}).join('');
  Array.prototype.forEach.call($('m-app').querySelectorAll('button'),function(b){b.onclick=function(){MAPP=b.getAttribute('data-m');try{var st=load();st.mapp=MAPP;store(st)}catch(e){}vinit()}});
- $('m-hint').innerHTML=m.pub?'Voce ist veröffentlicht. Der Link führt auf die Seite mit dem Download und bleibt bei neuen Versionen gleich.':'Die Links bleiben bei neuen Versionen gleich, solange du im Release <b>'+m.tag+'</b> nur die Dateien austauschst (gleiche Dateinamen).';
+ $('m-hint').innerHTML='Die Links bleiben bei neuen Versionen gleich, solange du im Release <b>'+m.tag+'</b> nur die Dateien austauschst (gleiche Dateinamen).';
  $('m-pdf').href='anleitung/'+m.file+'-zum-ersten-Mal-oeffnen.pdf';$('m-pdf').setAttribute('download',m.file+'-zum-ersten-Mal-oeffnen.pdf');
  $('v-sub').value=v.sub!=null?v.sub:m.sub;$('v-body').value=v.body!=null?v.body:mbody(k);
  $('vlinks').innerHTML=L.map(function(l,i){return '<div class="lrow"><b>'+l[0]+'</b><code>'+esc(l[1])+'</code><button class="btn small" type="button" data-i="'+i+'">Kopieren</button></div>'}).join('');
