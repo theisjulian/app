@@ -14,6 +14,7 @@ Solange er nicht in `main` übernommen ist, sieht niemand etwas davon: GitHub Pa
 - **Alle Seiten**: daje in der Programmleiste oben, in der Leiste unten am Handy (jetzt sieben Symbole) und in der Fußzeile.
 - **’namo.** zeigt als „Nächstes Programm“ auf daje, daje auf Libretto.
 - **Farben** `.a-daje` / `.n-daje` in `assets/site.css`, Sitemap-Eintrag `https://theisapps.de/daje/`.
+- **Statistik-Seite**: `/daje/` in der Liste „Seiten erreichbar?“.
 - **Datenschutz Nr. 5**: Absatz zu daje (lokaler Speicher, YouTube erst nach Antippen über youtube-nocookie,
   Vorlesestimme des Browsers, Bildsuche über Openverse nur beim Erstellen eigener Übungen).
 
