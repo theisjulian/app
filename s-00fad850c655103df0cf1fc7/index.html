@@ -8,8 +8,12 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Statistik"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
-:root{--canvas:#EDEEF2;--wash-a:rgba(110,155,255,.42);--wash-b:rgba(255,150,185,.32);--wash-c:rgba(125,228,210,.34);--glass:rgba(255,255,255,.62);--glass-solid:rgba(255,255,255,.9);--ink:#14161A;--muted:rgba(30,34,40,.6);--line:rgba(0,0,0,.09);--sunk:rgba(20,30,50,.06);--accent:#0071E3;--ok:#248A3D;--warn:#B25000;--bad:#D70015;--okbg:rgba(52,199,89,.15);--warnbg:rgba(255,149,0,.16);--badbg:rgba(255,59,48,.13);--lift:0 1px 2px rgba(16,24,40,.05),0 8px 26px -8px rgba(16,24,40,.16);--f:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif}
-@media(prefers-color-scheme:dark){:root{--canvas:#07080B;--wash-a:rgba(50,100,220,.30);--wash-b:rgba(190,60,120,.20);--wash-c:rgba(20,150,150,.22);--glass:rgba(38,41,48,.58);--glass-solid:rgba(34,37,44,.92);--ink:#F5F6F8;--muted:rgba(235,238,245,.62);--line:rgba(255,255,255,.10);--sunk:rgba(255,255,255,.07);--accent:#0A84FF;--ok:#32D74B;--warn:#FF9F0A;--bad:#FF453A;--okbg:rgba(50,215,75,.16);--warnbg:rgba(255,159,10,.16);--badbg:rgba(255,69,58,.16);--lift:0 1px 2px rgba(0,0,0,.5)}}
+@font-face{font-family:SG;src:url(../assets/fonts/schibsted-grotesk-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:SG;src:url(../assets/fonts/schibsted-grotesk-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:SG;src:url(../assets/fonts/schibsted-grotesk-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:SG;src:url(../assets/fonts/schibsted-grotesk-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
+:root{--canvas:#EDEEF2;--wash-a:rgba(110,155,255,.42);--wash-b:rgba(255,150,185,.32);--wash-c:rgba(125,228,210,.34);--glass:rgba(255,255,255,.62);--glass-solid:rgba(255,255,255,.9);--ink:#14161A;--muted:rgba(30,34,40,.6);--line:rgba(0,0,0,.09);--sunk:rgba(20,30,50,.06);--accent:#2f5bea;--ok:#248A3D;--warn:#B25000;--bad:#D70015;--okbg:rgba(52,199,89,.15);--warnbg:rgba(255,149,0,.16);--badbg:rgba(255,59,48,.13);--lift:0 1px 2px rgba(16,24,40,.05),0 8px 26px -8px rgba(16,24,40,.16);--f:SG,"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif}
+@media(prefers-color-scheme:dark){:root{--canvas:#07080B;--wash-a:rgba(50,100,220,.30);--wash-b:rgba(190,60,120,.20);--wash-c:rgba(20,150,150,.22);--glass:rgba(38,41,48,.58);--glass-solid:rgba(34,37,44,.92);--ink:#F5F6F8;--muted:rgba(235,238,245,.62);--line:rgba(255,255,255,.10);--sunk:rgba(255,255,255,.07);--accent:#7d9bff;--onaccent:#0c1330;--ok:#32D74B;--warn:#FF9F0A;--bad:#FF453A;--okbg:rgba(50,215,75,.16);--warnbg:rgba(255,159,10,.16);--badbg:rgba(255,69,58,.16);--lift:0 1px 2px rgba(0,0,0,.5)}}
 *{box-sizing:border-box}
 html{min-height:100%;background-color:var(--canvas);background-image:radial-gradient(1100px 700px at 0% 0%,var(--wash-a),transparent 70%),radial-gradient(900px 700px at 100% 10%,var(--wash-b),transparent 70%),radial-gradient(1000px 800px at 50% 100%,var(--wash-c),transparent 70%);background-attachment:fixed}
 body{margin:0;font:15px/1.45 var(--f);color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
@@ -20,7 +24,7 @@ header h1{margin:0;font-size:24px;letter-spacing:-.02em;line-height:1.1}
 header .sub{color:var(--muted);font-size:12.5px}
 .grow{flex:1}
 .btn{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--glass);color:var(--ink);padding:8px 14px;border-radius:12px;cursor:pointer;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
-.btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn.primary{background:var(--accent);color:var(--onaccent,#fff);border-color:transparent}
 .btn.small{padding:5px 10px;font-size:12.5px;border-radius:10px}
 .card{background:var(--glass);border:1px solid var(--line);border-radius:20px;box-shadow:var(--lift);-webkit-backdrop-filter:saturate(180%) blur(28px);backdrop-filter:saturate(180%) blur(28px);padding:18px 20px;min-width:0}
 .card h2{margin:0 0 12px;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -101,6 +105,24 @@ svg text{font-family:var(--f)}
 .bc-tip::after{content:"";position:absolute;left:var(--ax,50%);bottom:-5px;width:10px;height:10px;margin-left:-5px;background:inherit;transform:rotate(45deg)}
 .bc-ax{display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:4px}
 .bc-info{margin-top:6px}
+
+/* ab Okt. 2026: Statuszeile, Anteil je App, Zahlen in gleicher Breite, kompakte Kacheln am Handy */
+.tile .n,.v,.r,td.r b{font-variant-numeric:tabular-nums}
+.tile{position:relative;overflow:hidden}
+.tile .share{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--sunk)}.tile .share i{display:block;height:100%;border-radius:0 3px 3px 0}
+.status{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.status .ic2{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:800}
+.status.ok .ic2{background:var(--okbg);color:var(--ok)}.status.warn .ic2{background:var(--warnbg);color:var(--warn)}.status.bad .ic2{background:var(--badbg);color:var(--bad)}
+.status b{display:block;font-size:14.5px}.status ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}.status li{margin:1px 0}
+.status .go{margin-left:auto;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+@media(max-width:820px){
+ .tiles{grid-template-columns:1fr 1fr;gap:10px}
+ .tiles .tile:first-child{grid-column:1/-1}
+ .tile{padding:14px;gap:10px}.tile img,.tile .tot{width:38px;height:38px;border-radius:10px}.tile .tot{font-size:17px}.tile .n{font-size:24px}
+ header img.ic{width:36px;height:36px}
+ header .grow{flex-basis:100%;height:0}header .btn{flex:1}
+ .status .go{display:none}
+}
 </style></head><body>
 <div class="shell">
 <header>
@@ -114,6 +136,7 @@ svg text{font-family:var(--f)}
 <div class="err" id="err"></div>
 
 <section class="tab" id="t-uebersicht">
+  <button type="button" class="card status" id="status" hidden></button>
   <div class="tiles" id="tiles"></div>
   <div class="cols">
     <section class="card"><h2>Downloads nach Plattform</h2><div id="plat"></div></section>
@@ -149,7 +172,7 @@ svg text{font-family:var(--f)}
 </section>
 
 <section class="tab" id="t-vorlagen">
-  <section class="card"><h2>Nachricht an Kolleginnen und Kollegen: Testversionen <span class="pill">bleibt in diesem Browser</span></h2>
+  <section class="card"><h2>Nachricht an Kolleginnen und Kollegen <span class="pill">bleibt in diesem Browser</span></h2>
     <div class="seg" id="m-app" role="group" aria-label="App"></div>
     <div class="small muted" style="margin:10px 0 12px" id="m-hint"></div>
     <div id="vlinks"></div>
@@ -206,13 +229,15 @@ function fdm(s){var p=s.split('-');return p[2]+'.'+p[1]+'.'}
 var APPS=[
  {id:'gruppo',name:'Gruppo',vkey:'gruppen',c:['#ff5f7e','#d6204a'],img:'data:image/png;base64,'+ICONS.gruppi,re:/^(gruppen|gruppo|gruppi)/i,files:[['Mac','Gruppen-Mac.zip'],['Mac Intel','Gruppen-Mac-Intel.zip'],['Windows','Gruppen-Windows-Setup.exe']],page:'/gruppen/'},
  {id:'libretto',name:'Libretto',vkey:'libretto',c:['#22cf78','#0a8a4a'],img:'data:image/png;base64,'+ICONS.libretto,re:/^libretto/i,files:[['Mac','Libretto-Mac.zip'],['Mac Intel','Libretto-Mac-Intel.zip'],['Windows','Libretto-Windows-Setup.exe']],page:'/libretto/'},
- {id:'voce',name:'Voce',vkey:'viva',c:['#3a86ff','#1245d6'],img:'data:image/png;base64,'+ICONS.viva,re:/^(voce|viva)/i,files:[['Mac','Voce-Mac.zip'],['Mac Intel','Voce-Mac-Intel.zip'],['Windows','Voce-Windows-Setup.exe']],page:'/voce/',test:true},
+ {id:'voce',name:'Voce',vkey:'viva',c:['#3a86ff','#1245d6'],img:'data:image/png;base64,'+ICONS.viva,re:/^(voce|viva)/i,files:[['Mac','Voce-Mac.zip'],['Mac Intel','Voce-Mac-Intel.zip'],['Windows','Voce-Windows-Setup.exe']],page:'/voce/'},
  {id:'foliva',name:'Foliva',vkey:'foliva',c:['#9b7bf2','#5b3cc4'],img:'data:image/png;base64,'+ICONS.foliva,re:/^foliva/i,files:[['Mac','Foliva-Mac.zip'],['Mac Intel','Foliva-Mac-Intel.zip'],['Windows','Foliva-Windows-Setup.exe']],page:'/foliva/',test:true}
 ];
 var PLATS=['Mac (Apple Silicon)','Mac (Intel)','Windows','Android'];
 function platOf(n){n=n.toLowerCase();if(/\.apk$/.test(n))return 'Android';if(/windows|\.exe$|\.msi$/.test(n))return 'Windows';if(/intel|x64|x86/.test(n)&&/mac|\.dmg|\.zip/.test(n))return 'Mac (Intel)';if(/mac|\.dmg|\.zip/.test(n))return 'Mac (Apple Silicon)';return null}
 function appOf(n){for(var i=0;i<APPS.length;i++)if(APPS[i].re.test(n))return APPS[i];return null}
 function cmpV(a,b){var x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(var i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0)}return 0}
+/* Release-Name mit Version, auch wenn die Version nur im Tag steht (z. B. Name „Voce“, Tag „1.8.1“) */
+function relName(r){var n=r.name||r.tag_name,v=verOf(r);return v&&n.indexOf(v)<0?n+' '+v:n}
 function verOf(r){var m=/(\d+\.\d+\.\d+)/.exec((r.name||'')+' '+(r.tag_name||''));return m?m[1]:null}
 
 /* ---------- Tabs ---------- */
@@ -227,28 +252,39 @@ function show(t){cur=t;TABS.forEach(function(x){$('t-'+x[0]).classList.toggle('o
  try{var st=load();st.tab=t;store(st)}catch(e){}window.scrollTo(0,0)}
 
 /* ---------- Daten holen ---------- */
-var S={rel:null,vj:null,pages:null};
+var S={rel:null,vj:null,pages:null,latest:null},ISSUES=[];
 function demoRel(){var mk=function(tag,name,date,a,pre){return {tag_name:tag,name:name,published_at:date,prerelease:!!pre,assets:a.map(function(x){return {name:x[0],download_count:x[1]}})}};
  return [mk('v1.2.0','Gruppo 1.2.0','2026-10-19T10:00:00Z',[['Gruppen-Mac.zip',41],['Gruppen-Mac-Intel.zip',12],['Gruppen-Windows-Setup.exe',57]]),
  mk('v1.0.3','Gruppo 1.0.3','2026-09-20T10:00:00Z',[['Gruppen-Mac.zip',96],['Gruppen-Mac-Intel.zip',31],['Gruppen-Windows-Setup.exe',142],['Gruppen-Android.apk',64]]),
  mk('libretto-beta','Libretto 0.9.9 (Beta)','2026-10-15T10:00:00Z',[['Libretto-Mac.zip',37],['Libretto-Mac-Intel.zip',9],['Libretto-Windows-Setup.exe',44]],true),
- mk('voce-beta','Voce 1.8.0 (Test)','2026-10-21T12:00:00Z',[['Voce-Mac.zip',6],['Voce-Mac-Intel.zip',2],['Voce-Windows-Setup.exe',3]],true),
+ mk('1.8.1','Voce 1.8.1','2026-10-27T12:00:00Z',[['Voce-Mac.zip',6],['Voce-Mac-Intel.zip',2],['Voce-Windows-Setup.exe',3]]),
  mk('foliva-beta','Foliva 0.9.11 (Test)','2026-10-13T08:00:00Z',[['Foliva-Mac.zip',3],['Foliva-Mac-Intel.zip',1],['Foliva-Windows-Setup.exe',2]],true)]}
 function getRel(){if(DEMO)return Promise.resolve(demoRel());
  return fetch('https://api.github.com/repos/'+REPO+'/releases?per_page=100',{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'}).then(function(r){
   if(r.status===403||r.status===429)throw new Error('GitHub erlaubt ohne Anmeldung etwa 60 Abfragen pro Stunde. Bitte später noch einmal aktualisieren.');
   if(!r.ok)throw new Error('GitHub antwortet mit Fehler '+r.status+'.');return r.json()})}
-function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.9'},gruppen:{version:'1.2.0'},sportwahl:{version:'1.5.0'},viva:{version:'1.8.0'},foliva:{version:'0.9.11'}});
+/* Welches Release GitHub gerade als „Latest“ führt: Links mit /releases/latest/ zeigen dorthin */
+function getLatest(){if(DEMO)return Promise.resolve({tag_name:'1.8.1'});
+ return fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'}).then(function(r){return r.ok?r.json():null},function(){return null})}
+function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.9'},gruppen:{version:'1.2.0'},sportwahl:{version:'1.5.0'},viva:{version:'1.8.1'},foliva:{version:'0.9.11'}});
  return fetch(SITE+'/versions.json?'+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('versions.json: '+r.status);return r.json()})}
 var PAGES=['/','/gruppen/','/libretto/','/libretto/demo/','/voce/','/foliva/','/namo/','/namo/demo/','/studienfahrt/','/sportwahl/','/sportwahl/app.html','/gruppen/app.html','/versions.json','/datenschutz','/impressum','/lizenz'];
-function getPages(){if(DEMO)return Promise.resolve(PAGES.map(function(p,i){return {p:p,ok:true,ms:60+i*13}}));
- return Promise.all(PAGES.map(function(p){var t=Date.now();return fetch(SITE+p+(p.indexOf('?')<0?'?':'&')+'c='+t,{cache:'no-store'}).then(function(r){return {p:p,ok:r.ok,ms:Date.now()-t,code:r.status}},function(){return {p:p,ok:false,ms:Date.now()-t,code:0}})}))}
+function isAppPage(p){return APPS.some(function(a){return a.page===p})}
+function getPages(){if(DEMO)return Promise.resolve(PAGES.map(function(p,i){var a=APPS.find(function(x){return x.page===p}),html='';
+  if(a&&!a.test){var r=demoRel().filter(function(x){return x.assets.some(function(y){return y.name===a.files[0][1]})})[0];html=a.files.map(function(f){return 'https://github.com/'+REPO+'/releases/download/'+r.tag_name+'/'+f[1]}).join(' ')}
+  return {p:p,ok:true,ms:60+i*13,html:html}}));
+ return Promise.all(PAGES.map(function(p){var t=Date.now();return fetch(SITE+p+(p.indexOf('?')<0?'?':'&')+'c='+t,{cache:'no-store'}).then(function(r){var o={p:p,ok:r.ok,ms:Date.now()-t,code:r.status};
+  if(!r.ok||!isAppPage(p))return o;return r.text().then(function(tx){o.html=tx;return o},function(){return o})},function(){return {p:p,ok:false,ms:Date.now()-t,code:0}})}))}
+/* Download-Links einer Programmseite: Release-Tag je Datei (latest = das „Latest“-Release) */
+function siteLinks(a){var pg=(S.pages||[]).find(function(x){return x.p===a.page});if(!pg||pg.html==null)return null;
+ var re=/github\.com\/[^\/"'\s]+\/[^\/"'\s]+\/releases\/(?:latest\/download|download\/([^\/"'\s]+))\/([A-Za-z0-9._-]+)/g,m,out=[];
+ while((m=re.exec(pg.html)))if(a.files.some(function(f){return f[1]===m[2]}))out.push({tag:m[1]||'latest',file:m[2]});return out}
 
 /* ---------- Auswertung ---------- */
 function analyse(rels){var tot={},plat={},ver=[];APPS.forEach(function(a){tot[a.id]=0;plat[a.id]={};PLATS.forEach(function(p){plat[a.id][p]=0})});
  rels.forEach(function(r){(r.assets||[]).forEach(function(a){var ap=appOf(a.name),pl=platOf(a.name);if(!ap||!pl)return;
   tot[ap.id]+=a.download_count;plat[ap.id][pl]+=a.download_count;var v=ver.find(function(x){return x.app===ap.id&&x.key===r.tag_name});
-  if(!v){v={app:ap.id,key:r.tag_name,tag:r.name||r.tag_name,date:r.published_at,n:0,pre:r.prerelease};ver.push(v)}v.n+=a.download_count})});
+  if(!v){v={app:ap.id,key:r.tag_name,tag:relName(r),date:r.published_at,n:0,pre:r.prerelease};ver.push(v)}v.n+=a.download_count})});
  ver.sort(function(a,b){return a.app<b.app?-1:a.app>b.app?1:(b.date||'').localeCompare(a.date||'')});return {tot:tot,plat:plat,ver:ver}}
 function grad(a){return 'linear-gradient(90deg,'+a.c[0]+','+a.c[1]+')'}
 function appById(id){return APPS.find(function(a){return a.id===id})}
@@ -258,7 +294,7 @@ function renderUeber(rels){var R=analyse(rels),st=load(),snaps=st.snaps||{},tota
  if(!DEMO){snaps[today()]={gruppo:R.tot.gruppo,libretto:R.tot.libretto,voce:R.tot.voce,foliva:R.tot.foliva,total:total};var ks=Object.keys(snaps).sort();while(ks.length>800)delete snaps[ks.shift()];st.snaps=snaps;store(st)}
  var t='',dT=diff(snaps,'total',total);
  t+='<div class="card tile"><div class="tot">Σ</div><div><div class="n">'+nf.format(total)+'</div><div class="l">Downloads gesamt</div>'+(dT&&dT.d?'<div class="d">+'+nf.format(dT.d)+' seit '+fdm(dT.since)+'</div>':'')+'</div></div>';
- APPS.forEach(function(a){var d=diff(snaps,a.id,R.tot[a.id]);t+='<div class="card tile"><img src="'+a.img+'" alt=""><div><div class="n">'+nf.format(R.tot[a.id])+'</div><div class="l">'+a.name+'</div>'+(d&&d.d?'<div class="d">+'+nf.format(d.d)+' seit '+fdm(d.since)+'</div>':'')+'</div></div>'});
+ APPS.forEach(function(a){var d=diff(snaps,a.id,R.tot[a.id]);t+='<div class="card tile"><img src="'+a.img+'" alt=""><div><div class="n">'+nf.format(R.tot[a.id])+'</div><div class="l">'+a.name+'</div>'+(d&&d.d?'<div class="d">+'+nf.format(d.d)+' seit '+fdm(d.since)+'</div>':'')+'</div><span class="share" title="Anteil an allen Downloads"><i style="width:'+(total?Math.round(R.tot[a.id]/total*100):0)+'%;background:'+grad(a)+'"></i></span></div>'});
  $('tiles').innerHTML=t;
  var max=1;APPS.forEach(function(a){PLATS.forEach(function(p){max=Math.max(max,R.plat[a.id][p])})});
  var h='';PLATS.forEach(function(p){var sum=0;APPS.forEach(function(a){sum+=R.plat[a.id][p]});if(p==='Android'&&!sum)return;h+='<div style="margin:12px 0 2px;font-weight:700">'+p+' <span class="muted" style="font-weight:600">· '+nf.format(sum)+'</span></div>';
@@ -274,15 +310,15 @@ function verlauf(snaps){var ks=Object.keys(snaps).sort(),el=$('verlauf');
  var W=560,H=230,L=38,B=26,T=10,R=8,vals=ks.map(function(k){return snaps[k].total||0}),mx=Math.max.apply(null,vals),mn=Math.min.apply(null,vals);if(mx===mn)mx=mn+1;
  var X=function(i){return L+(W-L-R)*i/(ks.length-1)},Y=function(v){return T+(H-T-B)*(1-(v-mn)/(mx-mn))};
  var p=vals.map(function(v,i){return (i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)}).join(' ');
- var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Downloads gesamt im Verlauf"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0071E3" stop-opacity=".28"/><stop offset="1" stop-color="#0071E3" stop-opacity="0"/></linearGradient></defs>';
+ var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Downloads gesamt im Verlauf"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)" stop-opacity=".28"/><stop offset="1" style="stop-color:var(--accent)" stop-opacity="0"/></linearGradient></defs>';
  for(var g=0;g<=3;g++){var v=mn+(mx-mn)*g/3,y=Y(v);s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".12"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="currentColor" fill-opacity=".6">'+nf.format(Math.round(v))+'</text>'}
- s+='<path d="'+p+' L'+X(ks.length-1)+' '+(H-B)+' L'+X(0)+' '+(H-B)+'Z" fill="url(#g)"/><path d="'+p+'" fill="none" stroke="#0071E3" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+ s+='<path d="'+p+' L'+X(ks.length-1)+' '+(H-B)+' L'+X(0)+' '+(H-B)+'Z" fill="url(#g)"/><path d="'+p+'" fill="none" style="stroke:var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
  s+='<text x="'+L+'" y="'+(H-6)+'" font-size="11" fill="currentColor" fill-opacity=".6">'+fdm(ks[0])+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="currentColor" fill-opacity=".6">'+fdm(ks[ks.length-1])+'</text></svg>';
  el.innerHTML=s}
 
 /* ---------- Versionen ---------- */
 function newestWith(rels,file){var best=null;rels.forEach(function(r){if((r.assets||[]).some(function(a){return a.name===file})){if(!best||(r.published_at||'')>(best.published_at||''))best=r}});return best}
-function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;
+function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;ISSUES=[];
  APPS.forEach(function(a){var r=newestWith(rels,a.files[0][1]),vv=vj[a.vkey]&&vj[a.vkey].version,rv=r?verOf(r):null,st=[],cls='ok';
   var have={};if(r)(r.assets||[]).forEach(function(x){have[x.name]=1});
   var miss=a.files.filter(function(f){return !have[f[1]]}).map(function(f){return f[0]});
@@ -292,17 +328,28 @@ function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;
    if(vv&&rv){var c=cmpV(vv,rv);if(c>0){cls='bad';st.push('Die Website meldet '+vv+', das Release hat nur '+rv+': Apps würden ein Update ohne Download melden.')}else if(c<0){if(cls!=='bad')cls='warn';st.push('Das Release ist neuer ('+rv+') als versions.json ('+vv+'). Website noch nicht aktualisiert?')}}
    else if(!rv){if(cls==='ok')cls='warn';st.push('Versionsnummer im Release-Namen ergänzen (z. B. „'+a.name+' 1.0.0“), dann prüfe ich den Abgleich.')}
   }
-  if(cls==='ok')st.push(a.test?'Alles da. Testversion für Kollegen.':'Alles in Ordnung.');
+  /* Verlinkt die Website das neueste Release? */
+  var L=r&&!a.test?siteLinks(a):null,lk=null;
+  if(L){var latestTag=S.latest&&S.latest.tag_name,wrong=L.filter(function(x){return (x.tag==='latest'?latestTag:x.tag)!==r.tag_name});
+   if(!L.length){if(cls==='ok')cls='warn';lk='bad';st.push('Die Programmseite bietet keinen Download an.')}
+   else if(wrong.length){cls='bad';lk='bad';var w=wrong[0];st.push(w.tag==='latest'?'Die Website lädt über „latest“, GitHub führt als „Latest“ aber gerade '+(latestTag||'ein anderes Release')+': Downloads gehen ins Leere. Links fest auf „'+r.tag_name+'“ setzen.':'Die Website verlinkt noch das Release „'+w.tag+'“, neu ist „'+r.tag_name+'“. Links auf der Programmseite anpassen.')}
+   else lk='ok'}
+  if(cls==='ok')st.push(a.test?'Alles da. Testversion für Kollegen, nicht auf der Website verlinkt.':'Alles in Ordnung'+(lk==='ok'?', die Website verlinkt das neueste Release.':'.'));
+  if(cls!=='ok')ISSUES.push({cls:cls,t:a.name+': '+st.join(' ')});
   if(cls==='bad')bad++;if(cls==='warn')warn++;
   h+='<div class="arow"><div class="nm"><img src="'+a.img+'" alt="">'+a.name+(a.test?' <span class="pill warn">Test</span>':'')+'</div>'+
    '<div><span class="k">Version laut Website</span><b>'+(vv||'–')+'</b></div>'+
-   '<div><span class="k">Neuestes Release bei GitHub</span><b>'+(r?esc(r.name||r.tag_name):'–')+'</b>'+(r?'<div class="small muted">'+fd(r.published_at)+(r.prerelease?' · Pre-Release':'')+'</div>':'')+'</div>'+
-   '<div><span class="k">Dateien</span><div class="chips">'+a.files.map(function(f){return '<span class="chip '+(have[f[1]]?'ok':'bad')+'">'+(have[f[1]]?'✓ ':'✗ ')+f[0]+'</span>'}).join('')+'</div><div class="stat"><span class="pill '+cls+'">'+(cls==='ok'?'OK':cls==='warn'?'Prüfen':'Achtung')+'</span> <span class="muted">'+esc(st.join(' '))+'</span></div></div></div>'});
+   '<div><span class="k">Neuestes Release bei GitHub</span><b>'+(r?esc(relName(r)):'–')+'</b>'+(r?'<div class="small muted">'+fd(r.published_at)+(r.prerelease?' · Pre-Release':'')+'</div>':'')+'</div>'+
+   '<div><span class="k">Dateien</span><div class="chips">'+a.files.map(function(f){return '<span class="chip '+(have[f[1]]?'ok':'bad')+'">'+(have[f[1]]?'✓ ':'✗ ')+f[0]+'</span>'}).join('')+(lk?'<span class="chip '+lk+'">'+(lk==='ok'?'✓ ':'✗ ')+'Website-Links</span>':'')+'</div><div class="stat"><span class="pill '+cls+'">'+(cls==='ok'?'OK':cls==='warn'?'Prüfen':'Achtung')+'</span> <span class="muted">'+esc(st.join(' '))+'</span></div></div></div>'});
  var sv=vj.sportwahl&&vj.sportwahl.version;
  h+='<div class="arow"><div class="nm"><img src="data:image/svg+xml;base64,'+ICONS.sportivo+'" alt="">Sportivo</div><div><span class="k">Version laut Website</span><b>'+(sv||'–')+'</b></div><div><span class="k">Art</span><b>Web-App</b><div class="small muted">kein Download</div></div><div><span class="k">Seite</span><div class="stat"><span class="pill ok">OK</span> <span class="muted">Läuft direkt aus der Website.</span></div></div></div>';
  h+='<div class="arow"><div class="nm"><img src="data:image/png;base64,'+ICONS.namo+'" alt="">’namo.</div><div><span class="k">Art</span><b>Web-App mit Anmeldung</b><div class="small muted">auf Anfrage, kein Download</div></div><div><span class="k">Server (Supabase)</span><b id="nm-srv">wird geprüft …</b><div class="small muted">Gratiszugang pausiert nach 7 Tagen ohne Nutzung</div></div><div><span class="k">Links</span><div class="chips"><a class="chip" href="'+SITE+'/studienfahrt/" target="_blank" rel="noopener">App</a><a class="chip" href="'+SITE+'/namo/demo/" target="_blank" rel="noopener">Demo</a><a class="chip" href="https://supabase.com/dashboard/project/ipkiijqypkhhqaraphty" target="_blank" rel="noopener">Supabase</a></div></div></div>';
  $('apps').innerHTML=h;setTimeout(namoSrv,0);$('vs-hint').textContent=bad?bad+' mal Achtung':warn?warn+' mal Prüfen':'alles gut';$('vs-hint').className='pill '+(bad?'bad':warn?'warn':'ok')}
-function renderPages(){var p=S.pages||[],bad=p.filter(function(x){return !x.ok}).length;
+function renderStatus(){var el=$('status'),n=ISSUES.length,bad=ISSUES.some(function(x){return x.cls==='bad'}),c=n?(bad?'bad':'warn'):'ok';
+ el.className='card status '+c;el.hidden=false;
+ el.innerHTML='<span class="ic2">'+(n?'!':'✓')+'</span><span><b>'+(n?(n===1?'Eine Sache prüfen':n+' Dinge prüfen'):'Alles in Ordnung')+'</b>'+(n?'<ul>'+ISSUES.slice(0,4).map(function(x){return '<li>'+esc(x.t)+'</li>'}).join('')+'</ul>':'<span class="small muted">Versionen, Dateien, Download-Links und Seiten geprüft.</span>')+'</span><span class="go">Zu „Versionen“ →</span>';
+ el.onclick=function(){show('versionen')}}
+function renderPages(){var p=S.pages||[],bad=p.filter(function(x){return !x.ok}).length;p.filter(function(x){return !x.ok}).forEach(function(x){ISSUES.push({cls:'bad',t:'Seite '+x.p+' nicht erreichbar ('+(x.code||'keine Verbindung')+').'})});
  $('pages').innerHTML=p.map(function(x){return '<div><span class="pill '+(x.ok?'ok':'bad')+'">'+(x.ok?'✓':'✗')+'</span><span class="u">'+esc(x.p)+'</span><span class="muted small">'+x.ms+' ms</span></div>'}).join('');
  $('pg-hint').textContent=bad?bad+' nicht erreichbar':'alle erreichbar';$('pg-hint').className='pill '+(bad?'bad':'ok')}
 
@@ -350,12 +397,12 @@ function web(){var st=load(),c=st.gc||window.THEIS_PRESET||{},el=$('web');
 /* ---------- Checkliste und Links ---------- */
 var CL=[
  ['Libretto-Dateien tauschen','Release <a href="https://github.com/'+REPO+'/releases/tag/libretto-beta" target="_blank" rel="noopener">libretto-beta</a> (Pre-Release): Libretto-Mac.zip, Libretto-Mac-Intel.zip, Libretto-Windows-Setup.exe ersetzen. Release-Namen mit Version, z. B. „Libretto 0.9.9 (Beta)“.'],
- ['Gruppo veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release, „latest“) mit allen drei Dateien: Gruppen-Mac.zip, Gruppen-Mac-Intel.zip, Gruppen-Windows-Setup.exe (Android gibt es nicht mehr). Name z. B. „Gruppo 1.2.0“.'],
- ['Voce-Testversion tauschen','Pre-Release <a href="https://github.com/'+REPO+'/releases/tag/voce-beta" target="_blank" rel="noopener">voce-beta</a>: Voce-Mac.zip, Voce-Mac-Intel.zip, Voce-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name z. B. „Voce 1.8.0 (Test)“. Nicht auf der Website verlinken.'],
+ ['Gruppo veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit allen drei Dateien: Gruppen-Mac.zip, Gruppen-Mac-Intel.zip, Gruppen-Windows-Setup.exe. Name und Tag mit Version, z. B. „Gruppo 1.2.1“ und „1.2.1“. Die Website verlinkt fest auf das Release: im Website-Update die Links auf der Gruppo-Seite auf den neuen Tag setzen.'],
+ ['Voce veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Voce-Mac.zip, Voce-Mac-Intel.zip, Voce-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name und Tag mit Version, z. B. „Voce 1.8.2“ und „1.8.2“. Im Website-Update die Links auf der Voce-Seite auf den neuen Tag setzen.'],
  ['Foliva-Testversion tauschen','Pre-Release <a href="https://github.com/'+REPO+'/releases/tag/foliva-beta" target="_blank" rel="noopener">foliva-beta</a> (beim ersten Mal neu anlegen, Haken „Set as a pre-release“): Foliva-Mac.zip, Foliva-Mac-Intel.zip, Foliva-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name z. B. „Foliva 0.9.11 (Test)“. Nicht auf der Website verlinken.'],
- ['Reiter „Versionen“ prüfen','Erst wenn alle Dateien da sind (✓), geht es weiter.'],
+ ['Reiter „Versionen“ prüfen','Erst wenn alle Dateien da sind (✓), geht es weiter. „Website-Links“ zeigt noch ✗, bis das Website-Update hochgeladen ist.'],
  ['Website-Update hochladen','<a href="https://github.com/'+REPO+'/upload/main" target="_blank" rel="noopener">Upload-Seite</a>: Inhalt des Ordners „website“ aus dem Zip hineinziehen (Unterordner mitziehen), „Commit changes“. Danach 1 bis 2 Minuten warten.'],
- ['Nachkontrolle','Seite hart neu laden, in „Versionen“ alle Seiten und Versionen prüfen, einen Download-Link testen.']];
+ ['Nachkontrolle','Seite hart neu laden: oben in der Übersicht muss „Alles in Ordnung“ stehen (Versionen, Dateien, Website-Links, Seiten). Einen Download-Link testen.']];
 function renderCheck(){var st=load(),done=st.check||{};$('check').innerHTML=CL.map(function(c,i){return '<label class="'+(done[i]?'done':'')+'"><input type="checkbox" data-i="'+i+'"'+(done[i]?' checked':'')+'><span><b>'+(i+1)+'. '+c[0]+'</b><span class="small muted">'+c[1]+'</span></span></label>'}).join('');
  Array.prototype.forEach.call($('check').querySelectorAll('input'),function(b){b.onchange=function(){var s=load();s.check=s.check||{};s.check[b.getAttribute('data-i')]=b.checked;store(s);renderCheck()}})}
 $('c-reset').onclick=function(){var s=load();delete s.check;store(s);renderCheck()};
@@ -363,19 +410,20 @@ $('links').innerHTML=[['Releases','https://github.com/'+REPO+'/releases'],['Repo
 
 /* ---------- Vorlage ---------- */
 var MAILS={
- voce:{name:'Voce',tag:'voce-beta',file:'Voce',sub:'Voce (Testversion): mündliche Prüfungen in den Fremdsprachen',
-  intro:'ich habe eine Anwendung für die mündlichen Schulaufgaben in den modernen Fremdsprachen gebaut und suche ein paar Testerinnen und Tester. Voce hilft bei Prüfungsplan, Aufgabenkarten, Bewertung nach den ISB-Kriterien und den Bewertungsbögen.'},
+ voce:{name:'Voce',pub:'/voce/',file:'Voce',sub:'Voce: mündliche Prüfungen in den Fremdsprachen, jetzt zum Herunterladen',
+  intro:'Voce, meine Anwendung für die mündlichen Schulaufgaben in den modernen Fremdsprachen, gibt es jetzt kostenlos zum Herunterladen. Voce hilft bei Prüfungsplan, Aufgabenkarten, Bewertung nach den Rastern des ISB (mit dessen Genehmigung) und den Bewertungsbögen in Word. Danke an alle, die die Testversion ausprobiert haben!'},
  foliva:{name:'Foliva',tag:'foliva-beta',file:'Foliva',sub:'Foliva (Testversion): Arbeitsblätter und Proben gestalten',
   intro:'ich habe ein Programm gebaut, mit dem man Arbeitsblätter und Proben gestaltet, und suche ein paar Testerinnen und Tester. Foliva erzeugt Aufgaben mit Lösungen nach deinen Vorgaben (Rechenpäckchen, Zahlenmauern, Lückentexte, Silben, Wortsuche und vieles mehr), macht das Lösungsblatt auf Knopfdruck und bringt über 300 Vorlagen für alle Schularten mit – auch Proben und Schulaufgaben mit Punkten und Notenschlüssel.'}};
 var MAPP='voce';
-function mlinks(k){var m=MAILS[k],b='https://github.com/'+REPO+'/releases/download/'+m.tag+'/';return [['Mac (Apple-Chip)',b+m.file+'-Mac.zip'],['Mac (Intel)',b+m.file+'-Mac-Intel.zip'],['Windows',b+m.file+'-Windows-Setup.exe']]}
-function mbody(k){var m=MAILS[k];return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Die Anwendung läuft am Mac und unter Windows:\n\n'+mlinks(k).map(function(l){return l[0]+': '+l[1]}).join('\n')+'\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) nach, weil die App noch nicht bei Apple und Microsoft registriert ist. Wie es geht, steht in der angehängten Kurzanleitung (PDF, mit Bildern). Es ist eine Testversion: Bitte sichere deine Daten regelmäßig und gib die Datei vorerst nicht weiter. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian'}
-function mget(k){var st=load();return k==='voce'?(st.voce||{}):((st.mail||{})[k]||{})}
-function mput(k,v){var st=load();if(k==='voce'){if(v)st.voce=v;else delete st.voce}else{st.mail=st.mail||{};if(v)st.mail[k]=v;else delete st.mail[k]}store(st)}
+function mlinks(k){var m=MAILS[k];if(m.pub)return [['Seite mit Download',SITE+m.pub+'#laden']];var b='https://github.com/'+REPO+'/releases/download/'+m.tag+'/';return [['Mac (Apple-Chip)',b+m.file+'-Mac.zip'],['Mac (Intel)',b+m.file+'-Mac-Intel.zip'],['Windows',b+m.file+'-Windows-Setup.exe']]}
+function mbody(k){var m=MAILS[k];if(m.pub)return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Voce läuft am Mac und unter Windows. Herunterladen und eine kurze Anleitung gibt es hier:\n\n'+SITE+m.pub+'#laden\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) einmal nach, weil die App nicht bei Apple und Microsoft registriert ist. Wie es geht, steht auf der Seite und in der angehängten Kurzanleitung (PDF, mit Bildern). Vor dem Einsatz mit echten Schülerdaten bitte die Freigabe der Schulleitung einholen. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian';return 'Liebe Kolleginnen und Kollegen,\n\n'+m.intro+'\n\nAlle Daten bleiben auf deinem Rechner, nichts wird an einen Server gesendet. Die Anwendung läuft am Mac und unter Windows:\n\n'+mlinks(k).map(function(l){return l[0]+': '+l[1]}).join('\n')+'\n\nBeim ersten Öffnen fragt dein Mac (bzw. Windows) nach, weil die App noch nicht bei Apple und Microsoft registriert ist. Wie es geht, steht in der angehängten Kurzanleitung (PDF, mit Bildern). Es ist eine Testversion: Bitte sichere deine Daten regelmäßig und gib die Datei vorerst nicht weiter. Rückmeldungen gern direkt an mich.\n\nViele Grüße\nJulian'}
+/* Voce-Vorlage für die Veröffentlichung: neuer Speicherplatz, der alte Testversions-Entwurf (st.voce) bleibt in der Sicherung erhalten */
+function mget(k){var st=load();return (st.mail||{})[k]||{}}
+function mput(k,v){var st=load();st.mail=st.mail||{};if(v)st.mail[k]=v;else delete st.mail[k];store(st)}
 function vinit(){var k=MAPP,m=MAILS[k],v=mget(k),L=mlinks(k);
  $('m-app').innerHTML=Object.keys(MAILS).map(function(x){return '<button type="button" data-m="'+x+'" aria-pressed="'+(x===k)+'">'+MAILS[x].name+'</button>'}).join('');
  Array.prototype.forEach.call($('m-app').querySelectorAll('button'),function(b){b.onclick=function(){MAPP=b.getAttribute('data-m');try{var st=load();st.mapp=MAPP;store(st)}catch(e){}vinit()}});
- $('m-hint').innerHTML='Die Links bleiben bei neuen Versionen gleich, solange du im Release <b>'+m.tag+'</b> nur die Dateien austauschst (gleiche Dateinamen).';
+ $('m-hint').innerHTML=m.pub?'Voce ist veröffentlicht. Der Link führt auf die Seite mit dem Download und bleibt bei neuen Versionen gleich.':'Die Links bleiben bei neuen Versionen gleich, solange du im Release <b>'+m.tag+'</b> nur die Dateien austauschst (gleiche Dateinamen).';
  $('m-pdf').href='anleitung/'+m.file+'-zum-ersten-Mal-oeffnen.pdf';$('m-pdf').setAttribute('download',m.file+'-zum-ersten-Mal-oeffnen.pdf');
  $('v-sub').value=v.sub!=null?v.sub:m.sub;$('v-body').value=v.body!=null?v.body:mbody(k);
  $('vlinks').innerHTML=L.map(function(l,i){return '<div class="lrow"><b>'+l[0]+'</b><code>'+esc(l[1])+'</code><button class="btn small" type="button" data-i="'+i+'">Kopieren</button></div>'}).join('');
@@ -429,8 +477,8 @@ $('bk-file').onchange=function(){var f=this.files&&this.files[0];if(!f)return;va
 /* ---------- Start ---------- */
 function run(){$('err').style.display='none';$('stand').textContent='Lade …';
  var fail=function(e){var m=(e&&e.message)||'';if(/Failed to fetch|NetworkError|Load failed/i.test(m))m='Keine Verbindung. Bitte Internet prüfen und erneut aktualisieren.';$('err').textContent=m||'Unbekannter Fehler.';$('err').style.display='block';$('stand').textContent='Nicht aktualisiert'};
- Promise.all([getRel(),getVj().catch(function(){return null}),getPages()]).then(function(a){S.rel=a[0];S.vj=a[1];S.pages=a[2];
-  renderUeber(S.rel);renderVer();renderPages();
+ Promise.all([getRel(),getVj().catch(function(){return null}),getPages(),getLatest()]).then(function(a){S.rel=a[0];S.vj=a[1];S.pages=a[2];S.latest=a[3];
+  renderUeber(S.rel);renderVer();renderPages();renderStatus();
   $('stand').textContent=(DEMO?'Vorschau mit erfundenen Zahlen · ':'')+'Stand '+new Date().toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'})}).catch(fail);web()}
 $('b-ref').onclick=run;
 buildTabs();renderCheck();vinit();renderTodo();renderNotes();
