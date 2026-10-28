@@ -297,6 +297,29 @@ dialog.help{background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);ba
 .lf-tile{border:.5px solid var(--line);border-radius:14px;background:var(--glass-solid)}
 .lf-tile.own{background:var(--soft);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .lf-tile .hj{font:600 21px/1 var(--f-display);letter-spacing:-.02em}
+
+/* ab 1.6.0: App-Symbol in der Kopfzeile, Darstellung wie in Voce (Farbkugeln, Modus-Schalter, Schrift-Kacheln) */
+.brand{display:flex;align-items:center;gap:12px}
+.choice button{align-content:start}
+.brand .app-ic{width:40px;height:40px;flex:none;border-radius:10px;box-shadow:0 2px 6px rgba(242,122,0,.28)}
+.hint-warn{margin:0;padding:8px 12px;border-radius:10px;background:var(--warnbg,rgba(255,149,0,.14));color:var(--ink)}
+.lk h3{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.lk-row button.sw{padding:7px 16px 7px 8px;gap:9px;background:var(--soft,var(--bg));border:1.5px solid transparent;font-weight:500;font-size:15px}
+.lk-row button.sw[aria-pressed="true"]{background:var(--soft,var(--bg));color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.lk-row button.sw i{width:24px;height:24px;box-shadow:inset -3px -4px 6px rgba(0,0,0,.22),inset 2px 3px 5px rgba(255,255,255,.55),0 1px 2px rgba(0,0,0,.2)}
+.sw-glas{background:radial-gradient(circle at 35% 30%,#c7d8ff,#6e9bff 45%,#2a58e0)}
+.sw-laguna{background:radial-gradient(circle at 35% 30%,#b6f1f4,#17b9c2 45%,#0b6a70)}
+.sw-limette{background:radial-gradient(circle at 35% 30%,#e8f7bf,#9ccc3c 45%,#5d8a17)}
+.sw-klar{background:radial-gradient(circle at 35% 30%,#bcd9ff,#2f8bff 45%,#0050c8)}
+.sw-neon{background:radial-gradient(circle at 35% 30%,#ffc0e2,#ff3ea5 40%,#5b3cff 85%)}
+.lk-seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--soft,rgba(0,0,0,.06));gap:2px}
+.lk-seg button{font:500 15px var(--f-body);border:0;background:none;color:var(--ink);padding:8px 18px;border-radius:999px;cursor:pointer}
+.lk-seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 35%,transparent)}
+.lk-fonts{gap:10px}
+.lk-row button.ft{font-size:19px;font-weight:500;padding:12px 20px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg,transparent)}
+.lk-row button.ft[aria-pressed="true"]{background:var(--bg,transparent);color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.lk-row button:focus-visible,.lk-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:700px){.brand .app-ic{width:34px;height:34px}.lk-row button.ft{font-size:16px;padding:10px 14px}}
 </style>
 </head>
 <body>
@@ -304,8 +327,9 @@ dialog.help{background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);ba
 <div class="shell">
   <header class="top">
     <div class="brand">
-      <h1>Sportivo – Sportwahl</h1>
-      <div class="sub" id="head-sub"></div>
+      <svg class="app-ic" viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="spw-ic" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb62e"/><stop offset="1" stop-color="#f27a00"/></linearGradient></defs><rect width="1024" height="1024" rx="230" fill="url(#spw-ic)"/><rect x="262" y="480" width="150" height="270" rx="44" fill="#fff" opacity=".55"/><rect x="437" y="280" width="150" height="470" rx="44" fill="#fff"/><rect x="612" y="400" width="150" height="350" rx="44" fill="#fff" opacity=".75"/></svg>
+      <div><h1>Sportivo – Sportwahl</h1>
+      <div class="sub" id="head-sub"></div></div>
     </div>
     <div class="row" style="gap:14px">
       <div class="row small muted" id="head-stats"></div>
@@ -1365,9 +1389,10 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
   function renderLookMenu() {
     const l = lookOf();
     const grp = (key, list, cls) => list.map(([id, name]) => `<button type="button" class="${cls}" data-k="${key}" data-v="${id}" aria-pressed="${l[key] === id}"${key === 'font' ? ` style="font-family:${FONT_STACK[id]}"` : ''}>${cls === 'sw' ? `<i class="sw-${id}" aria-hidden="true"></i>` : ''}${esc(name)}</button>`).join('');
-    $('look-body').innerHTML = `<div class="lk"><h3>Design</h3><div class="lk-row">${grp('style', SPW.STYLES, 'sw')}</div></div>
-      <div class="lk"><h3>Hell oder dunkel</h3><div class="lk-row">${grp('mode', SPW.MODES, 'sg')}</div></div>
-      <div class="lk"><h3>Schrift</h3><div class="lk-row">${grp('font', SPW.FONTS, 'sg')}</div></div>
+    const modes = ['hell', 'dunkel', 'auto'].map(id => SPW.MODES.find(m => m[0] === id)).filter(Boolean);
+    $('look-body').innerHTML = `<div class="lk"><h3>Farbe</h3><div class="lk-row">${grp('style', SPW.STYLES, 'sw')}</div></div>
+      <div class="lk"><h3>Modus</h3><div class="lk-seg">${grp('mode', modes, 'sg')}</div></div>
+      <div class="lk"><h3>Schrift</h3><div class="lk-row lk-fonts">${grp('font', SPW.FONTS, 'ft')}</div></div>
       <p class="muted small">Das gewählte Design gilt auch für den Wahlbogen, den du an die Schüler gibst, und für den Druck der Auswertung. Die Kurslisten bleiben immer gleich. Die Wahl wird mit der Projektdatei gesichert.</p>`;
     $('look-body').querySelectorAll('button').forEach(b => b.onclick = () => setLook({ [b.dataset.k]: b.dataset.v }));
   }
@@ -1571,13 +1596,14 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
           <span id="l-verf" style="font-weight:600">Wahlverfahren</span>
           <div class="choice" role="radiogroup" aria-labelledby="l-verf">
             <button type="button" role="radio" data-verf="einfach" aria-checked="${P.settings.verfahren !== 'rang'}"><b>Einfach</b><span>Vier Wünsche für die vier Halbjahre und ein paar Ersatzwünsche.</span></button>
-            <button type="button" role="radio" data-verf="rang" aria-checked="${P.settings.verfahren === 'rang'}"><b>Rangliste</b><span>Schüler ohne Leistungsfach ordnen alle Sportarten per Drag and Drop. Die ersten vier Plätze sind die Wünsche, der Rest ist die Reihenfolge für Ausweichwahlen. Dazu gibt es einen Zufriedenheitswert. Leistungsfach wie bisher.</span></button>
+            <button type="button" role="radio" data-verf="rang" aria-checked="${P.settings.verfahren === 'rang'}"><b>Rangliste</b><span>Schüler ohne Leistungsfach ordnen alle Sportarten per Drag and Drop. Die ersten vier Plätze sind die Wünsche, der Rest ist die Reihenfolge für Ausweichwahlen. Dazu gibt es einen Zufriedenheitswert. Leistungsfach wie bisher. Lohnt sich bei einem großen Angebot; bei wenigen Sportarten besser „Einfach“.</span></button>
           </div>
         </div>
         <div class="row">
           <label class="field">Ersatzwünsche<select id="m-ersatz" style="width: 96px">${[0, 1, 2, 3].map(n => `<option ${+P.settings.ersatz === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
           <label class="field">Standard-Kursgröße<input type="number" id="m-cap" min="4" max="40" value="${P.settings.cap}" style="width: 96px"></label>
         </div>
+        ${P.settings.verfahren === 'rang' && offeredIds().length <= 6 ? `<p class="small hint-warn">Ihr bietet nur ${offeredIds().length} Sportarten an. Dann ordnen die Schüler bei der Rangliste fast alles, was es gibt, und die Ausweichreihenfolge hilft kaum. Mit „Einfach“ ist die Wahl schneller und genauso gut planbar.</p>` : ''}
         ${P.settings.verfahren === 'rang' ? '<p class="small muted">Bei der Rangliste gelten Ersatzwünsche nur für Schüler mit Leistungsfach.</p>' : ''}
       </section>
       <section class="panel">
