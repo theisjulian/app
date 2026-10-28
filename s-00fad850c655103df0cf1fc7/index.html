@@ -268,7 +268,7 @@ function getLatest(){if(DEMO)return Promise.resolve({tag_name:'1.8.1'});
  return fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{'Accept':'application/vnd.github+json'},cache:'no-store'}).then(function(r){return r.ok?r.json():null},function(){return null})}
 function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.10'},gruppen:{version:'1.2.0'},sportwahl:{version:'1.5.0'},viva:{version:'1.8.1'},foliva:{version:'0.9.11'}});
  return fetch(SITE+'/versions.json?'+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('versions.json: '+r.status);return r.json()})}
-var PAGES=['/','/gruppen/','/libretto/','/libretto/demo/','/voce/','/foliva/','/namo/','/namo/demo/','/studienfahrt/','/sportwahl/','/sportwahl/app.html','/gruppen/app.html','/versions.json','/datenschutz','/impressum','/lizenz'];
+var PAGES=['/','/gruppen/','/libretto/','/libretto/demo/','/voce/','/foliva/','/namo/','/namo/demo/','/studienfahrt/','/sportwahl/','/sportwahl/app.html','/daje/','/gruppen/app.html','/versions.json','/datenschutz','/impressum','/lizenz'];
 function isAppPage(p){return APPS.some(function(a){return a.page===p})}
 function getPages(){if(DEMO)return Promise.resolve(PAGES.map(function(p,i){var a=APPS.find(function(x){return x.page===p}),html='';
   if(a&&!a.test){var r=demoRel().filter(function(x){return x.assets.some(function(y){return y.name===a.files[0][1]})})[0];html=a.files.map(function(f){return 'https://github.com/'+REPO+'/releases/download/'+r.tag_name+'/'+f[1]}).join(' ')}

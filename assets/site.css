@@ -191,12 +191,12 @@ details.q p{color:var(--grey);max-width:70ch;padding-bottom:10px}
 
 /* App-Farben */
 .a-libretto{--app:#1d8a52;--tint:#e3f3ea}.a-voce{--app:#2b52b3;--tint:#e5ebfc}.a-foliva{--app:#6544bd;--tint:#ece7fb}
-.a-gruppo{--app:#c23452;--tint:#fbe5e9}.a-sportivo{--app:#a95a0a;--tint:#fcefd9}.a-namo{--app:#127371;--tint:#d9f2f1}
-.n-libretto{--ntint:#e3f3ea}.n-voce{--ntint:#e5ebfc}.n-foliva{--ntint:#ece7fb}.n-gruppo{--ntint:#fbe5e9}.n-sportivo{--ntint:#fcefd9}.n-namo{--ntint:#d9f2f1}
+.a-gruppo{--app:#c23452;--tint:#fbe5e9}.a-sportivo{--app:#a95a0a;--tint:#fcefd9}.a-namo{--app:#127371;--tint:#d9f2f1}.a-daje{--app:#b0207a;--tint:#fbe3f1}
+.n-libretto{--ntint:#e3f3ea}.n-voce{--ntint:#e5ebfc}.n-foliva{--ntint:#ece7fb}.n-gruppo{--ntint:#fbe5e9}.n-sportivo{--ntint:#fcefd9}.n-namo{--ntint:#d9f2f1}.n-daje{--ntint:#fbe3f1}
 @media(prefers-color-scheme:dark){
 .a-libretto{--app:#5fd497;--tint:#16271f}.a-voce{--app:#8fa9ff;--tint:#18203a}.a-foliva{--app:#b49cff;--tint:#211b38}
-.a-gruppo{--app:#ff8fa6;--tint:#2d1820}.a-sportivo{--app:#ffb35c;--tint:#2b2112}.a-namo{--app:#5fd6d1;--tint:#132a2a}
-.n-libretto{--ntint:#16271f}.n-voce{--ntint:#18203a}.n-foliva{--ntint:#211b38}.n-gruppo{--ntint:#2d1820}.n-sportivo{--ntint:#2b2112}.n-namo{--ntint:#132a2a}}
+.a-gruppo{--app:#ff8fa6;--tint:#2d1820}.a-sportivo{--app:#ffb35c;--tint:#2b2112}.a-namo{--app:#5fd6d1;--tint:#132a2a}.a-daje{--app:#ff8fd0;--tint:#2d1727}
+.n-libretto{--ntint:#16271f}.n-voce{--ntint:#18203a}.n-foliva{--ntint:#211b38}.n-gruppo{--ntint:#2d1820}.n-sportivo{--ntint:#2b2112}.n-namo{--ntint:#132a2a}.n-daje{--ntint:#2d1727}}
 :root[data-style=neon] [class*="a-"],:root[data-style=neon] [class*="n-"]{--tint:var(--surf);--ntint:var(--surf)}
 :root[data-style=neon] .pic,:root[data-style=neon] .stage{--tint:var(--surf)}
 
@@ -270,7 +270,8 @@ html,body{overflow-x:clip}
  footer{padding-bottom:120px}
  #tip{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 }
-@media(max-width:360px){.appdock a{width:47px;font-size:9.5px}.appdock img{width:32px;height:32px}}
+@media(max-width:440px){.appdock{gap:0;padding:7px 6px}.appdock a{width:calc((100vw - 34px)/7);max-width:54px}.appdock img{width:34px;height:34px}}
+@media(max-width:360px){.appdock a{font-size:9.5px}.appdock img{width:30px;height:30px}}
 /* Programmseiten: Laptop kommt beim Öffnen hoch wie auf der Startseite */
 .app-stage .laptop{animation:up .9s .1s cubic-bezier(.2,.7,.2,1) both}
 /* Bilder gleiten beim Scrollen einmal sanft an ihren Platz (nur was beim Laden noch unten liegt) */
