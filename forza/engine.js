@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.4';
+  const RULE_VERSION = 'forza-regeln-1.5';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -183,37 +183,48 @@
   const fmt = (n) => String(Math.round(n * 100) / 100).replace('.', ',');
 
   /* Tagesauswahl im Split */
+  /* Verlauf je Split-Tag: wann zuletzt, und welche Reihenfolge du tatsächlich trainierst (gelernt aus den letzten Einheiten) */
+  function dayHistory(sessions, days, today) {
+    const names = new Set(days.map((d) => d.name));
+    const hist = (sessions || []).filter((s) => s.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(s.status) && names.has(s.split_day) && s.session_date <= today)
+      .sort((a, b) => (a.session_date === b.session_date ? String(a.started_at || '').localeCompare(String(b.started_at || '')) : a.session_date < b.session_date ? -1 : 1));
+    const since = {}; for (const s of hist) since[s.split_day] = dayDiff(today, s.session_date);
+    const trans = {}, recent = hist.slice(-12);
+    for (let i = 1; i < recent.length; i++) { const a = recent[i - 1].split_day, b = recent[i].split_day; if (a === b) continue; (trans[a] = trans[a] || {})[b] = (trans[a][b] || 0) + 1; }
+    const last = hist.length ? hist[hist.length - 1].split_day : null;
+    let next = null; if (last && trans[last]) next = Object.entries(trans[last]).sort((x, y) => y[1] - x[1])[0][0];
+    return { since, last, next, learned: !!next };
+  }
+
+  /* Tagesauswahl im Split. Reihenfolge vor allem nach Rotation: der am längsten nicht trainierte Tag, verstärkt durch deine
+     gewohnte Abfolge. Schwerpunkte und Wochenziel wirken nur als Zusatz, Erholung (48 h) und lange Radfahrten bremsen. */
   function pickDay(split, ctx, stats, P) {
     const days = (split && split.days) || [];
     if (!days.length) return null;
     if (ctx.forceDay) { const i = days.findIndex((x) => x.name === ctx.forceDay); if (i >= 0) return { d: days[i], i, score: 0, legs: 0, penalty: 0, forced: true }; }
+    const H = dayHistory(ctx.sessions, days, ctx.today), li = days.findIndex((x) => x.name === H.last);
+    const fresh = P.min_rest_hours_same_muscle / 24;
     const rows = days.map((d, i) => {
-      let score = 0, parts = [];
+      const since = H.since[d.name] === undefined ? 14 : Math.min(H.since[d.name], 14);
+      let score = since, need = 0;
       for (const m of d.focus) {
-        const pr = prioOf(ctx.priorities, m, ctx.today);
-        const since = stats.last[m] === undefined ? 14 : Math.min(stats.last[m], 14);
-        const sets = stats.sets7[m] || 0;
-        const def = BIG.includes(m) || pr === 'schwerpunkt' ? Math.max(0, P.corridor_min - sets) : 0;
-        score += (since + def) * PRIO_W[pr];
-        parts.push(m);
+        const pr = prioOf(ctx.priorities, m, ctx.today), sets = stats.sets7[m] || 0;
+        need += (BIG.includes(m) || pr === 'schwerpunkt' ? Math.max(0, P.corridor_min - sets) : 0) * PRIO_W[pr];
       }
-      score /= d.focus.length;
-      // Beine als Schwerpunkt: Tage mit Beinen werden bevorzugt, damit sie regelmäßig dran sind
-      const lg = d.focus.filter((m) => ['quadrizeps', 'hamstrings', 'gesaess', 'waden'].includes(m) && prioOf(ctx.priorities, m, ctx.today) === 'schwerpunkt').length;
-      if (lg) score += Math.min(2, lg * 0.8);
-      // Ein Schwerpunkt-Muskel, der seit 5+ Tagen nicht voll dran war, hebt Tage mit ihm deutlich an
-      const stale = d.focus.filter((m) => prioOf(ctx.priorities, m, ctx.today) === 'schwerpunkt' && (stats.last[m] === undefined || stats.last[m] >= 5)).length;
-      if (stale) score += Math.min(3, stale * 1.2);
+      score += 0.4 * need / d.focus.length;
+      // Ein Schwerpunkt, der seit einer Woche nicht voll dran war, holt auf
+      if (d.focus.some((m) => prioOf(ctx.priorities, m, ctx.today) === 'schwerpunkt' && (stats.last[m] === undefined || stats.last[m] >= 7))) score += 2;
+      // Gewohnte Abfolge (gelernt), sonst Reihenfolge im Split
+      const habit = H.learned ? d.name === H.next : li >= 0 && (li + 1) % days.length === i;
+      if (habit) score += H.learned ? 3 : 1.5;
+      // Erholung: Muskeln, die vor weniger als 48 h voll belastet wurden
+      const tired = d.focus.filter((m) => stats.last[m] !== undefined && stats.last[m] < fresh).length / d.focus.length;
+      let penalty = tired * 8;
       // R19: Beine nach harter Radeinheit zurückhalten
       const legs = d.focus.filter((m) => ['quadrizeps', 'hamstrings', 'gesaess'].includes(m)).length / d.focus.length;
-      let penalty = 0;
-      if (ctx.rideHoursAgo !== null && ctx.rideHoursAgo < P.leg_after_ride_hours) penalty = legs * 6;
-      // Rotation: gleicher Tag wie zuletzt wird gemieden
-      if (ctx.lastDayName && d.name === ctx.lastDayName) penalty += 3;
-      // Rotation: Tag nach dem zuletzt geführten bekommt kleinen Bonus
-      const li = days.findIndex((x) => x.name === ctx.lastDayName);
-      if (li >= 0 && (li + 1) % days.length === i) score += 1.5;
-      return { d, i, score: score - penalty, legs, penalty };
+      if (ctx.rideHoursAgo !== null && ctx.rideHoursAgo < P.leg_after_ride_hours) penalty += legs * 10;
+      if (H.last && d.name === H.last) penalty += 4;
+      return { d, i, score: score - penalty, legs, penalty, since: H.since[d.name], habit, learned: H.learned, after: H.last };
     });
     rows.sort((a, b) => b.score - a.score || a.i - b.i);
     return rows[0];
@@ -258,6 +269,24 @@
   };
   const hash = (str) => { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; };
 
+  /* Gewohnheiten aus den letzten 6 Wochen: spontan Hinzugefügtes, Ersetztes, Ausgelassenes. Wirkt als Vorliebe bei der Auswahl. */
+  function habits(sessions, exById, dayName, today) {
+    const H = { add: {}, dayAdd: {}, toward: {}, away: {}, skip: {} }, inc = (o, k) => (o[k] = (o[k] || 0) + 1);
+    for (const s of sessions || []) {
+      if (s.kind !== 'kraft' || !['gefuehrt', 'bestaetigt'].includes(s.status) || dayDiff(today, s.session_date) > 42) continue;
+      for (const se of s.session_exercises || []) {
+        const ex = exById[se.exercise_id]; if (!ex || ex.dosage_profile === 'M') continue;
+        const done = (se.sets || []).filter((x) => x.done).length;
+        if (done && /^Spontan hinzugefügt/.test(se.why || '')) { inc(H.add, ex.id); if (s.split_day === dayName) inc(H.dayAdd, ex.id); }
+        if (se.replaced_from) { inc(H.away, se.replaced_from); if (done) inc(H.toward, ex.id); }
+        if (!done && (se.sets || []).length) inc(H.skip, ex.id);
+      }
+    }
+    const c = (o, k) => Math.min(2, o[k] || 0);
+    H.delta = (id) => 1.5 * c(H.toward, id) - 2.5 * c(H.away, id) - 1.5 * c(H.skip, id) + 0.8 * c(H.add, id);
+    return H;
+  }
+
   function suggest(ctx) {
     const P = params(ctx.params);
     const today = ctx.today || todayStr();
@@ -292,8 +321,9 @@
     const pick = pickDay(ctx.split, ctx, stats, P);
     if (!pick) return { rest: false, empty: true, title: 'Kein Split gewählt', reasons: ['Wähle unter „Mehr → Plan & Split“ einen Split.'], rule_version: RULE_VERSION };
     const day = pick.d;
+    const hab = habits(ctx.sessions, exById, day.name, today);
     if (gap === 0) reasons.push('Heute wurde schon trainiert. Das hier wäre eine zweite Einheit.');
-    reasons.push(pick.forced ? `${day.name}: von dir gewählt.` : `${day.name}: ${day.focus.slice(0, 3).map((m) => LABEL[m]).join(', ')} sind am längsten nicht dran oder unter dem Wochenziel.`);
+    reasons.push(pick.forced ? `${day.name}: von dir gewählt.` : `${day.name} ist dran: ${pick.since === undefined ? 'noch nicht trainiert' : pick.since === 0 ? 'heute schon trainiert' : 'zuletzt vor ' + pick.since + (pick.since === 1 ? ' Tag' : ' Tagen')}${pick.habit && pick.after ? (pick.learned ? `, nach ${pick.after} machst du meist ${day.name}` : `, kommt im Split nach ${pick.after}`) : ''}.`);
     if (pick.penalty >= 3 && ctx.rideHoursAgo !== null && ctx.rideHoursAgo < P.leg_after_ride_hours) reasons.push('Gestern lange gefahren: Beine werden zurückhaltend eingeplant.');
 
     // Zeitbudget
@@ -313,7 +343,7 @@
     ctx.sessions.slice().sort((a, b) => (a.session_date < b.session_date ? 1 : -1)).slice(0, 3)
       .forEach((s) => (s.session_exercises || []).forEach((se) => recentEx.add(se.exercise_id)));
     const rank = (e, m) => {
-      let r = 0;
+      let r = hab.delta(e.id);
       if (e.muscles_primary[0] === m) r += 3; else if (e.muscles_primary.includes(m)) r += 2; else r += 0.5;
       if (e.dosage_profile === 'G') r += 1.5;
       r += pref(e, gym);
@@ -358,6 +388,7 @@
           if (lastSame.has(e.id)) r += 2;
           if (variant) { r += hash(e.id + ':' + variant + ':' + day.name) * 3; if (prevOffered.has(e.id)) r -= 2; }
           if ((ctx.favorites || new Set()).has(e.id)) r += 1;
+          r += hab.delta(e.id);
           return r;
         };
         pool.sort((a, b) => sc(b) - sc(a) || (a.name < b.name ? -1 : 1));
@@ -397,6 +428,14 @@
       }
     };
     if (tplSlots) carryOver();
+    // Was du an diesem Tag mindestens zweimal spontan dazugenommen hast, plant forza gleich mit ein
+    const habitual = [];
+    for (const [id, n] of Object.entries(hab.dayAdd).sort((a, b) => b[1] - a[1])) {
+      const e = exById[id]; if (n < 2 || !e || usedEx.has(id) || !e.active || ((ctx.userEx || {})[id] || {}).hidden || (ctx.painEx || new Set()).has(id) || !available(e, ctx.items).ok || excl.has(id)) continue;
+      const prio = prioOf(ctx.priorities, e.muscles_primary[0], today), sets = setsFor(e, e.muscles_primary[0], prio), t = estMin(e, sets);
+      if (used + t > minutes + 3) continue;
+      used += t; usedEx.add(id); usedPattern.add(e.pattern); chosen.push({ muscle: e.muscles_primary[0], ex: e, sets, prio, minutes: t, habit: true }); habitual.push(e.name);
+    }
     // Restzeit füllen: bleibt bei der Vorlage deutlich Zeit übrig, kommen Zusatzübungen für die Fokus-Muskeln dazu
     // (Schwerpunkte zuerst, höchstens 3 Übungen je Schwerpunkt bzw. 2 sonst, kein Bewegungsmuster doppelt)
     if (tplSlots) {
@@ -449,7 +488,7 @@
         exercise_id: c.ex.id, name: c.ex.name, code: c.ex.code, muscle: c.muscle, sets: c.sets,
         profile: c.ex.dosage_profile, reps: pf.reps || null, secs: pf.secs || null, perSide: !!pf.perSide,
         rir: pf.rir ? [rirLo, rirHi] : null, rest_s: P[pf.rest], load_kg: kg, load_convention: c.ex.load_convention,
-        load_text: (c.carry ? 'Schwerpunkt unter dem Wochenziel: kurz mitgenommen. ' : '') + ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio, carry: !!c.carry
+        load_text: (c.carry ? 'Schwerpunkt unter dem Wochenziel: kurz mitgenommen. ' : c.habit ? 'Machst du an diesem Tag meist dazu. ' : '') + ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio, carry: !!c.carry
       };
     });
     // Supersätze: aufeinanderfolgende Nicht-Grundübungen mit verschiedenen Muskeln im Wechsel
@@ -470,6 +509,7 @@
       total = Math.round(t);
       if (items.some((i) => i.pair_with)) reasons.push('Zeit knapp: Zusatzübungen laufen als Supersatz im Wechsel, das spart Zeit bei gleicher Satzzahl.');
     } else total = Math.round(4 + items.reduce((s, i) => s + estMin(exById[i.exercise_id], i.sets), 0));
+    if (habitual.length) reasons.push(`Gewohnheit: ${habitual.join(', ')} nimmst du an ${day.name}-Tagen meist dazu.`);
     if (carried.length) reasons.push(`Schwerpunkt unter dem Wochenziel, daher am Ende 2 Sätze extra: ${carried.join(', ')}.`);
     if (calm) reasons.push('Ruhigere Tagesform: eine Reserve mehr und bei 3+ Sätzen ein Satz weniger.');
     const gaps = focus.filter((m) => !chosen.some((c) => c.muscle === m) && BIG.includes(m));

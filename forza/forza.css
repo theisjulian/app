@@ -377,3 +377,28 @@ html[data-theme=apple][data-mode=light]{--card2:#e6e6eb}
 html[data-theme=apple][data-mode][data-font] .hero{--hero-mute:var(--mute)}html[data-theme=apple][data-mode][data-font] .hero .icbtn:active{background:var(--card2)}
 details.hist summary{align-items:center;gap:10px}details.hist summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .25s var(--ease);flex:none;margin-right:6px}
 details.hist[open] summary:after{transform:rotate(-135deg)}details.hist[open]>:not(summary){animation:rise .3s var(--ease) both}
+/* Warum: eine Zeile, Details auf Wunsch */
+.why1,.why summary{font-size:14px;line-height:1.4;color:var(--hero-mute,var(--mute));margin:2px 0 8px}
+.why{margin:2px 0 8px}.why summary{list-style:none;display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin:0}
+.why summary::-webkit-details-marker{display:none}.why summary span{flex:1}
+.why summary em{font-style:normal;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.14);flex:none;margin-top:1px}
+.why[open] summary em{opacity:.5}
+.why ul{margin:8px 0 2px;padding:10px 12px 10px 28px;border-radius:14px;background:rgba(255,255,255,.08);font-size:13px;line-height:1.45;animation:rise .3s var(--ease) both}
+.why li+li{margin-top:5px}
+html[data-theme=apple][data-mode][data-font] .why summary em,html[data-theme=apple][data-mode][data-font] .why ul{background:var(--card2)}
+
+/* Schwebende App-Leiste (Handy) */
+@media(max-width:899px){
+ .bnav{left:12px;right:12px;bottom:calc(10px + var(--sb)*.6);padding:6px;border-radius:26px;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);
+  background:color-mix(in srgb,var(--bg2) 72%,transparent)!important;backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.12)}
+ .bnav button{flex:1;min-width:0;padding:7px 2px;border-radius:20px;gap:2px;font-size:10.5px;position:relative;transition:color .25s,background .3s var(--ease)}
+ .bnav button.on{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+ .bnav button.on:after{display:none}
+ .bnav svg{width:23px;height:23px}
+ .main{padding-bottom:calc(104px + var(--sb))}
+ .rest{bottom:calc(92px + var(--sb))}
+}
+html[data-theme=apple][data-mode][data-font] .bnav{border-top:1px solid color-mix(in srgb,var(--line) 80%,transparent)}
+/* Kopf auf „Heute“ ruhiger: Vorschlag rückt höher */
+.main>.row.between:first-child .h1{font-size:26px}

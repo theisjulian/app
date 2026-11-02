@@ -46,6 +46,27 @@ const asst = { id: 'u', name: 'Unterstützter Klimmzug', muscles_primary: ['lat'
 const aHist = [{ session_date: '2026-10-24', kind: 'kraft', status: 'bestaetigt', session_exercises: [{ exercise_id: 'u', sets: [40, 40].map((kg) => ({ done: true, load_kg: kg, reps: 10, rir: 2 })) }] }];
 const aS = E.suggest({ exercises: [asst], items: ['klimmzug_maschine'], split: { days: [{ name: 'Rücken', focus: ['lat'], minutes: 30 }] }, sessions: aHist, absences: [], priorities: [], today: '2026-10-28', rideHoursAgo: null });
 assert.equal(aS.items[0].load_kg, 37.5, 'weniger Unterstützung'); assert.deepEqual(E.warmup(40, 'unterstuetzt', P), []);
+// Tagesauswahl: gelernte Reihenfolge Pull → Beine → Push, Erholung, Nachholen
+const pplSplit = { days: [{ name: 'Push', focus: ['brust', 'schulter_vorn', 'schulter_seitlich', 'trizeps'] }, { name: 'Pull', focus: ['lat', 'ruecken_hoch', 'schulter_hinten', 'rotatoren', 'bizeps'] }, { name: 'Beine', focus: ['quadrizeps', 'hamstrings', 'gesaess', 'waden'] }] };
+const hs = (list) => list.map(([d, n]) => ({ session_date: d, kind: 'kraft', status: 'bestaetigt', split_day: n, session_exercises: [] }));
+const myHist = hs([['2026-10-22', 'Pull'], ['2026-10-25', 'Beine'], ['2026-10-26', 'Push'], ['2026-10-28', 'Pull'], ['2026-10-29', 'Beine'], ['2026-11-01', 'Push']]);
+const legPrio = ['quadrizeps', 'hamstrings', 'gesaess', 'waden', 'ruecken_hoch', 'schulter_hinten', 'rotatoren'].map((m) => ({ muscle_group: m, level: 'schwerpunkt', valid_from: '2026-10-01' }));
+const day = (sessions, today, extra = {}) => E.suggest({ exercises: [], items: [], split: pplSplit, sessions, absences: [], priorities: legPrio, today, rideHoursAgo: null, ...extra }).title;
+assert.equal(day(myHist, '2026-11-02'), 'Pull', 'nach Push kommt bei dir Pull, nicht wieder Beine');
+assert.equal(day(myHist.concat(hs([['2026-11-02', 'Pull']])), '2026-11-03'), 'Beine', 'danach Beine');
+assert.equal(day(myHist.concat(hs([['2026-11-02', 'Pull']])), '2026-11-03', { rideHoursAgo: 4 }), 'Push', 'nach langer Fahrt keine Beine');
+assert.equal(day(hs([['2026-10-20', 'Beine'], ['2026-10-24', 'Push'], ['2026-10-27', 'Pull'], ['2026-10-30', 'Push']]), '2026-11-02'), 'Beine', 'lange nicht trainierte Beine holen auf');
+// Gewohnheiten: zweimal spontan dazugenommen → eingeplant; zweimal ersetzt → nicht mehr zuerst gewählt
+const curl = mk('k', 'Kabel Curl', 'bizeps', 'curl', 'A'), flat = mk('b2', 'Brustpresse', 'brust', 'horizontal_druecken', 'G');
+const pushDay = (k, ses) => ({ session_date: k, kind: 'kraft', status: 'bestaetigt', split_day: 'Push', session_exercises: ses });
+const added = (id) => ({ exercise_id: id, why: 'Spontan hinzugefügt. Zuletzt 10 kg.', sets: [{ done: true, load_kg: 10, reps: 10 }] });
+const habBase = { ...pushBase, exercises: pushCat.concat([curl, flat]), minutes: 70 };
+const hab2 = E.suggest({ ...habBase, sessions: [pushDay('2026-10-20', [added('k')]), pushDay('2026-10-24', [added('k')])] });
+assert(hab2.items.some((i) => i.name === 'Kabel Curl'), 'Gewohnheit eingeplant'); assert(hab2.reasons.some((r) => /Gewohnheit/.test(r)));
+assert(!E.suggest({ ...habBase, sessions: [pushDay('2026-10-24', [added('k')])] }).items.some((i) => i.name === 'Kabel Curl'), 'einmal reicht nicht');
+const swapped = { exercise_id: 'b2', replaced_from: 'b', why: 'Ersetzt', sets: [{ done: true, load_kg: 40, reps: 10 }] };
+const sw = E.suggest({ ...habBase, sessions: [pushDay('2026-10-20', [swapped]), pushDay('2026-10-24', [swapped])] });
+assert(sw.items.some((i) => i.name === 'Brustpresse') && !sw.items.some((i) => i.name === 'Bank flach'), 'ersetzte Übung weicht der Wahl');
 console.log('eigenständige Tests ok');
 
 const katalog = process.argv[2];
