@@ -391,3 +391,48 @@ dialog.lb.out::backdrop{animation:lbf .25s ease reverse both}
 .lb .x svg{width:18px;height:18px}
 html:has(dialog.lb[open]){overflow:hidden}
 .pick button[aria-checked=true] i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
+
+/* ===== Stil „Zeitung“ (ab Update 35): Serifen, Papier, feine Linien, Akzent dunkelrot. Dunkel: Nachtausgabe ===== */
+@font-face{font-family:Lora;src:url(fonts/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:Lora;src:url(fonts/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:Lora;src:url(fonts/lora-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+:root[data-style=zeitung]{--bg:#f6f3ec;--ink:#151413;--grey:#55524c;--line:#d8d2c4;--surf:#efeadf;--blue:#a3172b;--blueSoft:#efe4d6;--onblue:#fff;--dot:#a3172b;--rule:#151413;color-scheme:light}
+@media(prefers-color-scheme:dark){:root[data-style=zeitung]{--bg:#141312;--ink:#ece6da;--grey:#a8a194;--line:#33302b;--surf:#1c1b19;--blue:#e2697a;--blueSoft:#24201d;--onblue:#141312;--dot:#e2697a;--rule:#ece6da;color-scheme:dark}}
+:root[data-style=zeitung] h1,:root[data-style=zeitung] h2,:root[data-style=zeitung] h3,:root[data-style=zeitung] .next strong,:root[data-style=zeitung] .me .big{font-family:Lora,Georgia,"Times New Roman",serif;letter-spacing:-.01em}
+:root[data-style=zeitung] h1{font-weight:700;letter-spacing:-.02em;line-height:1.06}
+:root[data-style=zeitung] h2{font-weight:700}
+:root[data-style=zeitung] h3{font-weight:600}
+:root[data-style=zeitung] .me .big{font-weight:400;font-style:italic}
+/* Kopfzeile wie ein Zeitungskopf: doppelte Linie */
+:root[data-style=zeitung] .bar{background:var(--bg);border-bottom:3px double var(--rule)}
+:root[data-style=zeitung] .bar.on{border-bottom-color:var(--rule)}
+:root[data-style=zeitung] .bar .appstrip{border-top-color:var(--line)}
+/* Abschnitte beginnen mit einer Linie, Überschriften darunter */
+:root[data-style=zeitung] section.s>.w>h2,:root[data-style=zeitung] .fx .tx h2{border-top:2px solid var(--rule);padding-top:14px}
+:root[data-style=zeitung] .lead::first-letter,:root[data-style=zeitung] .hero .top .r>p::first-letter{float:left;font:700 3.15em/.82 Lora,Georgia,serif;margin:.06em .08em 0 0;color:var(--blue)}
+/* Eckig und flach: keine Schatten, feine Rahmen */
+:root[data-style=zeitung] .btn{border-radius:2px;letter-spacing:.01em}
+:root[data-style=zeitung] .btn.sec{background:transparent;box-shadow:inset 0 0 0 1.5px var(--rule);color:var(--ink)}
+:root[data-style=zeitung] .btn.line{box-shadow:inset 0 0 0 1.5px var(--rule)}
+:root[data-style=zeitung] .pic,:root[data-style=zeitung] .stage,:root[data-style=zeitung] .app-stage,:root[data-style=zeitung] .steps li,:root[data-style=zeitung] .grid>div,:root[data-style=zeitung] .box,:root[data-style=zeitung] .inst li,:root[data-style=zeitung] .mail,:root[data-style=zeitung] .vid,:root[data-style=zeitung] .next,:root[data-style=zeitung] .safe,:root[data-style=zeitung] .cup{--tint:var(--surf);--ntint:var(--surf);border-radius:3px;box-shadow:none;border:1px solid var(--line)}
+:root[data-style=zeitung] .safe{background:var(--surf);border-top:3px solid var(--rule)}
+:root[data-style=zeitung] .cup{background:var(--ink);color:var(--bg);border:0}:root[data-style=zeitung] .cup .btn{background:var(--bg);color:var(--ink)}
+:root[data-style=zeitung] .pic img,:root[data-style=zeitung] .fx .pic img,:root[data-style=zeitung] .pair .pic img{border-radius:1px;box-shadow:0 0 0 1px var(--line)}
+:root[data-style=zeitung] .steps li::before,:root[data-style=zeitung] .inst li::before{border-radius:0;background:none;color:var(--blue);box-shadow:none;font:700 30px/1 Lora,Georgia,serif;width:auto;height:auto;justify-content:flex-start}
+:root[data-style=zeitung] .badge{border-radius:2px;background:none;box-shadow:inset 0 0 0 1px currentColor;text-transform:uppercase;letter-spacing:.08em;font-size:12px}
+:root[data-style=zeitung] .facts{border-top:2px solid var(--rule);border-bottom:1px solid var(--rule)}
+:root[data-style=zeitung] .idx a{border-radius:0}:root[data-style=zeitung] .idx a.on{background:none;box-shadow:inset 3px 0 0 var(--blue)}
+:root[data-style=zeitung] .seg,:root[data-style=zeitung] .pick{border-radius:3px}:root[data-style=zeitung] .seg button,:root[data-style=zeitung] .pick button{border-radius:2px}
+:root[data-style=zeitung] .ticks li::before{border-color:var(--blue)}
+:root[data-style=zeitung] details.q summary{font-family:Lora,Georgia,serif}
+:root[data-style=zeitung] .doc h1{border-bottom:3px double var(--rule);padding-bottom:12px}
+:root[data-style=zeitung] footer{border-top:3px double var(--rule)}
+:root[data-style=zeitung] .face{border-radius:2px;background-image:none;filter:grayscale(1) contrast(1.08)}
+:root[data-style=zeitung] ::selection{background:color-mix(in srgb,var(--blue) 22%,transparent)}
+:root[data-style=zeitung] .appdock{border-radius:6px}
+/* Ausgabe-Zeile über der Startseiten-Überschrift */
+.dateline{display:none}
+:root[data-style=zeitung] .dateline{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:22px;font:600 12px/1.3 SG,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
+.pick .z{background:#f6f3ec;box-shadow:inset 0 0 0 1px #151413;position:relative;overflow:hidden}
+.pick .z::after{content:"Z";position:absolute;inset:0;display:grid;place-items:center;font:700 12px/1 Lora,Georgia,serif;color:#a3172b}
+@media(max-width:600px){:root[data-style=zeitung] .dateline span:last-child{display:none}}
