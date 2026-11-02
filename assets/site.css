@@ -395,7 +395,7 @@ html:has(dialog.lb[open]){overflow:hidden}
 /* ===== Standard „Glas“ (ab Update 36): farbiges Licht hinter mattem Glas ===== */
 /* Licht als feste Ebene (läuft auch auf iPhone/iPad flüssig, wo background-attachment:fixed nicht geht) */
 :root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) body::before{content:"";position:fixed;inset:-12vmax;z-index:-1;pointer-events:none;
- background:radial-gradient(42vmax 32vmax at 18% 12%,rgba(112,140,255,.62),transparent 70%),radial-gradient(38vmax 30vmax at 88% 18%,rgba(255,138,196,.48),transparent 70%),radial-gradient(46vmax 34vmax at 55% 96%,rgba(84,214,196,.46),transparent 70%),radial-gradient(30vmax 24vmax at 6% 78%,rgba(176,132,255,.36),transparent 70%);
+ background:linear-gradient(180deg,var(--bg) calc(12vmax + 40px),color-mix(in srgb,var(--bg) 0%,transparent) calc(12vmax + 260px)),radial-gradient(42vmax 32vmax at 18% 12%,rgba(112,140,255,.62),transparent 70%),radial-gradient(38vmax 30vmax at 88% 18%,rgba(255,138,196,.48),transparent 70%),radial-gradient(46vmax 34vmax at 55% 96%,rgba(84,214,196,.46),transparent 70%),radial-gradient(30vmax 24vmax at 6% 78%,rgba(176,132,255,.36),transparent 70%);
  animation:aurora 38s ease-in-out infinite alternate;will-change:transform}
 @media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) body::before{opacity:.62}}
 @keyframes aurora{to{transform:translate3d(-3vmax,2.5vmax,0) rotate(4deg) scale(1.06)}}
@@ -473,3 +473,6 @@ html:has(dialog.lb[open]){overflow:hidden}
  :root[data-style=salbei] .doodle-salbei path:nth-child(4){animation-delay:1s}:root[data-style=salbei] .doodle-salbei path:nth-child(5){animation-delay:1.2s}
  :root[data-style=salbei] .doodle-salbei path:nth-child(6){animation-delay:1.4s}:root[data-style=salbei] .doodle-salbei path:nth-child(7){animation-delay:1.6s}
 }
+
+/* Glas: Kopfzeile oben ohne eigene Fläche (geht nahtlos in die Statusleiste über), beim Scrollen mattes Glas */
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .bar:not(.on){background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}
