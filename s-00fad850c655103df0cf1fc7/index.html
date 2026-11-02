@@ -146,6 +146,9 @@ svg text{font-family:var(--f)}
     <section class="card"><h2>Downloads je Version</h2><div id="ver"></div></section>
     <section class="card"><h2>Website <span class="pill">30 Tage</span></h2><div id="web"></div></section>
   </div>
+  <div class="cols">
+    <section class="card"><h2>daje <span class="pill">30 Tage · privat, nicht auf der Website verlinkt</span></h2><div id="daje"></div></section>
+  </div>
   <p class="note">Gezählt werden Downloads der Release-Dateien bei GitHub, nicht Installationen: Wer eine Datei zweimal lädt oder aktualisiert, zählt mehrfach. Der Verlauf entsteht, indem diese Seite bei jedem Öffnen den Tagesstand in diesem Browser merkt.</p>
 </section>
 
@@ -270,6 +273,9 @@ function getVj(){if(DEMO)return Promise.resolve({libretto:{version:'0.9.10'},gru
  return fetch(SITE+'/versions.json?'+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('versions.json: '+r.status);return r.json()})}
 var PAGES=['/','/gruppen/','/libretto/','/libretto/demo/','/voce/','/foliva/','/namo/','/namo/demo/','/studienfahrt/','/sportwahl/','/sportwahl/app.html','/gruppen/app.html','/versions.json','/datenschutz','/impressum','/lizenz'];
 function isAppPage(p){return APPS.some(function(a){return a.page===p})}
+/* daje: eigene Adresse, nur prüfen, ob sie antwortet (ohne Inhalt, fremde Domain) */
+var DAJE='https://daje.theisapps.de/';
+function getDaje(){if(DEMO)return Promise.resolve({ok:true,ms:84});var t=Date.now();return fetch(DAJE+'?c='+t,{cache:'no-store',mode:'no-cors'}).then(function(){return {ok:true,ms:Date.now()-t}},function(){return {ok:false,ms:Date.now()-t}})}
 function getPages(){if(DEMO)return Promise.resolve(PAGES.map(function(p,i){var a=APPS.find(function(x){return x.page===p}),html='';
   if(a&&!a.test){var r=demoRel().filter(function(x){return x.assets.some(function(y){return y.name===a.files[0][1]})})[0];html=a.files.map(function(f){return 'https://github.com/'+REPO+'/releases/download/'+r.tag_name+'/'+f[1]}).join(' ')}
   return {p:p,ok:true,ms:60+i*13,html:html}}));
@@ -384,6 +390,21 @@ function bcShow(c,i,hov){var tip=c.querySelector('.bc-tip'),bs=c.querySelectorAl
 function dayChart(hits,tot){try{var m={},all=tot&&Array.isArray(tot.stats)&&tot.stats.length;if(all){tot.stats.forEach(function(d){if(d&&d.day)m[d.day]=(m[d.day]||0)+(d.daily||0)})}else hits.forEach(function(p){(p.stats||[]).forEach(function(d){if(d&&d.day){m[d.day]=(m[d.day]||0)+(d.daily||0)}})});var ks=[],i,k;for(i=29;i>=0;i--){ks.push(dkey(Date.now()-i*864e5))}
  var tot=0,vals=ks.map(function(k){var v=m[k]||0;tot+=v;return v});if(!tot)return '';return '<div class="small muted" style="margin:6px 0 0">Aufrufe pro Tag (30 Tage'+(all?'':', meistbesuchte Seiten')+')</div>'+barChart(ks,vals)}catch(e){return ''}}
 function pageRows(hits){var mx=1;hits.forEach(function(p){mx=Math.max(mx,p.count||0)});return hits.map(function(p){var w=Math.round((p.count||0)/mx*100);return '<tr><td style="background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 22%,transparent) '+w+'%,transparent '+w+'%);border-radius:6px">'+esc(p.path||'')+'</td><td class="r">'+nf.format(p.count||0)+'</td></tr>'}).join('')}
+/* daje-Nutzung: Die App zählt ihre Aufrufe im selben GoatCounter unter Pfaden mit „daje:“ (ohne Cookies). Die Website zählt sie nicht mit. */
+function dajeRender(st){var el=$('daje');if(!el)return;var c=load().gc||window.THEIS_PRESET||{};
+ var reach=st?'<span class="pill '+(st.ok?'ok':'bad')+'">'+(st.ok?'erreichbar':'nicht erreichbar')+'</span> <span class="small muted">daje.theisapps.de · '+st.ms+' ms</span>':'';
+ if(DEMO){var dk=[],dv=[],i;for(i=29;i>=0;i--){dk.push(dkey(Date.now()-i*864e5));dv.push(i%7>4?1:3+((i*5)%7))}
+  el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><div class="tiles" style="grid-template-columns:1fr 1fr 1fr;margin:0 0 10px"><div><div style="font-size:28px;font-weight:800">214</div><div class="muted small">Aufrufe</div></div><div><div style="font-size:28px;font-weight:800">61</div><div class="muted small">Besucher</div></div><div><div style="font-size:28px;font-weight:800">38</div><div class="muted small">Übungen geöffnet</div></div></div>'+barChart(dk,dv)+'<table><tr><th>Bereich</th><th class="r">Aufrufe</th></tr>'+pageRows([{path:'daje:/hoeren',count:96},{path:'daje:/',count:61},{path:'daje:/wortschatz',count:41},{path:'daje:/hausaufgabe',count:16}])+'</table>';return}
+ if(!c.code||!c.token){el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><p class="small muted" style="margin:0">Für die Zahlen oben auf „Zähler“ tippen und den Zugang eintragen (derselbe wie für die Website).</p>';return}
+ el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><span class="muted small">Lade …</span>';
+ var base='https://'+encodeURIComponent(c.code)+'.goatcounter.com/api/v0/',h={headers:{'Authorization':'Bearer '+c.token}},q='?start='+new Date(Date.now()-30*864e5).toISOString()+'&end='+new Date().toISOString();
+ fetch(base+'stats/hits'+q+'&limit=100&daily=true',h).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(a){
+  var hits=(a.hits||[]).filter(function(p){return /^daje:/.test(p.path||'')}),tot=0;hits.forEach(function(p){tot+=p.count||0});
+  var ex=hits.filter(function(p){return /^daje:\/hoeren\//.test(p.path)}).reduce(function(s,p){return s+(p.count||0)},0);
+  if(!hits.length){el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><p class="small muted" style="margin:0">Noch keine Aufrufe gezählt. daje meldet Aufrufe erst, wenn dort der Zähler eingebaut ist (Pfade beginnen mit „daje:“).</p>';return}
+  var m={};hits.forEach(function(p){(p.stats||[]).forEach(function(d){if(d&&d.day)m[d.day]=(m[d.day]||0)+(d.daily||0)})});var ks=[],i;for(i=29;i>=0;i--)ks.push(dkey(Date.now()-i*864e5));
+  el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><div class="tiles" style="grid-template-columns:1fr 1fr;margin:0 0 10px"><div><div style="font-size:28px;font-weight:800">'+nf.format(tot)+'</div><div class="muted small">Aufrufe</div></div><div><div style="font-size:28px;font-weight:800">'+nf.format(ex)+'</div><div class="muted small">Übungen geöffnet</div></div></div>'+barChart(ks,ks.map(function(k){return m[k]||0}))+'<table><tr><th>Bereich</th><th class="r">Aufrufe</th></tr>'+pageRows(hits.slice(0,8))+'</table>'
+ }).catch(function(e){el.innerHTML='<div style="margin:-2px 0 10px">'+reach+'</div><p class="small muted" style="margin:0">Keine Zahlen ('+esc((e&&e.message)||'Netzwerkfehler')+').</p>'})}
 function web(){var st=load(),c=st.gc||window.THEIS_PRESET||{},el=$('web');
  if(DEMO){var dk=[],dv=[],i;for(i=29;i>=0;i--){dk.push(dkey(Date.now()-i*864e5));dv.push(2+((i*7)%9)+(i<4?6:0))}el.innerHTML='<div class="tiles" style="grid-template-columns:1fr 1fr;margin:0 0 10px"><div><div style="font-size:28px;font-weight:800">312</div><div class="muted small">Aufrufe</div></div><div><div style="font-size:28px;font-weight:800">187</div><div class="muted small">Besucher</div></div></div><div class="small muted" style="margin:6px 0 0">Aufrufe pro Tag (30 Tage)</div>'+barChart(dk,dv)+'<table><tr><th>Seite</th><th class="r">Aufrufe</th></tr>'+pageRows([{path:'/sportwahl/',count:121},{path:'/',count:74},{path:'/libretto/',count:52},{path:'/gruppen/',count:38}])+'</table>';return}
  if(!c.code||!c.token){el.innerHTML='<p class="muted" style="margin:0 0 8px">Noch kein Zähler verbunden.</p><p class="small muted" style="margin:0">Oben auf „Zähler“ tippen und Name sowie Zugangsschlüssel eintragen. Dann siehst du hier die Aufrufe der Website.</p>';return}
@@ -475,6 +496,7 @@ $('bk-file').onchange=function(){var f=this.files&&this.files[0];if(!f)return;va
 /* ---------- Start ---------- */
 function run(){$('err').style.display='none';$('stand').textContent='Lade …';
  var fail=function(e){var m=(e&&e.message)||'';if(/Failed to fetch|NetworkError|Load failed/i.test(m))m='Keine Verbindung. Bitte Internet prüfen und erneut aktualisieren.';$('err').textContent=m||'Unbekannter Fehler.';$('err').style.display='block';$('stand').textContent='Nicht aktualisiert'};
+ getDaje().then(dajeRender);
  Promise.all([getRel(),getVj().catch(function(){return null}),getPages(),getLatest()]).then(function(a){S.rel=a[0];S.vj=a[1];S.pages=a[2];S.latest=a[3];
   renderUeber(S.rel);renderVer();renderPages();renderStatus();
   $('stand').textContent=(DEMO?'Vorschau mit erfundenen Zahlen · ':'')+'Stand '+new Date().toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'})}).catch(fail);web()}
