@@ -6,7 +6,7 @@
   'use strict';
   let mem = null;                                   // aktueller Stand, nur im Arbeitsspeicher
   const cfg = {};                                   // Einstellungen (Farbwelt usw.), ebenfalls nur im Arbeitsspeicher
-  try { const st = localStorage.getItem('theis-stil'); if (st === 'neon' || st === 'heft') { cfg.skin = st; document.documentElement.setAttribute('data-skin', st); } } catch (e) {}   // startet im Stil der Website
+  try { const st = localStorage.getItem('theis-stil'); if (st === 'neon' || st === 'heft' || st === 'salbei') { cfg.skin = st; document.documentElement.setAttribute('data-skin', st); } } catch (e) {}   // startet im Stil der Website
   let go; const ready = new Promise(r => { go = r; });
   const X = window.__librettoDemo = { version: '0.9.9', start: go, locked: () => {}, preview: () => {} };
   const t0 = Date.now(), MIN = 60000, DAY = 864e5;
