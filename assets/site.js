@@ -1,8 +1,8 @@
 /* theis-Website: Stil (Klar/Neon/Heft) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
 (function(){
-  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft'];
+  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','zeitung'];
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#ffffff','#121520'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924']};
+  var LEISTE={normal:['#ffffff','#121520'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],zeitung:['#f6f3ec','#141312']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -106,7 +106,7 @@
       setTimeout(function(){
         if(get(SEEN))return;
         var t=document.createElement('div');t.id='tip';t.setAttribute('role','dialog');t.setAttribute('aria-label','Stil der Website');
-        t.innerHTML='<p><b>Lieber etwas anderes?</b>Die Seite gibt es auch bunt in Neon oder kariert wie ein Schulheft. Umschalten können Sie jederzeit oben.</p><div><button type="button" class="btn" data-s="neon">Neon</button><button type="button" class="btn" data-s="heft">Schulheft</button><button type="button" class="btn line" data-s="normal">So lassen</button></div>';
+        t.innerHTML='<p><b>Lieber etwas anderes?</b>Die Seite gibt es auch bunt in Neon, kariert wie ein Schulheft oder als Zeitung. Umschalten können Sie jederzeit oben.</p><div><button type="button" class="btn" data-s="neon">Neon</button><button type="button" class="btn" data-s="heft">Schulheft</button><button type="button" class="btn" data-s="zeitung">Zeitung</button><button type="button" class="btn line" data-s="normal">So lassen</button></div>';
         t.addEventListener('click',function(e){var b=e.target.closest('button');if(b){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null);put(SEEN,'1');t.remove()}});
         document.body.appendChild(t);
       },1600);
