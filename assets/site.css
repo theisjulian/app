@@ -8,8 +8,8 @@
 @font-face{font-family:SG;src:url(fonts/schibsted-grotesk-latin-ext-600-normal.woff2) format("woff2");font-weight:600;font-display:swap;unicode-range:U+0100-024F,U+1E00-1EFF}
 @font-face{font-family:SG;src:url(fonts/schibsted-grotesk-latin-ext-700-normal.woff2) format("woff2");font-weight:700;font-display:swap;unicode-range:U+0100-024F,U+1E00-1EFF}
 
-:root{--bg:#fff;--ink:#111214;--grey:#5a6070;--line:#e5e8ee;--surf:#f3f5f9;--blue:#2f5bea;--blueSoft:#e9eefe;--onblue:#fff;--dot:#2f5bea;--shadow:0 40px 80px -30px rgba(17,18,20,.45);--shot:0 20px 50px -22px rgba(17,18,20,.35);color-scheme:light}
-@media(prefers-color-scheme:dark){:root{--bg:#121520;--ink:#eef0f4;--grey:#a2a8b6;--line:#272c39;--surf:#1a1e2a;--blue:#7d9bff;--blueSoft:#1f2741;--onblue:#0c1330;--dot:#6f8fff;--shadow:0 40px 80px -30px rgba(0,0,0,.7);--shot:0 20px 50px -22px rgba(0,0,0,.6);color-scheme:dark}}
+:root{--bg:#eef1f8;--ink:#10131c;--grey:#4f5668;--line:rgba(16,19,28,.11);--surf:rgba(255,255,255,.62);--blue:#3d5cff;--blueSoft:rgba(236,240,255,.72);--onblue:#fff;--dot:#3d5cff;--shadow:0 40px 80px -30px rgba(25,32,80,.42);--shot:0 20px 50px -22px rgba(25,32,80,.38);color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0a0c15;--ink:#eef0f8;--grey:#a9afc4;--line:rgba(255,255,255,.12);--surf:rgba(255,255,255,.065);--blue:#8ea0ff;--blueSoft:rgba(255,255,255,.07);--onblue:#0a0c15;--dot:#8ea0ff;--shadow:0 40px 80px -30px rgba(0,0,0,.75);--shot:0 20px 50px -22px rgba(0,0,0,.65);color-scheme:dark}}
 /* Neon (wie ’namo.): Pastell-Lila, Neon-Pink, Elektroblau */
 :root[data-style=neon]{--bg:#f6f0ff;--ink:#22103a;--grey:#6c5a86;--line:#e7dcf7;--surf:#efe3ff;--blue:#d4127a;--blueSoft:#ffe4f3;--onblue:#fff;--dot:#ff3ea5;--grad:linear-gradient(120deg,#e81e8c 0%,#8a3ffc 55%,#2f6bff 100%)}
 @media(prefers-color-scheme:dark){:root[data-style=neon]{--bg:#0e0818;--ink:#f4ecff;--grey:#b3a3cf;--line:#2e2045;--surf:#1a1029;--blue:#ff3ea5;--blueSoft:#2a1640;--onblue:#1a0414;--dot:#ff3ea5;--grad:linear-gradient(120deg,#ff3ea5 0%,#8a3ffc 55%,#2f6bff 100%)}}
@@ -49,7 +49,7 @@ a{color:inherit}img,video,svg{max-width:100%}img{height:auto}
 .pick button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .pick i{width:18px;height:18px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);transition:transform .25s cubic-bezier(.2,.7,.2,1)}
 .pick button:hover i{transform:scale(1.12)}
-.pick .k{background:linear-gradient(135deg,#fff 50%,#2f5bea 50%)}
+.pick .k{background:radial-gradient(circle at 32% 28%,#fff 0 12%,transparent 30%),conic-gradient(from 200deg,#7d96ff,#c08bff,#ff9ccc,#7fe3d4,#7d96ff)}
 .pick .n{background:linear-gradient(120deg,#ff3ea5,#8a3ffc 55%,#2f6bff)}
 .pick .h{background-color:#f8f4e8;background-image:linear-gradient(#b9c8de 1px,transparent 1px),linear-gradient(90deg,#b9c8de 1px,transparent 1px);background-size:5px 5px;background-position:-1px -1px;box-shadow:inset 0 0 0 1px #c9cfd8,inset 3px 0 0 #e08a85}
 @media(max-width:1180px){.pick button{padding:5px}.pick button span{display:none}}
@@ -392,47 +392,84 @@ dialog.lb.out::backdrop{animation:lbf .25s ease reverse both}
 html:has(dialog.lb[open]){overflow:hidden}
 .pick button[aria-checked=true] i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
 
-/* ===== Stil „Zeitung“ (ab Update 35): Serifen, Papier, feine Linien, Akzent dunkelrot. Dunkel: Nachtausgabe ===== */
-@font-face{font-family:Lora;src:url(fonts/lora-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:Lora;src:url(fonts/lora-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
-@font-face{font-family:Lora;src:url(fonts/lora-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
-:root[data-style=zeitung]{--bg:#f6f3ec;--ink:#151413;--grey:#55524c;--line:#d8d2c4;--surf:#efeadf;--blue:#a3172b;--blueSoft:#efe4d6;--onblue:#fff;--dot:#a3172b;--rule:#151413;color-scheme:light}
-@media(prefers-color-scheme:dark){:root[data-style=zeitung]{--bg:#141312;--ink:#ece6da;--grey:#a8a194;--line:#33302b;--surf:#1c1b19;--blue:#e2697a;--blueSoft:#24201d;--onblue:#141312;--dot:#e2697a;--rule:#ece6da;color-scheme:dark}}
-:root[data-style=zeitung] h1,:root[data-style=zeitung] h2,:root[data-style=zeitung] h3,:root[data-style=zeitung] .next strong,:root[data-style=zeitung] .me .big{font-family:Lora,Georgia,"Times New Roman",serif;letter-spacing:-.01em}
-:root[data-style=zeitung] h1{font-weight:700;letter-spacing:-.02em;line-height:1.06}
-:root[data-style=zeitung] h2{font-weight:700}
-:root[data-style=zeitung] h3{font-weight:600}
-:root[data-style=zeitung] .me .big{font-weight:400;font-style:italic}
-/* Kopfzeile wie ein Zeitungskopf: doppelte Linie */
-:root[data-style=zeitung] .bar{background:var(--bg);border-bottom:3px double var(--rule)}
-:root[data-style=zeitung] .bar.on{border-bottom-color:var(--rule)}
-:root[data-style=zeitung] .bar .appstrip{border-top-color:var(--line)}
-/* Abschnitte beginnen mit einer Linie, Überschriften darunter */
-:root[data-style=zeitung] section.s>.w>h2,:root[data-style=zeitung] .fx .tx h2{border-top:2px solid var(--rule);padding-top:14px}
-:root[data-style=zeitung] .lead::first-letter,:root[data-style=zeitung] .hero .top .r>p::first-letter{float:left;font:700 3.15em/.82 Lora,Georgia,serif;margin:.06em .08em 0 0;color:var(--blue)}
-/* Eckig und flach: keine Schatten, feine Rahmen */
-:root[data-style=zeitung] .btn{border-radius:2px;letter-spacing:.01em}
-:root[data-style=zeitung] .btn.sec{background:transparent;box-shadow:inset 0 0 0 1.5px var(--rule);color:var(--ink)}
-:root[data-style=zeitung] .btn.line{box-shadow:inset 0 0 0 1.5px var(--rule)}
-:root[data-style=zeitung] .pic,:root[data-style=zeitung] .stage,:root[data-style=zeitung] .app-stage,:root[data-style=zeitung] .steps li,:root[data-style=zeitung] .grid>div,:root[data-style=zeitung] .box,:root[data-style=zeitung] .inst li,:root[data-style=zeitung] .mail,:root[data-style=zeitung] .vid,:root[data-style=zeitung] .next,:root[data-style=zeitung] .safe,:root[data-style=zeitung] .cup{--tint:var(--surf);--ntint:var(--surf);border-radius:3px;box-shadow:none;border:1px solid var(--line)}
-:root[data-style=zeitung] .safe{background:var(--surf);border-top:3px solid var(--rule)}
-:root[data-style=zeitung] .cup{background:var(--ink);color:var(--bg);border:0}:root[data-style=zeitung] .cup .btn{background:var(--bg);color:var(--ink)}
-:root[data-style=zeitung] .pic img,:root[data-style=zeitung] .fx .pic img,:root[data-style=zeitung] .pair .pic img{border-radius:1px;box-shadow:0 0 0 1px var(--line)}
-:root[data-style=zeitung] .steps li::before,:root[data-style=zeitung] .inst li::before{border-radius:0;background:none;color:var(--blue);box-shadow:none;font:700 30px/1 Lora,Georgia,serif;width:auto;height:auto;justify-content:flex-start}
-:root[data-style=zeitung] .badge{border-radius:2px;background:none;box-shadow:inset 0 0 0 1px currentColor;text-transform:uppercase;letter-spacing:.08em;font-size:12px}
-:root[data-style=zeitung] .facts{border-top:2px solid var(--rule);border-bottom:1px solid var(--rule)}
-:root[data-style=zeitung] .idx a{border-radius:0}:root[data-style=zeitung] .idx a.on{background:none;box-shadow:inset 3px 0 0 var(--blue)}
-:root[data-style=zeitung] .seg,:root[data-style=zeitung] .pick{border-radius:3px}:root[data-style=zeitung] .seg button,:root[data-style=zeitung] .pick button{border-radius:2px}
-:root[data-style=zeitung] .ticks li::before{border-color:var(--blue)}
-:root[data-style=zeitung] details.q summary{font-family:Lora,Georgia,serif}
-:root[data-style=zeitung] .doc h1{border-bottom:3px double var(--rule);padding-bottom:12px}
-:root[data-style=zeitung] footer{border-top:3px double var(--rule)}
-:root[data-style=zeitung] .face{border-radius:2px;background-image:none;filter:grayscale(1) contrast(1.08)}
-:root[data-style=zeitung] ::selection{background:color-mix(in srgb,var(--blue) 22%,transparent)}
-:root[data-style=zeitung] .appdock{border-radius:6px}
-/* Ausgabe-Zeile über der Startseiten-Überschrift */
-.dateline{display:none}
-:root[data-style=zeitung] .dateline{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:22px;font:600 12px/1.3 SG,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
-.pick .z{background:#f6f3ec;box-shadow:inset 0 0 0 1px #151413;position:relative;overflow:hidden}
-.pick .z::after{content:"Z";position:absolute;inset:0;display:grid;place-items:center;font:700 12px/1 Lora,Georgia,serif;color:#a3172b}
-@media(max-width:600px){:root[data-style=zeitung] .dateline span:last-child{display:none}}
+/* ===== Standard „Glas“ (ab Update 36): farbiges Licht hinter mattem Glas ===== */
+/* Licht als feste Ebene (läuft auch auf iPhone/iPad flüssig, wo background-attachment:fixed nicht geht) */
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) body::before{content:"";position:fixed;inset:-12vmax;z-index:-1;pointer-events:none;
+ background:radial-gradient(42vmax 32vmax at 18% 12%,rgba(112,140,255,.62),transparent 70%),radial-gradient(38vmax 30vmax at 88% 18%,rgba(255,138,196,.48),transparent 70%),radial-gradient(46vmax 34vmax at 55% 96%,rgba(84,214,196,.46),transparent 70%),radial-gradient(30vmax 24vmax at 6% 78%,rgba(176,132,255,.36),transparent 70%);
+ animation:aurora 38s ease-in-out infinite alternate;will-change:transform}
+@media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) body::before{opacity:.62}}
+@keyframes aurora{to{transform:translate3d(-3vmax,2.5vmax,0) rotate(4deg) scale(1.06)}}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) body{background:var(--bg)}
+/* Glasflächen: halbtransparent, heller Rand oben, weiche Tiefe. Unschärfe nur, wo der Hintergrund durchscheint und die Fläche klein bleibt */
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.pic,.stage,.app-stage,.steps li,.grid>div,.box,.inst li,.mail,.vid,.next,.safe,.facts,.seg,.pick,details.q){
+ --tint:var(--surf);--ntint:var(--surf);background:linear-gradient(160deg,rgba(255,255,255,.72),rgba(255,255,255,.38));border:1px solid rgba(255,255,255,.75);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(25,32,80,.05),0 24px 48px -30px rgba(25,32,80,.34)}
+@media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.pic,.stage,.app-stage,.steps li,.grid>div,.box,.inst li,.mail,.vid,.next,.safe,.facts,.seg,.pick,details.q){
+ background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.035));border-color:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 24px 48px -30px rgba(0,0,0,.7)}}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.steps li,.grid>div,.mail,.next,.safe){-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5)}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .facts{border-radius:20px;padding:0 20px}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) details.q{border-radius:16px;padding:0 20px;margin-bottom:10px}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) details.q:last-of-type{border-bottom:1px solid rgba(255,255,255,.75)}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .bar{background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .idx a.on{background:rgba(255,255,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 20px -14px rgba(25,32,80,.4)}
+@media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .idx a.on{background:rgba(255,255,255,.08);box-shadow:none}}
+/* Knöpfe: Glanzkante oben, sanftes Leuchten in der Akzentfarbe */
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .btn:not(.sec):not(.line):not(.off){background:linear-gradient(180deg,color-mix(in srgb,var(--blue) 82%,#fff),var(--blue));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 22px -10px color-mix(in srgb,var(--blue) 75%,transparent)}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .btn.sec{background:rgba(255,255,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(16,19,28,.06)}
+@media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .btn.sec{background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .cup{background:linear-gradient(120deg,#3d5cff,#7c5cff 55%,#d64fa0);color:#fff;box-shadow:0 30px 60px -30px rgba(61,92,255,.6)}
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .cup .btn{background:#fff!important;color:#3d3fd0;box-shadow:none}
+/* Lichtreflex, der dem Zeiger folgt (nur Maus, nicht bei „Bewegung reduzieren“) */
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ :root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.steps li,.grid>div,.next,.pic,.mail){position:relative;isolation:isolate}
+ :root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.steps li,.grid>div,.next,.pic,.mail)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;opacity:0;transition:opacity .35s;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.38),transparent 45%)}
+ :root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.steps li,.grid>div,.next,.pic,.mail):hover::after{opacity:1}
+ @media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) :is(.steps li,.grid>div,.next,.pic,.mail)::after{background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(160,180,255,.14),transparent 45%)}}
+}
+/* Überschrift: feiner Farbschimmer im Wort mit Markierung */
+:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .hl{background:linear-gradient(100deg,#3d5cff 0%,#8b5cf6 45%,#e0559f 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+@media(prefers-color-scheme:dark){:root:not([data-style=neon]):not([data-style=heft]):not([data-style=salbei]) .hl{background-image:linear-gradient(100deg,#9fb0ff,#c4a6ff 50%,#ff9fcf)}}
+/* Wer weniger Bewegung möchte oder ältere Geräte: Licht steht still */
+@media(prefers-reduced-motion:reduce){body::before{animation:none!important}}
+
+/* ===== Stil „Salbei“ (ab Update 36): ruhig, naturnah, weiche Formen. Dunkel: Waldnacht ===== */
+:root[data-style=salbei]{--bg:#eef2ea;--ink:#1b2620;--grey:#536157;--line:#d4ddd0;--surf:#e3eadd;--blue:#2f6e4b;--blueSoft:#dbe8d9;--onblue:#fff;--dot:#2f6e4b;--leaf:#8fb996;--shadow:0 40px 80px -34px rgba(27,52,36,.38);--shot:0 20px 50px -24px rgba(27,52,36,.32);color-scheme:light}
+@media(prefers-color-scheme:dark){:root[data-style=salbei]{--bg:#101612;--ink:#e4ece3;--grey:#a1b2a4;--line:#253128;--surf:#18211a;--blue:#86cfa1;--blueSoft:#1c281e;--onblue:#0c140e;--dot:#86cfa1;--leaf:#3f6b4c;--shadow:0 40px 80px -30px rgba(0,0,0,.75);--shot:0 20px 50px -22px rgba(0,0,0,.6);color-scheme:dark}}
+/* Weiche Lichtflecken wie Sonne durch Blätter */
+:root[data-style=salbei] body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:radial-gradient(50vmax 36vmax at 92% -4%,color-mix(in srgb,var(--leaf) 40%,transparent),transparent 70%),radial-gradient(40vmax 30vmax at -6% 40%,color-mix(in srgb,var(--leaf) 26%,transparent),transparent 70%),radial-gradient(44vmax 30vmax at 70% 108%,rgba(226,211,160,.30),transparent 70%)}
+@media(prefers-color-scheme:dark){:root[data-style=salbei] body::before{opacity:.55}}
+:root[data-style=salbei] :is(.pic,.stage,.app-stage,.steps li,.grid>div,.box,.inst li,.mail,.vid,.next){--tint:var(--surf);--ntint:var(--surf);background:var(--surf)}
+:root[data-style=salbei] :is(.stage,.app-stage,.pic,.safe,.cup){border-radius:44px 44px 44px 12px}
+:root[data-style=salbei] :is(.steps li,.grid>div,.inst li,.box,.next){border-radius:28px 28px 28px 8px}
+:root[data-style=salbei] .btn{border-radius:16px 16px 16px 5px}
+:root[data-style=salbei] .btn:not(.sec):not(.line):not(.off){box-shadow:0 8px 20px -12px color-mix(in srgb,var(--blue) 80%,transparent)}
+:root[data-style=salbei] .btn.sec{background:var(--surf)}
+:root[data-style=salbei] .safe{background:linear-gradient(150deg,var(--blueSoft),var(--surf))}
+:root[data-style=salbei] .cup{background:linear-gradient(130deg,#2f6e4b,#4e8c5f 60%,#8aa957);color:#fff}
+:root[data-style=salbei] .cup .btn{background:#fff;color:#2f6e4b}
+@media(prefers-color-scheme:dark){:root[data-style=salbei] .cup{background:linear-gradient(130deg,#1f4a33,#2e6343 60%,#56702f)}}
+:root[data-style=salbei] .idx a.on{background:var(--surf);box-shadow:inset 3px 0 0 var(--blue)}
+:root[data-style=salbei] .steps li::before{border-radius:50% 50% 50% 12%;background:var(--blue)}
+:root[data-style=salbei] .ticks li::before{border-color:var(--blue)}
+/* Wort in der Überschrift: sanft unterstrichen wie mit Pinsel */
+:root[data-style=salbei] .hl{position:relative;z-index:0;white-space:nowrap}
+:root[data-style=salbei] .hl::before{content:"";position:absolute;z-index:-1;left:-.04em;right:-.04em;bottom:.02em;height:.24em;border-radius:99px;background:color-mix(in srgb,var(--leaf) 75%,transparent);transform-origin:0 50%;animation:pinsel .9s .3s cubic-bezier(.3,.7,.2,1) both}
+@keyframes pinsel{from{transform:scaleX(0)}}
+:root[data-style=salbei] ::selection{background:color-mix(in srgb,var(--leaf) 55%,transparent)}
+.pick .s{background:radial-gradient(circle at 32% 28%,#e8f3e6 0 14%,transparent 34%),radial-gradient(circle at 50% 50%,#7fb08c,#2f6e4b)}
+/* Impressum, Salbei: ein Zweig wächst neben dem Text (nur breite Fenster) */
+.doodle-salbei{display:none}
+@media(min-width:1340px){
+ :root[data-style=salbei] .has-doodle{position:relative}
+ :root[data-style=salbei] .doodle-salbei{display:block;position:absolute;left:calc(100% + 30px);top:20px;width:240px;height:auto;overflow:visible;pointer-events:none;color:var(--blue)}
+ :root[data-style=salbei] .doodle-salbei path{stroke-dasharray:1;stroke-dashoffset:0}
+}
+@media(min-width:1340px) and (prefers-reduced-motion:no-preference){
+ :root[data-style=salbei] .doodle-salbei path{stroke-dashoffset:1;animation:scrib 1.2s cubic-bezier(.4,.1,.3,1) forwards}
+ :root[data-style=salbei] .doodle-salbei path:nth-child(n+2){animation-duration:.6s}
+ :root[data-style=salbei] .doodle-salbei path:nth-child(2){animation-delay:.6s}:root[data-style=salbei] .doodle-salbei path:nth-child(3){animation-delay:.8s}
+ :root[data-style=salbei] .doodle-salbei path:nth-child(4){animation-delay:1s}:root[data-style=salbei] .doodle-salbei path:nth-child(5){animation-delay:1.2s}
+ :root[data-style=salbei] .doodle-salbei path:nth-child(6){animation-delay:1.4s}:root[data-style=salbei] .doodle-salbei path:nth-child(7){animation-delay:1.6s}
+}
