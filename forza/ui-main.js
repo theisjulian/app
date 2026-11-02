@@ -36,16 +36,17 @@
     const email = document.getElementById('au-mail').value.trim(); if (!email) return msg('Bitte zuerst die E-Mail eintragen.');
     const r = await F.sb.auth.resetPasswordForEmail(email, { redirectTo: F.C.stravaRedirect }); msg(r.error ? r.error.message : 'E-Mail zum Zurücksetzen ist unterwegs.');
   };
-  F.acts.logout = async () => { await F.sb.auth.signOut(); F.user = null; F.S = {}; F.render(); };
+  // Nur auf diesem Gerät und nur in forza abmelden: dieselbe Anmeldung nutzt auch daje, die bleibt aktiv
+  F.acts.logout = async () => { await F.sb.auth.signOut({ scope: 'local' }); F.user = null; F.S = {}; F.render(); };
 
   /* ---------- Heute ---------- */
   F.views.heute = () => {
     const S = F.S, today = F.today(), hr = new Date().getHours();
     const greet = hr < 11 ? 'Guten Morgen' : hr < 18 ? 'Hallo' : 'Guten Abend';
-    const name = (S.profile && S.profile.display_name) || 'Julian';
+    const name = (S.profile && S.profile.display_name) || '';
     const sg = F.suggestion(), open = F.openSession(), form = F.ls.get('form-' + today, 'normal'), place = F.items(), mins = F.ls.get('minutes', null);
     const d = F.dparse(today);
-    let h = `<div class="row between" style="margin-bottom:14px"><div><div class="eyebrow">${F.WD[d.getDay()]}, ${d.getDate()}. ${F.MON[d.getMonth()]}</div><div class="h1">${greet}, ${esc(name)}</div></div></div>`;
+    let h = `<div class="row between" style="margin-bottom:14px"><div><div class="eyebrow">${F.WD[d.getDay()]}, ${d.getDate()}. ${F.MON[d.getMonth()]}</div><div class="h1">${greet}${name ? ', ' + esc(name) : ''}</div></div></div>`;
     if (open) h += `<div class="card" style="border-color:var(--a)"><div class="row between"><div><div class="eyebrow">Läuft gerade</div><b>${esc(open.title || 'Training')}</b></div><button class="btn pri sm" data-act="resume">Fortsetzen</button></div></div>`;
     // Beinfrage nach Fahrt
     const ride = S.activities.find((a) => RIDE.includes(a.sport) && (Date.now() - new Date(a.start_at).getTime()) < 30 * 3600000 && ((a.kilojoules || 0) > 600 || (a.moving_s || 0) > 5400));
@@ -56,10 +57,9 @@
     if (sg.rest) h += `<div class="hero"><div class="eyebrow mute">Vorschlag für heute</div><div class="h1" style="margin:6px 0 8px">${esc(sg.title)}</div>${sg.reasons.map((r) => `<div class="mute">${esc(r)}</div>`).join('')}</div>`;
     else if (sg.empty) h += `<div class="hero"><div class="h2">${esc(sg.title)}</div><div class="mute">${esc(sg.reasons[0])}</div><button class="btn pri" style="margin-top:12px" data-act="nav" data-r="mehr/split">Split wählen</button></div>`;
     else h += `<div class="hero"><div class="row between"><div class="eyebrow mute">Vorschlag</div><div class="seg" role="group" aria-label="Tagesform"><button class="${form === 'normal' ? 'on' : ''}" data-act="form" data-v="normal">Normal</button><button class="${form === 'ruhiger' ? 'on' : ''}" data-act="form" data-v="ruhiger">Ruhiger</button></div></div>
-      <div class="h1" style="margin:8px 0 2px">${esc(sg.title)}</div><div class="mute">ca. ${sg.minutes}${mins ? ' von ' + mins : ''} Minuten · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}${sg.reentry ? ' · Wiedereinstieg' : ''}</div>
+      <div class="h1" style="margin:8px 0 2px">${esc(sg.title)}</div>${whyBlock(sg.reasons)}<div class="mute">ca. ${sg.minutes}${mins ? ' von ' + mins : ''} Minuten · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}${sg.reentry ? ' · Wiedereinstieg' : ''}</div>
       <div style="margin-top:10px">${sg.items.map((it, i) => `<div class="exrow"><div class="exn">${i + 1}</div><div class="grow"><b>${esc(it.name)}</b>${it.pair_with ? '<span class="badge" style="margin-left:6px">Superset</span>' : ''}<div class="mute small">${it.sets} × ${it.reps ? it.reps[0] + '–' + it.reps[1] + (it.perSide ? ' je Seite' : '') : it.secs ? it.secs[0] + '–' + it.secs[1] + (F.E.PROFILES[it.profile] === F.E.PROFILES.T ? ' s oder m' : ' s') : ''}${it.rir ? ' · Reserve ' + it.rir[0] + '–' + it.rir[1] : ''}${it.load_kg ? ' · ' + F.fmt(it.load_kg) + ' kg' + (it.load_convention === 'je_hand' ? ' je Hand' : '') : ''}</div></div><button class="icbtn" data-act="swapOne" data-id="${it.exercise_id}" aria-label="Diese Übung austauschen" title="Austauschen">${F.icon.swap}</button><button class="icbtn" data-act="help" data-id="${it.exercise_id}" aria-label="Hilfe" title="Hilfe">${F.icon.info}</button></div>`).join('')}</div>
       ${sg.mobility && sg.mobility.length ? `<div class="mobi"><div class="eyebrow mute" style="margin-bottom:4px">Optional zum Abschluss, ca. 4 Minuten · Haltung</div>${sg.mobility.map((m) => `<div class="small">${esc(m.name)} · ${m.sets} × ${m.reps[0]}–${m.reps[1]}</div>`).join('')}</div>` : ''}
-      <div class="small mute why" style="margin:12px 0"><b>Warum?</b> ${sg.reasons.map(esc).join(' ')}</div>
       <button class="btn pri block" data-act="start">Training starten</button><div class="row gap" style="margin-top:8px"><button class="btn ghost hero-ghost grow" data-act="pickDay">Anderer Tag</button><button class="btn ghost hero-ghost dice grow" data-act="reroll" aria-label="Variieren">${F.icon.dice || '↻'} Variieren</button></div>
       ${sg.variant ? `<div class="small mute" style="margin-top:10px;text-align:center">Variante ${sg.variant} · <button class="lnk" data-act="rerollReset">zur festen Reihenfolge</button></div>` : ''}</div>`;
     // Woche
@@ -79,6 +79,13 @@
       <div><div class="card"><div class="row between"><div class="h2">Sätze pro Woche</div><span class="badge">Ziel ${P.corridor_min}–${P.corridor_max}</span></div>${bars}<div class="small mute">${Object.keys(st).length ? '' : 'Noch keine protokollierten Sätze: Aus den übernommenen Einheiten sind keine Sätze bekannt. '}Gezählt werden abgeschlossene Sätze der letzten 7 Tage für die Hauptmuskelgruppe.</div></div>${stravaCard()}</div></div>`;
     return h;
   };
+  /* Warum: der wichtigste Grund als eine Zeile, der Rest aufklappbar. Ziel-Texte stehen im Profil, nicht hier. */
+  function whyBlock(reasons) {
+    const rs = (reasons || []).filter((r) => !/^(Ziel |Zeitfenster )/.test(r));
+    if (!rs.length) return '';
+    if (rs.length === 1) return `<div class="why1">${esc(rs[0])}</div>`;
+    return `<details class="why"><summary><span>${esc(rs[0])}</span><em>+${rs.length - 1}</em></summary><ul>${rs.slice(1).map((r) => `<li>${esc(r)}</li>`).join('')}</ul></details>`;
+  }
   function recentList(n) {
     const S = F.S, items = [];
     S.sessions.filter((s) => ['gefuehrt', 'bestaetigt'].includes(s.status)).forEach((s) => items.push({ d: s.session_date, t: s.title || 'Training', sub: `Kraft${s.duration_min ? ' · ' + s.duration_min + ' min' : ''}${s.source === 'chat_import' ? ' · übernommen' : ''}`, ic: 'dumb' }));

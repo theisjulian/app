@@ -22,15 +22,13 @@
   };
   async function firstRun() {
     const sb = F.sb, uid = F.user.id;
-    const seed = await sb.rpc('seed_history'); if (seed.error) throw seed.error;
     const ex = await sb.from('exercises').select('equipment,equipment_alt').is('user_id', null);
     const items = new Set(); (ex.data || []).forEach((e) => [...e.equipment, ...e.equipment_alt].forEach((i) => i !== 'koerpergewicht' && items.add(i)));
     await sb.from('equipment_profiles').insert([{ name: 'Studio', kind: 'studio', items: [...items], is_default: true }, { name: 'Zuhause', kind: 'zuhause', items: [] }]);
     const tpl = await sb.from('splits').select('*').is('user_id', null).eq('name', 'Flexibler Mix (wie bisher)').maybeSingle();
     if (tpl.data) await sb.from('splits').insert({ user_id: uid, name: tpl.data.name, description: tpl.data.description, days: tpl.data.days, active: true });
-    const today = F.today();
-    await sb.from('priorities').insert(['quadrizeps', 'waden', 'ruecken_hoch', 'schulter_hinten', 'rotatoren'].map((m) => ({ muscle_group: m, level: 'schwerpunkt', valid_from: today })));
-    await sb.from('profiles').upsert({ user_id: uid, display_name: 'Julian', sex: 'm', birth_year: 1993, height_cm: 176, goals: [] }, { onConflict: 'user_id' });
+    // Neues Konto (z. B. jemand, der nur daje nutzt und forza öffnet): leer starten, keine persönlichen Vorgaben oder Verlaufsdaten
+    await sb.from('profiles').upsert({ user_id: uid, goals: [] }, { onConflict: 'user_id' });
   }
   F.applyLook();
   (async () => {
