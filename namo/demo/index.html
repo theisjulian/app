@@ -1200,6 +1200,155 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
  .rx-kpis .stat small{flex-basis:100%;margin:0}
 }
 /* ===== Update 22 · Ende (CSS) ===== */
+/* ===== Update 23 · Anfang (CSS) ===== */
+/* App-Icon in den Farben des Designs */
+.app-ic{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--lg-grad,#0b7f8e);flex:none;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 10px -6px rgba(0,0,0,.4);vertical-align:middle}
+.app-ic svg{width:78%;height:78%}
+.app-ic .g-pin{fill:var(--lg-accent,#0b8f9c)}
+.app-ic.lg{width:40px;height:40px;border-radius:12px}
+header .brand-home{display:inline-flex!important;align-items:center;gap:10px}
+html[data-namo-style="graphit"] .app-ic{border-radius:6px;box-shadow:none}
+html[data-namo-style="neon"] .app-ic{box-shadow:0 0 16px -4px rgba(255,62,165,.7)}
+.sb-brand,.sb-foot{display:none}
+
+/* ---- Rechner ab 1200 px: freistehende Seitenleiste im Design, ohne Kopfzeile ---- */
+@media (min-width:1200px){
+ body[data-tab]>header{display:none!important}
+ html body main.shell{grid-template-columns:256px minmax(0,1fr)!important;column-gap:30px!important;max-width:1560px!important;padding-top:20px!important}
+ html body main.shell>#nav{top:20px!important;height:calc(100vh - 40px);max-height:none;padding:16px 12px!important;gap:3px!important;overflow-y:auto;
+  background:color-mix(in srgb,var(--lg-card) 84%,transparent)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+  border:1px solid var(--lg-line)!important;border-radius:26px!important;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 24px 50px -36px rgba(10,30,40,.45)!important}
+ html body main.shell>#nav .sb-brand{display:block;padding:2px 4px 14px;margin:0 0 8px;border-bottom:1px solid var(--lg-line)}
+ html body main.shell>#nav .sb-home{display:flex!important;align-items:center;gap:12px;width:100%;padding:6px!important;border-radius:14px!important;background:transparent!important;color:var(--lg-ink)!important;text-align:left}
+ html body main.shell>#nav .sb-home span{display:grid;gap:1px;min-width:0}
+ html body main.shell>#nav .sb-home b{font-size:22px;letter-spacing:-.04em;font-weight:800;line-height:1}
+ html body main.shell>#nav .sb-home small{font-size:11.5px;color:var(--lg-muted);font-weight:500;white-space:normal}
+ html body main.shell>#nav>button[data-tab]{color:var(--lg-muted)!important;font-size:14px!important;font-weight:600;padding:11px 14px!important;border-radius:14px!important;gap:12px!important;transition:background .15s,color .15s}
+ html body main.shell>#nav>button[data-tab]:hover{background:var(--lg-soft)!important;color:var(--lg-ink)!important}
+ html body main.shell>#nav>button[data-tab].active{background:var(--lg-soft)!important;color:var(--lg-accent-text)!important;box-shadow:inset 3px 0 0 var(--lg-accent)}
+ html body main.shell>#nav>button[data-tab] .nav-ic{width:20px;height:20px}
+ html body main.shell>#nav .sb-foot{display:grid;gap:8px;margin-top:auto;padding:14px 4px 2px;border-top:1px solid var(--lg-line)}
+ html body main.shell>#nav .sb-role{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--lg-muted);padding:0 8px}
+ html body main.shell>#nav .sb-set{display:flex!important;align-items:center;gap:8px;justify-content:space-between;width:100%;padding:10px 12px!important;border-radius:14px!important;border:1px solid var(--lg-line)!important;background:var(--lg-card)!important;color:var(--lg-ink)!important;font-weight:600;font-size:13.5px}
+ html body main.shell>#nav .sb-set .lang-pill{font-size:11px;padding:2px 7px;border:1px solid var(--lg-line);border-radius:999px;color:var(--lg-muted)}
+ .notice{background:transparent!important;padding:0 0 2px!important;margin-bottom:6px!important}
+ html[data-andiamo-theme="dark"] body main.shell>#nav{box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 24px 50px -30px rgba(0,0,0,.7)!important}
+ html[data-namo-style="neon"] body main.shell>#nav{border-color:color-mix(in srgb,#ff3ea5 30%,var(--lg-line))!important}
+ html[data-namo-style="neon"] body main.shell>#nav>button[data-tab].active{box-shadow:inset 3px 0 0 #ff3ea5,0 0 18px -8px rgba(255,62,165,.6)}
+ html[data-namo-style="graphit"] body main.shell>#nav{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:2px solid var(--lg-ink)!important;border-radius:10px!important;box-shadow:4px 4px 0 var(--lg-ink)!important}
+ html[data-namo-style="graphit"] body main.shell>#nav>button[data-tab]{border-radius:6px!important}
+ html[data-namo-style="graphit"] body main.shell>#nav>button[data-tab].active{background:var(--lg-ink)!important;color:var(--lg-card)!important;box-shadow:none}
+ html[data-namo-style="heft"] body main.shell>#nav{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:1.5px solid color-mix(in srgb,var(--lg-ink) 30%,transparent)!important;box-shadow:0 3px 0 color-mix(in srgb,var(--lg-ink) 15%,transparent)!important}
+}
+
+/* ---- iPad und kleine Fenster (761–1199 px): schwebende Leiste unten wie am Handy, größer und mit vollem Text ---- */
+@media (min-width:761px) and (max-width:1199px){
+ html body main.shell{display:block!important;max-width:1100px!important}
+ html body main.shell>*{grid-column:auto!important}
+ body[data-tab],body[data-student]{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important}
+ html body main.shell>nav#nav,html body .st-tabs{position:fixed!important;top:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px))!important;
+  width:min(760px,calc(100vw - 40px));height:auto!important;margin:0!important;z-index:40;display:grid!important;gap:3px!important;padding:7px!important;border-radius:28px!important;
+  grid-template-columns:repeat(var(--nav-count,6),minmax(0,1fr))!important;flex-direction:row!important;
+  border:1px solid color-mix(in srgb,#fff 55%,transparent)!important;background:color-mix(in srgb,var(--lg-card) 70%,transparent)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:0 16px 40px -14px rgba(10,20,30,.35),inset 0 1px 0 rgba(255,255,255,.55)!important}
+ html body .st-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ html body main.shell>nav#nav>button[data-tab],html body .st-tabs button{display:flex!important;flex-direction:column!important;align-items:center;justify-content:center;gap:4px!important;padding:9px 4px!important;font-size:12.5px!important;font-weight:600;border:0!important;border-radius:22px!important;background:transparent!important;color:var(--lg-muted)!important;box-shadow:none!important}
+ html body main.shell>nav#nav>button[data-tab].active,html body .st-tabs button.on{background:color-mix(in srgb,var(--lg-accent) 14%,transparent)!important;color:var(--lg-accent-text)!important}
+ html body main.shell>nav#nav .nav-ic,html body .st-tabs .nav-ic{width:24px!important;height:24px!important}
+ #nav .nav-label.has-short{display:inline!important}#nav .nav-short{display:none!important}
+ html[data-andiamo-theme="dark"] body nav#nav,html[data-andiamo-theme="dark"] body .st-tabs{border-color:rgba(255,255,255,.1)!important;background:color-mix(in srgb,var(--lg-card) 62%,transparent)!important;box-shadow:0 16px 40px -12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)!important}
+ html[data-namo-style="neon"] body nav#nav,html[data-namo-style="neon"] body .st-tabs{border-color:color-mix(in srgb,#ff3ea5 35%,transparent)!important}
+ html[data-namo-style="graphit"] body nav#nav,html[data-namo-style="graphit"] body .st-tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:2px solid var(--lg-ink)!important;border-radius:10px!important;box-shadow:4px 4px 0 var(--lg-ink)!important}
+ html[data-namo-style="graphit"] body nav#nav>button[data-tab],html[data-namo-style="graphit"] body .st-tabs button{border-radius:6px!important}
+ html[data-namo-style="graphit"] body nav#nav>button[data-tab].active,html[data-namo-style="graphit"] body .st-tabs button.on{background:var(--lg-ink)!important;color:var(--lg-card)!important}
+ html[data-namo-style="heft"] body nav#nav,html[data-namo-style="heft"] body .st-tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:1.5px solid color-mix(in srgb,var(--lg-ink) 35%,transparent)!important;border-radius:18px!important;box-shadow:0 3px 0 color-mix(in srgb,var(--lg-ink) 18%,transparent)!important}
+}
+
+/* Dashboard: Bereitschaft, Fristen, Wetter */
+.dash-ready .dr-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 54px;gap:14px;align-items:center;width:100%;text-align:left;padding:8px 4px!important;border:0!important;border-bottom:1px solid var(--lg-line)!important;border-radius:0!important;background:transparent!important}
+.dash-ready .dr-row:last-child{border-bottom:0!important}
+.dash-ready .dr-row:hover{background:var(--lg-soft)!important}
+.dash-ready .dr-t{font-size:13.5px;font-weight:600}
+.dash-ready .dr-v{font-weight:800;font-variant-numeric:tabular-nums}.dash-ready .dr-v small{color:var(--lg-muted);font-weight:600}
+.dash-ready .bar{grid-column:2;grid-row:1;height:7px;margin:0!important}
+.dash-ready .dr-v{text-align:right}
+.dash-ready .dr-row.done .bar>i{background:var(--lg-ok)!important}
+.dash-ready .dr-row.done .dr-v{color:var(--lg-ok)}
+.dash-dl .dl-row{display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;align-items:center;width:100%;text-align:left;padding:9px 4px!important;border:0!important;border-bottom:1px solid var(--lg-line)!important;border-radius:0!important;background:transparent!important}
+.dash-dl .dl-row:last-child{border-bottom:0!important}
+.dash-dl .dl-row:hover{background:var(--lg-soft)!important}
+.dash-dl .dl-date{display:grid;justify-items:center;padding:6px 4px;border-radius:12px;background:var(--lg-soft)}
+.dash-dl .dl-date b{font-size:13px}.dash-dl .dl-date small{font-size:10.5px;color:var(--lg-muted)}
+.dash-dl .dl-row.soon .dl-date{background:var(--lg-warn-bg)}.dash-dl .dl-row.soon .dl-date small{color:var(--lg-warn)}
+.dash-dl .dl-row.over .dl-date{background:color-mix(in srgb,var(--lg-bad) 14%,transparent)}.dash-dl .dl-row.over .dl-date small{color:var(--lg-bad)}
+.dash-dl .dl-t{display:grid;min-width:0}.dash-dl .dl-t b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dash-dl .dl-t small{color:var(--lg-muted);font-size:12px}
+.wx-days{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:6px}
+.wx-day{display:grid;justify-items:center;gap:2px;padding:10px 4px;border-radius:16px;background:var(--lg-card2);border:1px solid var(--lg-line);text-align:center}
+.wx-day.today{border-color:var(--lg-accent);box-shadow:0 0 0 1px var(--lg-accent) inset}
+.wx-day b{font-size:12.5px}.wx-day small{font-size:10.5px;color:var(--lg-muted)}
+.wx-ic{width:30px;height:30px;color:var(--lg-accent-text)}.wx-ic .f{fill:currentColor;fill-opacity:.15;stroke:none}
+.wx-ic.wx-sun{color:#e8a317}.wx-ic.wx-part{color:#d9a23a}
+.wx-t{font-weight:800;font-size:15px}.wx-t i{font-style:normal;font-weight:600;color:var(--lg-muted);font-size:12.5px}
+.wx-na{height:30px;display:grid;place-items:center;color:var(--lg-muted)}
+@media (max-width:760px){.wx-days{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:1200px){.ov-side .wx-days{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Zimmerkontrolle */
+dialog.rc-dialog{width:min(560px,94vw);max-width:94vw;max-height:88vh;border-radius:24px;padding:20px 20px 16px;border:1px solid var(--lg-line)}
+.rc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.rc-head h2{margin:2px 0 8px}
+.rc-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.rc-dialog .seg{display:inline-flex;gap:3px;padding:3px;border-radius:999px;background:var(--lg-soft)}
+.rc-dialog .seg button{border:0!important;background:transparent!important;border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--lg-muted)!important}
+.rc-dialog .seg button.on{background:var(--lg-card)!important;color:var(--lg-ink)!important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.rc-list{display:grid;gap:6px;margin:12px 0}
+.rc-room{display:grid!important;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;padding:11px 12px!important;border-radius:16px!important;border:1px solid var(--lg-line)!important;background:var(--lg-card)!important}
+.rc-room .rc-box{width:28px;height:28px;border-radius:9px;border:2px solid var(--lg-line);display:grid;place-items:center;font-weight:800;color:#fff}
+.rc-room.ok{background:var(--lg-ok-bg)!important;border-color:transparent!important}
+.rc-room.ok .rc-box{background:var(--lg-ok);border-color:var(--lg-ok)}
+.rc-room .rc-t{display:grid;min-width:0}.rc-room .rc-t b{font-size:14.5px}.rc-room .rc-t b small{color:var(--lg-muted);font-weight:500}
+.rc-room .rc-t>small{color:var(--lg-muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-room .rc-at{font-variant-numeric:tabular-nums;font-weight:700;color:var(--lg-ok);font-size:13px}
+
+/* Abstimmungen */
+.polls-card .poll{border:1px solid var(--lg-line);border-radius:18px;padding:14px 16px;margin-top:12px;background:var(--lg-card2)}
+.poll.closed{opacity:.85}
+.poll-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.poll-h b{font-size:15.5px}
+.poll-bars{display:grid;gap:9px;margin:12px 0 8px}
+.poll-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.poll-bar .pb-t{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}.poll-bar .pb-t small{color:var(--lg-accent-text);font-weight:700}
+.poll-bar .pb-n{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--lg-muted);font-weight:700}
+.poll-bar .pb-b{grid-column:1/-1;height:10px;border-radius:99px;background:var(--lg-soft);overflow:hidden}
+.poll-bar .pb-b i{display:block;height:100%;border-radius:99px;background:color-mix(in srgb,var(--lg-accent) 55%,transparent);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.poll-bar.lead .pb-b i{background:var(--lg-accent)}
+.poll-bar.mine .pb-t{color:var(--lg-accent-text)}
+.poll-f{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.poll-f .actions{margin:0}
+.seen-chip.miss{background:var(--lg-soft);color:var(--lg-ink)}
+.st-poll h3{margin:4px 0 12px;font-size:19px;letter-spacing:-.02em}
+.poll-opts{display:grid;gap:8px}
+.poll-opt{padding:14px 16px!important;border-radius:16px!important;font-size:15px;font-weight:700;text-align:left;border:1.5px solid var(--lg-line)!important;background:var(--lg-card)!important;transition:transform .12s,border-color .15s}
+.poll-opt:active{transform:scale(.98)}
+.poll-opt:hover{border-color:var(--lg-accent)!important}
+.poll-change{border:0!important;background:transparent!important;color:var(--lg-accent-text)!important;font-size:13px;font-weight:600;padding:4px 6px!important}
+.poll-done{margin:0 0 4px}
+
+/* Reise in Zahlen */
+.rz-card{overflow:hidden;container-type:inline-size}
+.rz-hero{position:relative;padding:22px 22px 20px;margin:-2px -2px 16px;border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--lg-accent) 92%,#000) 0%,var(--lg-accent) 55%,color-mix(in srgb,var(--lg-accent) 70%,#fff) 100%);color:#fff}
+.rz-kicker{display:block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff;opacity:.88}
+.rz-hero h2{margin:6px 0 4px;color:#fff;font-size:24px;letter-spacing:-.025em;line-height:1.15}
+.rz-hero p{margin:0;opacity:.9;font-weight:600;font-size:14px}
+.rz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rz-tile:last-child:nth-child(3n+1){grid-column:span 3}.rz-tile:last-child:nth-child(3n+2){grid-column:span 2}
+@container (max-width:470px){.rz-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rz-tile:last-child:nth-child(n){grid-column:auto}.rz-tile:last-child:nth-child(odd){grid-column:span 2}.rz-tile b{font-size:25px}}
+.rz-tile{display:grid;gap:2px;padding:14px 14px 12px;border-radius:18px;background:var(--lg-card2);border:1px solid var(--lg-line)}
+.rz-tile .rz-i{font-size:20px;line-height:1;margin-bottom:6px}
+.rz-tile b{font-size:28px;line-height:1.05;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--lg-accent-text)}
+.rz-tile span:last-child{font-size:13px;font-weight:600;color:var(--lg-muted);line-height:1.25}
+.rz-bye{margin:16px 0 2px;text-align:center;font-family:var(--hand-font,inherit);font-size:22px;font-weight:700;color:var(--lg-accent-text)}
+.rz-dialog .rz-note{margin:14px 2px 0}
+.acc-pwbtn{white-space:nowrap}
+/* ===== Update 23 · Ende (CSS) ===== */
 </style></head><body><div id="namodemo" role="region" aria-label="Demo-Hinweis"><b>Demo</b><span class="nd-t">Erfundene Reise, nichts wird gespeichert.</span>
 <label class="nd-r"><span>Ansicht</span><select id="nd-role" aria-label="Rolle wählen">
 <option value="admin">Admin</option><option value="teacher_edit">Lehrkraft</option><option value="teacher_read">Lehrkraft (nur lesen)</option><option value="student">Schülerin</option></select></label>
@@ -1255,7 +1404,7 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
     const f = t.finance || {}, inc = t.income || [], ev = f.events || [];
     const mates = key => !p[key] ? null : t.people.filter(x => x.active && x.id !== p.id && x[key] === p[key]).map(x => x.name).sort();
     return {
-      person,
+      person: Object.assign(person, { votes: p.votes || {} }),
       schedule: (t.schedule || []).filter(x => x.shared === true).map(x => ({ title: x.title, date: x.date, time: x.time, end: x.end, place: x.place, navAddress: x.navAddress, trainNumber: x.trainNumber, trainInfoUrl: x.trainInfoUrl, status: x.status, note: x.publicNote })),
       contacts: (t.contacts || []).filter(x => x.shared === true && x.role === 'Lehrkraft').map(x => ({ name: x.name, role: x.role, phone: x.phone, note: x.note })),
       docs: (t.docs || []).filter(d => docAllowed(d, p, 'student')).map(d => ({ id: d.id, name: d.name, filename: d.filename, type: d.type, size: d.size, path: d.path })),
@@ -1269,7 +1418,8 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
       },
       roommates: { roomB: mates('roomB'), roomV: mates('roomV') },
       announcements: (t.announcements || []).filter(a => a.active !== false).sort((a, b) => String(b.at).localeCompare(String(a.at))).map(a => ({ id: a.id, text: a.text, at: a.at, meetAt: a.meetAt, meetPlace: a.meetPlace })),
-      packing: (t.packing || []).filter(x => x.shared === true).map(x => ({ id: x.id, title: x.title, category: x.category }))
+      packing: (t.packing || []).filter(x => x.shared === true).map(x => ({ id: x.id, title: x.title, category: x.category })),
+      polls: (t.polls || []).filter(x => x.shared !== false && !x.deleted).map(x => ({ id: x.id, question: x.question, options: x.options, closed: x.active === false, showResults: x.showResults || 'after', createdAt: x.createdAt, counts: (x.showResults === 'live' || x.active === false) ? Object.fromEntries(x.options.map(o => [o.id, t.people.filter(pp => pp.active && pp.votes && pp.votes[x.id] === o.id).length])) : null }))
     };
   }
   function identity() { const m = me(); return { role: m.role, personId: m.personId, email: m.email }; }
@@ -1285,6 +1435,7 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
     andiamo_student_document: a => student((p, d) => { d.payload.docs.push({ id: 'u' + Date.now().toString(36), name: a.file_name, filename: a.file_name, type: a.mime, size: a.file_size, path: a.file_path, data: '', scope: 'person', personId: p.id, category: 'Persönlich' }); }),
     andiamo_access_status: () => { if (me().role !== 'admin') return err('Nur Admin'); const d = db(); return ok(d.access.map((a, i) => ({ person_id: a.person_id, email: a.email, role: a.role, enabled: a.enabled, confirmed: i % 6 !== 2, last_sign_in: i % 6 === 2 ? null : new Date(Date.now() - (i + 1) * 36e5 * 7).toISOString() }))); },
     andiamo_manage_access: a => { if (me().role !== 'admin') return err('Nur Admin'); const d = db(); const e = String(a.account_email || '').toLowerCase().trim(); const row = d.access.find(x => x.email === e); const v = { email: e, role: a.account_role, person_id: a.participant_id || null, enabled: !!a.active }; row ? Object.assign(row, v) : d.access.push(v); d.access.sort((x, y) => x.email.localeCompare(y.email)); put(d); return ok(null); },
+    andiamo_student_vote: a => student((p, d) => { const poll = (d.payload.polls || []).find(x => x.id === a.poll_id && x.active !== false && x.shared !== false); if (!poll || (a.option_id && !poll.options.some(o => o.id === a.option_id))) return err('Abstimmung nicht offen'); const v = Object.assign({}, p.votes); if (a.option_id) v[a.poll_id] = a.option_id; else delete v[a.poll_id]; p.votes = v; }),
     andiamo_student_seen: a => student((p, d) => { if (!(d.payload.announcements || []).some(x => x.id === a.ann_id)) return err('Info unbekannt'); const s = new Set(p.seen || []); s.add(a.ann_id); p.seen = [...s]; }),
     andiamo_invite_status: () => { if (me().role !== 'admin') return err('Nur Admin'); return ok(clone(db().invites || [])); },
     andiamo_create_person_invite: a => { if (me().role !== 'admin') return err('Nur Admin'); return ok({ token: '0123456789abcdef'.repeat(4), expires_at: new Date(Date.now() + 1728e5).toISOString(), max_uses: 1 }); },
@@ -3175,10 +3326,10 @@ function u21HeroCountdown(){
 function u21Dashboard(){
  const v=document.getElementById('view');if(!v||v.querySelector(':scope>.ov-cols'))return;
  const kids=[...v.children];if(!kids.length)return;
- const side=c=>c.matches('.contrib-card,.open-points,.trip-tools,.nudge');
+ const side=c=>c.matches('.contrib-card,.open-points,.trip-tools,.nudge,.dash-dl,.wx-card');
  const main=document.createElement('div'),aside=document.createElement('div'),wrap=document.createElement('div');
  main.className='ov-main';aside.className='ov-side';wrap.className='ov-cols';
- const trip=document.body.dataset.ov==='trip',rank=c=>c.matches('[data-live-program]')?(trip?0:2):c.matches('.ann-card')?1:c.matches('.trip-tools')?(trip?-1:3):c.matches('.contrib-card')?1:c.matches('.open-points')?2:c.matches('.nudge')?4:3;
+ const trip=document.body.dataset.ov==='trip',rank=c=>c.matches('[data-live-program]')?(trip?0:2):c.matches('.ann-card')?1:c.matches('.trip-tools')?(trip?-1:3):c.matches('.dash-dl')?0:c.matches('.contrib-card')?1:c.matches('.open-points')?2:c.matches('.wx-card')?3.5:c.matches('.nudge')?4:c.matches('.dash-ready')?2.5:3;
  kids.filter(c=>!side(c)).sort((a,b)=>rank(a)-rank(b)).forEach(c=>main.append(c));
  kids.filter(side).sort((a,b)=>rank(a)-rank(b)).forEach(c=>aside.append(c));
  wrap.append(main,aside);v.append(wrap);
@@ -3578,6 +3729,231 @@ ${miss.length?`<div class="seen-group miss"><h4>${L('Noch nicht gesehen','Non an
  render=function(){const out=r.apply(this,arguments);try{document.querySelectorAll('.section-nav').forEach(n=>{const b=n.querySelector('.primary,[aria-pressed="true"]');if(b&&n.scrollWidth>n.clientWidth)n.scrollLeft=Math.max(0,b.offsetLeft-n.offsetLeft-16)})}catch{}return out};
 }
 /* ===== Update 22 · Ende ===== */
+/* ===== Update 23 · Anfang ===== */
+/* --- App-Icon im Kopf (Farben des Designs) und neue Seitenleiste am Rechner --- */
+const NAMO_GLYPH='<svg viewBox="150 150 724 760" aria-hidden="true" focusable="false"><path d="M412 362v-82q0-46 46-46h108q46 0 46 46v82" fill="none" stroke="#fff" stroke-width="56" stroke-linecap="round"/><rect x="242" y="362" width="540" height="430" rx="72" fill="none" stroke="#fff" stroke-width="56"/><path d="M412 384v386M612 384v300" stroke="#fff" stroke-width="56" stroke-linecap="round"/><circle cx="742" cy="752" r="118" fill="#fff"/><path class="g-pin" d="M742 682c-40 0-70 30-70 68 0 52 70 108 70 108s70-56 70-108c0-38-30-68-70-68z"/><circle cx="742" cy="748" r="24" fill="#fff"/></svg>';
+function namoAppIcon(cls=''){return `<span class="app-ic ${cls}" aria-hidden="true">${NAMO_GLYPH}</span>`}
+(()=>{try{const b=document.querySelector('header .brand-home');if(b&&!b.querySelector('.app-ic'))b.insertAdjacentHTML('afterbegin',namoAppIcon())}catch{}})();
+{
+ const r=render;
+ render=function(){
+  const out=r.apply(this,arguments);
+  try{
+   const nav=document.getElementById('nav');
+   if(nav&&!nav.querySelector('.sb-brand')){
+    nav.insertAdjacentHTML('afterbegin',`<div class="sb-brand"><button type="button" class="sb-home" data-action="home" aria-label="’namo · ${esc(L('Startseite','Pagina iniziale'))}">${namoAppIcon('lg')}<span><b>’namo.</b><small>${esc(L('Bologna & Venedig · 14.–19. März','Bologna e Venezia · 14–19 marzo'))}</small></span></button></div>`);
+    const role={admin:'Admin',teacher_edit:L('Lehrkraft · Schreibrechte','Docente · modifica'),teacher_read:L('Lehrkraft · Leserechte','Docente · sola lettura')}[identity?.role]||'';
+    nav.insertAdjacentHTML('beforeend',`<div class="sb-foot">${role?`<span class="sb-role">${esc(role)}</span>`:''}<button type="button" class="sb-set" data-action="preferences">${lgIcon('cal','cb-ic').replace(/<svg[^>]*>.*<\/svg>/s,'')}<span>${esc(L('Einstellungen','Impostazioni'))}</span><span class="lang-pill">${esc(uiLanguage==='it'?'IT':'DE')}</span></button></div>`);
+   }
+  }catch{}
+  return out;
+ };
+}
+
+/* --- Dashboard der Leitung: Bereitschaft der Gruppe, nächste Fristen, Wetter --- */
+function dashReady(){
+ const st=activePeople().filter(p=>p.role!=='Lehrkraft'),n=st.length;if(!n)return '';
+ const rows=[
+  [L('Elternbrief abgegeben','Lettera ai genitori consegnata'),st.filter(p=>p.letter).length,'people'],
+  [L('Einverständnis','Consenso'),st.filter(p=>p.consent).length,'people'],
+  [L('Notfallkontakt','Contatto di emergenza'),st.filter(p=>p.emergencyPhone).length,'people'],
+  [L('Ausweis geprüft','Documento verificato'),st.filter(p=>p.idChecked).length,'people'],
+  [L('Beitrag vollständig','Quota completa'),st.filter(p=>contributionDue(p)-contributionPaid(p.id)<=0).length,'money'],
+  [L('Zimmer zugeordnet','Camera assegnata'),st.filter(p=>p.roomB&&p.roomV).length,'rooms'],
+  [L('Ticket zugeordnet','Biglietto assegnato'),st.filter(p=>p.ticketOut&&(p.returning===false||p.ticketBack)).length,'trains']
+ ];
+ if(isTripAdmin()&&typeof accessStatus!=='undefined'&&accessStatus)rows.splice(1,0,[L('In der App angemeldet','Accesso all’app'),st.filter(p=>accessKind(p)==='active').length,'access']);
+ return `<div class="card dash-ready"><div class="row"><h2>${L('Bereitschaft der Gruppe','Situazione del gruppo')}</h2><span class="pill">${n} ${L('Schülerinnen und Schüler','studenti')}</span></div>${rows.map(([t,v,go])=>{const pc=Math.round(v/n*100);return `<button type="button" class="dr-row ${v===n?'done':''}" data-action="goto" data-id="${go}"><span class="dr-t">${esc(t)}</span><span class="dr-v">${v}<small>/${n}</small></span><span class="bar"><i style="width:${pc}%"></i></span></button>`}).join('')}</div>`;
+}
+function dashDeadlines(){
+ const today=tripClock().day,items=[];
+ (state.tasks||[]).filter(t=>!t.done&&t.due).forEach(t=>items.push({d:t.due,t:t.title,k:L('Aufgabe','Attività'),go:'tasks'}));
+ state.costs.filter(c=>c.due&&c.amount!=null&&costPaid(c)<c.amount).forEach(c=>items.push({d:c.due,t:c.title,k:L('Zahlung offen: ','Pagamento aperto: ')+euro(c.amount-costPaid(c)),go:'budget'}));
+ const f=finance();if(f.dueDate&&f.confirmed){const open=activePeople().filter(p=>contributionDue(p)-contributionPaid(p.id)>0).length;if(open)items.push({d:f.dueDate,t:L('Reisebeitrag fällig','Scadenza quota'),k:open+' '+L('noch offen','ancora aperte'),go:'money'})}
+ items.push({d:'2027-03-14',t:L('Abfahrt','Partenza'),k:'München Hbf',go:'programme'});
+ const list=items.filter(x=>x.d>=today||x.go!=='programme').sort((a,b)=>a.d.localeCompare(b.d)).slice(0,6);
+ const days=d=>Math.round((new Date(d+'T12:00:00')-new Date(today+'T12:00:00'))/864e5);
+ return `<div class="card dash-dl"><h2>${L('Nächste Fristen','Prossime scadenze')}</h2>${list.map(x=>{const n=days(x.d),cls=n<0?'over':n<=7?'soon':'';return `<button type="button" class="dl-row ${cls}" data-action="goto" data-id="${x.go}"><span class="dl-date"><b>${esc(new Intl.DateTimeFormat(uiLanguage==='it'?'it-IT':'de-DE',{day:'numeric',month:'short'}).format(new Date(x.d+'T12:00:00')))}</b><small>${n<0?L('überfällig','scaduta'):n===0?L('heute','oggi'):L('in '+n+' Tg.','tra '+n+' g')}</small></span><span class="dl-t"><b>${esc(x.t)}</b><small>${esc(x.k)}</small></span></button>`}).join('')||`<p class="muted">${L('Keine offenen Fristen.','Nessuna scadenza aperta.')}</p>`}</div>`;
+}
+/* Wetter (Open-Meteo, ohne Schlüssel); Vorhersage nur ca. 16 Tage voraus */
+const WX_PLACES={Bologna:[44.494,11.343],Venedig:[45.438,12.335]};
+const WX_DAYS=[['2027-03-14','Bologna'],['2027-03-15','Bologna'],['2027-03-16','Bologna'],['2027-03-17','Venedig'],['2027-03-18','Venedig'],['2027-03-19','Venedig']];
+const WX_IC={sun:'<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/>',part:'<circle cx="8.5" cy="8.5" r="3.5"/><path d="M8.5 2v1.5M2 8.5h1.5M3.9 3.9l1 1M13.1 3.9l-1 1"/><path class="f" d="M8 20h9a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.4 1.6A3.2 3.2 0 0 0 8 20z"/><path d="M8 20h9a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.4 1.6A3.2 3.2 0 0 0 8 20z"/>',cloud:'<path class="f" d="M7 19h10a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 2A3.6 3.6 0 0 0 7 19z"/><path d="M7 19h10a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 2A3.6 3.6 0 0 0 7 19z"/>',rain:'<path class="f" d="M7 15h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.8A3.2 3.2 0 0 0 7 15z"/><path d="M7 15h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.8A3.2 3.2 0 0 0 7 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',snow:'<path d="M7 14h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.8A3.2 3.2 0 0 0 7 14z"/><path d="M8 18v.01M12 20v.01M16 18v.01M10 22v.01M14 22v.01" stroke-width="2.6"/>',storm:'<path d="M7 14h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.5 1.8A3.2 3.2 0 0 0 7 14z"/><path d="M12.5 15l-2.5 4h3l-2 4"/>',fog:'<path d="M4 9h16M3 13h18M5 17h14"/>'};
+function wxKind(c){return c<=1?'sun':c<=2?'part':c===3?'cloud':c<=48?'fog':c<=67||(c>=80&&c<=82)?'rain':c<=77||c===85||c===86?'snow':'storm'}
+function wxLabel(c){const k=wxKind(c);return {sun:L('sonnig','soleggiato'),part:L('heiter bis wolkig','poco nuvoloso'),cloud:L('bewölkt','nuvoloso'),fog:L('Nebel','nebbia'),rain:L('Regen','pioggia'),snow:L('Schnee','neve'),storm:L('Gewitter','temporale')}[k]}
+function wxIcon(c){return `<svg class="wx-ic wx-${wxKind(c)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WX_IC[wxKind(c)]}</svg>`}
+let wxData=null,wxBusy=false;
+function wxLoad(){
+ if(wxBusy)return;
+ const today=tripClock().day,first=WX_DAYS[0][0],last=WX_DAYS[5][0];
+ const span=Math.round((new Date(first+'T12:00:00')-new Date(today+'T12:00:00'))/864e5);
+ if(span>15||today>last){wxData=wxData||{none:true};return}
+ try{const c=JSON.parse(localStorage.getItem('namo-wx')||'null');if(c&&Date.now()-c.at<3*3600e3){wxData=c.data;return}}catch{}
+ wxBusy=true;
+ Promise.all(Object.entries(WX_PLACES).map(([city,[la,lo]])=>fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FRome&forecast_days=16`).then(r=>r.ok?r.json():null).then(j=>[city,j]).catch(()=>[city,null])))
+  .then(res=>{const data={};res.forEach(([city,j])=>{const d=j&&j.daily;if(!d)return;d.time.forEach((t,i)=>{data[city+'|'+t]={c:d.weather_code[i],max:Math.round(d.temperature_2m_max[i]),min:Math.round(d.temperature_2m_min[i]),p:d.precipitation_probability_max?.[i]}})});wxData=data;try{localStorage.setItem('namo-wx',JSON.stringify({at:Date.now(),data}))}catch{}wxBusy=false;try{if(document.querySelector('.wx-card'))(identity?.role==='student'?renderStudent:render)()}catch{}})
+  .catch(()=>{wxBusy=false});
+}
+function wxCard(compact){
+ wxLoad();
+ const today=tripClock().day,fmt=d=>new Intl.DateTimeFormat(uiLanguage==='it'?'it-IT':'de-DE',{weekday:'short',day:'numeric'}).format(new Date(d+'T12:00:00'));
+ const days=WX_DAYS.map(([d,city])=>({d,city,w:wxData&&wxData[city+'|'+d]}));
+ const any=days.some(x=>x.w);
+ if(compact&&!any)return '';
+ const typical=`<p class="small muted">${L('Die Vorhersage erscheint etwa zwei Wochen vor der Abfahrt. Typisch Mitte März: Bologna 5–15 °C, Venedig 5–13 °C, Regen jederzeit möglich – Regenjacke einpacken.','Le previsioni appaiono circa due settimane prima della partenza. Tipico a metà marzo: Bologna 5–15 °C, Venezia 5–13 °C, pioggia sempre possibile.')}</p>`;
+ return `<div class="card wx-card"><div class="row"><h2>${L('Wetter auf der Reise','Meteo del viaggio')}</h2>${any?`<span class="pill">Open-Meteo</span>`:''}</div>${any?`<div class="wx-days">${days.map(x=>`<div class="wx-day ${x.d===today?'today':''}">${x.w?wxIcon(x.w.c):'<span class="wx-na">–</span>'}<b>${fmt(x.d)}</b><small>${esc(x.city==='Venedig'?L('Venedig','Venezia'):x.city)}</small>${x.w?`<span class="wx-t">${x.w.max}° <i>${x.w.min}°</i></span><small title="${esc(wxLabel(x.w.c))}">${x.w.p!=null?x.w.p+' % '+L('Regen','pioggia'):esc(wxLabel(x.w.c))}</small>`:`<small>${L('noch offen','non ancora')}</small>`}</div>`).join('')}</div>`:typical}</div>`;
+}
+{
+ const ov=views['Übersicht'];
+ views['Übersicht']=()=>{let h=ov();try{h+=dashDeadlines()+dashReady()+wxCard(false)}catch(e){console.warn(e)}return h};
+ const sp=stPanel;
+ stPanel=function(){const h=sp();if(studentTab!=='today')return h;let w='';try{w=wxCard(true)}catch{}if(!w)return h;const i=h.indexOf('<div class="card st-route">');return i<0?h+w:h.slice(0,i)+w+h.slice(i)};
+}
+
+/* --- Zimmerkontrolle am Abend: Zimmer der aktuellen Stadt abhaken, mit Uhrzeit; gilt je Tag --- */
+let rcCity='';
+function rcDay(){return tripClock().day}
+function rcDefaultCity(){const d=rcDay();return d>='2027-03-17'?'Venedig':'Bologna'}
+function rcChecks(){const all=state.roomChecks||{};return all[rcDay()]||{}}
+function rcBody(){
+ const city=rcCity||rcDefaultCity(),key=city==='Bologna'?'roomB':'roomV',checks=rcChecks();
+ const rooms=state.rooms.filter(r=>r.city===city).map(r=>({r,ppl:activePeople().filter(p=>p.role!=='Lehrkraft'&&p[key]===r.name).sort(comparePeople)})).filter(x=>x.ppl.length);
+ const done=rooms.filter(x=>checks[x.r.id]).length,edit=canEditTrip(),fmt=t=>new Date(t).toLocaleTimeString(uiLanguage==='it'?'it-IT':'de-DE',{hour:'2-digit',minute:'2-digit'});
+ return `<div class="rc-top"><div class="seg">${['Bologna','Venedig'].map(c=>`<button type="button" class="${c===city?'on':''}" data-rc-city="${c}">${esc(c==='Venedig'?L('Venedig','Venezia'):c)}</button>`).join('')}</div><span class="pill ${done===rooms.length&&rooms.length?'ok':''}">${done}/${rooms.length} ${L('kontrolliert','controllate')}</span></div>
+<div class="bar"><i style="width:${rooms.length?done/rooms.length*100:0}%"></i></div>
+<div class="rc-list">${rooms.map(({r,ppl})=>{const c=checks[r.id];return `<button type="button" class="rc-room ${c?'ok':''}" data-rc-room="${esc(r.id)}" ${edit?'':'disabled'} aria-pressed="${!!c}"><span class="rc-box" aria-hidden="true">${c?'✓':''}</span><span class="rc-t"><b>${esc(r.name)}${r.number?` <small>· ${L('Nr.','n.')} ${esc(r.number)}</small>`:''}</b><small>${ppl.map(p=>esc(nameParts(p.name).first||p.name)).join(', ')}</small></span><span class="rc-at">${c?esc(fmt(c.at)):''}</span></button>`}).join('')||`<p class="muted">${L('Noch keine Zimmer zugeordnet.','Nessuna camera assegnata.')}</p>`}</div>
+<p class="small muted">${L('Antippen = kontrolliert (mit Uhrzeit). Nochmal antippen hebt es auf. Gilt nur für heute, morgen beginnt die Liste neu.','Tocca = controllata (con orario). Tocca di nuovo per annullare. Vale solo per oggi.')}</p>`;
+}
+function rcOpen(){
+ let d=document.getElementById('rc-dialog');
+ if(!d){d=document.createElement('dialog');d.id='rc-dialog';d.className='rc-dialog';document.body.append(d);
+  d.addEventListener('click',async e=>{
+   const cb=e.target.closest('[data-rc-city]');if(cb){rcCity=cb.dataset.rcCity;rcPaint();return}
+   if(e.target.closest('[data-rc-close]')||e.target===d){d.close();return}
+   const b=e.target.closest('[data-rc-room]');if(!b||!canEditTrip())return;
+   const id=b.dataset.rcRoom,day=rcDay();b.disabled=true;
+   try{await financeMutation(()=>{state.roomChecks=state.roomChecks||{};const all=state.roomChecks;Object.keys(all).forEach(k=>{if(k<day&&Object.keys(all).length>10)delete all[k]});const t=all[day]=all[day]||{};if(t[id])delete t[id];else t[id]={at:new Date().toISOString(),by:identity?.email||''}})}catch(err){toast(err.message||L('Nicht gespeichert.','Non salvato.'))}
+   rcPaint();
+  });
+ }
+ rcPaint();if(!d.open)d.showModal();
+}
+function rcPaint(){const d=document.getElementById('rc-dialog');if(!d)return;d.innerHTML=`<div class="rc-head"><div><div class="eyebrow">${L('Abends','Sera')} · ${esc(new Date().toLocaleDateString(uiLanguage==='it'?'it-IT':'de-DE',{weekday:'long',day:'numeric',month:'long'}))}</div><h2>${L('Zimmerkontrolle','Controllo camere')}</h2></div><button type="button" class="dlg-x" data-rc-close aria-label="${L('Schließen','Chiudi')}">×</button></div>${rcBody()}`}
+actions.roomcheck=()=>rcOpen();
+{
+ const tt=tripToolsCard;
+ tripToolsCard=function(){const h=tt();if(!h)return h;const i=h.lastIndexOf('</div></div>');return i<0?h:h.slice(0,i)+btn(L('Zimmerkontrolle','Controllo camere'),'roomcheck')+h.slice(i)};
+}
+
+/* --- Abstimmungen: Leitung stellt eine Frage mit Antworten, Schülerinnen stimmen in der App ab (Server-Funktion andiamo_student_vote) --- */
+try{if(typeof STUDENT_FIELDS!=='undefined'&&!STUDENT_FIELDS.includes('votes'))STUDENT_FIELDS.push('votes')}catch{}
+function pollStudents(){return activePeople().filter(p=>p.role!=='Lehrkraft')}
+function pollCounts(poll){const c={};poll.options.forEach(o=>c[o.id]=0);pollStudents().forEach(p=>{const v=p.votes&&p.votes[poll.id];if(v in c)c[v]++});return c}
+function pollBars(poll,counts,mine){
+ const total=Object.values(counts).reduce((n,x)=>n+x,0),max=Math.max(1,...Object.values(counts));
+ return `<div class="poll-bars">${poll.options.map(o=>{const n=counts[o.id]||0,pc=total?Math.round(n/total*100):0;return `<div class="poll-bar ${n===max&&n>0?'lead':''} ${mine===o.id?'mine':''}"><span class="pb-t">${esc(o.text)}${mine===o.id?` <small>· ${L('deine Wahl','tua scelta')}</small>`:''}</span><span class="pb-n">${n} · ${pc} %</span><span class="pb-b"><i style="width:${pc}%"></i></span></div>`}).join('')}</div>`;
+}
+function pollsCard(){
+ const polls=(state.polls||[]).filter(x=>!x.deleted).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+ const edit=canEditTrip();if(!edit&&!polls.length)return '';
+ const st=pollStudents();
+ return `<div class="card polls-card"><div class="row"><h2>${L('Abstimmungen','Sondaggi')}</h2>${edit?btn('+ '+L('Neue Abstimmung','Nuovo sondaggio'),'pollnew','','primary'):''}</div>${polls.length?'':`<p class="small muted">${L('Zum Beispiel „Pizza oder Pasta heute Abend?“. Die Schülerinnen stimmen in der App ab, du siehst das Ergebnis sofort.','Ad esempio “Pizza o pasta stasera?”. Le studentesse votano nell’app, vedi subito il risultato.')}</p>`}
+${polls.map(poll=>{const c=pollCounts(poll),voted=st.filter(p=>p.votes&&p.votes[poll.id]),miss=st.filter(p=>!(p.votes&&p.votes[poll.id])),open=poll.active!==false;
+ return `<div class="poll ${open?'':'closed'}"><div class="poll-h"><b>${esc(poll.question)}</b><span class="pill ${open?'ok':''}">${open?L('läuft','in corso'):L('beendet','chiuso')}</span></div>${pollBars(poll,c)}<div class="poll-f"><span class="small muted">${voted.length}/${st.length} ${L('abgestimmt','hanno votato')} · ${poll.showResults==='live'?L('Ergebnis für alle sichtbar','risultato visibile a tutti'):L('Ergebnis erst nach dem Ende sichtbar','risultato visibile alla fine')}</span>${edit?`<span class="actions">${open?btn(L('Beenden','Chiudi'),'pollend',poll.id):btn(L('Wieder öffnen','Riapri'),'pollopen',poll.id)}${btn(L('Löschen','Elimina'),'polldel',poll.id,'danger')}</span>`:''}</div>${miss.length&&open?`<details class="ann-seen"><summary>${L('Noch nicht abgestimmt','Non hanno ancora votato')} <span class="pill">${miss.length}</span></summary><div class="seen-chips">${miss.sort(comparePeople).map(p=>`<span class="seen-chip miss">${esc(displayName(p))}</span>`).join('')}</div></details>`:''}</div>`}).join('')}</div>`;
+}
+actions.pollnew=()=>{
+ if(!canEditTrip())return;
+ showForm(L('Neue Abstimmung','Nuovo sondaggio'),
+  field(L('Frage','Domanda'),'question','','text','required maxlength="160" placeholder="'+esc(L('z. B. Pizza oder Pasta heute Abend?','es. Pizza o pasta stasera?'))+'"')+
+  `<label class="field">${L('Antworten · eine pro Zeile, 2 bis 6','Risposte · una per riga, da 2 a 6')}<textarea name="options" rows="4" required maxlength="400" placeholder="Pizza&#10;Pasta"></textarea></label>`+
+  `<label class="field">${L('Ergebnis für Schülerinnen','Risultato per le studentesse')}<select name="showResults"><option value="live">${L('sofort sichtbar','visibile subito')}</option><option value="after">${L('erst nach dem Ende','solo alla fine')}</option></select></label>`,
+  async f=>{
+   const q=String(f.question||'').trim(),opts=[...new Set(String(f.options||'').split('\n').map(x=>x.trim()).filter(Boolean))].slice(0,6);
+   if(!q)throw Error(L('Bitte eine Frage eingeben.','Inserisci una domanda.'));
+   if(opts.length<2)throw Error(L('Bitte mindestens zwei Antworten eingeben.','Inserisci almeno due risposte.'));
+   state.polls=state.polls||[];state.polls.push({id:uid(),question:q.slice(0,160),options:opts.map(t=>({id:uid().slice(0,8),text:t.slice(0,80)})),active:true,shared:true,showResults:f.showResults==='after'?'after':'live',createdAt:new Date().toISOString()});
+  });
+};
+const pollSet=(id,fn)=>financeMutation(()=>{const p=(state.polls||[]).find(x=>x.id===id);if(p)fn(p)});
+actions.pollend=id=>pollSet(id,p=>{p.active=false;p.endedAt=new Date().toISOString()});
+actions.pollopen=id=>pollSet(id,p=>{p.active=true});
+actions.polldel=async id=>{if(!localizedConfirm(L('Abstimmung endgültig löschen?','Eliminare definitivamente il sondaggio?')))return;await financeMutation(()=>{state.polls=(state.polls||[]).filter(x=>x.id!==id);state.people.forEach(p=>{if(p.votes&&p.votes[id]){const v={...p.votes};delete v[id];p.votes=v}})})};
+/* Schülerinnen */
+function stPollsCard(){
+ const sd=studentData;if(!sd)return '';
+ const week=Date.now()-7*864e5,polls=(sd.polls||[]).filter(x=>!x.closed||new Date(x.createdAt).getTime()>week);if(!polls.length)return '';
+ const mine=(sd.person&&sd.person.votes)||{};
+ return polls.map(poll=>{const my=mine[poll.id],open=!poll.closed;
+  const body=open&&!my?`<div class="poll-opts">${poll.options.map(o=>`<button type="button" class="poll-opt" data-action="stvote" data-id="${esc(poll.id+'|'+o.id)}">${esc(o.text)}</button>`).join('')}</div>`
+   :(poll.counts?pollBars(poll,poll.counts,my):`<p class="poll-done">✓ ${L('Danke! Du hast gewählt: ','Grazie! Hai scelto: ')}<b>${esc((poll.options.find(o=>o.id===my)||{}).text||'–')}</b></p><p class="small muted">${L('Das Ergebnis siehst du, sobald die Abstimmung endet.','Vedrai il risultato alla fine del sondaggio.')}</p>`);
+  return `<div class="card st-poll"><div class="poll-h"><span class="eyebrow">${open?L('Abstimmung','Sondaggio'):L('Ergebnis','Risultato')}</span>${open&&my?`<button type="button" class="poll-change" data-action="stvote" data-id="${esc(poll.id+'|')}">${L('ändern','cambia')}</button>`:''}</div><h3>${esc(poll.question)}</h3>${body}</div>`}).join('');
+}
+actions.stvote=async id=>{
+ if(typeof previewPerson!=='undefined'&&previewPerson){toast(L('In der Vorschau nicht möglich.','Non disponibile nell’anteprima.'));return}
+ const [poll,opt]=String(id).split('|');
+ try{const {error}=await cloud.rpc('andiamo_student_vote',{poll_id:poll,option_id:opt||null});if(error)throw error;await loadRemote();if(opt)toast(L('Stimme gespeichert.','Voto salvato.'))}
+ catch(e){toast(/function|schema cache/i.test(e.message||'')?L('Abstimmen ist gleich möglich – bitte später nochmal versuchen.','Il voto sarà possibile a breve.'):(e.message||L('Nicht gespeichert.','Non salvato.')))}
+};
+{
+ const ov=views['Übersicht'];
+ views['Übersicht']=()=>{const h=ov();let pc='';try{pc=pollsCard()}catch{}if(!pc)return h;const i=h.indexOf('<div data-live-program');return i<0?h+pc:h.slice(0,i)+pc+h.slice(i)};
+ const sp=stPanel;
+ stPanel=function(){const h=sp();if(studentTab!=='today')return h;let pc='';try{pc=stPollsCard()}catch{}if(!pc)return h;const i=h.indexOf('<div class="card st-next');const j=i<0?h.indexOf('<div class="card st-route">'):i;return j<0?pc+h:h.slice(0,j)+pc+h.slice(j)};
+}
+
+/* --- Reise in Zahlen: Rückblick nach der Fahrt (Schülerinnen auf „Heute“, Leitung auf der Übersicht; Vorschau jederzeit über „Unterwegs“) --- */
+const RZ_END='2027-03-19';
+function rzNum(n){return Number(n||0).toLocaleString(uiLanguage==='it'?'it-IT':'de-DE')}
+function rzOver(sched){const ds=(sched||[]).map(x=>x.date).filter(Boolean).sort();const end=ds.length&&ds[ds.length-1]>RZ_END?ds[ds.length-1]:RZ_END;return tripClock().day>end}
+function rzTiles(staff){
+ const sched=(staff?state.schedule.filter(x=>x.shared):(studentData?.schedule||[])).filter(x=>!['Abgesagt','Annullato'].includes(x.status));
+ const ann=staff?(state.announcements||[]).length:(studentData?.announcements||[]).length;
+ const t=[[6,L('Tage','giorni'),'☀️'],[5,L('Nächte','notti'),'🌙'],[3,L('Städte','città'),'📍'],['≈ 1.300',L('km mit dem Zug','km in treno'),'🚆'],[sched.length,L('Programmpunkte','tappe del programma'),'🗓️'],[ann,L('Ankündigungen','avvisi'),'📣']];
+ if(staff){const st=activePeople().filter(p=>p.role!=='Lehrkraft');
+  t.unshift([st.length,L('Schülerinnen','studentesse'),'👥']);
+  t.push([(state.rollcalls||[]).length,L('Zählungen','appelli'),'✅'],[(state.polls||[]).filter(x=>!x.deleted).length,L('Abstimmungen','sondaggi'),'🗳️']);
+ }else{const sd=studentData||{},rm=new Set([...(sd.roommates?.roomB||[]),...(sd.roommates?.roomV||[])]),pk=(sd.packing||[]).length,done=(sd.person?.packed||[]).filter(id=>(sd.packing||[]).some(x=>x.id===id)).length;
+  if(rm.size)t.push([rm.size,rm.size===1?L('Zimmerpartnerin','compagna di stanza'):L('Zimmerpartnerinnen','compagne di stanza'),'🛏️']);
+  if(pk)t.push([`${done}/${pk}`,L('Packliste abgehakt','lista bagagli spuntata'),'🎒']);
+ }
+ return t;
+}
+function rzCard(staff,inDialog){
+ const tiles=rzTiles(staff);
+ return `<div class="${inDialog?'':'card '}rz-card"><div class="rz-hero"><span class="rz-kicker">${L('Reise in Zahlen','Il viaggio in numeri')}</span><h2>${L('Das war unsere Studienfahrt','Questo è stato il nostro viaggio')}</h2><p>Bologna &amp; ${L('Venedig','Venezia')} · ${L('14.–19. März 2027','14–19 marzo 2027')}</p></div><div class="rz-grid">${tiles.map(([n,l,i])=>`<div class="rz-tile"><span class="rz-i" aria-hidden="true">${i}</span><b>${typeof n==='number'?rzNum(n):esc(String(n))}</b><span>${esc(l)}</span></div>`).join('')}</div><p class="rz-bye">Grazie mille &amp; arrivederci!</p></div>`;
+}
+actions.rzpreview=()=>{
+ let d=document.getElementById('rz-dialog');
+ if(!d){d=document.createElement('dialog');d.id='rz-dialog';d.className='rc-dialog rz-dialog';document.body.append(d);d.addEventListener('click',e=>{if(e.target.closest('[data-rz-close]')||e.target===d)d.close()})}
+ d.innerHTML=`<div class="rc-head"><div><div class="eyebrow">${L('Vorschau · erscheint nach der Fahrt','Anteprima · appare dopo il viaggio')}</div></div><button type="button" class="dlg-x" data-rz-close aria-label="${L('Schließen','Chiudi')}">×</button></div>${rzCard(true,true)}<p class="small muted rz-note">${L('Die Schülerinnen sehen ab dem 20. März auf „Heute“ ihre eigene Version: mit Zimmerpartnerinnen und abgehakter Packliste statt Gruppen- und Finanzzahlen.','Dal 20 marzo le studentesse vedono in “Oggi” la loro versione: con compagne di stanza e lista bagagli invece dei dati del gruppo.')}</p>`;
+ d.showModal();
+};
+{
+ const tt=tripToolsCard;
+ tripToolsCard=function(){const h=tt();if(!h)return h;const i=h.lastIndexOf('</div></div>');return i<0?h:h.slice(0,i)+btn(L('Reise in Zahlen','Viaggio in numeri'),'rzpreview')+h.slice(i)};
+ const ov=views['Übersicht'];
+ views['Übersicht']=()=>{const h=ov();let c='';try{if(rzOver(state.schedule))c=rzCard(true)}catch{}if(!c)return h;const i=h.indexOf('<div class="card');return i<0?c+h:h.slice(0,i)+c+h.slice(i)};
+ const sp=stPanel;
+ stPanel=function(){const h=sp();if(studentTab!=='today')return h;let c='';try{if(rzOver(studentData?.schedule))c=rzCard(false)}catch{}if(!c)return h;const i=h.indexOf('<div class="card');return i<0?c+h:h.slice(0,i)+c+h.slice(i)};
+}
+
+/* --- Passwort-Link: in „Zugänge verwalten“ pro Person eine E-Mail zum Zurücksetzen des Passworts senden --- */
+function pwDecorate(d){d.querySelectorAll('.acc-row').forEach(row=>{const inv=row.querySelector('.acc-inv'),em=row.querySelector('.acc-email');if(!inv||!em||inv.querySelector('.acc-pwbtn')||!em.defaultValue)return;const b=document.createElement('button');b.type='button';b.className='acc-pwbtn';b.dataset.pwreset=row.dataset.accessRow;b.textContent='Passwort-Link';b.title='E-Mail zum Zurücksetzen des Passworts senden';inv.append(b)})}
+{
+ const acc=actions.accounts;
+ actions.accounts=async(...a)=>{const r=await acc(...a);const d=document.getElementById('access-dialog');if(d&&!d.dataset.pw){d.dataset.pw='1';pwDecorate(d);new MutationObserver(()=>pwDecorate(d)).observe(d,{childList:true,subtree:true});
+  d.addEventListener('click',async e=>{const b=e.target.closest('[data-pwreset]');if(!b)return;e.preventDefault();const i=b.dataset.pwreset,row=b.closest('.acc-row'),email=String(row?.querySelector('.acc-email')?.value||'').trim().toLowerCase(),st=document.getElementById('access-status-'+i);
+   if(!email){if(st)st.textContent='Keine E-Mail-Adresse eingetragen.';return}
+   if(!confirm(`E-Mail zum Zurücksetzen des Passworts an ${email} senden?\n\nÜber den Link legt die Person ein neues Passwort fest. Ohne Passwort geht es auch: „Einladungslink“ oder „Per E-Mail“ melden direkt an.`))return;
+   b.disabled=true;if(st)st.textContent='Wird versendet …';
+   try{const {error}=await cloud.auth.resetPasswordForEmail(email,{redirectTo:'https://theisapps.de/studienfahrt/'});if(error)throw error;if(st)st.textContent='✓ Passwort-Link an '+email+' gesendet. Bitte auch im Spam-Ordner nachsehen lassen.'}
+   catch(err){if(st)st.textContent=/rate|seconds|too many/i.test(err.message||'')?'Zu viele E-Mails in kurzer Zeit – bitte später erneut versuchen oder den Einladungslink nutzen.':(err.message||'Nicht gesendet.')}
+   finally{b.disabled=false}},true)}
+  return r};
+}
+/* Seite „Neues Passwort festlegen“ zweisprachig */
+if(typeof recoveryView==='function'){const rv=recoveryView;recoveryView=function(){rv();if(uiLanguage!=='it')return;const f=document.getElementById('recoveryform');if(!f)return;const card=f.closest('.card');const h=card&&card.querySelector('h2');if(h)h.textContent='Imposta una nuova password';f.querySelectorAll('label').forEach(l=>{const n=l.firstChild;if(n&&n.nodeType===3)n.textContent=n.textContent.replace('Neues Passwort','Nuova password').replace('Passwort wiederholen','Ripeti la password')});const b=f.querySelector('button.primary');if(b)b.textContent='Salva password'}}
+/* ===== Update 23 · Ende ===== */
 init().catch(e=>{document.querySelector('main').innerHTML='<div class="card"><h2>Verbindung nicht verfügbar.</h2><p>Bitte Internetverbindung und Supabase-Einrichtung prüfen und die Seite neu laden.</p></div>';console.error(e)});
 // Unterbindet weitere Schreibaktionen, während ein Serverstand gespeichert wird.
 document.addEventListener('click',e=>{if(cloudSaving&&e.target.closest('[data-action]')){e.preventDefault();e.stopImmediatePropagation();toast('Speichern läuft. Bitte kurz warten.')}},true);
