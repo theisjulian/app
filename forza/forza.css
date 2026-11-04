@@ -16,8 +16,25 @@ body{min-height:100dvh}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
 h1,h2,h3{margin:0;letter-spacing:-.01em}
-.boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:50;transition:opacity .3s}
-.boot-mark{width:56px;height:56px;border-radius:16px;background:linear-gradient(#56627a,#141922);animation:pulse 1.2s infinite alternate}
+.boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);z-index:80;overflow:hidden;transition:opacity .4s ease,visibility .4s}
+.boot-tile{position:relative;width:108px;height:108px;border-radius:26px;background:var(--grad,linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 50%,#0a0f18)));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 22px 50px -16px var(--acc);animation:bootin .55s cubic-bezier(.3,1.4,.5,1) both}
+.boot-tile svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+.boot .bf{stroke-width:120;stroke-dasharray:820;stroke-dashoffset:820;animation:bootdraw .45s .15s cubic-bezier(.6,0,.3,1) forwards}
+.boot .bp{stroke-width:64;stroke-dasharray:640;stroke-dashoffset:640;animation:bootdraw .4s .5s cubic-bezier(.5,0,.3,1) forwards,bootbeat 1.1s 1s ease-in-out infinite}
+.boot-glow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--acc) 45%,transparent),transparent);opacity:0;animation:bootglow 1.6s .2s ease-out forwards,bootbreath 2.4s 1.8s ease-in-out infinite alternate}
+.boot-name{font-weight:700;font-size:22px;letter-spacing:.02em;color:var(--text);opacity:0;animation:bootname .45s .45s ease-out forwards}
+@keyframes bootin{from{transform:scale(.55) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes bootdraw{to{stroke-dashoffset:0}}
+@keyframes bootbeat{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes bootglow{to{opacity:1}}@keyframes bootbreath{to{transform:scale(1.12);opacity:.7}}
+@keyframes bootname{from{opacity:0;transform:translateY(6px)}to{opacity:.85;transform:none}}
+.boot.out{opacity:0;visibility:hidden}.boot.out .boot-tile{transform:scale(1.18);transition:transform .4s cubic-bezier(.4,0,.2,1)}
+html[data-theme=glas] .boot{background:transparent}
+html[data-theme=glas] .boot-tile{background:linear-gradient(140deg,rgba(255,255,255,.34),rgba(255,255,255,.1));backdrop-filter:saturate(190%) blur(24px);-webkit-backdrop-filter:saturate(190%) blur(24px);border:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 24px 50px -18px rgba(60,120,255,.6)}
+html[data-theme=glas][data-mode=light] .boot-tile svg{stroke:#2f6fe0}
+html[data-theme=apple][data-mode=light] .boot-tile{box-shadow:0 18px 40px -16px var(--acc)}
+.noanim .boot *{animation:none!important}.noanim .boot .bf,.noanim .boot .bp{stroke-dashoffset:0}.noanim .boot-glow,.noanim .boot-name{opacity:.85}
+@media(prefers-reduced-motion:reduce){.boot *{animation:none!important}.boot .bf,.boot .bp{stroke-dashoffset:0}.boot-glow,.boot-name{opacity:.85}}
 @keyframes pulse{to{transform:scale(.92);opacity:.7}}
 .noanim *{animation:none!important;transition:none!important}
 /* Layout */
