@@ -34,7 +34,9 @@
   (async () => {
     await F.afterAuth();
     F.sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { F.user = null; F.render(); } });
-    document.getElementById('boot')?.remove();
+    // Startbildschirm: Animation kurz ausspielen lassen (höchstens bis 1 s nach dem Öffnen), dann weich ausblenden
+    const bt = document.getElementById('boot');
+    if (bt) { const wait = Math.max(0, 1000 - (Date.now() - (window.__fz0 || 0))); setTimeout(() => { bt.classList.add('out'); setTimeout(() => bt.remove(), 450); }, F.motionOk && F.motionOk() ? wait : 0); }
     // Neue Version schneller holen: beim Zurückkehren in die App nach Updates fragen
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then((reg) => document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => null); })).catch(() => null);
   })();

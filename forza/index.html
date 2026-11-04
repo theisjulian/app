@@ -14,23 +14,30 @@
 <link rel="apple-touch-icon" href="assets/forza-180.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Geist:wght@400;500;600;700&family=Jost:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="forza.css?v=20261104a">
+<script>
+/* Theme sofort setzen, bevor etwas gezeichnet wird: der Startbildschirm erscheint gleich in deinen Farben */
+(function(){window.__fz0=Date.now();var d=document.documentElement,l={};try{l=JSON.parse(localStorage.getItem('forza-look'))||{}}catch(e){}
+var t=l.theme||'graphit',m=l.mode||'dark';if(m==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+if(t==='tag'){var n=new Date(),N=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5),r=Math.PI/180,de=23.44*Math.sin(2*Math.PI*(284+N)/365)*r,H=Math.acos(Math.max(-1,Math.min(1,-Math.tan(48.2*r)*Math.tan(de))))/r/15,no=12-10.8/15-n.getTimezoneOffset()/60,sr=no-H,ss=no+H,h=n.getHours()+n.getMinutes()/60,p=h<sr-.75||h>=ss+.75?'nacht':h<sr+.75?'morgen':h<no-2?'vormittag':h<no+2?'mittag':h<ss-1.25?'nachmittag':'abend';d.dataset.phase=p;m=p==='nacht'||p==='abend'?'dark':'light'}
+d.dataset.theme=t;d.dataset.mode=m;d.dataset.font=l.font||'standard';if(l.anim===false)d.classList.add('noanim')})();
+</script>
+<link rel="stylesheet" href="forza.css?v=20261104b">
 </head>
 <body>
-<div id="boot" class="boot"><div class="boot-mark"></div></div>
+<div id="boot" class="boot" aria-hidden="true"><div class="boot-glow"></div><div class="boot-tile"><svg viewBox="0 0 1024 1024"><path class="bf" d="M640 230c-150-30-250 40-250 190v390"/><path class="bp" d="M270 520h120l50-90 70 190 50-100h170"/></svg></div><div class="boot-name">forza</div></div>
 <div id="root"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=20261104a"></script>
-<script src="texts.js?v=20261104a"></script>
-<script src="engine.js?v=20261104a"></script>
-<script src="core.js?v=20261104a"></script>
-<script src="ui-main.js?v=20261104a"></script>
-<script src="ui-train.js?v=20261104a"></script>
-<script src="ui-more.js?v=20261104a"></script>
-<script src="ui-extra.js?v=20261104a"></script>
-<script src="ui-extra2.js?v=20261104a"></script>
-<script src="ui-fx.js?v=20261104a"></script>
-<script src="boot.js?v=20261104a"></script>
+<script src="config.js?v=20261104b"></script>
+<script src="texts.js?v=20261104b"></script>
+<script src="engine.js?v=20261104b"></script>
+<script src="core.js?v=20261104b"></script>
+<script src="ui-main.js?v=20261104b"></script>
+<script src="ui-train.js?v=20261104b"></script>
+<script src="ui-more.js?v=20261104b"></script>
+<script src="ui-extra.js?v=20261104b"></script>
+<script src="ui-extra2.js?v=20261104b"></script>
+<script src="ui-fx.js?v=20261104b"></script>
+<script src="boot.js?v=20261104b"></script>
 </body>
 </html>
