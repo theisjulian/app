@@ -16,7 +16,7 @@
   F.acts.rerollReset = () => { const t = F.today(); F.ls.set('variant-' + t, 0); F.ls.set('avoid-' + t, []); F.ls.set('excl-' + t, []); F.render(); };
 
   /* ---------- Einstellungen: Darstellung sofort sichtbar ---------- */
-  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f'], ['tag', 'Tageslicht', '#ffb36b', '#2a6fd8'], ['apple', 'Apple', '#ff375f', '#ff9f0a']];
+  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f'], ['tag', 'Tageslicht', '#ffb36b', '#2a6fd8'], ['apple', 'Apple', '#ff375f', '#ff9f0a'], ['glas', 'Liquid Glass', '#a8c4ff', '#5ac8fa']];
   const FONTS = [['standard', 'Standard', 'Geist'], ['rund', 'Rund', 'Nunito'], ['klassisch', 'Klassisch', 'Lora'], ['technisch', 'Technisch', 'Space Grotesk'], ['lesbar', 'Gut lesbar', 'Atkinson Hyperlegible'], ['geometrisch', 'Geometrisch', 'Jost']];
   const lookCards = () => {
     const l = F.look();

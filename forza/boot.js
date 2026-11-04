@@ -35,6 +35,7 @@
     await F.afterAuth();
     F.sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { F.user = null; F.render(); } });
     document.getElementById('boot')?.remove();
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => null);
+    // Neue Version schneller holen: beim Zurückkehren in die App nach Updates fragen
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then((reg) => document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => null); })).catch(() => null);
   })();
 })();
