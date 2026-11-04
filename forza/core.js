@@ -125,6 +125,9 @@
     });
   };
 
+  /* Tastatur offen (iPhone): feste Leisten wandern sonst mit der Tastatur nach oben */
+  if (window.visualViewport) { const kb = () => document.documentElement.classList.toggle('kb', window.innerHeight - visualViewport.height > 140); visualViewport.addEventListener('resize', kb); }
+
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
   F.go = (r) => { if (location.hash === '#/' + r) { F.closeModal(); F.render(); window.scrollTo(0, 0); } else location.hash = '#/' + r; }; // gleiche Adresse: kein hashchange, also selbst neu zeichnen
@@ -139,6 +142,7 @@
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><img src="assets/forza.svg" alt="">forza</div>${nav.map(([k, l]) => `<button class="nv ${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}${l}</button>`).join('')}</aside>
       <main class="main">${body}</main><nav class="bnav">${nav.map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}<span>${l}</span></button>`).join('')}</nav></div>${F.restBar ? F.restBar() : ''}`;
     if (F.after) F.after(main, rest);
+    if (F.fitAll) F.fitAll();
   };
   F.modal = (html) => { F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div>${html}</div>`; m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m); };
   F.closeModal = () => document.getElementById('modal')?.remove();

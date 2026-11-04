@@ -107,11 +107,31 @@
         ${F.ui.tr.ei > 0 ? `<button class="btn sm" data-act="goEx" data-i="${F.ui.tr.ei - 1}">‹ Zurück</button>` : ''}${F.ui.tr.ei < exs.length - 1 ? `<button class="btn sm pri" data-act="goEx" data-i="${F.ui.tr.ei + 1}">Weiter ›</button>` : `<button class="btn sm pri" data-act="finishAsk">Fertig</button>`}</div>
       <button class="btn ghost block" style="margin:6px 0 18px" data-act="addExAsk">+ Übung hinzufügen</button>`;
   };
+  /* Aufwärmen: nur vor der ersten Grundübung je Muskelgruppe einer Einheit (danach ist der Muskel schon warm) */
+  const warmupFor = (s, se, ex) => {
+    if (ex.dosage_profile !== 'G' || doneN(se)) return [];
+    const before = s.session_exercises.slice(0, s.session_exercises.indexOf(se));
+    if (before.some((o) => doneN(o) && ((F.S.exById[o.exercise_id] || {}).muscles_primary || []).some((m) => (ex.muscles_primary || []).includes(m)))) return [];
+    const tg = se.sets[0] ? F.setTarget(se, se.sets[0]) : null;
+    return tg ? E.warmup(Number(tg.load_kg), ex.load_convention, E.params(F.S.params)) : [];
+  };
   const warmupLine = (se, ex) => {
-    if (ex.dosage_profile !== 'G' || doneN(se)) return '';
-    const tg = se.sets[0] ? F.setTarget(se, se.sets[0]) : null, w = tg ? E.warmup(Number(tg.load_kg), ex.load_convention, E.params(F.S.params)) : [];
+    const w = warmupFor(F.openSession(), se, ex);
     return w.length ? `<div class="fz-warm"><b>Vorher aufwärmen</b> (nicht eintragen): ${w.map((x) => `${F.fmt(x.kg)} kg × ${x.reps}`).join(' · ')}</div>` : '';
   };
+  const warmState = (s) => F.ls.get('warm-' + s.id, {});
+  const warmScreen = (s, se, ex, w) => {
+    const ws = warmState(s), ticks = (ws.t || {})[se.id] || [], first = !s.session_exercises.some(doneN), unit = ex.load_convention === 'je_hand' ? ' je Hand' : '';
+    return `<div class="fz${enter('w' + se.id)}"><div class="eyebrow">Übung ${s.session_exercises.indexOf(se) + 1} von ${s.session_exercises.length} · Aufwärmen</div>
+      <div class="h1 fz-name">${esc(ex.name)}</div>
+      <div class="fz-sub">Ein paar leichte Sätze bis knapp unter dein Arbeitsgewicht. Bereitet Gelenke und Technik vor und wird nicht eingetragen.</div>
+      ${first ? '<div class="fz-warm">Davor 3–5 Minuten locker bewegen, z. B. Rad oder Rudergerät.</div>' : ''}
+      <div class="wu-list">${w.map((x, i) => `<button class="wu ${ticks.includes(i) ? 'on' : ''}" data-act="warmTick" data-id="${se.id}" data-i="${i}"><span class="wu-c">${F.icon.check.replace('<svg', '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"')}</span><b>${F.fmt(x.kg)} kg${unit}</b><span>× ${x.reps}</span></button>`).join('')}</div>
+      <button class="btn pri block fz-go" data-act="warmDone" data-id="${se.id}">Arbeitssätze starten</button>
+      <div class="fz-tools"><button data-act="warmDone" data-id="${se.id}" data-skip="1">Ohne Aufwärmen</button><button data-act="help" data-id="${se.exercise_id}">Hilfe</button></div></div>`;
+  };
+  F.acts.warmTick = (t) => { const s = F.openSession(), ws = warmState(s); ws.t = ws.t || {}; const a = ws.t[t.dataset.id] || [], i = +t.dataset.i; ws.t[t.dataset.id] = a.includes(i) ? a.filter((x) => x !== i) : a.concat(i); F.ls.set('warm-' + s.id, ws); try { navigator.vibrate && navigator.vibrate(8); } catch {} F.render(); };
+  F.acts.warmDone = (t) => { const s = F.openSession(), ws = warmState(s); ws.d = ws.d || {}; ws.d[t.dataset.id] = t.dataset.skip ? 'skip' : 'done'; F.ls.set('warm-' + s.id, ws); F.render(); window.scrollTo(0, 0); };
 
   /* Fokus: nur der nächste Satz, Werte vorgeschlagen, ein Tipp zum Abhaken. Danach läuft die Pause von selbst. */
   const enter = (key) => { const on = F.ui.tr.key !== key; F.ui.tr.key = key; return on ? ' fz-enter' : ''; };
@@ -122,6 +142,7 @@
     const se = exs[F.ui.tr.ei];
     if (!se || !isOpen(se)) return topBar(s, dnEx) + `<div class="fz-done${enter('done')}"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="rc" cx="60" cy="60" r="52"/><path class="rk" d="M36 62l16 16 32-36"/></svg><div class="h1">Alles erledigt</div><div class="mute" style="margin:6px 0 18px">${exs.reduce((n, e) => n + doneN(e), 0)} Sätze in ${Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000))} Minuten</div><button class="btn pri block fz-go" data-act="finishAsk">Training beenden</button>${postureOffer(s)}<button class="btn ghost block" style="margin-top:10px" data-act="addExAsk">+ Noch eine Übung</button></div>`;
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
+    const wu = warmupFor(s, se, ex); if (wu.length && !(warmState(s).d || {})[se.id]) return topBar(s, dnEx) + warmScreen(s, se, ex, wu);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung (weniger = schwerer)' : 'kg';
     const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
     const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="${im}" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
@@ -129,7 +150,6 @@
       <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}${pair ? ' · Superset mit ' + esc((F.S.exById[pair.exercise_id] || {}).name || '') : ''}</div>
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
-      ${st.set_no === 1 ? warmupLine(se, ex) : ''}
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
       ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : '<div class="small mute">Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.</div>'}
       <button class="btn pri block fz-go" data-act="doneSet" data-s="${st.id}">${F.icon.check.replace('<svg', '<svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"')} Geschafft</button>
@@ -157,6 +177,14 @@
     document.addEventListener('touchend', (e) => { if (!ok) return; ok = false; const t1 = e.changedTouches[0], dx = t1.clientX - x0, dy = t1.clientY - y0; if (Math.abs(dx) < 70 || Math.abs(dy) > 60 || Math.abs(dx) < 1.6 * Math.abs(dy)) return;
       const s = F.openSession && F.openSession(); if (!s) return; const i = F.ui.tr.ei + (dx < 0 ? 1 : -1); if (i < 0 || i >= s.session_exercises.length) return; F.acts.goEx({ dataset: { i: String(i) } }); }, { passive: true }); })();
   F.acts.goEx = (t) => { F.ui.tr.ei = Number(t.dataset.i); F.render(); window.scrollTo(0, 0); };
+  /* Ziffern passen immer ins Feld: Schrift wird verkleinert, bis der Wert hineinpasst */
+  const cv = document.createElement('canvas').getContext('2d');
+  F.fit = (el) => { if (!el || !el.clientWidth) return; el.style.fontSize = ''; const cs = getComputedStyle(el); let size = parseFloat(cs.fontSize); const room = el.clientWidth - 6, text = el.value || el.placeholder || '';
+    const w = (px) => { cv.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`; return cv.measureText(text).width; };
+    while (size > 14 && w(size) > room) size -= 1; el.style.fontSize = size + 'px'; };
+  F.fitAll = () => document.querySelectorAll('.stepper input').forEach(F.fit);
+  window.addEventListener('resize', () => F.fitAll && F.fitAll());
+  document.addEventListener('input', (e) => { if (e.target.closest && e.target.closest('.stepper')) F.fit(e.target); });
   F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); };
   F.acts.step = (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const ex = F.S.exById[f.se.exercise_id], fld = t.dataset.f, d = Number(t.dataset.d);
@@ -164,7 +192,7 @@
     const step = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? F.E.params(F.S.params).load_step_hand : F.E.params(F.S.params).load_step_total) : fld === 'seconds' ? 5 : 1;
     if (v === null) { const tg = F.setTarget(f.se, f.st); v = tg[fld] ?? (fld === 'reps' ? (E.PROFILES[ex.dosage_profile]?.reps?.[0] ?? 8) : fld === 'seconds' ? 20 : 0); if ((tg[fld] === null || tg[fld] === undefined) && d > 0 && fld !== 'load_kg') { f.st[fld] = v; inp.value = v; return; } }
     v = Math.max(0, v + d * step); f.st[fld] = fld === 'load_kg' ? v : Math.round(v); inp.value = F.fmt(v);
-    inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
+    F.fit(inp); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
   };
   F.acts.rir = (t) => { const f = findSet(t.dataset.s); if (!f) return; f.st.rir = f.st.rir === Number(t.dataset.v) ? null : Number(t.dataset.v); F.render(); };
   /* Vorschlag in die leeren Felder übernehmen (nur das, was du nicht selbst geändert hast) */
