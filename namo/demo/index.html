@@ -1102,6 +1102,104 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
 .st-route .row{align-items:center}
 .st-route .rt-labels small{color:var(--lg-muted)}
 /* ===== Update 21 · Ende (CSS) ===== */
+/* ===== Update 22 · Anfang (CSS) ===== */
+/* Abrechnung */
+.rx-head .row{align-items:flex-start;gap:12px}
+.rx-progress{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;margin:4px 0 14px}
+.rx-progress .bar{grid-column:1/-1}
+.rx-pdf{border-top:1px solid var(--lg-line);padding-top:12px;display:grid;gap:6px}
+.rx-pdf .actions{margin:4px 0 0}
+.rx-cat{margin:10px 0 18px}
+.rx-cat-h{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--lg-line);padding-bottom:6px;margin-bottom:4px}
+.rx-cat-h h3{margin:0;font-size:15px}
+.rx-row{display:grid;grid-template-columns:minmax(0,1.4fr) 130px minmax(0,1.6fr);gap:6px 14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--lg-line)}
+.rx-row:last-child{border-bottom:0}
+.rx-row.missing .rx-n b{color:var(--lg-warn)}
+.rx-t{display:grid;min-width:0}.rx-t b{overflow-wrap:anywhere}.rx-t small{color:var(--lg-muted)}
+.rx-n{display:grid;text-align:right;font-variant-numeric:tabular-nums}.rx-n small{color:var(--lg-muted);font-size:11.5px}
+.rx-docs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.rx-chip{display:inline-flex;align-items:center;border:1px solid var(--lg-line);border-radius:999px;background:var(--lg-card2);max-width:100%;overflow:hidden}
+.rx-chip>button{border:0!important;background:transparent!important;padding:5px 9px!important;font-size:12px;display:inline-flex;gap:5px;align-items:center;min-width:0}
+.rx-chip>button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.rx-chip .cb-ic{width:14px;height:14px;flex:none}
+.rx-chip .rx-x{padding:5px 9px 5px 2px!important;color:var(--lg-muted)!important}
+.rx-add{padding:5px 10px!important;font-size:12px!important;border-radius:999px!important}
+@media (max-width:760px){
+ .rx-row{grid-template-columns:minmax(0,1fr) auto}
+ .rx-docs{grid-column:1/-1}
+ .rx-head .row{flex-direction:column}
+}
+
+/* Aktuelle Info: gesehen / noch nicht */
+.ann-seen{margin-top:8px}
+.ann-seen summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--lg-accent-text);display:flex;align-items:center;gap:8px;list-style:none}
+.ann-seen summary::-webkit-details-marker{display:none}
+.ann-seen summary::before{content:"›";display:inline-block;transition:transform .2s;font-size:16px}
+.ann-seen[open] summary::before{transform:rotate(90deg)}
+.seen-group{margin-top:10px}
+.seen-group h4{margin:0 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--lg-muted);display:flex;align-items:center;gap:6px}
+.seen-group h4 .cb-ic{width:14px;height:14px;color:var(--lg-ok)}
+.seen-chips{display:flex;flex-wrap:wrap;gap:5px}
+.seen-chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--lg-ok-bg);color:var(--lg-ok)}
+
+/* Einstellungen */
+#prefform.prefs22 section{background:var(--lg-card2);border:1px solid var(--lg-line);border-radius:18px;padding:14px 16px;margin:12px 0}
+#prefform.prefs22 section h3{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--lg-muted)}
+#prefform.prefs22 .fields{display:grid;gap:14px;grid-template-columns:1fr}
+#prefform.prefs22 .style-pick,#prefform.prefs22 .font-pick{display:flex!important;flex-wrap:wrap;gap:7px;margin-top:6px}
+#prefform.prefs22 .style-pick label,#prefform.prefs22 .font-pick label{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:8px;padding:6px 13px 6px 6px!important;min-height:0!important;border-radius:999px!important;border:1px solid var(--lg-line)!important;background:var(--lg-card)!important;font-size:13.5px;font-weight:600;cursor:pointer;width:auto!important;box-shadow:none!important;transition:border-color .15s,background .15s}
+#prefform.prefs22 .style-pick label:has(input:checked),#prefform.prefs22 .font-pick label:has(input:checked){border-color:var(--lg-accent)!important;background:var(--lg-soft)!important;box-shadow:0 0 0 1px var(--lg-accent) inset!important}
+#prefform.prefs22 .style-pick input,#prefform.prefs22 .font-pick input{position:absolute;opacity:0;pointer-events:none}
+#prefform.prefs22 .style-pick .sw{width:24px!important;height:24px!important;border-radius:50%!important;flex:none;margin:0!important;border:1px solid rgba(0,0,0,.12)}
+#prefform.prefs22 .font-pick .fp-sample{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;background:var(--lg-soft);font-size:13px!important;line-height:1;margin:0!important}
+#prefform.prefs22 .font-pick .fp-name{font-size:13.5px!important;margin:0!important;font-weight:600}
+#prefform.prefs22 .style-pick label:focus-within,#prefform.prefs22 .font-pick label:focus-within{outline:3px solid var(--lg-accent);outline-offset:2px}
+#prefform.prefs22 .toggle-row{display:flex!important;align-items:center;justify-content:space-between;gap:14px;padding:4px 0;flex-direction:row}
+#prefform.prefs22 .toggle-row .tg-t{display:grid;gap:2px;flex:1;min-width:0}
+#prefform.prefs22 .toggle-row .tg-t b{font-size:14px;font-weight:600}
+#prefform.prefs22 .toggle-row .tg-t .small{display:block;margin:0}
+#prefform.prefs22 input.switch{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--lg-line);position:relative;cursor:pointer;transition:background .2s;margin:0;border:0}
+#prefform.prefs22 input.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+#prefform.prefs22 input.switch:checked{background:var(--lg-accent)}
+#prefform.prefs22 input.switch:checked::after{transform:translateX(18px)}
+#prefform.prefs22 .seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:999px;background:var(--lg-soft);margin-top:6px;width:max-content;max-width:100%}
+#prefform.prefs22 .seg button{border:0!important;background:transparent!important;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--lg-muted)!important}
+#prefform.prefs22 .seg button.on{background:var(--lg-card)!important;color:var(--lg-ink)!important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#prefform.prefs22 section .actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+#prefform.prefs22 section .actions button{justify-content:center}
+
+/* ---- Schwebende App-Leiste auf dem Handy (Glas, wo es zum Design passt) ---- */
+@media (max-width:760px){
+ body[data-tab],body[data-student]{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))!important}
+ nav#nav,.st-tabs{left:max(12px,env(safe-area-inset-left,0px))!important;right:max(12px,env(safe-area-inset-right,0px))!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;
+  padding:6px!important;border-radius:26px!important;border:1px solid color-mix(in srgb,#fff 55%,transparent)!important;
+  background:color-mix(in srgb,var(--lg-card) 68%,transparent)!important;-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+  box-shadow:0 12px 34px -12px rgba(10,20,30,.35),inset 0 1px 0 rgba(255,255,255,.55)!important}
+ html[data-andiamo-theme="dark"] nav#nav,html[data-andiamo-theme="dark"] .st-tabs{border-color:rgba(255,255,255,.1)!important;background:color-mix(in srgb,var(--lg-card) 62%,transparent)!important;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)!important}
+ nav#nav button,.st-tabs button{border-radius:20px!important;padding:7px 0!important}
+ nav#nav button.active,.st-tabs button.on{background:color-mix(in srgb,var(--lg-accent) 14%,transparent)!important}
+ /* Neon: Glas mit leuchtender Kante */
+ html[data-namo-style="neon"] nav#nav,html[data-namo-style="neon"] .st-tabs{border-color:color-mix(in srgb,#ff3ea5 35%,transparent)!important}
+ html[data-namo-style="neon"] .st-tabs button.on::after,html[data-namo-style="neon"] nav#nav button.active::after{display:none}
+ /* Graphit: kein Glas – klare, kantige Leiste mit hohem Kontrast */
+ html[data-namo-style="graphit"] nav#nav,html[data-namo-style="graphit"] .st-tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:2px solid var(--lg-ink)!important;border-radius:10px!important;box-shadow:3px 3px 0 var(--lg-ink)!important}
+ html[data-namo-style="graphit"] nav#nav button,html[data-namo-style="graphit"] .st-tabs button{border-radius:6px!important}
+ html[data-namo-style="graphit"] nav#nav button.active,html[data-namo-style="graphit"] .st-tabs button.on{background:var(--lg-ink)!important;color:var(--lg-card)!important}
+ /* Heft: Papier statt Glas */
+ html[data-namo-style="heft"] nav#nav,html[data-namo-style="heft"] .st-tabs{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--lg-card)!important;border:1.5px solid color-mix(in srgb,var(--lg-ink) 35%,transparent)!important;border-radius:16px!important;box-shadow:0 3px 0 color-mix(in srgb,var(--lg-ink) 18%,transparent)!important}
+}
+
+.rx-file{position:relative;display:flex!important;align-items:center;gap:10px;justify-content:center;padding:14px!important;border:1.5px dashed var(--lg-line)!important;border-radius:16px!important;background:var(--lg-field)!important;cursor:pointer;margin-top:6px;font-weight:600}
+.rx-file.has{border-style:solid!important;border-color:var(--lg-accent)!important;background:var(--lg-soft)!important}
+.rx-file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.rx-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+@media (max-width:760px){
+ .rx-kpis{gap:8px!important;margin:14px 0!important}
+ .rx-kpis .stat{min-height:0!important;padding:12px 16px!important;display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+ .rx-kpis .stat strong{font-size:22px!important;margin:0!important}
+ .rx-kpis .stat small{flex-basis:100%;margin:0}
+}
+/* ===== Update 22 · Ende (CSS) ===== */
 </style></head><body><div id="namodemo" role="region" aria-label="Demo-Hinweis"><b>Demo</b><span class="nd-t">Erfundene Reise, nichts wird gespeichert.</span>
 <label class="nd-r"><span>Ansicht</span><select id="nd-role" aria-label="Rolle wählen">
 <option value="admin">Admin</option><option value="teacher_edit">Lehrkraft</option><option value="teacher_read">Lehrkraft (nur lesen)</option><option value="student">Schülerin</option></select></label>
@@ -1220,8 +1318,8 @@ body[data-tab="Übersicht"][data-ov="trip"] #view>.ann-card{order:-1}
     } catch (e) { return new Blob(['%PDF-1.4\n% Demo\n'], { type: 'application/pdf' }); }
   }
   const storage = { from: () => ({
-    upload: async () => later(ok({ path: 'demo' })),
-    download: async path => later(ok(demoPdf(path))),
+    upload: async (path, blob) => { (window.__files=window.__files||{})[path]=blob; return later(ok({ path })); },
+    download: async path => later(ok((window.__files||{})[path] || demoPdf(path))),
     createSignedUrl: async path => later(ok({ signedUrl: URL.createObjectURL(demoPdf(path)) })),
     remove: async () => later(ok([]))
   }) };
@@ -1817,7 +1915,7 @@ function annSeen(a){const st=activePeople().filter(p=>p.role!=='Lehrkraft');cons
 function meetText(a){if(!a.meetAt&&!a.meetPlace)return '';const t=a.meetAt?new Date(a.meetAt):null;const when=t&&!isNaN(t)?t.toLocaleString(uiLanguage==='it'?'it-IT':'de-DE',{weekday:'short',day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):'';return [a.meetPlace,when].filter(Boolean).join(' · ')}
 function annShareText(a){const m=meetText(a);return `’namo. · ${L('Info','Avviso')}: ${a.text}${m?'\n'+L('Treffpunkt','Ritrovo')+': '+m:''}`}
 announcementsCard=function(){const list=(state.announcements||[]).filter(a=>a.active!==false).sort((a,b)=>String(b.at).localeCompare(String(a.at)));const edit=canEditTrip();if(!edit&&!list.length)return '';const online=!!window.ANDIAMO_ONLINE;
- return `<div class="card ann-card"><div class="row"><h2>${L('Aktuelle Info für alle','Avviso per tutti')}</h2></div><p class="small muted">${L('Erscheint bei allen Schülerinnen ganz oben, bis du sie beendest.','Appare in alto a tutte le studentesse finché non lo termini.')}</p>${list.map(a=>{const s=annSeen(a),m=meetText(a);return `<div class="ann"><div><p>${esc(a.text)}</p>${m?`<p class="ann-meet">${lgIcon('pin','cb-ic')} ${esc(m)}</p>`:''}<small class="muted">${esc(relTime(a.at))}${online&&s.st.length?` · <span class="${s.missing.length?'':'ok-text'}">${L('gesehen','visto')} ${s.seen.length}/${s.st.length}</span>`:''}</small>${online&&s.missing.length?`<details class="ann-miss"><summary>${L('Wer hat es noch nicht gesehen?','Chi non l’ha ancora visto?')}</summary>${s.missing.map(p=>`<div class="count-row"><b>${esc(displayName(p))}</b>${p.phone?`<a class="cbtn wa" href="${esc(waHref(p.phone,L('Hallo ','Ciao ')+(nameParts(p.name).first||p.name)+L(', bitte schau kurz in ’namo. – es gibt eine neue Info: ','! Dai un’occhiata a ’namo., c’è un nuovo avviso: ')+a.text))}" target="_blank" rel="noopener noreferrer">${lgIcon('chat','cb-ic')}<span>WhatsApp</span></a>`:`<span class="small muted">${L('keine Nummer','nessun numero')}</span>`}</div>`).join('')}</details>`:''}</div><div class="ann-acts"><a class="button" href="https://wa.me/?text=${encodeURIComponent(annShareText(a))}" target="_blank" rel="noopener noreferrer" title="${L('In die WhatsApp-Gruppe teilen','Condividi nel gruppo WhatsApp')}">${lgIcon('chat','cb-ic')} ${L('Teilen','Condividi')}</a>${edit?btn(L('Beenden','Termina'),'endannounce',a.id):''}</div></div>`}).join('')}${edit?`<div class="ann-new"><textarea id="ann-text" maxlength="400" rows="2" placeholder="${L('z. B. Treffpunkt geändert, bitte pünktlich sein','es. Ritrovo cambiato, siate puntuali')}" aria-label="${L('Neue Info','Nuovo avviso')}"></textarea><div class="ann-meet-fields"><input id="ann-place" maxlength="80" placeholder="${L('Treffpunkt (optional), z. B. Gleis 12','Ritrovo (facoltativo), es. binario 12')}" aria-label="${L('Treffpunkt','Ritrovo')}"><input id="ann-time" type="datetime-local" aria-label="${L('Uhrzeit (optional)','Ora (facoltativa)')}"></div>${btn(L('Veröffentlichen','Pubblica'),'announce','','primary')}</div>`:''}</div>`};
+ return `<div class="card ann-card"><div class="row"><h2>${L('Aktuelle Info für alle','Avviso per tutti')}</h2></div><p class="small muted">${L('Erscheint bei allen Schülerinnen ganz oben, bis du sie beendest.','Appare in alto a tutte le studentesse finché non lo termini.')}</p>${list.map(a=>{const s=annSeen(a),m=meetText(a);return `<div class="ann"><div><p>${esc(a.text)}</p>${m?`<p class="ann-meet">${lgIcon('pin','cb-ic')} ${esc(m)}</p>`:''}<small class="muted">${esc(relTime(a.at))}${online&&s.st.length?` · <span class="${s.missing.length?'':'ok-text'}">${L('gesehen','visto')} ${s.seen.length}/${s.st.length}</span>`:''}</small>${online&&s.st.length?annSeenHTML(a,s):''}</div><div class="ann-acts"><a class="button" href="https://wa.me/?text=${encodeURIComponent(annShareText(a))}" target="_blank" rel="noopener noreferrer" title="${L('In die WhatsApp-Gruppe teilen','Condividi nel gruppo WhatsApp')}">${lgIcon('chat','cb-ic')} ${L('Teilen','Condividi')}</a>${edit?btn(L('Beenden','Termina'),'endannounce',a.id):''}</div></div>`}).join('')}${edit?`<div class="ann-new"><textarea id="ann-text" maxlength="400" rows="2" placeholder="${L('z. B. Treffpunkt geändert, bitte pünktlich sein','es. Ritrovo cambiato, siate puntuali')}" aria-label="${L('Neue Info','Nuovo avviso')}"></textarea><div class="ann-meet-fields"><input id="ann-place" maxlength="80" placeholder="${L('Treffpunkt (optional), z. B. Gleis 12','Ritrovo (facoltativo), es. binario 12')}" aria-label="${L('Treffpunkt','Ritrovo')}"><input id="ann-time" type="datetime-local" aria-label="${L('Uhrzeit (optional)','Ora (facoltativa)')}"></div>${btn(L('Veröffentlichen','Pubblica'),'announce','','primary')}</div>`:''}</div>`};
 actions.announce=async()=>{if(!canEditTrip())return;const text=String($('#ann-text')?.value||'').trim().slice(0,400);if(!text){toast(L('Bitte zuerst einen Text eingeben.','Scrivi prima un testo.'));return}const meetPlace=String($('#ann-place')?.value||'').trim().slice(0,80),meetAt=String($('#ann-time')?.value||'').slice(0,16);const before=clone(state);const a={id:uid(),text,at:new Date().toISOString(),active:true};if(meetPlace)a.meetPlace=meetPlace;if(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(meetAt))a.meetAt=meetAt;state.announcements=[...(state.announcements||[]),a];try{await persist();render();toast(L('Info veröffentlicht.','Avviso pubblicato.'))}catch(e){state=before;render();throw e}};
 
 // --- Löschlauf nach der Fahrt (nur Admin bzw. lokale Version) ---
@@ -3179,6 +3277,307 @@ Object.assign(NAMO_ILLU,{
  };
 }
 /* ===== Update 21 · Ende ===== */
+/* ===== Update 22 · Anfang ===== */
+/* --- Abrechnung: Belege an Kostenpositionen und Buchungen, Ausgaben unterwegs erfassen, Abrechnungs-PDF mit Belegen im Anhang ---
+   Belege sind normale Dokumente (Kategorie „Beleg“, nur Lehrkräfte) mit Verweis ref = "cost:<id>" oder "event:<id>". */
+const RX_EVENT_KINDS=['grant','vendor','vendorRefund','deposit','depositReturn','advance','income'];
+function rxRefTitle(ref){
+ const [k,id]=String(ref||'').split(':');
+ if(k==='cost'){const c=state.costs.find(x=>x.id===id);return c?c.title:''}
+ if(k==='event'){const e=finance().events.find(x=>x.id===id);return e?e.title:''}
+ return '';
+}
+function rxDocsFor(ref){return (state.docs||[]).filter(d=>d.ref===ref)}
+function rxCostEvents(c){return finance().events.filter(e=>e.costId===c.id)}
+function rxForCost(c){const refs=new Set(['cost:'+c.id,...rxCostEvents(c).map(e=>'event:'+e.id)]);return (state.docs||[]).filter(d=>refs.has(d.ref))}
+function rxOtherEvents(){return finance().events.filter(e=>!e.costId&&['grant','advance'].includes(e.kind))}
+function rxSettings(){
+ const r=(state.settings&&state.settings.report)||{};
+ const school=(state.contacts||[]).find(c=>c.role==='Schule');
+ const teachers=activePeople().filter(p=>p.role==='Lehrkraft').map(p=>displayName(p));
+ return {school:r.school??(school?String(school.name).split(' · ')[0].replace(/\bSekretariat\b/,'').trim():''),lead:r.lead??teachers.join(', '),place:r.place??''};
+}
+/* Zahlen der Abrechnung (Beträge in Cent) */
+function rxReport(){
+ const costs=state.costs.slice(),cats=[...new Set(costs.map(c=>c.category))];
+ const exp=costs.filter(c=>c.category!=='Kaution'),dep=costs.filter(c=>c.category==='Kaution');
+ const spent=exp.reduce((n,c)=>n+costPaid(c),0),depositOpen=dep.reduce((n,c)=>n+costPaid(c),0);
+ const payers=state.people.filter(p=>contributionPaid(p.id)!==0||(p.active&&contributionDue(p)>0));
+ const contributions=state.people.reduce((n,p)=>n+contributionPaid(p.id),0);
+ const grants=finance().events.filter(e=>e.kind==='grant').reduce((n,e)=>n+e.amount,0);
+ const otherIncome=state.income.filter(x=>!x.personId).reduce((n,x)=>n+x.amount,0);
+ const income=contributions+grants+otherIncome;
+ return {cats,exp,dep,spent,depositOpen,payers,contributions,grants,otherIncome,income,balance:income-spent-depositOpen};
+}
+/* Belegnummern in der Reihenfolge der Abrechnung */
+function rxNumbered(){
+ const r=rxReport(),list=[],seen=new Set();
+ const push=(d,pos)=>{if(seen.has(d.id))return;seen.add(d.id);list.push({doc:d,pos,no:'B'+(list.length+1)})};
+ for(const cat of r.cats)for(const c of state.costs.filter(x=>x.category===cat))rxForCost(c).forEach(d=>push(d,c.title));
+ for(const e of rxOtherEvents())rxDocsFor('event:'+e.id).forEach(d=>push(d,e.title));
+ (state.docs||[]).filter(d=>d.ref&&!seen.has(d.id)&&rxRefTitle(d.ref)).forEach(d=>push(d,rxRefTitle(d.ref)));
+ return list;
+}
+function rxChips(docs,edit){
+ return docs.map(d=>`<span class="rx-chip"><button type="button" data-action="open" data-id="${esc(d.id)}" title="${esc(d.filename||d.name)}">${lgIcon(d.type==='application/pdf'?'file':'doc','cb-ic')}<span>${esc(d.name)}</span></button>${edit?`<button type="button" class="rx-x" data-action="rxunlink" data-id="${esc(d.id)}" aria-label="${esc(L('Beleg von der Position lösen','Scollega ricevuta'))}">×</button>`:''}</span>`).join('');
+}
+function reportHTML(){
+ const r=rxReport(),edit=canEditTrip(),s=rxSettings(),nums=rxNumbered();
+ const needRx=r.exp.filter(c=>costPaid(c)>0),withRx=needRx.filter(c=>rxForCost(c).length).length;
+ const head=`<div class="card rx-head"><div class="row"><div><h2>${L('Abrechnung','Rendiconto')}</h2><p class="small muted">${L('Am Ende der Fahrt: alle Ausgaben mit Beleg, alle Einnahmen, der Saldo – als PDF für die Schulleitung, die Belege hängen hinten an.','A fine viaggio: tutte le spese con ricevuta, le entrate e il saldo – in PDF per la dirigenza, con le ricevute in allegato.')}</p></div>${edit?btn(lgIcon('upload','cb-ic')+L('Ausgabe + Beleg erfassen','Registra spesa + ricevuta'),'rxexpense','','primary'):''}</div>
+<div class="finance-kpis rx-kpis">${stat(L('Einnahmen','Entrate'),euro(r.income),L('Beiträge und Förderung','Quote e contributi'))}${stat(L('Ausgaben','Uscite'),euro(r.spent),L('an Anbieter bezahlt, netto','pagato ai fornitori, netto'))}${stat(r.balance>=0?L('Überschuss','Avanzo'):L('Fehlbetrag','Disavanzo'),euro(Math.abs(r.balance)),r.depositOpen?L('Kaution noch offen: ','Cauzione ancora aperta: ')+euro(r.depositOpen):L('Einnahmen minus Ausgaben','Entrate meno uscite'))}</div>
+<div class="rx-progress"><span>${L('Positionen mit Beleg','Voci con ricevuta')}</span><b>${withRx} / ${needRx.length}</b><div class="bar"><i style="width:${needRx.length?withRx/needRx.length*100:0}%"></i></div></div>
+<div class="rx-pdf"><label class="checkline"><input type="checkbox" id="rx-names"> ${L('Beiträge namentlich auflisten','Elenca le quote per nome')}</label><label class="checkline"><input type="checkbox" id="rx-attach" checked> ${L('Belege als Anhang einfügen','Allega le ricevute')} (${nums.length})</label><div class="actions">${btn(L('Abrechnung als PDF','Rendiconto in PDF'),'rxpdf','','primary')}${edit?btn(L('Kopfangaben','Intestazione'),'rxsettings'):''}</div><p class="small muted">${esc([s.school,s.lead?L('Fahrtleitung: ','Responsabile: ')+s.lead:''].filter(Boolean).join(' · ')||L('Schule und Fahrtleitung unter „Kopfangaben“ eintragen.','Inserisci scuola e responsabile in “Intestazione”.'))}</p></div></div>`;
+ const row=(title,sub,planned,paid,docs,ref)=>`<div class="rx-row${paid>0&&!docs.length?' missing':''}"><div class="rx-t"><b>${esc(title)}</b><small>${esc(sub)}</small></div><div class="rx-n">${planned!=null?`<small>${L('geplant','previsto')} ${euro(planned)}</small>`:''}<b>${euro(paid)}</b></div><div class="rx-docs">${rxChips(docs,edit)}${edit?btn('+ '+L('Beleg','Ricevuta'),'rxadd',ref,'rx-add'):''}${paid>0&&!docs.length?`<span class="pill warn">${L('Beleg fehlt','Ricevuta mancante')}</span>`:''}</div></div>`;
+ const exp=r.cats.filter(cat=>cat!=='Kaution').map(cat=>{
+  const cs=state.costs.filter(c=>c.category===cat);if(!cs.length)return '';
+  const sum=cs.reduce((n,c)=>n+costPaid(c),0);
+  return `<div class="rx-cat"><div class="rx-cat-h"><h3>${esc(tr?tr(cat):cat)}</h3><b>${euro(sum)}</b></div>${cs.map(c=>{const ev=rxCostEvents(c);return row(c.title,ev.length?ev.length+' '+L(ev.length===1?'Zahlung':'Zahlungen',ev.length===1?'pagamento':'pagamenti'):(c.status||''),c.amount,costPaid(c),rxForCost(c),'cost:'+c.id)}).join('')}</div>`;
+ }).join('');
+ const dep=r.dep.length?`<div class="rx-cat"><div class="rx-cat-h"><h3>${L('Kaution','Cauzione')}</h3><b>${euro(r.depositOpen)} ${L('offen','aperta')}</b></div>${r.dep.map(c=>row(c.title,L('rückzahlbar','rimborsabile'),c.amount,costPaid(c),rxForCost(c),'cost:'+c.id)).join('')}</div>`:'';
+ const inc=`<div class="rx-cat"><div class="rx-cat-h"><h3>${L('Beiträge','Quote')}</h3><b>${euro(r.contributions)}</b></div><p class="small muted">${L('Bestätigte Einzahlungen abzüglich Rückzahlungen, aus „Beiträge“.','Versamenti confermati meno rimborsi, da “Quote”.')}</p></div>`+
+  (rxOtherEvents().length?`<div class="rx-cat"><div class="rx-cat-h"><h3>${L('Förderung und Auslagen','Contributi e anticipazioni')}</h3></div>${rxOtherEvents().map(e=>row(e.title,kindLabel(e.kind)+(e.date?' · '+date(e.date):''),null,Math.abs(e.amount),rxDocsFor('event:'+e.id),'event:'+e.id)).join('')}</div>`:'');
+ return head+`<div class="card"><h2>${L('Ausgaben','Uscite')}</h2>${exp}${dep}</div><div class="card"><h2>${L('Einnahmen','Entrate')}</h2>${inc}</div>`;
+}
+/* Datei vorbereiten: Fotos verkleinern (max. 2000 px, JPEG), PDFs unverändert */
+async function rxPrepare(file){
+ if(file.type==='application/pdf'){if(file.size>20*1024*1024)throw Error(L(`„${file.name}“ ist größer als 20 MB.`,`“${file.name}” supera 20 MB.`));return {type:file.type,blob:file,filename:file.name}}
+ if(!/^image\//.test(file.type)&&!/\.(jpe?g|png|heic|heif|webp)$/i.test(file.name))throw Error(L(`„${file.name}“: bitte PDF oder Foto.`,`“${file.name}”: PDF o foto.`));
+ let bmp;try{bmp=await createImageBitmap(file)}catch{throw Error(L(`„${file.name}“ lässt sich nicht öffnen. Bitte als JPG oder PDF speichern.`,`Impossibile aprire “${file.name}”. Salvalo come JPG o PDF.`))}
+ const k=Math.min(1,2000/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));
+ const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bmp,0,0,c.width,c.height);
+ const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));if(!blob)throw Error(L('Foto konnte nicht verarbeitet werden.','Impossibile elaborare la foto.'));
+ return {type:'image/jpeg',blob,filename:String(file.name).replace(/\.[^.]+$/,'')+'.jpg'};
+}
+async function rxMakeDocs(files,ref,label){
+ const out=[];
+ for(const f of files){const p=await rxPrepare(f);out.push({id:uid(),name:(label||L('Beleg','Ricevuta'))+(files.length>1?' '+(out.length+1):''),filename:p.filename,type:p.type,size:p.blob.size,data:await readB64(p.blob),scope:'teacher',category:'Beleg',ref})}
+ return out;
+}
+let rxPendingRef='';
+function rxInput(){
+ let u=document.getElementById('rx-upload');
+ if(!u){u=document.createElement('input');u.type='file';u.id='rx-upload';u.hidden=true;u.multiple=true;u.accept='application/pdf,image/*';document.body.append(u);
+  u.onchange=async e=>{const files=[...e.target.files],ref=rxPendingRef;e.target.value='';if(!files.length||!ref)return;
+   try{toast(L('Beleg wird gespeichert …','Salvataggio ricevuta …'));const docs=await rxMakeDocs(files,ref,L('Beleg','Ricevuta')+' · '+rxRefTitle(ref));await financeMutation(()=>{state.docs.push(...docs)});toast(L('Beleg gespeichert.','Ricevuta salvata.'))}catch(err){toast(err.message||L('Beleg nicht gespeichert.','Ricevuta non salvata.'))}}}
+ return u;
+}
+actions.rxadd=ref=>{if(!canEditTrip())return;rxPendingRef=ref;rxInput().click()};
+actions.rxunlink=async id=>{
+ const d=state.docs.find(x=>x.id===id);if(!d||!canEditTrip())return;
+ if(!localizedConfirm(L('Beleg von dieser Position lösen? Die Datei bleibt unter „Dokumente“.','Scollegare la ricevuta? Il file resta in “Documenti”.')))return;
+ await financeMutation(()=>{delete d.ref});
+};
+actions.rxsettings=()=>{
+ const s=rxSettings();
+ showForm(L('Kopfangaben der Abrechnung','Intestazione del rendiconto'),
+  field(L('Schule','Scuola'),'school',s.school,'text','maxlength="150"')+field(L('Fahrtleitung','Responsabile del viaggio'),'lead',s.lead,'text','maxlength="200"')+field(L('Ort für die Unterschrift','Luogo per la firma'),'place',s.place,'text','maxlength="80"'),
+  async f=>{state.settings.report={school:String(f.school||'').trim(),lead:String(f.lead||'').trim(),place:String(f.place||'').trim()}});
+};
+actions.rxexpense=(pre)=>{
+ if(!canEditTrip())return;
+ const order=['Vor Ort','Programm','Verpflegung','Sonstiges'],rk=c=>{const i=order.indexOf(c.category);return i<0?9:i};
+ const cs=state.costs.filter(c=>c.category!=='Kaution').sort((a,b)=>rk(a)-rk(b));
+ showForm(L('Ausgabe + Beleg erfassen','Registra spesa + ricevuta'),
+  `<label class="field">${L('Kostenposition','Voce di costo')}<select name="costId" id="rx-cost">${cs.map(c=>`<option value="${esc(c.id)}" ${pre===c.id?'selected':''}>${esc(c.title)}</option>`).join('')}<option value="__new" ${cs.length?'':'selected'}>${L('+ Neue Position …','+ Nuova voce …')}</option></select></label>
+<div id="rx-new" hidden><div class="fields">${field(L('Neue Position','Nuova voce'),'newTitle','','text','maxlength="200"')}${select(L('Kategorie','Categoria'),'newCategory','Vor Ort',['Vor Ort','Programm','Verpflegung','Bahn','Unterkunft','Ortstaxe','Sonstiges'])}</div></div>`+
+  field(L('Wofür? (z. B. Vaporetto-Tageskarten)','Per cosa? (es. biglietti vaporetto)'),'title','','text','required maxlength="200"')+paymentFields()+
+  `<div class="field">${L('Beleg','Ricevuta')}<label class="rx-file button">${lgIcon('upload','cb-ic')}<span id="rx-file-t">${L('Beleg fotografieren oder Datei wählen','Fotografa la ricevuta o scegli un file')}</span><input type="file" id="rx-file" accept="application/pdf,image/*" multiple></label></div><p class="small muted">${L('Am Handy öffnet sich die Kamera oder die Fotoauswahl. Fotos werden verkleinert gespeichert.','Sul telefono si apre la fotocamera o la galleria. Le foto vengono ridimensionate.')}</p>`,
+  async f=>{
+   let costId=f.costId;
+   if(costId==='__new'){const t=String(f.newTitle||'').trim();if(!t)throw Error(L('Bitte die neue Position benennen.','Inserisci il nome della nuova voce.'));costId=uid();state.costs.push({id:costId,title:t,category:f.newCategory||'Vor Ort',amount:null,paid:0,due:'',status:'Gebucht',note:''})}
+   if(!state.costs.some(c=>c.id===costId))throw Error(L('Bitte Kostenposition wählen.','Seleziona la voce di costo.'));
+   const files=[...(document.getElementById('rx-file')?.files||[])];
+   const ev={kind:'vendor',title:String(f.title||'').trim(),amount:-money(f.amount),date:f.date,note:f.note||'',costId};
+   addFinanceEvent(ev);
+   const id=finance().events[finance().events.length-1].id;
+   if(files.length)state.docs.push(...await rxMakeDocs(files,'event:'+id,L('Beleg','Ricevuta')+' · '+ev.title));
+   validate(state);
+  });
+ const sel=document.getElementById('rx-cost'),nw=document.getElementById('rx-new'),upd=()=>{nw.hidden=sel.value!=='__new'};sel.onchange=upd;upd();
+ const am=document.querySelector('#form [name=amount]');if(am){am.value='';am.inputMode='decimal'}
+ const fi=document.getElementById('rx-file');fi.onchange=()=>{const n=fi.files.length;document.getElementById('rx-file-t').textContent=n?(n===1?fi.files[0].name:n+' '+L('Dateien gewählt','file scelti')):L('Beleg fotografieren oder Datei wählen','Fotografa la ricevuta o scegli un file');fi.closest('.rx-file').classList.toggle('has',!!n)};
+};
+/* ---------- Abrechnungs-PDF ---------- */
+let rxPdfLibLoading=null;
+function rxLoadPdfLib(){
+ if(window.PDFLib)return Promise.resolve();
+ return rxPdfLibLoading||(rxPdfLibLoading=new Promise((res,rej)=>{const s=document.createElement('script');s.src='assets/pdf-lib-1.17.1.min.js';s.onload=()=>res();s.onerror=()=>{rxPdfLibLoading=null;rej(Error(L('PDF-Werkzeug konnte nicht geladen werden. Bitte mit Internet erneut versuchen.','Impossibile caricare lo strumento PDF. Riprova con internet.')))};document.head.append(s)}));
+}
+function buildReportPDF({names,attachPages,language,footer}){
+ const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:'mm',format:'a4',compress:true}),it=language==='it',T=(a,b)=>it?b:a,C=x=>pdfClean(String(x??'').replace(/ı/g,'i').replace(/İ/g,'I'));
+ const r=rxReport(),s=rxSettings(),nums=rxNumbered(),INK=PC.ink,MUTE=PC.mute,LINE=PC.line,SOFT=PC.soft;
+ const E=c=>pdfClean(euro(c));
+ let y=0;
+ const sub=T('Studienfahrt Bologna & Venedig · 14.-19.03.2027','Viaggio Bologna e Venezia · 14-19/03/2027');
+ const top=()=>{pdf.setFillColor(...PC.teal);pdf.rect(0,0,210,13,'F');pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.text(T('Abrechnung','Rendiconto'),16,8.4);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text(C(sub),194,8.4,{align:'right'});y=22};
+ const need=h=>{if(y+h>278){pdf.addPage();top()}};
+ const h2=t=>{need(16);y+=3;pdf.setFont('helvetica','bold');pdf.setFontSize(12.5);pdf.setTextColor(...INK);pdf.text(C(t),16,y);y+=3;pdf.setDrawColor(...PC.teal);pdf.setLineWidth(.5);pdf.line(16,y,194,y);y+=6};
+ const txt=(t,x,yy,o={})=>{pdf.setFont('helvetica',o.b?'bold':'normal');pdf.setFontSize(o.s||9);pdf.setTextColor(...(o.c||INK));pdf.text(C(t),x,yy,o.r?{align:'right'}:undefined)};
+ pdfBand(pdf,it,T('Abrechnung','Rendiconto'),sub,s.school||T('Studienfahrt 2027','Viaggio 2027'));y=40;
+ /* Kopf */
+ const meta=[[T('Schule','Scuola'),s.school||'-'],[T('Fahrt','Viaggio'),T('Bologna & Venedig','Bologna e Venezia')],[T('Zeitraum','Periodo'),'14.-19.03.2027'],[T('Fahrtleitung','Responsabile'),s.lead||'-'],[T('Teilnehmende','Partecipanti'),`${activePeople().filter(p=>p.role!=='Lehrkraft').length} ${T('Schülerinnen und Schüler','studenti')} · ${activePeople().filter(p=>p.role==='Lehrkraft').length} ${T('Lehrkräfte','docenti')}`],[T('Stand','Stato al'),new Date().toLocaleDateString(it?'it-IT':'de-DE')]];
+ meta.forEach(([k,v])=>{txt(k,16,y,{c:MUTE,s:8.5});const lines=pdf.splitTextToSize(C(v),130);txt(lines[0],56,y,{s:9.5});y+=5.6});
+ /* Zusammenfassung */
+ y+=4;pdf.setFillColor(...SOFT);pdf.roundedRect(16,y,178,34,3,3,'F');
+ const box=(x,label,val,note,col)=>{txt(label,x,y+8,{c:MUTE,s:8});txt(val,x,y+17,{b:1,s:15,c:col||INK});txt(note,x,y+24,{c:MUTE,s:7.5})};
+ box(22,T('Einnahmen','Entrate'),E(r.income),T('Beiträge und Förderung','Quote e contributi'));
+ box(82,T('Ausgaben','Uscite'),E(r.spent),T('an Anbieter bezahlt, netto','pagato ai fornitori, netto'));
+ box(142,r.balance>=0?T('Überschuss','Avanzo'):T('Fehlbetrag','Disavanzo'),E(Math.abs(r.balance)),r.depositOpen?T('Kaution offen: ','Cauzione aperta: ')+E(r.depositOpen):T('Einnahmen minus Ausgaben','Entrate meno uscite'),r.balance>=0?[22,118,74]:[178,58,40]);
+ y+=44;
+ /* Ausgaben */
+ const noOf=d=>(nums.find(n=>n.doc.id===d.id)||{}).no||'';
+ h2(T('Ausgaben nach Kostenposition','Uscite per voce di costo'));
+ const colHead=()=>{txt(T('Position','Voce'),16,y,{c:MUTE,s:7.5,b:1});txt(T('Geplant','Previsto'),132,y,{c:MUTE,s:7.5,b:1,r:1});txt(T('Bezahlt','Pagato'),158,y,{c:MUTE,s:7.5,b:1,r:1});txt(T('Belege','Ricevute'),164,y,{c:MUTE,s:7.5,b:1});y+=2;pdf.setDrawColor(...LINE);pdf.setLineWidth(.2);pdf.line(16,y,194,y);y+=4.5};
+ colHead();
+ for(const cat of r.cats.filter(c=>c!=='Kaution')){
+  const cs=state.costs.filter(c=>c.category===cat);if(!cs.length)continue;need(14);
+  txt(it&&typeof tr==='function'?tr(cat):cat,16,y,{b:1,s:9.5,c:PC.teal});txt(E(cs.reduce((n,c)=>n+costPaid(c),0)),158,y,{b:1,s:9,r:1,c:PC.teal});y+=5.5;
+  for(const c of cs){
+   const lines=pdf.splitTextToSize(C(c.title),105),ds=rxForCost(c).map(noOf).filter(Boolean),bl=pdf.splitTextToSize(ds.join(', ')||(costPaid(c)>0?T('fehlt','manca'):'-'),30);
+   need(Math.max(lines.length,bl.length)*4.2+2);
+   lines.forEach((l,i)=>txt(l,19,y+i*4.2,{s:8.8}));txt(c.amount==null?'-':E(c.amount),132,y,{s:8.8,r:1,c:MUTE});txt(E(costPaid(c)),158,y,{s:8.8,r:1});
+   bl.forEach((l,i)=>txt(l,164,y+i*4.2,{s:8.3,c:ds.length?INK:[178,58,40]}));
+   y+=Math.max(lines.length,bl.length)*4.2+1.6;
+  }
+  y+=1.5;
+ }
+ need(10);pdf.setDrawColor(...INK);pdf.setLineWidth(.3);pdf.line(16,y-2,194,y-2);txt(T('Summe Ausgaben','Totale uscite'),19,y+2.5,{b:1,s:9.5});txt(E(r.spent),158,y+2.5,{b:1,s:9.5,r:1});y+=10;
+ if(r.dep.length){need(14);txt(T('Kaution (rückzahlbar, nicht in den Ausgaben)','Cauzione (rimborsabile, esclusa dalle uscite)'),16,y,{b:1,s:9.5,c:PC.teal});y+=5.5;r.dep.forEach(c=>{const ds=rxForCost(c).map(noOf).filter(Boolean);need(6);txt(pdf.splitTextToSize(C(c.title),105)[0],19,y,{s:8.8});txt(E(costPaid(c))+' '+T('offen','aperta'),158,y,{s:8.8,r:1});txt(ds.join(', ')||'-',164,y,{s:8.3});y+=5.6});y+=3}
+ /* Einnahmen */
+ h2(T('Einnahmen','Entrate'));
+ const inRow=(a,b,ds)=>{need(7);txt(a,19,y,{s:9});txt(b,158,y,{s:9,r:1});if(ds)txt(ds,164,y,{s:8.3});y+=5.8};
+ inRow(T('Beiträge der Teilnehmenden','Quote dei partecipanti')+` (${r.payers.length} ${T('Personen','persone')})`,E(r.contributions));
+ finance().events.filter(e=>e.kind==='grant').forEach(e=>inRow(T('Förderung: ','Contributo: ')+e.title+(e.date?' · '+date(e.date):''),E(e.amount),rxDocsFor('event:'+e.id).map(noOf).join(', ')||'-'));
+ if(r.otherIncome)inRow(T('Sonstige Eingänge','Altre entrate'),E(r.otherIncome));
+ need(10);pdf.setDrawColor(...INK);pdf.setLineWidth(.3);pdf.line(16,y-2,194,y-2);txt(T('Summe Einnahmen','Totale entrate'),19,y+2.5,{b:1,s:9.5});txt(E(r.income),158,y+2.5,{b:1,s:9.5,r:1});y+=10;
+ const adv=finance().events.filter(e=>e.kind==='advance');
+ if(adv.length){need(12);txt(T('Auslagenerstattungen (bereits in den Ausgaben enthalten)','Rimborsi di anticipazioni (già incluse nelle uscite)'),16,y,{b:1,s:9,c:MUTE});y+=5.2;adv.forEach(e=>inRow(e.title+(e.date?' · '+date(e.date):''),E(Math.abs(e.amount)),rxDocsFor('event:'+e.id).map(noOf).join(', ')||'-'));y+=2}
+ /* Ergebnis */
+ need(22);pdf.setFillColor(...SOFT);pdf.roundedRect(16,y,178,r.depositOpen?24:17,3,3,'F');
+ txt(T('Einnahmen','Entrate'),22,y+6.5,{s:9});txt(E(r.income),120,y+6.5,{s:9,r:1});txt(T('Ausgaben','Uscite'),22,y+11.5,{s:9});txt('- '+E(r.spent),120,y+11.5,{s:9,r:1});
+ let yy=y+11.5;if(r.depositOpen){yy+=5;txt(T('Kaution noch nicht zurück','Cauzione non ancora restituita'),22,yy,{s:9});txt('- '+E(r.depositOpen),120,yy,{s:9,r:1})}
+ txt(r.balance>=0?T('Überschuss','Avanzo'):T('Fehlbetrag','Disavanzo'),190,y+6.5,{s:8.5,r:1,c:MUTE});txt(E(Math.abs(r.balance)),190,y+13,{b:1,s:13,r:1,c:r.balance>=0?[22,118,74]:[178,58,40]});
+ y+=(r.depositOpen?24:17)+8;
+ /* Beiträge je Person */
+ if(names){
+  h2(T('Beiträge je Person','Quote per persona'));
+  txt(T('Person','Persona'),16,y,{c:MUTE,s:7.5,b:1});txt(T('Soll','Dovuto'),132,y,{c:MUTE,s:7.5,b:1,r:1});txt(T('Bezahlt','Pagato'),158,y,{c:MUTE,s:7.5,b:1,r:1});txt(T('Differenz','Differenza'),194,y,{c:MUTE,s:7.5,b:1,r:1});y+=2;pdf.setDrawColor(...LINE);pdf.line(16,y,194,y);y+=4.5;
+  state.people.filter(p=>p.active||contributionPaid(p.id)!==0).slice().sort(comparePeople).forEach((p,i)=>{need(5.5);const due=contributionDue(p),paid=contributionPaid(p.id),gap=paid-due;if(i%2){pdf.setFillColor(...SOFT);pdf.rect(16,y-3.6,178,5.2,'F')}txt(displayName(p)+(p.active?'':' ('+T('zurückgetreten','ritirato')+')'),19,y,{s:8.6});txt(E(due),132,y,{s:8.6,r:1});txt(E(paid),158,y,{s:8.6,r:1});txt(gap===0?'0':(gap>0?'+':'-')+E(Math.abs(gap)),194,y,{s:8.6,r:1,c:gap<0?[178,58,40]:INK});y+=5.2});
+  y+=4;
+ }
+ /* Belegverzeichnis */
+ h2(T('Belegverzeichnis','Elenco delle ricevute'));
+ if(!nums.length){txt(T('Keine Belege hinterlegt.','Nessuna ricevuta.'),19,y,{c:MUTE});y+=7}
+ nums.forEach(n=>{need(5.6);txt(n.no,19,y,{b:1,s:8.6});txt(pdf.splitTextToSize(C(n.doc.name),78)[0],32,y,{s:8.6});txt(pdf.splitTextToSize(C(n.pos),58)[0],114,y,{s:8.2,c:MUTE});const pg=attachPages&&attachPages[n.doc.id];txt(pg?T('Anhang S. ','Allegato p. ')+pg:(attachPages?T('nicht eingebettet','non incorporata'):''),194,y,{s:8,r:1,c:MUTE});y+=5.4});
+ /* Unterschrift */
+ need(40);y+=14;pdf.setDrawColor(...INK);pdf.setLineWidth(.3);pdf.line(16,y,90,y);pdf.line(110,y,194,y);
+ txt((s.place?s.place+', ':'')+T('Ort, Datum','Luogo, data'),16,y+5,{s:8,c:MUTE});txt(T('Unterschrift Fahrtleitung','Firma del responsabile')+(s.lead?' ('+s.lead+')':''),110,y+5,{s:8,c:MUTE});
+ if(footer){const n=pdf.getNumberOfPages();for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...MUTE);pdf.text(C(`’namo · ${T('Abrechnung','Rendiconto')} · ${T('Seite','Pagina')} ${i} ${T('von','di')} ${n}`),194,290,{align:'right'})}}
+ return pdf;
+}
+function rxStampFooter(doc,PDFLib,font,total,reportPages){
+ doc.getPages().forEach((p,i)=>{const {width}=p.getSize(),t=pdfClean(`’namo · ${i<reportPages?'Abrechnung':'Anhang'} · Seite ${i+1} von ${total}`);p.drawText(t,{x:width-45-font.widthOfTextAtSize(t,7),y:16,size:7,font,color:PDFLib.rgb(.45,.48,.52)})});
+}
+actions.rxpdf=async()=>{
+ const names=!!document.getElementById('rx-names')?.checked,attach=!!document.getElementById('rx-attach')?.checked,language=uiLanguage;
+ const b=document.querySelector('[data-action="rxpdf"]');if(b)b.disabled=true;
+ try{
+  if(!window.jspdf)throw Error(L('PDF-Erzeugung nicht verfügbar.','Generazione PDF non disponibile.'));
+  const nums=rxNumbered();let out;
+  if(!attach||!nums.length){out=buildReportPDF({names,attachPages:null,language,footer:true}).output('blob')}
+  else{
+   toast(L('Belege werden geladen …','Caricamento ricevute …'));
+   await rxLoadPdfLib();const P=window.PDFLib;
+   const att=await P.PDFDocument.create(),font=await att.embedFont(P.StandardFonts.Helvetica),bold=await att.embedFont(P.StandardFonts.HelveticaBold);
+   const A4=[595.28,841.89],starts={},fails=[];
+   const header=(page,n,part)=>{page.drawRectangle({x:0,y:A4[1]-34,width:A4[0],height:34,color:P.rgb(11/255,127/255,142/255)});page.drawText(pdfClean(`Beleg ${n.no}`),{x:45,y:A4[1]-22,size:12,font:bold,color:P.rgb(1,1,1)});page.drawText(pdfClean(`${String(n.doc.name).includes(n.pos)?n.doc.name:n.doc.name+' · '+n.pos}${part?' · '+part:''}`.replace(/ı/g,'i')).slice(0,110),{x:110,y:A4[1]-21.5,size:8.5,font,color:P.rgb(1,1,1)})};
+   const area={x:30,y:40,w:A4[0]-60,h:A4[1]-34-40-14};
+   for(const n of nums){
+    try{
+     const blob=await documentBlob(n.doc),bytes=new Uint8Array(await blob.arrayBuffer());
+     if(n.doc.type==='application/pdf'){
+      const src=await P.PDFDocument.load(bytes,{ignoreEncryption:true}),pages=await att.embedPdf(src,src.getPageIndices());
+      pages.forEach((ep,i)=>{const pg=att.addPage(A4);if(i===0)starts[n.doc.id]=att.getPageCount();header(pg,n,pages.length>1?`${i+1}/${pages.length}`:'');const k=Math.min(area.w/ep.width,area.h/ep.height);pg.drawRectangle({x:area.x+(area.w-ep.width*k)/2-.5,y:area.y+(area.h-ep.height*k)/2-.5,width:ep.width*k+1,height:ep.height*k+1,borderColor:P.rgb(.85,.87,.9),borderWidth:.5});pg.drawPage(ep,{x:area.x+(area.w-ep.width*k)/2,y:area.y+(area.h-ep.height*k)/2,width:ep.width*k,height:ep.height*k})});
+     }else{
+      const img=n.doc.type==='image/png'?await att.embedPng(bytes):await att.embedJpg(bytes),pg=att.addPage(A4);starts[n.doc.id]=att.getPageCount();header(pg,n,'');
+      const k=Math.min(area.w/img.width,area.h/img.height,1.6);pg.drawImage(img,{x:area.x+(area.w-img.width*k)/2,y:area.y+area.h-img.height*k,width:img.width*k,height:img.height*k});
+     }
+    }catch(e){fails.push(n);const pg=att.addPage(A4);starts[n.doc.id]=att.getPageCount();header(pg,n,'');pg.drawText(pdfClean(L('Dieser Beleg konnte nicht eingebettet werden (z. B. geschütztes PDF).','Questa ricevuta non è stata incorporata (es. PDF protetto).')),{x:45,y:A4[1]-80,size:11,font,color:P.rgb(.3,.3,.3)});pg.drawText(pdfClean(L('Original: ','Originale: ')+(n.doc.filename||n.doc.name)),{x:45,y:A4[1]-98,size:10,font,color:P.rgb(.3,.3,.3)})}
+   }
+   /* Zweimal bauen: erst Seitenzahl des Berichts ermitteln, dann mit Seitenangaben „Anhang S. …“ */
+   const first=buildReportPDF({names,attachPages:{},language}),R=first.getNumberOfPages(),pages={};
+   for(const id in starts)pages[id]=R+starts[id];
+   let rep=buildReportPDF({names,attachPages:pages,language});if(rep.getNumberOfPages()!==R)rep=buildReportPDF({names,attachPages:null,language});
+   const doc=await P.PDFDocument.load(rep.output('arraybuffer'));
+   const copied=await doc.copyPages(att,att.getPageIndices());copied.forEach(p=>doc.addPage(p));
+   rxStampFooter(doc,P,await doc.embedFont(P.StandardFonts.Helvetica),doc.getPageCount(),rep.getNumberOfPages());
+   doc.setTitle('Abrechnung Studienfahrt Bologna & Venedig 2027');doc.setCreator("’namo");
+   out=new Blob([await doc.save()],{type:'application/pdf'});
+   if(fails.length)toast(L(`${fails.length} Beleg(e) konnten nicht eingebettet werden – im Anhang markiert.`,`${fails.length} ricevuta/e non incorporate – segnalate nell’allegato.`));
+  }
+  download(out,'Abrechnung-Studienfahrt-2027.pdf');
+  if(!attach||!nums.length)toast(L('Abrechnung erstellt.','Rendiconto creato.'));
+ }catch(e){toast(e.message||L('PDF konnte nicht erstellt werden.','Impossibile creare il PDF.'))}finally{if(b)b.disabled=false}
+};
+/* Einbindung: Unterseite „Abrechnung“ in Finanzen; Knopf in „Unterwegs“ */
+{
+ const ft=financeTabs;
+ financeTabs=function(){const h=ft();return h.replace(/<\/div>$/,btn(L('Abrechnung','Rendiconto'),'financepage','report',financePage==='report'?'primary':'')+'</div>')};
+ const fp=actions.financepage;
+ actions.financepage=page=>{if(page==='report'){financePage='report';tab='Finanzen';render();return}return fp(page)};
+ const fv=views.Finanzen;
+ views.Finanzen=()=>financePage==='report'?`<div class="finance-shell">${financeTabs()}${reportHTML()}</div>`:fv();
+ const tt=typeof tripToolsCard==='function'?tripToolsCard:null;
+ if(tt)tripToolsCard=function(){const h=tt();if(!h||!canEditTrip())return h;const i=h.lastIndexOf('</div></div>');return i<0?h:h.slice(0,i)+btn(L('Ausgabe + Beleg','Spesa + ricevuta'),'rxexpense')+h.slice(i)};
+ Object.assign(translations,{'Abrechnung':'Rendiconto'});
+}
+
+/* --- Aktuelle Info: sehen, wer sie schon gesehen hat und wer noch nicht --- */
+function annSeenHTML(a,s){
+ const wa=p=>p.phone?`<a class="cbtn wa" href="${esc(waHref(p.phone,L('Hallo ','Ciao ')+(nameParts(p.name).first||p.name)+L(', bitte schau kurz in ’namo. – es gibt eine neue Info: ','! Dai un’occhiata a ’namo., c’è un nuovo avviso: ')+a.text))}" target="_blank" rel="noopener noreferrer">${lgIcon('chat','cb-ic')}<span>WhatsApp</span></a>`:`<span class="small muted">${L('keine Nummer','nessun numero')}</span>`;
+ const seen=s.seen.slice().sort(comparePeople),miss=s.missing.slice().sort(comparePeople);
+ return `<details class="ann-seen"><summary>${L('Wer hat es gesehen?','Chi l’ha visto?')} <span class="pill ${miss.length?'':'ok'}">${seen.length}/${s.st.length}</span></summary>
+<div class="seen-group"><h4>✓ ${L('Gesehen','Visto')} · ${seen.length}</h4>${seen.length?`<div class="seen-chips">${seen.map(p=>`<span class="seen-chip">${esc(displayName(p))}</span>`).join('')}</div>`:`<p class="small muted">${L('Noch niemand.','Ancora nessuno.')}</p>`}</div>
+${miss.length?`<div class="seen-group miss"><h4>${L('Noch nicht gesehen','Non ancora visto')} · ${miss.length}</h4>${miss.map(p=>`<div class="count-row"><b>${esc(displayName(p))}</b>${wa(p)}</div>`).join('')}</div>`:`<p class="small ok-text">${L('Alle haben die Info gesehen.','Tutti hanno visto l’avviso.')}</p>`}</details>`;
+}
+
+/* --- Einstellungen: Designs und Schriften als Pillen, Schalter statt Häkchen, Farbmodus und Sprache als Segmente --- */
+{
+ const pr=actions.preferences;
+ actions.preferences=(...args)=>{
+  const r=pr(...args);
+  try{
+   const f=document.getElementById('prefform');if(!f||f.dataset.u22)return r;f.dataset.u22='1';f.classList.add('prefs22');
+   f.querySelectorAll('.font-pick .fp-sample').forEach(e=>{e.textContent='Aa'});
+   f.querySelectorAll('label.checkline').forEach(l=>{
+    const inp=l.querySelector('input[type=checkbox]');if(!inp)return;
+    const desc=l.querySelector('.small');const title=[...l.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' ').trim();
+    [...l.childNodes].filter(n=>n.nodeType===3).forEach(n=>n.remove());
+    const t=document.createElement('span');t.className='tg-t';t.innerHTML=`<b>${esc(title)}</b>`;if(desc){desc.remove();t.append(desc)}
+    l.prepend(t);inp.classList.add('switch');inp.setAttribute('role','switch');l.classList.add('toggle-row');
+   });
+   const seg=sel=>{
+    if(!sel||sel.dataset.seg)return;sel.dataset.seg='1';
+    const box=document.createElement('div');box.className='seg';box.setAttribute('role','radiogroup');
+    [...sel.options].forEach(o=>{const b=document.createElement('button');b.type='button';b.textContent=o.textContent.replace(/\s*\(.*\)$/,'').replace('Immer dunkel',L('Dunkel','Scuro'));b.setAttribute('role','radio');
+     const on=()=>{box.querySelectorAll('button').forEach(x=>{const a=x===b;x.classList.toggle('on',a);x.setAttribute('aria-checked',a)})};
+     if(o.selected)on();b.onclick=()=>{sel.value=o.value;sel.dispatchEvent(new Event('change',{bubbles:true}));on()};box.append(b)});
+    sel.hidden=true;sel.after(box);
+   };
+   seg(f.querySelector('#pref-theme'));seg(f.querySelector('select[name=language]'));
+   const hint=f.querySelector('.style-pick')?.parentElement?.querySelector('.small.muted');if(hint)hint.textContent=L('Jedes Design gibt es hell und dunkel. Gilt auf allen deinen Geräten.','Ogni stile esiste chiaro e scuro. Vale su tutti i tuoi dispositivi.');
+  }catch{}
+  return r;
+ };
+}
+
+/* --- Unter-Navigation: aktiven Bereich auf dem Handy ins Bild schieben --- */
+{
+ const r=render;
+ render=function(){const out=r.apply(this,arguments);try{document.querySelectorAll('.section-nav').forEach(n=>{const b=n.querySelector('.primary,[aria-pressed="true"]');if(b&&n.scrollWidth>n.clientWidth)n.scrollLeft=Math.max(0,b.offsetLeft-n.offsetLeft-16)})}catch{}return out};
+}
+/* ===== Update 22 · Ende ===== */
 init().catch(e=>{document.querySelector('main').innerHTML='<div class="card"><h2>Verbindung nicht verfügbar.</h2><p>Bitte Internetverbindung und Supabase-Einrichtung prüfen und die Seite neu laden.</p></div>';console.error(e)});
 // Unterbindet weitere Schreibaktionen, während ein Serverstand gespeichert wird.
 document.addEventListener('click',e=>{if(cloudSaving&&e.target.closest('[data-action]')){e.preventDefault();e.stopImmediatePropagation();toast('Speichern läuft. Bitte kurz warten.')}},true);
