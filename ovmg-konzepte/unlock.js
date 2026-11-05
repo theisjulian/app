@@ -49,3 +49,12 @@ document.querySelector('#lock').addEventListener('click', async () => {
     const bytes = await load(); await show(bytes, key); keep.checked = true;
   } catch (e) { await keyDrop(); status.textContent = ''; } finally { button.disabled = false }
 })();
+
+/* Am Handy: Ist ein Entwurf geöffnet, entfällt diese Leiste – der Entwurf hat seine eigene mit „Zur Übersicht“. */
+frame.addEventListener('load', () => {
+  try {
+    const body = frame.contentDocument && frame.contentDocument.body; if (!body) return;
+    const sync = () => viewer.classList.toggle('is-concept', body.classList.contains('is-viewing'));
+    new MutationObserver(sync).observe(body, { attributes: true, attributeFilter: ['class'] }); sync();
+  } catch (e) { /* andere Herkunft: Leiste bleibt */ }
+});
