@@ -12,15 +12,27 @@ async function load() {
   const chunks = await Promise.all([1, 2, 3, 4, 5].map(async n => { const r = await fetch('./preview-' + String(n).padStart(2, '0') + '.bin', { cache: 'no-store' }); if (!r.ok) throw new Error('network'); return new Uint8Array(await r.arrayBuffer()) }));
   const bytes = new Uint8Array(chunks.reduce((n, b) => n + b.length, 0)); let offset = 0;
   for (const part of chunks) { bytes.set(part, offset); offset += part.length }
-  if (new TextDecoder().decode(bytes.slice(0, 8)) !== 'OVMG001!') throw new Error('format');
+  if (new TextDecoder().decode(bytes.slice(0, 8)) !== 'OVMG002!') throw new Error('format');
   return bytes;
 }
-async function deriveKey(secret, bytes) {
+/* Aufbau: Kennung · Anzahl Schlüssel · je Schlüssel (Art, Salz, IV, verpackter Inhaltsschlüssel) · IV · Inhalt.
+   Art 0 = Passwort, Art 1 = QR-Zugang. Beide öffnen denselben Inhaltsschlüssel; der QR-Zugang lässt sich einzeln austauschen. */
+function slots(bytes) {
+  const n = bytes[8], out = []; let p = 9;
+  for (let i = 0; i < n; i++) { out.push({ type: bytes[p], salt: bytes.slice(p + 1, p + 17), iv: bytes.slice(p + 17, p + 29), wrapped: bytes.slice(p + 29, p + 77) }); p += 77; }
+  return { list: out, iv: bytes.slice(p, p + 12), body: bytes.slice(p + 12) };
+}
+async function openKey(secret, bytes, type) {
   const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: bytes.slice(8, 24), iterations: 600000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  for (const s of slots(bytes).list.filter(x => x.type === type)) {
+    const kek = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: s.salt, iterations: 600000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    try { const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: s.iv }, kek, s.wrapped); return await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['decrypt']); } catch (e) { /* nächster Schlüssel */ }
+  }
+  throw new Error('password');
 }
 async function show(bytes, key) {
-  let plain; try { plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.slice(24, 36) }, key, bytes.slice(36)) } catch { throw new Error('password') }
+  const S = slots(bytes);
+  let plain; try { plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: S.iv }, key, S.body) } catch { throw new Error('password') }
   const stream = new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'));
   const html = await new Response(stream).blob();
   objectURL = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
@@ -30,7 +42,7 @@ form.addEventListener('submit', async e => {
   e.preventDefault(); button.disabled = true; status.textContent = 'Die Vorschau wird geöffnet …'; let secret = password.value; password.value = '';
   try {
     if (!crypto.subtle || !window.DecompressionStream) throw new Error('browser');
-    const bytes = await load(), key = await deriveKey(secret, bytes); secret = '';
+    const bytes = await load(), key = await openKey(secret, bytes, 0); secret = '';
     await show(bytes, key);
     if (keep.checked) await keySave(key); else await keyDrop();
   } catch (err) {
@@ -40,8 +52,19 @@ form.addEventListener('submit', async e => {
 document.querySelector('#lock').addEventListener('click', async () => {
   await keyDrop(); frame.src = 'about:blank'; if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null; viewer.hidden = true; gate.hidden = false; password.focus();
 });
+/* QR-Zugang: Schlüssel steht hinter „#zugang=“ (wird nie an den Server geschickt) und wird sofort aus der Adresse entfernt */
+const qrToken = (() => { const m = location.hash.match(/^#zugang=([A-Za-z0-9_-]{16,})$/); if (m) history.replaceState(null, '', location.pathname + location.search); return m ? m[1] : null; })();
 /* gemerkte Anmeldung beim Öffnen der Seite */
 (async () => {
+  if (qrToken) {
+    try {
+      if (!crypto.subtle || !window.DecompressionStream) throw new Error('browser');
+      status.textContent = 'QR-Zugang wird geprüft …'; button.disabled = true;
+      const bytes = await load(), key = await openKey(qrToken, bytes, 1);
+      await show(bytes, key); await keySave(key); return;
+    } catch (e) { status.textContent = e.message === 'password' ? 'Dieser QR-Code ist nicht mehr gültig. Bitte das Passwort verwenden.' : 'Die Vorschau konnte nicht geladen werden.'; }
+    finally { button.disabled = false }
+  }
   try {
     if (!crypto.subtle || !window.DecompressionStream) return;
     const key = await keyLoad(); if (!key) return;
