@@ -277,7 +277,10 @@ details.xrow>summary::-webkit-details-marker{display:none}
 .xmk.dot{color:var(--orange);font-size:11px}
 .xt{color:var(--label-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .xbtns{display:flex;gap:8px;padding:0 12px 8px}
-.xlist{padding:0 12px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px 16px}
+.xlist{padding:0 12px 10px;display:flex;flex-direction:column;gap:1px;max-width:640px}
+.xgrp{margin:8px 0 2px;padding:3px 8px;border-radius:7px;background:var(--fill);font-weight:600;font-size:13px}
+label.xi{border-radius:7px;padding:4px 6px}
+label.xi:nth-of-type(even){background:var(--fill)}
 label.xi{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:14px;cursor:pointer}
 label.xi .xn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 label.xi .nr{color:var(--label-3);width:22px;text-align:right;font-variant-numeric:tabular-nums}
@@ -344,7 +347,7 @@ table.semTbl td.semSt{min-width:76px}
 .trowE input{background:var(--fill);border:0;border-radius:10px;padding:8px 10px;font-size:14px;min-width:0}
 .cell.tk{cursor:pointer}
 .cell.tk::placeholder{color:var(--label-3)}
-.tkWrap{overflow:auto;max-height:62vh;border-radius:12px;background:var(--fill)}
+.tkWrap{overflow:auto;max-height:max(260px,calc(100vh - 400px));border-radius:12px;background:var(--fill)}
 .tkTbl{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:tabular-nums}
 .tkTbl th{position:sticky;top:0;z-index:2;background:var(--sheet);font-size:12.5px;padding:6px 6px;border-bottom:.5px solid var(--hairline);text-align:center;white-space:nowrap}
 .tkTbl th b{display:block}.tkTbl th small{display:block;color:var(--label-2);font-weight:400}
@@ -359,7 +362,7 @@ table.semTbl td.semSt{min-width:76px}
 .tkTbl select{background:var(--sheet);border:0;border-radius:8px;padding:5px 4px;font-size:13px}
 .tkTbl tr.clsRow td{background:var(--fill-2);font-weight:600;text-align:left;padding:5px 8px}
 .tkTbl tfoot td{position:sticky;bottom:0;background:var(--sheet);font-weight:500;color:var(--label-2);border-top:.5px solid var(--hairline)}
-dialog.wide.tkDlg{width:min(1240px,96vw)}
+dialog.wide.tkDlg{width:min(1500px,98vw)}
 .tkTbl th:nth-child(1),.tkTbl td.nr{position:sticky;left:0;z-index:3;background:var(--sheet)}
 .tkTbl th:nth-child(2),.tkTbl td.nm{position:sticky;left:34px;z-index:3;background:var(--sheet);min-width:150px;text-align:left}
 .tkTbl tr.clsRow td{position:static}
@@ -480,3 +483,15 @@ body.sidePeek .sideCourses{min-height:120px;width:auto}
 .skinBtn.on{border-color:var(--blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 35%,transparent);font-weight:600}
 .skinSw{display:inline-flex;flex:none;border-radius:7px;overflow:hidden;border:.5px solid rgba(0,0,0,.18)}
 .skinSw i{display:block;width:11px;height:22px}
+
+/* Eingabeblatt: Notenschlüssel unter der Tabelle, Knapp-dran-Markierung */
+.tkKey{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:8px 2px 0;padding:7px 10px;border-radius:10px;background:var(--fill-2);font-size:12.5px;color:var(--label-2)}
+.tkKey b{color:var(--label);margin-right:2px}
+.tkKey .kc{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tkKey .kc i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tkKey .kc em{font-style:normal;color:var(--label-3);margin-left:2px}
+.tkTbl td.res{white-space:nowrap}
+.near{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:11px;font-weight:600;line-height:1.5;background:color-mix(in srgb,var(--orange) 18%,transparent);color:var(--orange);cursor:help}
+.near.down{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+p.meta .near{background:none;padding:0;margin:0;color:var(--orange);cursor:default}
+#distLive small.hint{font-weight:400}

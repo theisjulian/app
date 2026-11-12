@@ -1,8 +1,8 @@
-/* theis-Website: Stil (Klar/Neon/Heft) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
+/* theis-Website: Stil (Glas/Neon/Heft/Atelier) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
 (function(){
-  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','salbei'];
+  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','atelier'];
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],salbei:['#eef2ea','#101612']};
+  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],atelier:['#f5f1e8','#15130f']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -56,7 +56,7 @@
     });
   }
   function ready(){
-    var g=get(KEY);apply(STILE.indexOf(g)>=0?g:'normal');
+    var g=get(KEY);if(g==='salbei'){g='atelier';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
     /* Stil-Auswahl: Klick oder Pfeiltasten wie bei Optionsfeldern */
     document.querySelectorAll('.pick').forEach(function(p){
       var bs=[].slice.call(p.querySelectorAll('button'));
@@ -106,15 +106,27 @@
       var lit=null;document.addEventListener('pointermove',function(e){var c=e.target.closest&&e.target.closest('.steps li,.grid>div,.next,.pic,.mail');if(!c){lit=null;return}
         var b=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-b.left)+'px');c.style.setProperty('--my',(e.clientY-b.top)+'px');lit=c},{passive:true});
     }
-    /* Beim ersten Besuch einmal auf die anderen Stile hinweisen */
+    /* Download-Knopf oben: nennt das Gerät und öffnet unten gleich den passenden Reiter */
+    document.querySelectorAll('a[data-dl]').forEach(function(a){
+      var ua=navigator.userAgent,os=/iPhone|iPad|Android/.test(ua)?null:/Windows/.test(ua)?'win':/Mac/.test(ua)?'mac':null;
+      if(!os||!document.querySelector('.seg [data-t='+os+']'))return;
+      a.innerHTML=(os==='mac'?'Für Mac laden':'Für Windows laden')+'<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v10M4.5 8.5 9 13l4.5-4.5M3.5 15.5h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      a.addEventListener('click',function(){var b=document.querySelector('.seg [data-t='+os+']');if(b)b.click()});
+    });
+    /* Beim ersten Besuch einmal dezent auf die anderen Stile hinweisen – erst wenn jemand liest, nie über dem Einstieg */
     if(!get(SEEN)&&!get(KEY)&&document.querySelector('.pick')){
-      setTimeout(function(){
-        if(get(SEEN))return;
+      var shown=false,show=function(){
+        if(shown||get(SEEN)||scrollY<innerHeight*.9)return;shown=true;removeEventListener('scroll',show);
         var t=document.createElement('div');t.id='tip';t.setAttribute('role','dialog');t.setAttribute('aria-label','Stil der Website');
-        t.innerHTML='<p><b>Lieber etwas anderes?</b>Die Seite gibt es auch bunt in Neon, kariert wie ein Schulheft oder ruhig in Salbeigrün. Umschalten können Sie jederzeit oben.</p><div><button type="button" class="btn" data-s="neon">Neon</button><button type="button" class="btn" data-s="heft">Schulheft</button><button type="button" class="btn" data-s="salbei">Salbei</button><button type="button" class="btn line" data-s="normal">So lassen</button></div>';
-        t.addEventListener('click',function(e){var b=e.target.closest('button');if(b){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null);put(SEEN,'1');t.remove()}});
+        t.innerHTML='<p><b>Vier Stile zur Wahl</b>Glas, Neon, Schulheft oder Atelier – jederzeit oben umschaltbar.</p><div class="tip-s">'+
+          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['atelier','a','Atelier']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
+          '</div><button type="button" class="tip-x" aria-label="Hinweis schließen"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+        t.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;put(SEEN,'1');
+          if(b.dataset.s){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null)}
+          t.classList.add('out');setTimeout(function(){t.remove()},250)});
         document.body.appendChild(t);
-      },1600);
+      };
+      addEventListener('scroll',show,{passive:true});
     }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
