@@ -1,8 +1,8 @@
-/* theis-Website: Stil (Glas/Neon/Heft/Atelier) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
+/* theis-Website: Stil (Glas/Neon/Heft/Plakat) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
 (function(){
-  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','atelier'];
+  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat'];
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],atelier:['#f5f1e8','#15130f']};
+  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#f1ede3','#0f1226']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -56,7 +56,7 @@
     });
   }
   function ready(){
-    var g=get(KEY);if(g==='salbei'){g='atelier';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
+    var g=get(KEY);if(g==='salbei'||g==='atelier'){g='plakat';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
     /* Stil-Auswahl: Klick oder Pfeiltasten wie bei Optionsfeldern */
     document.querySelectorAll('.pick').forEach(function(p){
       var bs=[].slice.call(p.querySelectorAll('button'));
@@ -118,8 +118,8 @@
       var shown=false,show=function(){
         if(shown||get(SEEN)||scrollY<innerHeight*.9)return;shown=true;removeEventListener('scroll',show);
         var t=document.createElement('div');t.id='tip';t.setAttribute('role','dialog');t.setAttribute('aria-label','Stil der Website');
-        t.innerHTML='<p><b>Vier Stile zur Wahl</b>Glas, Neon, Schulheft oder Atelier – jederzeit oben umschaltbar.</p><div class="tip-s">'+
-          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['atelier','a','Atelier']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
+        t.innerHTML='<p><b>Vier Stile zur Wahl</b>Glas, Neon, Schulheft oder Plakat – jederzeit oben umschaltbar.</p><div class="tip-s">'+
+          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['plakat','p','Plakat']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
           '</div><button type="button" class="tip-x" aria-label="Hinweis schließen"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
         t.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;put(SEEN,'1');
           if(b.dataset.s){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null)}
