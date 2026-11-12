@@ -1,0 +1,527 @@
+/* Libretto 1.0 – Erscheinungsbild „Liquid Glass“ (wie Gruppo 1.3), weitere Farbwelten, Schriften, neue Aufteilung.
+   Wird als letztes Stylesheet geladen. Ausdrucke (PDF/Word) sind nicht betroffen; Notenfarben (--gr1…6) bleiben überall gleich. */
+
+/* ---------- Schriften (liegen der App bei, nichts wird aus dem Netz geladen) ---------- */
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-opsz-normal.woff2) format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-opsz-normal.woff2) format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/nunito-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/nunito-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/nunito-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Lora';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/lora-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Lora';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/lora-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Lora';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/lora-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/space-grotesk-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/space-grotesk-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/space-grotesk-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Jost';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/jost-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Jost';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/jost-latin-700-normal.woff2) format('woff2')}
+:root{--ui:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;--display:var(--ui)}
+:root[data-font="nunito"]{--ui:'Nunito',ui-rounded,system-ui,sans-serif}
+:root[data-font="lora"]{--ui:'Lora',ui-serif,Georgia,serif}
+:root[data-font="grotesk"]{--ui:'Space Grotesk',system-ui,sans-serif}
+:root[data-font="atkinson"]{--ui:'Atkinson Hyperlegible',system-ui,sans-serif}
+:root[data-font="jost"]{--ui:'Jost','Century Gothic',system-ui,sans-serif}
+:root[data-font="nunito"] body,:root[data-font="lora"] body{letter-spacing:0}
+
+/* ---------- Weitere Farbwelten (aus Gruppo 1.3 übernommen): Laguna, Klar, Glut, Wald, Apple ---------- */
+:root[data-skin="laguna"]{ --canvas:#f1f7f7; --wash-a:rgba(44,196,208,.30); --wash-b:rgba(120,200,230,.20); --wash-c:rgba(60,200,170,.20); --glass:rgba(255,255,255,0.66); --glass-solid:rgba(255,255,255,0.93); --sheet:#e3f2f2; --glass-hi:rgba(255,255,255,.88); --hairline:#cfe3e4; --tile:rgba(255,255,255,0.6); --label:#0f2a2e; --label-2:rgba(15,42,46,0.66); --label-3:rgba(15,42,46,0.36); --fill:rgba(15,42,46,0.07); --fill-2:rgba(15,42,46,0.13); --track:rgba(15,42,46,0.16); --blue:#0b7f8e; --on-accent:#fff; --accent2:#0a64a8; --green:#30B650; --orange:#F07800; --red:#E0342B; color-scheme:light; }
+:root[data-skin="laguna"][data-theme="dark"]{ --canvas:#08181b; --wash-a:rgba(44,196,208,.24); --wash-b:rgba(20,110,160,.20); --wash-c:rgba(20,150,120,.18); --glass:rgba(17,41,46,0.62); --glass-solid:rgba(17,41,46,0.95); --sheet:#173539; --glass-hi:rgba(255,255,255,.10); --hairline:#21393d; --tile:rgba(17,41,46,0.55); --label:#e5f1f1; --label-2:rgba(229,241,241,0.66); --label-3:rgba(229,241,241,0.36); --fill:rgba(229,241,241,0.08); --fill-2:rgba(229,241,241,0.15); --track:rgba(229,241,241,0.18); --blue:#2cc4d0; --on-accent:#04262a; --accent2:#5fb8ff; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A; color-scheme:dark; --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.85); }
+:root[data-skin="klar"]{ --canvas:#f2f2f7; --wash-a:rgba(0,0,0,0); --wash-b:rgba(0,0,0,0); --wash-c:rgba(0,0,0,0); --glass:rgba(255,255,255,0.66); --glass-solid:rgba(255,255,255,0.93); --sheet:#f2f2f7; --glass-hi:rgba(255,255,255,.88); --hairline:#d9d9de; --tile:rgba(255,255,255,0.6); --label:#111114; --label-2:rgba(17,17,20,0.66); --label-3:rgba(17,17,20,0.36); --fill:rgba(17,17,20,0.07); --fill-2:rgba(17,17,20,0.13); --track:rgba(17,17,20,0.16); --blue:#0a64e0; --on-accent:#fff; --accent2:#0a64e0; --green:#30B650; --orange:#F07800; --red:#E0342B; color-scheme:light; }
+:root[data-skin="klar"][data-theme="dark"]{ --canvas:#000000; --wash-a:rgba(0,0,0,0); --wash-b:rgba(0,0,0,0); --wash-c:rgba(0,0,0,0); --glass:rgba(28,28,30,0.62); --glass-solid:rgba(28,28,30,0.95); --sheet:#2c2c2e; --glass-hi:rgba(255,255,255,.10); --hairline:#38383a; --tile:rgba(28,28,30,0.55); --label:#ffffff; --label-2:rgba(255,255,255,0.66); --label-3:rgba(255,255,255,0.36); --fill:rgba(255,255,255,0.08); --fill-2:rgba(255,255,255,0.15); --track:rgba(255,255,255,0.18); --blue:#4f9bff; --on-accent:#041a3a; --accent2:#4f9bff; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A; color-scheme:dark; --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.85); }
+:root[data-skin="glut"]{ --canvas:#fff6ee; --wash-a:rgba(255,150,70,.30); --wash-b:rgba(255,200,120,.24); --wash-c:rgba(240,110,70,.16); --glass:rgba(255,255,255,0.66); --glass-solid:rgba(255,255,255,0.93); --sheet:#ffeedd; --glass-hi:rgba(255,255,255,.88); --hairline:#f0d5bd; --tile:rgba(255,255,255,0.6); --label:#2a1409; --label-2:rgba(42,20,9,0.66); --label-3:rgba(42,20,9,0.36); --fill:rgba(42,20,9,0.07); --fill-2:rgba(42,20,9,0.13); --track:rgba(42,20,9,0.16); --blue:#c2410c; --on-accent:#fff; --accent2:#b3261e; --green:#30B650; --orange:#F07800; --red:#E0342B; color-scheme:light; }
+:root[data-skin="glut"][data-theme="dark"]{ --canvas:#150c07; --wash-a:rgba(255,122,58,.26); --wash-b:rgba(255,170,60,.14); --wash-c:rgba(200,70,40,.16); --glass:rgba(40,24,17,0.62); --glass-solid:rgba(40,24,17,0.95); --sheet:#33201a; --glass-hi:rgba(255,255,255,.10); --hairline:#46291d; --tile:rgba(40,24,17,0.55); --label:#fff1e6; --label-2:rgba(255,241,230,0.66); --label-3:rgba(255,241,230,0.36); --fill:rgba(255,241,230,0.08); --fill-2:rgba(255,241,230,0.15); --track:rgba(255,241,230,0.18); --blue:#ff9a4d; --on-accent:#2a1200; --accent2:#ffc15e; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A; color-scheme:dark; --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.85); }
+:root[data-skin="wald"]{ --canvas:#f1f8f3; --wash-a:rgba(95,214,138,.28); --wash-b:rgba(170,220,150,.22); --wash-c:rgba(60,170,140,.18); --glass:rgba(255,255,255,0.66); --glass-solid:rgba(255,255,255,0.93); --sheet:#e4f2e9; --glass-hi:rgba(255,255,255,.88); --hairline:#cfe3d6; --tile:rgba(255,255,255,0.6); --label:#0f2a1a; --label-2:rgba(15,42,26,0.66); --label-3:rgba(15,42,26,0.36); --fill:rgba(15,42,26,0.07); --fill-2:rgba(15,42,26,0.13); --track:rgba(15,42,26,0.16); --blue:#166534; --on-accent:#fff; --accent2:#0e7490; --green:#30B650; --orange:#F07800; --red:#E0342B; color-scheme:light; }
+:root[data-skin="wald"][data-theme="dark"]{ --canvas:#07130d; --wash-a:rgba(95,214,138,.22); --wash-b:rgba(60,150,90,.16); --wash-c:rgba(40,140,130,.16); --glass:rgba(17,39,26,0.62); --glass-solid:rgba(17,39,26,0.95); --sheet:#183323; --glass-hi:rgba(255,255,255,.10); --hairline:#234230; --tile:rgba(17,39,26,0.55); --label:#e8f6ec; --label-2:rgba(232,246,236,0.66); --label-3:rgba(232,246,236,0.36); --fill:rgba(232,246,236,0.08); --fill-2:rgba(232,246,236,0.15); --track:rgba(232,246,236,0.18); --blue:#5fd68a; --on-accent:#04210f; --accent2:#7fe0c0; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A; color-scheme:dark; --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.85); }
+:root[data-skin="apple"]{ --canvas:#F2F2F7; --wash-a:rgba(0,0,0,0); --wash-b:rgba(0,0,0,0); --wash-c:rgba(0,0,0,0); --glass:#FFFFFF; --glass-solid:#FFFFFF; --sheet:#FFFFFF; --glass-hi:rgba(255,255,255,0); --hairline:rgba(60,60,67,.16); --tile:#FFFFFF; --label:#1D1D1F; --label-2:rgba(60,60,67,.60); --label-3:rgba(60,60,67,.30); --fill:rgba(118,118,128,.12); --fill-2:rgba(118,118,128,.20); --track:rgba(120,120,128,.16); --blue:#007AFF; --on-accent:#fff; --accent2:#5856D6; --green:#34C759; --orange:#FF9500; --red:#FF3B30; --g1:#007AFF; --g2:#32ADE6; --g3:#34C759; --g4:#5856D6; --g5:#FF2D55; --g6:#FF9500; --g7:#AF52DE; --g8:#30B0C7; --lift:0 0 0 .5px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06); --lift-2:0 0 0 .5px rgba(0,0,0,.08),0 22px 70px rgba(0,0,0,.30); --r-xl:14px; --r-lg:12px; --r-md:10px; --r-sm:8px; --blur:saturate(180%) blur(30px); --spring:cubic-bezier(.32,.72,0,1); --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Inter,system-ui,sans-serif; color-scheme:light; }
+:root[data-skin="apple"][data-theme="dark"]{ --canvas:#000000; --wash-a:rgba(0,0,0,0); --wash-b:rgba(0,0,0,0); --wash-c:rgba(0,0,0,0); --glass:#1C1C1E; --glass-solid:#1C1C1E; --sheet:#2C2C2E; --glass-hi:rgba(255,255,255,0); --hairline:rgba(84,84,88,.55); --tile:#1C1C1E; --label:#FFFFFF; --label-2:rgba(235,235,245,.60); --label-3:rgba(235,235,245,.30); --fill:rgba(120,120,128,.36); --fill-2:rgba(120,120,128,.50); --track:rgba(120,120,128,.32); --blue:#0A84FF; --on-accent:#fff; --accent2:#5E5CE6; --green:#30D158; --orange:#FF9F0A; --red:#FF453A; --g1:#0A84FF; --g2:#64D2FF; --g3:#30D158; --g4:#5E5CE6; --g5:#FF375F; --g6:#FF9F0A; --g7:#BF5AF2; --g8:#40C8E0; --lift:0 0 0 .5px rgba(255,255,255,.04); --lift-2:0 0 0 .5px rgba(255,255,255,.12),0 22px 70px rgba(0,0,0,.7); --thumb:#636366; color-scheme:dark; }
+:root[data-skin="klar"],:root[data-skin="apple"]{background-image:none}
+:root[data-skin="klar"] .glass{box-shadow:none}
+:root[data-skin="apple"] .glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-skin="apple"] dialog{border-radius:14px}
+:root[data-skin="heft"]:not([data-font]) :is(.sideTop h1,.courseHead h2,.gateCard h2,.sheethead h2){font-family:'Lora',Georgia,serif;letter-spacing:-.01em}
+:root[data-skin="graphit"]:not([data-font]) :is(.sideTop h1,.courseHead h2){font-family:'Space Grotesk',system-ui,sans-serif}
+
+/* ======================================================================
+   Liquid Glass – Standard-Look (html ohne data-skin)
+   ====================================================================== */
+html:not([data-skin]){
+  --canvas:#E9ECF4;
+  --lg-a:#7FA6FF; --lg-b:#FF9CC2; --lg-c:#7FE3D0; --lg-d:#C7A6FF;
+  --lg-fill:rgba(255,255,255,.46); --lg-fill-2:rgba(255,255,255,.24);
+  --lg-rim-1:rgba(255,255,255,.95); --lg-rim-2:rgba(255,255,255,.18); --lg-rim-3:rgba(255,255,255,.55);
+  --lg-shadow:0 1px 1px rgba(20,30,70,.04), 0 10px 30px -12px rgba(30,40,100,.22), 0 30px 60px -30px rgba(30,40,100,.20);
+  --lg-inner:inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.22), inset 0 0 24px rgba(255,255,255,.16);
+  --lg-blur:blur(26px) saturate(190%) brightness(1.03);
+  --glass:rgba(255,255,255,.46); --glass-solid:rgba(255,255,255,.86); --glass-hi:rgba(255,255,255,.95); --sheet:#F4F5FA;
+  --hairline:rgba(30,40,80,.09); --tile:rgba(255,255,255,.44);
+  --fill:rgba(40,50,90,.06); --fill-2:rgba(40,50,90,.11); --track:rgba(40,50,90,.17);
+  --label:#0F1220; --label-2:rgba(25,30,50,.62); --label-3:rgba(25,30,50,.36);
+  --blue:#0A6CFF; --stick:#F6F7FC; --paper:rgba(255,255,255,.74);
+  --r-xl:26px; --r-lg:20px;
+}
+html:not([data-skin])[data-theme="dark"]{
+  --canvas:#06070C;
+  --lg-a:#2D55D9; --lg-b:#9C2F6E; --lg-c:#127A72; --lg-d:#5B3BB5;
+  --lg-fill:rgba(255,255,255,.075); --lg-fill-2:rgba(255,255,255,.03);
+  --lg-rim-1:rgba(255,255,255,.42); --lg-rim-2:rgba(255,255,255,.05); --lg-rim-3:rgba(255,255,255,.16);
+  --lg-shadow:0 1px 1px rgba(0,0,0,.4), 0 18px 50px -18px rgba(0,0,0,.75);
+  --lg-inner:inset 0 1px 1px rgba(255,255,255,.22), inset 0 -1px 1px rgba(255,255,255,.05), inset 0 0 26px rgba(255,255,255,.035);
+  --lg-blur:blur(28px) saturate(170%) brightness(.92);
+  --glass:rgba(255,255,255,.07); --glass-solid:rgba(48,52,66,.94); --glass-hi:rgba(255,255,255,.22); --sheet:#22252F;
+  --hairline:rgba(255,255,255,.10); --tile:rgba(255,255,255,.06);
+  --fill:rgba(255,255,255,.08); --fill-2:rgba(255,255,255,.14); --track:rgba(255,255,255,.2);
+  --label:#F4F6FB; --label-2:rgba(232,236,246,.66); --label-3:rgba(232,236,246,.36);
+  --blue:#3B8CFF; --green:#32D74B; --orange:#FF9F0A; --red:#FF453A; --stick:#1A1C25; --paper:rgba(22,24,32,.72);
+  --lift:0 1px 2px rgba(0,0,0,.5); --lift-2:0 20px 50px -20px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+/* Hintergrund: weiches Farbbild, zieht sehr langsam (bei „Bewegung reduzieren“ still) */
+html:not([data-skin]){
+  background-color:var(--canvas);
+  background-image:
+    radial-gradient(46vmax 40vmax at 6% 0%, color-mix(in srgb,var(--lg-a) 70%,transparent), transparent 62%),
+    radial-gradient(40vmax 36vmax at 100% 8%, color-mix(in srgb,var(--lg-b) 62%,transparent), transparent 60%),
+    radial-gradient(52vmax 42vmax at 70% 108%, color-mix(in srgb,var(--lg-c) 62%,transparent), transparent 62%),
+    radial-gradient(34vmax 30vmax at 28% 92%, color-mix(in srgb,var(--lg-d) 46%,transparent), transparent 62%);
+}
+html:not([data-skin]) body::before{
+  content:"";position:fixed;inset:-10vmax;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(22vmax 22vmax at 30% 30%, color-mix(in srgb,var(--lg-a) 40%,transparent), transparent 70%),
+    radial-gradient(20vmax 20vmax at 75% 60%, color-mix(in srgb,var(--lg-b) 34%,transparent), transparent 70%),
+    radial-gradient(18vmax 18vmax at 45% 80%, color-mix(in srgb,var(--lg-c) 36%,transparent), transparent 70%);
+  filter:blur(10px);
+}
+@media (prefers-reduced-motion:no-preference){
+  html:not([data-skin]) body::before{animation:lgDrift 48s ease-in-out infinite alternate}
+  @keyframes lgDrift{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(3vmax,-2vmax,0) rotate(8deg)}100%{transform:translate3d(-3vmax,2vmax,0) rotate(-6deg)}}
+}
+@media print{html:not([data-skin]) body::before{display:none}}
+/* Glas: Füllung + Lichtkante als Rand-Verlauf */
+html:not([data-skin]) .glass{
+  border:1px solid transparent;
+  background:
+    linear-gradient(160deg,var(--lg-fill),var(--lg-fill-2)) padding-box,
+    linear-gradient(135deg,var(--lg-rim-1) 0%,var(--lg-rim-2) 38%,var(--lg-rim-2) 62%,var(--lg-rim-3) 100%) border-box;
+  -webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);
+  box-shadow:var(--lg-shadow),var(--lg-inner);
+}
+/* Die Notentabelle bleibt „Papier“: ruhig und gut lesbar, feste Köpfe und Namensspalte deckend */
+html:not([data-skin]) .gridWrap.glass{
+  background:linear-gradient(var(--paper),var(--paper)) padding-box,
+    linear-gradient(135deg,var(--lg-rim-1) 0%,var(--lg-rim-2) 38%,var(--lg-rim-2) 62%,var(--lg-rim-3) 100%) border-box}
+html:not([data-skin]) table.grid thead th,html:not([data-skin]) table.grid th.nm,html:not([data-skin]) table.grid td.nm,html:not([data-skin]) tr:hover td.nm{background:var(--stick);-webkit-backdrop-filter:none;backdrop-filter:none}
+html:not([data-skin]) table.grid tbody tr:focus-within td.nm{background-color:var(--stick)}
+/* Steuerelemente */
+html:not([data-skin]) .seg{background:color-mix(in srgb,var(--label) 6%,transparent);border-radius:999px;padding:3px;box-shadow:inset 0 1px 2px rgba(20,30,60,.06)}
+html:not([data-skin]) .seg button{border-radius:999px;padding:7px 14px}
+html:not([data-skin]) .seg button[aria-pressed="true"]{
+  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72));
+  box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(30,40,80,.08),0 3px 10px -3px rgba(30,40,90,.30)}
+html:not([data-skin])[data-theme="dark"] .seg button[aria-pressed="true"]{
+  background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.12));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 4px 12px -4px rgba(0,0,0,.7)}
+html:not([data-skin]) :is(.go:not(.secondary),.mini.accent){
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 52%),
+    linear-gradient(180deg,color-mix(in srgb,var(--blue) 88%,#7ab2ff),var(--blue));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.65),inset 0 -2px 6px rgba(0,10,60,.22),0 10px 24px -10px color-mix(in srgb,var(--blue) 85%,transparent)}
+html:not([data-skin]) .go{border-radius:999px}
+html:not([data-skin]) .mini{border-radius:999px;padding:7px 14px}
+html:not([data-skin]) .sw{box-shadow:inset 0 1px 2px rgba(20,30,60,.12)}
+html:not([data-skin]) .sw::after{box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 -1px 2px rgba(0,0,0,.05),0 0 0 .5px rgba(0,0,0,.04)}
+/* Dialoge: dickes Glas */
+html:not([data-skin]) dialog{
+  border-radius:28px;border:1px solid transparent;
+  background:
+    linear-gradient(170deg,rgba(252,253,255,.95),rgba(246,248,253,.90)) padding-box,
+    linear-gradient(135deg,#fff,rgba(255,255,255,.2) 40%,rgba(255,255,255,.6)) border-box;
+  -webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:0 40px 100px -30px rgba(20,30,80,.45),inset 0 1px 1px #fff}
+html:not([data-skin])[data-theme="dark"] dialog{
+  background:
+    linear-gradient(170deg,rgba(44,47,60,.95),rgba(28,30,40,.93)) padding-box,
+    linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.04) 40%,rgba(255,255,255,.12)) border-box;
+  box-shadow:0 40px 100px -30px rgba(0,0,0,.9),inset 0 1px 1px rgba(255,255,255,.12)}
+html:not([data-skin]) dialog::backdrop{background:rgba(20,26,50,.24);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%)}
+html:not([data-skin]) .sheethead{background:transparent}
+/* Seitenleiste im Glas-Look */
+html:not([data-skin]) .sb{border-radius:13px;transition:background .2s,box-shadow .25s,transform .2s var(--spring)}
+html:not([data-skin]) .sb:hover:not(:disabled){background:color-mix(in srgb,var(--label) 6%,transparent)}
+html:not([data-skin]) .sb:active:not(:disabled){transform:scale(.98)}
+html:not([data-skin]) .sb .ic{color:var(--blue)}
+html:not([data-skin]) .sideQuick .sb .ic,html:not([data-skin]) .sideBottom .sb .ic{color:var(--label-2)}
+html:not([data-skin]) .sb[aria-selected="true"],html:not([data-skin]) .sideCourses .citem[aria-current="true"]{
+  color:var(--label);font-weight:600;
+  background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,.54));
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 0 0 .5px rgba(30,40,80,.08),0 6px 16px -8px rgba(30,40,90,.35)}
+html:not([data-skin])[data-theme="dark"] .sb[aria-selected="true"],html:not([data-skin])[data-theme="dark"] .sideCourses .citem[aria-current="true"]{
+  background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.08));
+  box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 .5px rgba(255,255,255,.08),0 8px 20px -10px rgba(0,0,0,.8)}
+html:not([data-skin]) .sideSearch{border-radius:13px;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.48));border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--hairline),0 4px 12px -8px rgba(30,40,90,.4)}
+html:not([data-skin])[data-theme="dark"] .sideSearch{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05));box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 0 .5px var(--hairline)}
+html:not([data-skin]) .notice{border-radius:16px}
+html:not([data-skin]) .field input[type=text],html:not([data-skin]) .field input[type=password],html:not([data-skin]) .field input[type=number],html:not([data-skin]) .field input[type=date],html:not([data-skin]) .field input[type=time],html:not([data-skin]) .field select,html:not([data-skin]) .field textarea{border-radius:13px}
+
+/* ======================================================================
+   Aufteilung 1.0: schwebende Leiste, Arbeitsfläche füllt das Fenster (ein einziger Rollbalken: der der Tabelle)
+   ====================================================================== */
+:root{--topH:0px;--gap:12px}
+#appRoot{height:calc(100vh - var(--topH));min-height:0;align-items:stretch;overflow:hidden}
+.side{position:relative;top:auto;height:auto;margin:var(--gap) 0 var(--gap) var(--gap);border-radius:26px;border-right:0;overflow:hidden;padding:16px 10px 8px;gap:0}
+body.mac .side{padding-top:44px}
+.side.glass{border:.5px solid var(--hairline)}
+#main.wrap{flex:1;min-width:0;height:100%;overflow:auto;padding:20px 20px 18px;max-width:none;margin:0;scrollbar-gutter:stable}
+.wrap[data-tab="backup"]{max-width:none}
+.wrap[data-tab="backup"] > *{max-width:1120px;margin-left:auto;margin-right:auto}
+#main[data-tab="grades"] #work{display:flex;flex-direction:column;min-height:100%}
+#main[data-tab="grades"] #work > .gridWrap{flex:1 1 0;min-height:260px;max-height:none}
+#main[data-tab="grades"] #work > .legend{flex:none}
+.legend{margin:8px 6px 0;font-size:12px}
+/* Seitenleiste: Kopf, Suche und Bereiche fest; die Kursliste rollt; Schnellzugriffe einklappbar; unten Sperren/Einstellungen/Hilfe und die Marke */
+.sideTop h1 small{font-weight:500}
+.sideCourses{flex:1 1 0;min-height:96px;overflow-y:auto;overflow-x:hidden;margin:0 -4px;padding:8px 4px 6px;scrollbar-width:thin}
+.sideCourses .cgroup{margin:8px 8px 3px;font-size:10.5px;letter-spacing:.07em}
+.sideCourses .citem.stripe,.sideCourses .citem.plain{padding:5px 8px;min-height:36px;border-radius:5px 12px 12px 5px;margin-bottom:1px}
+.sideCourses .citem.stripe{grid-template-columns:30px minmax(0,1fr) auto;gap:9px}
+.sideCourses .citem .badge{width:28px;height:26px;border-radius:8px;font-size:11.5px}
+.sideCourses .citem.stripe .t,.sideCourses .citem.plain .t{display:flex;align-items:baseline;gap:7px}
+.sideCourses .citem.stripe .t small,.sideCourses .citem.plain .t small{display:inline;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+.sideActs{flex:none;border-top:.5px solid var(--hairline);padding-top:4px;max-height:46vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+button.sideGroup{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:0;background:none;border-radius:8px;text-align:left;cursor:pointer;padding:8px 8px 4px 10px}
+button.sideGroup:hover{color:var(--label-2)}
+button.sideGroup span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.sideGroup .chev{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.sideGroup[aria-expanded="false"] .chev{transform:rotate(-90deg)}
+.sideGroup[aria-expanded="false"] + .sideQuick{display:none}
+.sideQuick .sb{min-height:28px;padding:4px 10px}
+#sideBk{min-height:38px}
+.sideBottom{margin-top:0;flex:none;flex-direction:row;gap:2px;padding:6px 0 0}
+.sideBottom .sb{flex:1 1 0;flex-direction:column;gap:3px;justify-content:center;align-items:center;text-align:center;min-height:44px;padding:6px 2px;font-size:10.5px;font-weight:500}
+.sideBottom .sb span{max-width:100%}
+.sideBottom .sb.helpBtn{font-weight:500}
+.sideBrand{flex:none;display:flex;justify-content:center;align-items:center;border:0;background:none;padding:8px 0 4px;color:var(--label-2);cursor:pointer;opacity:.72;transition:opacity .2s;border-radius:10px}
+.sideBrand:hover{opacity:1}
+.sideBrand svg{height:19px;width:auto;display:block}
+.theisapps .dot{fill:#2F5BEA}
+:root[data-theme="dark"] .theisapps .dot{fill:#5B8CFF}
+/* eingeklappt */
+body.sideC .sideActs,body.sideNarrow .sideActs{border-top:0;padding-top:0;display:flex;flex-direction:column;align-items:center;max-height:none;overflow:visible}
+body.sideC button.sideGroup,body.sideNarrow button.sideGroup{display:block;height:1px;padding:0;margin:7px 6px;background:var(--hairline);width:36px;pointer-events:none}
+body.sideC button.sideGroup *,body.sideNarrow button.sideGroup *{display:none}
+body.sideC .sideGroup[aria-expanded="false"] + .sideQuick,body.sideNarrow .sideGroup[aria-expanded="false"] + .sideQuick{display:flex}
+body.sideC .sideBottom,body.sideNarrow .sideBottom{flex-direction:column;align-items:center;border-top:.5px solid var(--hairline);margin-top:6px}
+body.sideC .sideBottom .sb,body.sideNarrow .sideBottom .sb{min-height:32px;flex:none}
+body.sideC .sideBrand,body.sideNarrow .sideBrand{display:none}
+body.sideC .sideCourses,body.sideNarrow .sideCourses{overflow-y:auto;scrollbar-width:none;margin:0;padding:6px 0}
+body.sideC .side,body.sideNarrow .side{overflow-y:auto;scrollbar-width:none}
+body.sidePeek .side{margin:0;border-radius:0 26px 26px 0;top:var(--topH);height:calc(100vh - var(--topH));overflow:hidden}
+body.sidePeek .sideActs{display:block;border-top:.5px solid var(--hairline);max-height:46vh;overflow-y:auto}
+body.sidePeek button.sideGroup{display:flex;height:auto;width:100%;background:none;margin:0;padding:8px 8px 4px 10px;pointer-events:auto}
+body.sidePeek button.sideGroup *{display:revert}
+body.sidePeek .sideGroup[aria-expanded="false"] + .sideQuick{display:none}
+body.sidePeek .sideBottom{flex-direction:row;border-top:0;margin-top:0}
+body.sidePeek .sideBottom .sb{flex:1 1 0;min-height:44px}
+body.sidePeek .sideBottom .sb span{display:block}
+body.sidePeek .sideBrand{display:flex}
+body.sidePeek .sideCourses{overflow-y:auto;margin:0 -4px;padding:8px 4px 6px}
+body.sidePeek #main.wrap{margin-left:calc(64px + var(--gap))}
+html:not([data-skin]) body.sidePeek .side{background:linear-gradient(160deg,rgba(250,251,255,.96),rgba(244,246,252,.94)) padding-box,linear-gradient(135deg,#fff,rgba(255,255,255,.3)) border-box}
+html:not([data-skin])[data-theme="dark"] body.sidePeek .side{background:linear-gradient(160deg,rgba(40,43,56,.97),rgba(26,28,38,.96)) padding-box,linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,.06)) border-box}
+
+/* ---------- Kopf des Kurses: Hinweise als kleine Marken statt breiter Balken ---------- */
+.courseHead{margin:0 2px 10px;align-items:center}
+.courseHead h2{font-size:27px;font-weight:700;letter-spacing:-.03em}
+.scopeBar{margin:0 0 10px;min-height:36px}
+.hintChips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center;position:relative}
+.hchip{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer;
+  background:color-mix(in srgb,var(--orange) 15%,var(--tile));color:color-mix(in srgb,var(--orange) 78%,var(--label));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--orange) 34%,transparent)}
+.hchip i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.hchip.info{background:color-mix(in srgb,var(--blue) 12%,var(--tile));color:color-mix(in srgb,var(--blue) 80%,var(--label));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--blue) 28%,transparent)}
+.hchip.red{background:color-mix(in srgb,var(--red) 14%,var(--tile));color:color-mix(in srgb,var(--red) 82%,var(--label));box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--red) 34%,transparent)}
+.hchip:hover{filter:brightness(.97)}
+.hchip[aria-expanded="true"]{box-shadow:inset 0 0 0 1.5px currentColor}
+.hintPop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:min(520px,calc(100vw - 120px));border-radius:18px;padding:14px 16px;font-size:13.5px;line-height:1.45;
+  background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:.5px solid var(--hairline);box-shadow:var(--lift-2)}
+.hintPop b{font-weight:600}
+.hintPop .mini{margin-top:10px}
+.hintPop .notice{background:none;border:0;padding:0;display:block}
+.hintPop .notice .mini{margin-left:0;display:inline-block}
+
+/* ---------- Über Libretto ---------- */
+dialog.abdlg{width:min(440px,94vw);text-align:center;padding:0;overflow:hidden}
+.abx{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);color:var(--label-2);font-size:20px;line-height:1;cursor:pointer;z-index:2}
+.abx:hover{background:var(--fill-2);color:var(--label)}
+.abtop{padding:38px 34px 6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.abicon img{width:104px;height:104px;display:block;border-radius:24px;filter:drop-shadow(0 16px 26px rgba(22,160,90,.35))}
+.abname{margin:16px 0 0;font:700 30px/1.1 var(--display);letter-spacing:-.03em}
+.abver{font-size:13.5px;color:var(--label-2);font-variant-numeric:tabular-nums;user-select:text}
+.abline{margin:12px 0 0;font-size:15.5px;line-height:1.45;color:var(--label);max-width:330px}
+.abacts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:18px 28px 4px}
+.abbtn{border:0;border-radius:999px;padding:11px 18px;font:inherit;font-size:15px;font-weight:600;background:var(--fill);color:var(--label);cursor:pointer;text-decoration:none}
+.abbtn:hover{background:var(--fill-2)}
+.abbtn.pri{background:var(--blue);color:var(--on-accent,#fff)}
+.abnew{margin:16px 24px 0;padding:14px 18px;border-radius:18px;background:var(--fill);text-align:left}
+.abnew h3{margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--label-2)}
+.abnew p{margin:0;font-size:13.5px;line-height:1.5}
+.abnote{margin:14px 28px 0;font-size:12.5px;line-height:1.45;color:var(--label-2)}
+.ablinks{display:flex;gap:14px;justify-content:center;margin-top:10px}
+.ablinks button{border:0;background:none;color:var(--blue);font-size:13px;padding:0;cursor:pointer}
+.abfoot{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 0 22px;color:var(--label-2);font-size:13px}
+.abfoot svg{height:19px;width:auto}
+@media (prefers-reduced-motion:no-preference){
+  dialog.abdlg[open]{animation:dlgIn .38s cubic-bezier(.2,1.1,.3,1) both}
+  @keyframes dlgIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+}
+
+/* ---------- Einstellungen mit Reitern ---------- */
+.setTabs{display:flex;margin:0 0 16px}
+.setTabs.seg button{padding:8px 10px}
+.setPane[hidden]{display:none}
+.setHead{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--label-2);margin:16px 2px 8px}
+.setHead:first-child{margin-top:0}
+.skinPick{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px;margin:0 0 4px}
+.skinBtn{flex-direction:column;align-items:stretch;gap:8px;padding:9px;border-radius:16px;border:0;background:var(--tile);box-shadow:inset 0 0 0 .5px var(--hairline);font-size:13.5px;font-weight:500}
+.skinBtn .skinSw{display:flex;height:34px;border-radius:10px;border:0;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.10)}
+.skinBtn .skinSw i{flex:1;width:auto;height:auto}
+.skinBtn .skinSw i:first-child{flex:1.6}
+.skinBtn.on{box-shadow:inset 0 0 0 2px var(--blue),0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent);font-weight:600}
+.fontPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.fontBtn{border:0;border-radius:14px;padding:11px 12px;background:var(--tile);box-shadow:inset 0 0 0 .5px var(--hairline);font-size:15.5px;text-align:left;color:var(--label);cursor:pointer}
+.fontBtn small{display:block;font-size:11.5px;color:var(--label-2);margin-top:2px}
+.fontBtn[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--blue),0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
+.modePick{display:inline-flex;min-width:320px}
+.setRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 14px;border-radius:14px;background:var(--fill);margin-bottom:8px}
+.setRow > div{min-width:0}
+.setRow b{display:block;font-size:14px;font-weight:600}
+.setRow small{display:block;font-size:12.5px;color:var(--label-2);line-height:1.4}
+
+/* ---------- Formulare ruhiger: drei gleich breite Spalten bleiben auch bei „übrigen“ Feldern im Raster ---------- */
+.gateCard{border-radius:30px}
+.empty.glass{min-height:min(460px,calc(100vh - 140px))}
+
+/* ---------- Kompakte Zeilen (Einstellungen → Aussehen) ---------- */
+body.dense .cell{height:29px;font-size:14px}
+body.dense table.grid td.nm button{padding:4px 12px 4px 14px;font-size:13.5px}
+body.dense .rawpts{margin-top:-5px;padding-bottom:1px;font-size:9.5px}
+body.dense .gb{height:24px;min-width:30px;font-size:13.5px;border-radius:7px}
+body.dense td.res{padding:2px 10px}
+body.dense .tkTbl td{padding-top:1px;padding-bottom:1px}
+.bkDot{width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:auto;flex:none}
+.bkDot.warn{background:var(--orange)}
+body.sideC .bkDot,body.sideNarrow .bkDot{position:absolute;margin:-16px 0 0 20px}
+body.sidePeek .bkDot{position:static;margin:0 0 0 auto}
+.setPane{min-height:300px}
+/* Leistungsnachweis: Felder in einer ruhigen Zeile statt mit einzelnen „übrigen“ Feldern */
+.grid3.aGrid{grid-template-columns:1.25fr 1.6fr 1.15fr .85fr}
+.grid3.aGrid.five{grid-template-columns:1.15fr 1.4fr 1.15fr .7fr .8fr}
+.grid3.kGrid{grid-template-columns:1fr 1.5fr 1fr 1fr}
+@media (max-width:640px){.grid3.aGrid,.grid3.aGrid.five,.grid3.kGrid{grid-template-columns:1fr 1fr}}
+
+/* ---------- Kursliste: „+“ für einen neuen Kurs direkt an der Überschrift ---------- */
+.sideAdd{border:0;width:24px;height:24px;border-radius:8px;background:var(--fill);color:var(--blue);font-size:17px;line-height:1;font-weight:500;padding:0 0 2px;display:inline-grid;place-items:center;flex:none}
+.sideAdd:hover{background:color-mix(in srgb,var(--blue) 16%,transparent)}
+
+/* ======================================================================
+   Übersicht (Startseite)
+   ====================================================================== */
+.startPage{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.sHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 6px 0}
+.sHead h1{font-size:30px;line-height:1.1;letter-spacing:-.02em;margin:0;font-weight:700}
+.sHead p{margin:5px 0 0;color:var(--label-2);font-size:14.5px}
+.sHeadActs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sHeadActs .go{margin:0}
+.sCols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:16px;align-items:start}
+.sRow{width:100%;border:0;background:none;text-align:left;font:inherit;color:inherit;grid-template-columns:74px minmax(0,1fr) auto;line-height:1.3}
+button.sRow{cursor:pointer}
+.sRow .d{display:flex;flex-direction:column;font-size:14px}
+.sRow .d small{font-weight:400;font-size:11.5px;color:var(--label-3);white-space:nowrap}
+.sRow b{font-weight:600}
+.sRow.ev{color:var(--label-2)}
+.sRow .pill.info{background:color-mix(in srgb,var(--blue) 15%,transparent);color:color-mix(in srgb,var(--blue) 75%,var(--label))}
+.sRow .pill.big{background:color-mix(in srgb,var(--blue) 15%,transparent);color:color-mix(in srgb,var(--blue) 75%,var(--label))}
+.sMore{margin:4px 10px 8px}
+.sDone{display:flex;flex-direction:column;gap:3px;padding:16px 12px;border-radius:14px;background:color-mix(in srgb,var(--green) 11%,transparent)}
+.sDone b{color:color-mix(in srgb,var(--green) 70%,var(--label))}
+.sDone span{color:var(--label-2);font-size:13.5px}
+.sHeadline{font-size:12.5px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.05em;padding:6px 8px 0}
+.sCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.sCard{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;color:inherit;border:.5px solid var(--hairline);border-radius:20px;padding:14px 16px 13px 19px;background:var(--glass, var(--glass-solid));overflow:hidden;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;min-height:132px}
+.sCard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--hue, var(--blue))}
+.sCard:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.10)}
+.sCardTop{display:flex;flex-direction:column}
+.sCardTop b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.sCardTop span{font-size:12.5px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sAvg{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;display:flex;align-items:baseline;gap:8px;margin-top:2px}
+.sAvg small{font-size:11.5px;font-weight:500;color:var(--label-3);letter-spacing:0}
+.sMeta{font-size:12px;color:var(--label-2)}
+.sTags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.sTags i{font-style:normal;font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--fill);color:var(--label-2)}
+.sTags i.warn{background:color-mix(in srgb,var(--orange) 18%,transparent);color:color-mix(in srgb,var(--orange) 72%,var(--label))}
+.sTags i.info{background:color-mix(in srgb,var(--blue) 15%,transparent);color:color-mix(in srgb,var(--blue) 75%,var(--label))}
+.sFoot{padding:0 8px}
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:var(--blue);cursor:pointer}
+.pickList{display:flex;flex-direction:column;gap:6px}
+.pickRow{display:flex;align-items:baseline;gap:10px;text-align:left;font:inherit;color:inherit;border:0;border-radius:13px;padding:11px 14px;background:var(--fill);box-shadow:inset 4px 0 0 var(--hue, var(--blue));cursor:pointer}
+.pickRow:hover{background:var(--fill-2)}
+.pickRow span{color:var(--label-2);font-size:13.5px}
+@media (prefers-reduced-motion: reduce){.sCard{transition:none}}
+.sideHead{gap:5px}
+.sideHead .ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em}
+.sideHead .vsw{width:23px}
+.sideHead .vswBox{flex:none}
+.sRow{grid-template-columns:92px minmax(0,1fr) auto}
+.sHeadActs .mini.accent{padding:9px 16px;font-size:14px}
+
+/* ---------- Notentabelle: Fußzeile „Ø Klasse“ bleibt unten stehen ---------- */
+table.grid tfoot td{position:sticky;bottom:0;z-index:3;background:var(--glass-solid);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-top:1px solid var(--hairline);font-size:12.5px;font-weight:600;color:var(--label-2);text-align:center;padding:8px 6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.grid tfoot td.nm{z-index:4;text-align:left;padding-left:14px}
+table.grid tfoot td.nm span{text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+table.grid tfoot td.main{color:var(--label)}
+html:not([data-skin]) table.grid tfoot td{background:var(--stick);-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* ---------- Punkte je Aufgabe: Faktor, Schreibaufgabe, Status ---------- */
+.tkTbl th .tkf{display:block;margin:3px auto 0;width:64px;border:0;border-radius:7px;background:transparent;color:var(--label-3);font-size:11.5px;font-weight:600;text-align:center;text-align-last:center;padding:2px 0;appearance:none;-webkit-appearance:none;cursor:pointer}
+.tkTbl th .tkf:hover{background:var(--fill-2);color:var(--label-2)}
+.tkTbl th .tkf.on{background:color-mix(in srgb,var(--blue) 16%,transparent);color:color-mix(in srgb,var(--blue) 80%,var(--label))}
+.tkTbl th.tkplus .tkWrite{display:block;margin:5px auto 0;border:0;border-radius:8px;background:var(--fill-2);color:var(--blue);font-size:11.5px;font-weight:600;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.tkTbl th.tkplus .tkWrite:hover{background:color-mix(in srgb,var(--blue) 16%,transparent)}
+.tkTbl select.tkst{width:62px;max-width:62px}
+.tkLegend{margin:8px 4px 0;font-size:12px;color:var(--label-2);line-height:1.5}
+.tkLegend b{color:var(--label)}
+.wtSeg{display:flex;flex-wrap:wrap}
+.trowE{grid-template-columns:minmax(0,1fr) 96px 78px 34px}
+.trowE select{background:var(--fill);border:0;border-radius:10px;padding:8px 6px;font-size:13.5px;min-width:0;color:inherit}
+
+/* ---------- Leistungsnachweis: Simulation der Notengrenzen ---------- */
+details.sim{margin:10px 0 4px;border-radius:14px;background:var(--fill);padding:2px 12px}
+details.sim > summary{cursor:pointer;padding:9px 2px;font-weight:600;font-size:13.5px;color:var(--blue);list-style-position:inside}
+details.sim[open]{padding-bottom:8px}
+.simTbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:2px}
+.simTbl th{font-size:11px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.04em;padding:4px 6px;text-align:center;white-space:nowrap}
+.simTbl th:first-child{text-align:left}
+.simTbl th i{display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:4px}
+.simTbl td{padding:7px 6px;border-top:.5px solid var(--hairline);vertical-align:middle}
+.simTbl td small{display:block;font-size:11.5px;color:var(--label-3);font-weight:400}
+.simTbl td.n{text-align:center;font-variant-numeric:tabular-nums}
+.simTbl td.n small{display:inline;margin-left:5px}
+.simTbl td:last-child{text-align:right;white-space:nowrap}
+.simTbl .z{color:var(--label-3)}
+.simTbl tr.cur td{background:color-mix(in srgb,var(--green) 9%,transparent)}
+.simTbl tr.cur td:first-child{border-radius:9px 0 0 9px}.simTbl tr.cur td:last-child{border-radius:0 9px 9px 0}
+details.tkHelp{margin:0 0 8px}
+details.tkHelp > summary{list-style:none;cursor:pointer;font-size:13px;color:var(--label-2);line-height:1.45}
+details.tkHelp > summary::-webkit-details-marker{display:none}
+details.tkHelp > summary em{font-style:normal;color:var(--blue);margin-left:8px;white-space:nowrap}
+details.tkHelp[open] > summary em{display:none}
+details.tkHelp .hint{margin:6px 0 0}
+/* Kopf der Dialoge: Inhalt soll beim Rollen nicht durchscheinen */
+html:not([data-skin]) .sheethead{background:color-mix(in srgb,var(--sheet) 78%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5)}
+/* Punkte-Blatt: Kopf und Fuß liegen beim Rollen über den Namen */
+.tkTbl thead th{z-index:4}.tkTbl thead th:nth-child(-n+2){z-index:5}
+.tkTbl tfoot td{z-index:4}.tkTbl tfoot td.nm,.tkTbl tfoot td:first-child{z-index:5}
+.maker .theisapps{height:26px;width:auto;color:var(--label);flex:none}
+
+/* ---------- Eingabeblatt: Schreibaufgabe als EINE Aufgabe (Inhalt + Sprache unter gemeinsamer Überschrift) ---------- */
+.tkTbl tr.hg1 th{height:40px}
+.tkTbl tr.hg2 th{top:40px}
+.tkTbl tr.hg2 th:nth-child(1),.tkTbl tr.hg2 th:nth-child(2){left:auto;z-index:4}
+.tkTbl th.tkG{padding:6px 6px 4px;border-bottom:0;vertical-align:bottom}
+.tkTbl th.tkG .tkGh{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:10px 10px 0 0;padding:5px 8px 4px;background:color-mix(in srgb,var(--blue) 11%,transparent);border-bottom:2px solid color-mix(in srgb,var(--blue) 55%,transparent)}
+.tkTbl th.tkG .tkgl{width:96px;text-align:center;font-weight:700;font-size:12.5px;background:transparent;border:0;border-bottom:1px dashed transparent;color:inherit;padding:1px 2px}
+.tkTbl th.tkG .tkgl:hover,.tkTbl th.tkG .tkgl:focus{border-bottom-color:var(--label-3);outline:0}
+.tkTbl th.tkG .tkf{display:inline-block;margin:0;width:auto;padding:2px 8px}
+.tkTbl th.tkG .tkdel{display:inline-block;margin:0}
+.tkTbl th.gsub{background:color-mix(in srgb,var(--blue) 6%,var(--sheet))}
+.tkTbl th.gsub .tkl{font-weight:600;color:var(--label-2)}
+.tkTbl td.tkInG{background:color-mix(in srgb,var(--blue) 5%,transparent)}
+.tkTbl td.tkInG.gS{box-shadow:inset 2px 0 0 color-mix(in srgb,var(--blue) 35%,transparent)}
+.tkTbl td.tkInG.gE{box-shadow:inset -2px 0 0 color-mix(in srgb,var(--blue) 35%,transparent)}
+.tkTbl td.tkInG.gS.gE{box-shadow:inset 2px 0 0 color-mix(in srgb,var(--blue) 35%,transparent),inset -2px 0 0 color-mix(in srgb,var(--blue) 35%,transparent)}
+.trowG{margin:10px 0 4px;font-size:12.5px;font-weight:700;color:var(--label)}
+.trowG small{font-weight:400;color:var(--label-2)}
+.trowE.inG{padding-left:14px;border-left:2px solid color-mix(in srgb,var(--blue) 45%,transparent);margin-left:2px}
+
+/* ---------- Durchschnitt deutlich: große Marke im Eingabeblatt und im Notenspiegel ---------- */
+.avgPill{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px 5px;border-radius:999px;background:color-mix(in srgb,var(--blue) 14%,transparent);color:color-mix(in srgb,var(--blue) 80%,var(--label));font-size:13px;font-weight:600}
+.avgPill b{font-size:19px;font-weight:750;letter-spacing:-.01em;color:var(--label);font-variant-numeric:tabular-nums}
+.avgPill small{font-weight:500;color:var(--label-2);font-size:11.5px}
+#tkSum{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+
+/* ---------- Oberstufe: Prüfungsteile (ISB-Rechentabelle) ---------- */
+.prowH,.prow{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.3fr) 86px 92px 34px;gap:8px;align-items:center}
+.prowH{font-size:11.5px;font-weight:600;color:var(--label-2);margin:4px 0 4px;padding:0 2px}
+.prow{margin-bottom:6px}
+.prow .pw{display:flex;align-items:center;gap:4px;color:var(--label-2)}
+.prow .pw input{width:62px}
+.prow input:disabled{opacity:.35}
+.ppTbl td.pS,.ppTbl th.gsub:first-child{box-shadow:inset 2px 0 0 color-mix(in srgb,var(--blue) 28%,transparent)}
+.ppTbl td.tn{font-weight:700;font-variant-numeric:tabular-nums;color:var(--label);min-width:54px;background:color-mix(in srgb,var(--blue) 5%,transparent)}
+.ppTbl th.tnH{color:var(--label);font-weight:700}
+.ppTbl th.gsub small{display:block;font-weight:400;color:var(--label-3);font-size:10.5px}
+.ppTbl th.tkG .tkGh{gap:10px}
+.ppTbl .pwB{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--blue) 18%,transparent);color:color-mix(in srgb,var(--blue) 80%,var(--label))}
+.ppTbl .sperr{color:var(--red);text-decoration:underline dotted;cursor:help}
+.ppTbl tr.cur td{background:color-mix(in srgb,var(--blue) 9%,transparent)}
+.ppTbl tr.grpRow td{text-align:left;font-weight:700;font-size:12px;color:var(--label-2);padding:6px 8px;background:var(--fill)}
+.ppTbl td.sum{font-variant-numeric:tabular-nums;color:var(--label-2)}
+.prow input,.prow select{background:var(--fill);border:0;border-radius:10px;padding:8px 10px;font-size:14px;min-width:0;color:inherit;font-family:inherit}
+.prow select{padding:8px 6px;font-size:13.5px}
+.prow input:focus,.prow select:focus{outline:2px solid color-mix(in srgb,var(--blue) 60%,transparent);outline-offset:0}
+.sRow .pill.late{background:color-mix(in srgb,var(--red) 16%,transparent);color:color-mix(in srgb,var(--red) 78%,var(--label))}
+/* Nachteilsausgleich / Notenschutz */
+.supTag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.03em;line-height:16px;vertical-align:1px;background:color-mix(in srgb,var(--purple,#8e44ad) 16%,transparent);color:color-mix(in srgb,var(--purple,#8e44ad) 80%,var(--label));cursor:help}
+.supTag.ns{background:color-mix(in srgb,var(--orange) 18%,transparent);color:color-mix(in srgb,var(--orange) 75%,var(--label))}
+
+/* ---------- Elternsprechtag-Ansicht ---------- */
+dialog.tvDlg{width:min(1100px,96vw)}
+.tvTop{display:flex;align-items:center;gap:14px;margin:2px 0 14px}
+.tvTop .mini{font-size:20px;padding:6px 16px;flex:none}
+.tvName{flex:1;text-align:center}
+.tvName h2{margin:0;font-size:30px;letter-spacing:-.02em}
+.tvName p{margin:4px 0 0;color:var(--label-2);font-size:14px}
+.tvStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tvStat{border-radius:16px;padding:12px 16px;background:var(--fill)}
+.tvStat.key{background:color-mix(in srgb,var(--blue) 13%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--blue) 45%,transparent)}
+.tvStat span{display:block;font-size:12px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.05em}
+.tvStat b{display:block;font-size:40px;line-height:1.1;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tvStat small{color:var(--label-2)}
+.tvRow{margin:12px 0}
+.tvRowT{font-size:12.5px;font-weight:700;color:var(--label-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.tvChips{display:flex;flex-wrap:wrap;gap:12px}
+.tvItem{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:62px;text-align:center}
+.tvItem small{font-size:11.5px;color:var(--label-2);line-height:1.3}
+.tvChip{display:grid;place-items:center;min-width:52px;height:52px;padding:0 8px;border-radius:14px;font-size:22px;font-weight:750;color:#fff;background:var(--g,var(--label-3))}
+.tvChip.none{background:var(--fill-2);color:var(--label-2);font-size:16px}
+.tvNote{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--fill)}
+.tvNote p{white-space:pre-wrap;margin:4px 0}
+.tvKeys{text-align:center;margin-top:16px}
+.kgL{font-weight:400;color:var(--label-3)}
+
+/* ---------- Hilfe: Suche, Inhaltsverzeichnis, Abschnitte ---------- */
+.helpDoc .hSearch{width:100%;margin:6px 0 12px;padding:11px 14px;border:0;border-radius:12px;background:var(--fill);font:inherit;font-size:15px;color:inherit}
+.hToc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px;padding:14px 16px;border-radius:16px;background:var(--fill);margin-bottom:18px}
+.hTocG{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.hTocG b{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--label-2);margin-bottom:2px}
+.hTocG .linkbtn{text-align:left;font-size:14px}
+.hGroupT{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--blue);margin:22px 0 2px;padding-top:10px;border-top:1px solid var(--hairline)}
+.hSec h3{margin-top:12px}
+.hSec{scroll-margin-top:10px}
+.hCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.hCards > div{border-radius:14px;padding:12px 14px;background:var(--fill)}
+.hCards p{margin:4px 0 0;font-size:13.5px}
+.helpDoc ol.hSteps{display:block;padding-left:22px;margin:6px 0} .helpDoc ol.hSteps li{margin:5px 0}
+.srcList ul{margin:2px 0 12px} .srcList li{margin:3px 0;font-size:13.5px} .srcList > p{margin:12px 0 2px}
+.ppTbl tr.hg2 th.gsub{text-align:center}
+
+/* ---------- 1.0.2 Feinschliff ---------- */
+.sideSearch input::placeholder{color:var(--label-3);opacity:1}
+.sHead.pHead{margin:0 0 14px}
+#keyBox .kGrid{margin-top:12px}
+#keyBox > .rows + .rows, #keyBox > .rows{margin-bottom:6px}
+.gateBrand{position:fixed;left:0;right:0;bottom:22px;display:flex;justify-content:center;color:var(--label-2);opacity:.7;pointer-events:none}
+.gateBrand svg{height:20px;width:auto}
+.keyGrid .kp{font-size:10.5px;font-weight:500;color:var(--label-3);min-height:13px;font-variant-numeric:tabular-nums}
+.keyPct:empty{display:none}

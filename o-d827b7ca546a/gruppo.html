@@ -901,7 +901,7 @@ body.pfs-on #fsLogo,body.ov-on #fsLogo{display:block}
 body[data-sb="min"]{--sbw:72px}
 .toolbar .tbtn.on{background:var(--fill-2);color:var(--label);box-shadow:inset 3px 0 0 var(--blue)}
 .dash[hidden],.layout[hidden]{display:none}
-.dash{padding:6px 2px 40px;max-width:1180px;margin:0 auto}
+.dash{padding:6px 2px 40px;max-width:none;margin:0}
 .dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:8px 0 20px}
 .dgreet{font-size:clamp(28px,4.2vw,42px);font-weight:700;letter-spacing:-.03em;margin:0;line-height:1.1}
 .ddate{margin:4px 0 0;color:var(--label-2);font-size:15.5px;text-transform:capitalize}
@@ -1115,35 +1115,59 @@ input::placeholder,textarea::placeholder,.ovtask::placeholder,.sizes input::plac
 .hring b{font-size:38px;font-weight:700;letter-spacing:-.03em}.hring small{font-size:11px;opacity:.75;margin-top:2px}
 @media (max-width:700px){#dash[data-ds]:not([data-ds=std]){padding:16px 14px 26px;border-radius:22px}.hring{position:relative;right:auto;bottom:auto;width:120px;height:120px;margin-top:8px}.hring b{font-size:30px}}
 
-/* ---------- A · Magazin ---------- */
-#dash[data-ds=mag]{background:#f7f2e9;font-family:'Lora',Georgia,'Times New Roman',serif;--label:#1f1b16;--label-2:#6b5f52;--label-3:#a39687;--fill:rgba(70,45,20,.07);--fill-2:rgba(70,45,20,.12);--blue:#9c4a2b;--green:#4f7a4a;--orange:#b4691f;--glass-solid:#fffaf1;--on-accent:#fff;--sep:rgba(70,45,20,.2);--lift:0 1px 3px rgba(70,45,20,.2)}
-#dash[data-ds=mag] .dgreet{font-weight:400;font-size:clamp(34px,5vw,58px);letter-spacing:-.035em}
-#dash[data-ds=mag] .ddate{font-style:italic;color:var(--label-2)}
-#dash[data-ds=mag] .dhead{border-bottom:3px double rgba(70,45,20,.35);padding-bottom:14px;margin-bottom:26px}
+/* ---------- A · Magazin (modern, 1.3.0): Weißraum, große Grotesk, Zahlen als Blickfang, eine Signalfarbe ---------- */
+#dash[data-ds=mag]{background:#FBFAF7;color:#0C0C0E;font-family:'Inter',system-ui,sans-serif;counter-reset:mag;
+  --label:#0C0C0E;--label-2:#5E5E66;--label-3:#A3A3AB;--fill:rgba(12,12,14,.05);--fill-2:rgba(12,12,14,.09);--blue:#FF4A1C;--green:#0F9D6B;--orange:#FF4A1C;
+  --glass-solid:#fff;--on-accent:#fff;--sep:rgba(12,12,14,.12);--lift:none;border-radius:28px;padding:34px 40px 40px;box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 30px 70px -40px rgba(20,20,40,.35)}
+#dash[data-ds=mag] .dhead{align-items:flex-end;border-bottom:2px solid #0C0C0E;padding-bottom:18px;margin-bottom:30px}
+#dash[data-ds=mag] .dgreet{font-weight:800;font-size:clamp(40px,5.6vw,84px);letter-spacing:-.055em;line-height:.92}
+#dash[data-ds=mag] .ddate{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--label);margin-top:12px}
+#dash[data-ds=mag] .ddate::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--blue);margin-right:10px;vertical-align:1px}
+#dash[data-ds=mag] .dfocus{background:none;padding:0;gap:18px;border-radius:0}
+#dash[data-ds=mag] .dfocus button{padding:6px 0;border-radius:0;color:var(--label-2);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:none!important;box-shadow:none!important;border-bottom:2px solid transparent}
+#dash[data-ds=mag] .dfocus button[aria-pressed="true"]{color:var(--label);border-bottom-color:var(--blue)}
 #dash[data-ds=mag] .dcard,#dash[data-ds=mag] .dhero{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0!important;color:var(--label)}
-#dash[data-ds=mag] .dh{font-family:-apple-system,'Segoe UI',sans-serif;letter-spacing:.18em;font-size:11px;color:var(--blue);border-bottom:1px solid var(--sep);padding-bottom:8px;margin-bottom:6px}
-#dash[data-ds=mag] .dhero{min-height:0;gap:8px;color:var(--label)!important}
-#dash[data-ds=mag] .dkick{color:var(--blue);letter-spacing:.2em;font-family:-apple-system,'Segoe UI',sans-serif;opacity:1}
-#dash[data-ds=mag] .dtitle{font-weight:400;font-size:clamp(46px,7.6vw,100px);letter-spacing:-.045em;line-height:.95;color:var(--label)}
-#dash[data-ds=mag] .dsub{font-style:italic;font-size:21px;color:var(--label-2);opacity:1}
-#dash[data-ds=mag] .dprog{height:3px;background:var(--sep);max-width:none;border-radius:0}
+#dash[data-ds=mag] .dh{counter-increment:mag;font-size:11px;font-weight:800;letter-spacing:.2em;color:var(--label);border-top:2px solid #0C0C0E;padding-top:10px;margin-bottom:8px;display:flex;gap:12px}
+#dash[data-ds=mag] .dh::before{content:counter(mag,decimal-leading-zero);color:var(--blue)}
+#dash[data-ds=mag] .dhero{min-height:0;gap:10px;color:var(--label)!important;position:relative}
+#dash[data-ds=mag] .dkick{color:var(--blue);font-size:12px;font-weight:800;letter-spacing:.24em;opacity:1}
+#dash[data-ds=mag] .dtitle{font-weight:800;font-size:clamp(56px,8.4vw,140px);letter-spacing:-.065em;line-height:.86;color:var(--label);margin:4px 0 6px}
+#dash[data-ds=mag] .dsub{font-size:18px;font-weight:500;color:var(--label-2);opacity:1;letter-spacing:-.01em}
+#dash[data-ds=mag] .dprog{height:8px;background:var(--fill);max-width:none;border-radius:0;margin-top:10px}
 #dash[data-ds=mag] .dprog i{background:var(--blue);border-radius:0;transform-origin:left}
-#dash[data-ds=mag] .dacts button{background:none!important;color:var(--blue)!important;border-radius:0;padding:2px 0;border-bottom:2px solid currentColor;-webkit-backdrop-filter:none;backdrop-filter:none;font-family:-apple-system,'Segoe UI',sans-serif;font-size:14px}
-#dash[data-ds=mag] .dchip,#dash[data-ds=mag] .dhero .dchip{background:none;border:1px solid var(--sep);color:var(--label-2);border-radius:2px;font-family:-apple-system,'Segoe UI',sans-serif}
-#dash[data-ds=mag] .drow{border-radius:0;border-bottom:1px solid var(--sep);padding-left:0;padding-right:0}
+#dash[data-ds=mag] .dacts{gap:10px;margin-top:12px}
+#dash[data-ds=mag] .dacts button{background:#0C0C0E!important;color:#fff!important;border-radius:999px;padding:11px 20px;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;font-size:14px;font-weight:700;letter-spacing:-.01em;box-shadow:none}
+#dash[data-ds=mag] .dacts button:first-child{background:var(--blue)!important}
+#dash[data-ds=mag] .dacts button:hover{transform:translateY(-1px)}
+#dash[data-ds=mag] .dchip,#dash[data-ds=mag] .dhero .dchip{background:none;border:1px solid var(--sep);color:var(--label-2);border-radius:999px;font-weight:600}
+#dash[data-ds=mag] .drow{border-radius:0;border-bottom:1px solid var(--sep);padding-left:0;padding-right:0;grid-template-columns:62px 1fr auto;font-variant-numeric:tabular-nums}
 #dash[data-ds=mag] .ddot{display:none}
-#dash[data-ds=mag] .drow{grid-template-columns:54px 1fr auto}
-#dash[data-ds=mag] .drow.live{background:none;color:var(--blue);font-weight:700}
-#dash[data-ds=mag] .dtile{background:none;border:1px solid var(--sep);border-radius:2px;box-shadow:none}
-#dash[data-ds=mag] .dtile i{background:var(--blue);box-shadow:none;border-radius:50%}
-#dash[data-ds=mag] .dcls{border:1px solid var(--sep)!important;padding:16px!important;border-top:4px solid var(--ch)!important}
+#dash[data-ds=mag] .drow.live{background:none;color:var(--label);font-weight:800;box-shadow:inset 4px 0 0 var(--blue);padding-left:14px}
+#dash[data-ds=mag] .dtile{background:#fff;border:1px solid var(--sep);border-radius:18px;box-shadow:none;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+#dash[data-ds=mag] .dtile:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 14px 30px -18px rgba(12,12,14,.5)}
+#dash[data-ds=mag] .dtile i{background:#0C0C0E;box-shadow:none;border-radius:12px}
+#dash[data-ds=mag] .dcls{background:#fff!important;border:1px solid var(--sep)!important;padding:18px!important;border-radius:18px!important;border-top:6px solid var(--ch)!important}
+#dash[data-ds=mag] .hring{display:flex;position:absolute;right:0;top:0;width:auto;height:auto;background:none!important;box-shadow:none!important;border:0}
+#dash[data-ds=mag] .hring i{background:none;width:auto;height:auto;align-items:flex-end}
+#dash[data-ds=mag] .hring b{font-size:clamp(70px,9vw,150px);font-weight:800;letter-spacing:-.07em;color:var(--blue);line-height:.85}
+#dash[data-ds=mag] .hring small{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
 @media (min-width:701px){
-#dash[data-ds=mag] .dbody.f-today{grid-template-columns:minmax(0,7fr) minmax(0,4fr);column-gap:52px;grid-template-areas:"h c" "d c" "q n";align-items:start}
-#dash[data-ds=mag] .f-today .dhero{grid-area:h}#dash[data-ds=mag] .f-today .dday{grid-area:d}#dash[data-ds=mag] .f-today .dcal{grid-area:c;border-left:1px solid var(--sep)!important;padding-left:30px!important}
+#dash[data-ds=mag] .dbody.f-today{grid-template-columns:minmax(0,8fr) minmax(0,4fr);column-gap:56px;row-gap:34px;grid-template-areas:"h c" "d c" "q c" "n n";align-items:start}
+#dash[data-ds=mag] .f-today .dhero{grid-area:h}#dash[data-ds=mag] .f-today .dday{grid-area:d}#dash[data-ds=mag] .f-today .dcal{grid-area:c}
 #dash[data-ds=mag] .f-today .dquick{grid-area:q}#dash[data-ds=mag] .f-today .dnews{grid-area:n}}
+@media (max-width:700px){#dash[data-ds=mag]{padding:20px 18px 26px;border-radius:22px}#dash[data-ds=mag] .hring{position:relative}}
+html[data-theme="dark"] #dash[data-ds=mag]{background:#0E0E10;color:#F4F4F6;--label:#F4F4F6;--label-2:#A5A5AE;--label-3:#5E5E66;--fill:rgba(255,255,255,.07);--fill-2:rgba(255,255,255,.12);--sep:rgba(255,255,255,.14);--glass-solid:#1A1A1E;box-shadow:0 30px 70px -40px rgba(0,0,0,.9)}
+html[data-theme="dark"] #dash[data-ds=mag] :is(.dhead,.dh){border-color:#F4F4F6}
+html[data-theme="dark"] #dash[data-ds=mag] :is(.dtile,.dcls){background:#18181B!important}
+html[data-theme="dark"] #dash[data-ds=mag] .dtile i,html[data-theme="dark"] #dash[data-ds=mag] .dacts button{background:#F4F4F6!important;color:#0E0E10!important}
+html[data-theme="dark"] #dash[data-ds=mag] .dtile i{color:#0E0E10}
+html[data-theme="dark"] #dash[data-ds=mag] .dacts button:first-child{background:var(--blue)!important;color:#fff!important}
 @media (prefers-reduced-motion:no-preference){
-#dash[data-ds=mag][data-anim="1"] .dbody>*{animation:dRise .7s cubic-bezier(.2,.8,.2,1) both}
-#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(2){animation-delay:.1s}#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(3){animation-delay:.2s}#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(4){animation-delay:.3s}
+#dash[data-ds=mag][data-anim="1"] .dbody>*{animation:dRise .8s cubic-bezier(.2,.8,.2,1) both}
+#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(2){animation-delay:.08s}#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(3){animation-delay:.16s}#dash[data-ds=mag][data-anim="1"] .dbody>*:nth-child(4){animation-delay:.24s}
+#dash[data-ds=mag][data-anim="1"] .dtitle{animation:magIn 1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes magIn{from{opacity:0;letter-spacing:-.02em;transform:translateY(18px)}}
+#dash[data-ds=mag][data-anim="1"] .hring b{animation:magIn 1.1s .15s cubic-bezier(.2,.8,.2,1) both}
 #dash[data-ds=mag] .dprog i{animation:dScale 1.4s cubic-bezier(.2,.8,.2,1) both}
 #dash[data-ds=mag] .drow:hover:not(:disabled){background:none;padding-left:8px;transition:padding .25s}}
 
@@ -1394,7 +1418,432 @@ html[data-skin="graphit"] dialog{border:1px solid var(--label)}
 html[data-skin="heft"] dialog{border-radius:8px;border:1.5px solid color-mix(in srgb,var(--label) 70%,transparent);box-shadow:6px 6px 0 color-mix(in srgb,var(--label) 18%,transparent)}
 html[data-skin="heft"] .sheet{border-radius:8px}
 html[data-skin="neon"] dialog{box-shadow:0 0 0 1px color-mix(in srgb,var(--blue) 40%,transparent),0 30px 80px -20px color-mix(in srgb,var(--blue) 60%,transparent)}
-html:is([data-skin="salbei"],[data-skin="wald"]) dialog{border-radius:30px}
+html:is([data-skin="salbei"],[data-skin="wald"]) dialog{border-radius:30px}#dash[data-ds=mag] .hring{top:26px;bottom:auto}
+@media (min-width:701px){#dash[data-ds=mag] .dhero .dprog{max-width:calc(100% - 230px)}}
+#dash[data-ds=mag] .dlsel{background:none!important;border:1px solid var(--sep);box-shadow:none!important}
+
+/* ---- Timer „Moka“ (Bialetti) ---- */
+.tmmoka .mkbody{stroke:color-mix(in srgb,#3b414a 55%,transparent);stroke-width:2;stroke-linejoin:round}
+.tmmoka .mkshade{fill:rgba(0,0,0,.12)}
+.tmmoka .mkwin{fill:color-mix(in srgb,#20140c 30%,rgba(255,255,255,.35));stroke:rgba(255,255,255,.55);stroke-width:2}
+.tmmoka .mkcrema{fill:none;stroke:#e7b57a;stroke-width:5;opacity:.9}
+.tmmoka .mkcol{fill:rgba(255,255,255,.35);stroke:rgba(0,0,0,.15)}
+.tmmoka .mkshine{fill:rgba(255,255,255,.38)}
+.tmmoka .mkknob,.tmmoka .mkhandle{fill:#1d1f24;stroke:#000;stroke-width:1.5}
+.tmmoka .mkhandle{filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.tmmoka .mkvalve{fill:#c7ccd3;stroke:#6d747e;stroke-width:2}.tmmoka .mkvalvein{fill:#8b929c}
+.tmmoka .mkstove{fill:#2b2e35}
+.tmmoka .mkflame{opacity:0;transition:opacity .6s}
+.tmmoka.run .mkflame{opacity:1}
+.tmmoka .mkspray circle{fill:#8a4a20;opacity:0}
+.tmmoka .mksteam path{fill:none;stroke:color-mix(in srgb,var(--label) 35%,transparent);stroke-width:7;stroke-linecap:round;opacity:0}
+.ovstage[data-lvl="warn"] .tmmoka .mkcrema{stroke:#f0c088}
+@media (prefers-reduced-motion:no-preference){
+  .tmmoka .mkcof{animation:mkWave 2.6s ease-in-out infinite alternate}
+  @keyframes mkWave{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+  .tmmoka.run .mkflame path{transform-box:fill-box;transform-origin:50% 100%;animation:mkFlick .5s ease-in-out infinite alternate}
+  @keyframes mkFlick{from{transform:scaleY(.82) scaleX(1.05)}to{transform:scaleY(1.12) scaleX(.94)}}
+  .tmmoka.run .mkspray circle{animation:mkSpray 1s ease-out infinite}
+  @keyframes mkSpray{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-26px)}}
+  .tmmoka.done .mksteam path{animation:mkSteam 2.4s ease-out infinite}
+  @keyframes mkSteam{0%{opacity:0;transform:translateY(10px)}30%{opacity:.8}100%{opacity:0;transform:translateY(-40px)}}
+}
+.tmmoka.done .mksteam path{opacity:.6}
+.tmmoka .mkedge{fill:none;stroke:color-mix(in srgb,#3b414a 60%,transparent);stroke-width:2;stroke-linejoin:round}
+.tmmoka .mkfac path{stroke:rgba(255,255,255,.25);stroke-width:.6}
+.tmmoka .mkwin{fill:rgba(40,24,14,.28);stroke:rgba(255,255,255,.7);stroke-width:2.5}
+html[data-theme="dark"] .tmmoka .mkfac{filter:brightness(.82)}
+/* Tische bauen: gleiche Sicht wie der Plan – Reihe 1 unten an der Tafel (1.3.0) */
+#spBuild .sbrows{display:flex;flex-direction:column-reverse;gap:2px}
+#spBuild .sbtafel{margin:2px 0 0 70px;max-width:420px;text-align:center;padding:5px 0;border-radius:8px;background:#2f3b33;color:#e9efe9;font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase}
+#spBuild .sbback{margin-left:70px;font-size:11px;color:var(--label-3);letter-spacing:.06em}
+#dash[data-ds=aurora] .hring{top:22px;bottom:auto}
+@media (min-width:701px){#dash[data-ds=aurora] .dhero{padding-right:190px}}
+@media (max-width:700px){#dash[data-ds=aurora] .hring{top:auto;position:relative}}
+
+/* ===== 1.3.0 Dashboard: Countdown, Tagesband, Wochenblick, Tageszeit, Bild des Tages, Klassenkarten ===== */
+.dcount{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.dcount span{font-size:13.5px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#dash[data-ds]:not([data-ds=std]) .dcount span{background:var(--fill);box-shadow:none;color:inherit}
+/* Raster der Standard-Gestaltung: Hero + Woche, Tagesband über die ganze Breite, darunter Schnellstart und Termine */
+@media (min-width:1101px){
+  #dash[data-ds=std] .f-today .dhero{grid-column:span 8}
+  #dash[data-ds=std] .f-today .dweek{grid-column:span 4}
+  #dash[data-ds=std] .f-today .dday{grid-column:span 12;grid-row:auto}
+  #dash[data-ds=std] .f-today .dquick{grid-column:span 6}
+  #dash[data-ds=std] .f-today .dcal{grid-column:span 6}
+}
+@media (min-width:701px) and (max-width:1100px){
+  #dash[data-ds=std] .f-today .dhero{grid-column:span 12}#dash[data-ds=std] .f-today .dweek{grid-column:span 12}
+  #dash[data-ds=std] .f-today .dday,#dash[data-ds=std] .f-today .dquick,#dash[data-ds=std] .f-today .dcal{grid-column:span 12;grid-row:auto}
+}
+/* Tagesband */
+.dband{margin:6px 0 4px;padding:26px 0 6px}
+.dbtrack{position:relative;height:74px;border-radius:18px;background:repeating-linear-gradient(135deg,transparent 0 7px,color-mix(in srgb,var(--label) 4%,transparent) 7px 14px),color-mix(in srgb,var(--label) 4%,transparent);box-shadow:inset 0 1px 2px rgba(20,30,60,.06)}
+.dbtick{position:absolute;top:-22px;transform:translateX(-50%);font-size:11.5px;color:var(--label-3);font-variant-numeric:tabular-nums}
+.dbtick::after{content:"";position:absolute;left:50%;top:18px;width:1px;height:78px;background:color-mix(in srgb,var(--label) 7%,transparent)}
+.dbk{position:absolute;top:6px;bottom:6px;margin-left:2px;border:0;border-radius:14px;padding:8px 10px;text-align:left;color:var(--label);font:inherit;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;justify-content:center;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--h) 26%,rgba(255,255,255,.75)),color-mix(in srgb,var(--h) 14%,rgba(255,255,255,.55)));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.8),inset 0 0 0 1px color-mix(in srgb,var(--h) 30%,transparent),0 6px 14px -8px color-mix(in srgb,var(--h) 70%,transparent);transition:transform .25s var(--spring),box-shadow .25s}
+.dbk:hover:not(:disabled){transform:translateY(-2px)}
+.dbk b{font-size:15px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbk small{font-size:11.5px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbk i{position:absolute;right:9px;top:7px;font-style:normal;font-size:10.5px;color:var(--label-2);font-variant-numeric:tabular-nums}
+.dbk.past{opacity:.62;filter:saturate(.7)}
+.dbk.live{background:linear-gradient(180deg,color-mix(in srgb,var(--h) 80%,#fff),var(--h));color:#fff;box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 10px 22px -8px var(--h)}
+.dbk.live small,.dbk.live i{color:rgba(255,255,255,.85)}
+html[data-theme="dark"] .dbk:not(.live){background:linear-gradient(180deg,color-mix(in srgb,var(--h) 34%,rgba(255,255,255,.08)),color-mix(in srgb,var(--h) 20%,rgba(255,255,255,.04)));box-shadow:inset 0 1px 1px rgba(255,255,255,.15),inset 0 0 0 1px color-mix(in srgb,var(--h) 40%,transparent)}
+.dbnow{position:absolute;top:-6px;bottom:-6px;width:2px;margin-left:-1px;background:var(--red);border-radius:2px;z-index:2;box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 18%,transparent)}
+.dbnow::before{content:"";position:absolute;top:-4px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--red)}
+.dbnow em{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:no-preference){.dbnow::before{animation:dbPulse 2s ease-in-out infinite}@keyframes dbPulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--red) 25%,transparent)}}
+  #dash[data-anim="1"] .dbk{animation:dbIn .6s var(--spring) both}#dash[data-anim="1"] .dbk:nth-child(n+3){animation-delay:.06s}#dash[data-anim="1"] .dbk:nth-child(n+5){animation-delay:.12s}#dash[data-anim="1"] .dbk:nth-child(n+7){animation-delay:.18s}
+  @keyframes dbIn{from{opacity:0;transform:translateY(10px) scale(.96)}}}
+@media (min-width:701px){#dash[data-ds=std] .dday.hasband .dlist{display:none}}
+@media (max-width:700px){.dband{display:none}}
+/* Wochenblick */
+.dweek{justify-content:space-between}
+.dwk{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end;height:118px;padding-top:4px}
+.dwc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%}
+.dwc b{font-size:13px;color:var(--label-2);font-variant-numeric:tabular-nums}
+.dwc i{width:100%;max-width:38px;border-radius:10px;background:color-mix(in srgb,var(--blue) 22%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.dwc span{font-size:12px;font-weight:600;color:var(--label-2);text-transform:uppercase;letter-spacing:.04em}
+.dwc.on i{background:linear-gradient(180deg,color-mix(in srgb,var(--blue) 70%,#fff),var(--blue));box-shadow:0 8px 18px -8px var(--blue)}
+.dwc.on b,.dwc.on span{color:var(--blue)}
+.dwc.off i{background:color-mix(in srgb,var(--green) 30%,transparent)}
+@media (prefers-reduced-motion:no-preference){#dash[data-anim="1"] .dwc i{animation:dwUp .8s var(--spring) both;transform-origin:bottom}#dash[data-anim="1"] .dwc:nth-child(2) i{animation-delay:.05s}#dash[data-anim="1"] .dwc:nth-child(3) i{animation-delay:.1s}#dash[data-anim="1"] .dwc:nth-child(4) i{animation-delay:.15s}#dash[data-anim="1"] .dwc:nth-child(5) i{animation-delay:.2s}@keyframes dwUp{from{transform:scaleY(.05)}}}
+.dwfree{display:flex;flex-direction:column;gap:1px;text-align:left;border:0;border-radius:16px;padding:11px 14px;margin-top:4px;background:color-mix(in srgb,var(--green) 12%,transparent);color:var(--label);font:inherit;cursor:pointer}
+.dwfree small{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green)}
+.dwfree b{font-size:15.5px}.dwfree span{font-size:13px;color:var(--label-2)}
+/* Hero nach Tageszeit (nur Liquid Glass, Standard-Gestaltung) */
+html:not([data-skin]) #dash[data-ds=std] .dhero[data-tod="morgen"]{background:radial-gradient(90% 120% at 0% 0%,rgba(255,255,255,.32),transparent 55%),linear-gradient(135deg,#FF9F43,#F25F5C 55%,#C2378F)}
+html:not([data-skin]) #dash[data-ds=std] .dhero[data-tod="mittag"]{background:radial-gradient(90% 120% at 0% 0%,rgba(255,255,255,.30),transparent 55%),linear-gradient(135deg,#2F8BFF,#0A6CFF 50%,#5B4BFF)}
+html:not([data-skin]) #dash[data-ds=std] .dhero[data-tod="nachmittag"]{background:radial-gradient(90% 120% at 0% 0%,rgba(255,255,255,.28),transparent 55%),linear-gradient(135deg,#7B5CFF,#B44CF0 55%,#F0508F)}
+html:not([data-skin]) #dash[data-ds=std] .dhero[data-tod="abend"]{background:radial-gradient(90% 120% at 0% 0%,rgba(255,255,255,.18),transparent 55%),linear-gradient(135deg,#1E2A78,#3B2C8F 55%,#7A2D7E)}
+html:not([data-skin]) #dash[data-ds=std] .dhero::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(40% 60% at 85% 20%,rgba(255,255,255,.22),transparent 70%);mix-blend-mode:soft-light}
+@media (prefers-reduced-motion:no-preference){html:not([data-skin]) #dash[data-ds=std] .dhero::after{animation:heroSheen 14s ease-in-out infinite alternate}@keyframes heroSheen{to{transform:translate(-30%,20%)}}}
+/* Restzeit-Ring im Standard-Hero (Liquid Glass) */
+html:not([data-skin]) #dash[data-ds=std] .dhero .hring{display:grid;place-items:center;--rc:#fff;--rb:rgba(255,255,255,.22);--ri:rgba(255,255,255,.14);width:150px;height:150px;top:26px;bottom:auto;right:28px;box-shadow:0 10px 30px -12px rgba(0,0,0,.35)}
+html:not([data-skin]) #dash[data-ds=std] .dhero .hring i{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 1px 1px rgba(255,255,255,.4)}
+@media (min-width:701px){html:not([data-skin]) #dash[data-ds=std] .dhero .dprog{max-width:calc(100% - 190px)}}
+@media (max-width:700px){html:not([data-skin]) #dash[data-ds=std] .dhero .hring{display:none}}
+/* Bild des Tages */
+.dhero.potd{background-image:linear-gradient(90deg,rgba(8,12,30,.78),rgba(8,12,30,.35) 60%,rgba(8,12,30,.15)),var(--potd)!important;background-size:cover!important;background-position:center!important}
+.dpcred{position:absolute;right:16px;bottom:10px;max-width:60%;font-size:10.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+/* Klassenkarten */
+.dcnext{font-size:13px;font-weight:600;color:var(--label-2);margin-top:2px}
+.dctrend{display:flex;align-items:flex-end;gap:3px;height:28px;margin-top:4px}
+.dctrend i{width:7px;border-radius:3px;background:var(--ch,var(--blue));opacity:.85}.dctrend i.z{opacity:.18}
+.dctrend span{margin-left:8px;font-size:12px;color:var(--label-2);align-self:center}
+/* dunkle Gestaltungen: gewählter Reiter gut lesbar */
+#dash:is([data-ds=bento],[data-ds=cockpit],[data-ds=tafel],[data-ds=aurora]) .dfocus button[aria-pressed="true"]{background:rgba(255,255,255,.18)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)!important}
+
+/* ===== Liquid Glass (Standard-Look ab 1.3.0) =====
+   Gilt nur ohne gewähltes Theme (html ohne data-skin). Alle anderen Themes bleiben unverändert.
+   Bausteine: farbiges, langsam ziehendes Hintergrundbild · Glas mit Lichtkante (heller Rand oben links,
+   schwacher Rand unten rechts) · Tropfen-Schalter · getöntes Glas für Hauptknöpfe. */
+html:not([data-skin]){
+  --canvas:#E9ECF4;
+  --lg-a:#7FA6FF; --lg-b:#FF9CC2; --lg-c:#7FE3D0; --lg-d:#C7A6FF;
+  --lg-fill:rgba(255,255,255,.42);
+  --lg-fill-2:rgba(255,255,255,.20);
+  --lg-rim-1:rgba(255,255,255,.95);
+  --lg-rim-2:rgba(255,255,255,.18);
+  --lg-rim-3:rgba(255,255,255,.55);
+  --lg-shadow:0 1px 1px rgba(20,30,70,.04), 0 10px 30px -12px rgba(30,40,100,.22), 0 30px 60px -30px rgba(30,40,100,.20);
+  --lg-inner:inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.22), inset 0 0 24px rgba(255,255,255,.16);
+  --lg-blur:blur(26px) saturate(190%) brightness(1.03);
+  --glass:rgba(255,255,255,.42); --glass-solid:rgba(255,255,255,.80); --glass-hi:rgba(255,255,255,.95);
+  --hairline:rgba(30,40,80,.08); --tile:rgba(255,255,255,.40);
+  --fill:rgba(40,50,90,.06); --fill-2:rgba(40,50,90,.11);
+  --label:#0F1220; --label-2:rgba(25,30,50,.60); --label-3:rgba(25,30,50,.32);
+  --blue:#0A6CFF;
+  --r-xl:30px; --r-lg:22px;
+}
+@media (prefers-color-scheme:dark){
+  html:not([data-skin]):not([data-theme="light"]){
+    --canvas:#06070C;
+    --lg-a:#2D55D9; --lg-b:#9C2F6E; --lg-c:#127A72; --lg-d:#5B3BB5;
+    --lg-fill:rgba(255,255,255,.075); --lg-fill-2:rgba(255,255,255,.03);
+    --lg-rim-1:rgba(255,255,255,.42); --lg-rim-2:rgba(255,255,255,.05); --lg-rim-3:rgba(255,255,255,.16);
+    --lg-shadow:0 1px 1px rgba(0,0,0,.4), 0 18px 50px -18px rgba(0,0,0,.75);
+    --lg-inner:inset 0 1px 1px rgba(255,255,255,.22), inset 0 -1px 1px rgba(255,255,255,.05), inset 0 0 26px rgba(255,255,255,.035);
+    --lg-blur:blur(28px) saturate(170%) brightness(.92);
+    --glass:rgba(255,255,255,.07); --glass-solid:rgba(58,62,76,.92); --glass-hi:rgba(255,255,255,.22);
+    --hairline:rgba(255,255,255,.09); --tile:rgba(255,255,255,.06);
+    --fill:rgba(255,255,255,.08); --fill-2:rgba(255,255,255,.14);
+    --label:#F4F6FB; --label-2:rgba(232,236,246,.62); --label-3:rgba(232,236,246,.30);
+    --blue:#3B8CFF;
+  }
+}
+html:not([data-skin])[data-theme="dark"]{
+  --canvas:#06070C;
+  --lg-a:#2D55D9; --lg-b:#9C2F6E; --lg-c:#127A72; --lg-d:#5B3BB5;
+  --lg-fill:rgba(255,255,255,.075); --lg-fill-2:rgba(255,255,255,.03);
+  --lg-rim-1:rgba(255,255,255,.42); --lg-rim-2:rgba(255,255,255,.05); --lg-rim-3:rgba(255,255,255,.16);
+  --lg-shadow:0 1px 1px rgba(0,0,0,.4), 0 18px 50px -18px rgba(0,0,0,.75);
+  --lg-inner:inset 0 1px 1px rgba(255,255,255,.22), inset 0 -1px 1px rgba(255,255,255,.05), inset 0 0 26px rgba(255,255,255,.035);
+  --lg-blur:blur(28px) saturate(170%) brightness(.92);
+  --glass:rgba(255,255,255,.07); --glass-solid:rgba(58,62,76,.92); --glass-hi:rgba(255,255,255,.22);
+  --hairline:rgba(255,255,255,.09); --tile:rgba(255,255,255,.06);
+  --fill:rgba(255,255,255,.08); --fill-2:rgba(255,255,255,.14);
+  --label:#F4F6FB; --label-2:rgba(232,236,246,.62); --label-3:rgba(232,236,246,.30);
+  --blue:#3B8CFF;
+}
+
+/* --- Hintergrund: weiches Farbbild, zieht sehr langsam (bei „Bewegung reduzieren“ still) --- */
+html:not([data-skin]){
+  background-color:var(--canvas);
+  background-image:
+    radial-gradient(46vmax 40vmax at 6% 0%, color-mix(in srgb,var(--lg-a) 70%,transparent), transparent 62%),
+    radial-gradient(40vmax 36vmax at 100% 8%, color-mix(in srgb,var(--lg-b) 62%,transparent), transparent 60%),
+    radial-gradient(52vmax 42vmax at 70% 108%, color-mix(in srgb,var(--lg-c) 62%,transparent), transparent 62%),
+    radial-gradient(34vmax 30vmax at 28% 92%, color-mix(in srgb,var(--lg-d) 46%,transparent), transparent 62%);
+}
+html:not([data-skin]) body::before{
+  content:"";position:fixed;inset:-10vmax;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(22vmax 22vmax at 30% 30%, color-mix(in srgb,var(--lg-a) 40%,transparent), transparent 70%),
+    radial-gradient(20vmax 20vmax at 75% 60%, color-mix(in srgb,var(--lg-b) 34%,transparent), transparent 70%),
+    radial-gradient(18vmax 18vmax at 45% 80%, color-mix(in srgb,var(--lg-c) 36%,transparent), transparent 70%);
+  filter:blur(10px);
+}
+@media (prefers-reduced-motion:no-preference){
+  html:not([data-skin]) body::before{animation:lgDrift 48s ease-in-out infinite alternate}
+  @keyframes lgDrift{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(3vmax,-2vmax,0) rotate(8deg)}100%{transform:translate3d(-3vmax,2vmax,0) rotate(-6deg)}}
+}
+
+/* --- Glas-Material: Füllung + Lichtkante als Rand-Verlauf --- */
+html:not([data-skin]) :is(.glass,.dcard,.tile,.toolbar .bar){
+  border:1px solid transparent;
+  background:
+    linear-gradient(160deg,var(--lg-fill),var(--lg-fill-2)) padding-box,
+    linear-gradient(135deg,var(--lg-rim-1) 0%,var(--lg-rim-2) 38%,var(--lg-rim-2) 62%,var(--lg-rim-3) 100%) border-box;
+  -webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);
+  box-shadow:var(--lg-shadow),var(--lg-inner);
+}
+html:not([data-skin]) .tile{
+  background:
+    linear-gradient(165deg,color-mix(in srgb,var(--hue) 16%,var(--lg-fill)),color-mix(in srgb,var(--hue) 5%,var(--lg-fill-2))) padding-box,
+    linear-gradient(135deg,var(--lg-rim-1) 0%,color-mix(in srgb,var(--hue) 20%,var(--lg-rim-2)) 45%,var(--lg-rim-3) 100%) border-box;
+}
+
+/* --- Seitenleiste: schwebende Glasscheibe --- */
+@media (min-width:981px){
+  html:not([data-skin]) .toolbar{padding:12px 0 12px 12px}
+  html:not([data-skin]) .toolbar .bar{border-radius:28px;padding:20px 12px 12px}
+  html:not([data-skin]) .toolbar h1{font-size:23px;font-weight:700;letter-spacing:-.03em}
+  html:not([data-skin]) .toolbar .tbtn{border-radius:14px;transition:background .25s,color .2s,box-shadow .25s,transform .2s var(--spring)}
+  html:not([data-skin]) .toolbar .tbtn:hover{background:color-mix(in srgb,var(--label) 6%,transparent)}
+  html:not([data-skin]) .toolbar .tbtn:active{transform:scale(.97)}
+  html:not([data-skin]) .toolbar .tbtn.on{
+    color:var(--label);font-weight:600;
+    background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.52));
+    box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 0 0 .5px rgba(30,40,80,.08),0 6px 16px -8px rgba(30,40,90,.35)}
+  html:not([data-skin])[data-theme="dark"] .toolbar .tbtn.on{
+    background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.08));
+    box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 .5px rgba(255,255,255,.08),0 8px 20px -10px rgba(0,0,0,.8)}
+  html:not([data-skin]) .toolbar .tbtn.on svg{color:var(--blue)}
+  html:not([data-skin]) .toolbar .tgrp::before{font-size:11px;letter-spacing:.08em;color:var(--label-3)}
+  html:not([data-skin]) .toolbar .classBtn{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.45));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px var(--hairline),0 4px 12px -8px rgba(30,40,90,.4);border-radius:14px;padding:10px 34px 10px 14px;font-size:16px}
+  html:not([data-skin])[data-theme="dark"] .toolbar .classBtn{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 0 .5px var(--hairline)}
+  html:not([data-skin]) .sbprof{background:color-mix(in srgb,var(--label) 5%,transparent);border-radius:16px}
+}
+
+/* --- Steuerelemente --- */
+html:not([data-skin]) .seg{background:color-mix(in srgb,var(--label) 6%,transparent);border-radius:999px;padding:3px;box-shadow:inset 0 1px 2px rgba(20,30,60,.06)}
+html:not([data-skin]) .seg button{border-radius:999px;padding:8px 10px}
+html:not([data-skin]) .seg button[aria-pressed="true"],
+html:not([data-skin]) #dash[data-ds=std] .dfocus button[aria-pressed="true"]{
+  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72));
+  box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(30,40,80,.08),0 3px 10px -3px rgba(30,40,90,.30)}
+html:not([data-skin])[data-theme="dark"] .seg button[aria-pressed="true"],
+html:not([data-skin])[data-theme="dark"] #dash[data-ds=std] .dfocus button[aria-pressed="true"]{
+  background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.12));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 4px 12px -4px rgba(0,0,0,.7)}
+html:not([data-skin]) #dash[data-ds=std] .dfocus{border-radius:999px;padding:4px;background:color-mix(in srgb,var(--label) 6%,transparent)}
+html:not([data-skin]) #dash[data-ds=std] .dfocus button{border-radius:999px;padding:8px 15px}
+html:not([data-skin]) .sizes button,html:not([data-skin]) .sizes input{border-radius:999px;background:color-mix(in srgb,var(--label) 5%,transparent);box-shadow:inset 0 0 0 .5px var(--hairline)}
+html:not([data-skin]) .sizes button[aria-pressed="true"]{
+  background:radial-gradient(120% 90% at 30% 15%,color-mix(in srgb,#fff 40%,var(--blue)),var(--blue) 60%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.6),inset 0 -2px 4px rgba(0,0,40,.18),0 6px 16px -6px color-mix(in srgb,var(--blue) 80%,transparent)}
+/* Hauptknopf: getöntes Glas */
+html:not([data-skin]) :is(.go,.dgo,.tools button.commit){
+  border-radius:999px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 52%),
+    linear-gradient(180deg,color-mix(in srgb,var(--blue) 88%,#7ab2ff),var(--blue));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.65),inset 0 -2px 6px rgba(0,10,60,.22),0 10px 24px -10px color-mix(in srgb,var(--blue) 85%,transparent)}
+html:not([data-skin]) .tools{gap:4px}
+html:not([data-skin]) .tools button{border-radius:999px}
+html:not([data-skin]) .sw{box-shadow:inset 0 1px 2px rgba(20,30,60,.12)}
+html:not([data-skin]) .sw::after{box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 -1px 2px rgba(0,0,0,.05),0 0 0 .5px rgba(0,0,0,.04)}
+html:not([data-skin]) .sw:active::after{width:34px;background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+html:not([data-skin]) .chip{border-radius:999px;background:color-mix(in srgb,var(--label) 5%,transparent);box-shadow:inset 0 0 0 .5px var(--hairline)}
+
+/* --- Dialoge: dickes Glas --- */
+html:not([data-skin]) dialog{
+  border-radius:30px;
+  background:
+    linear-gradient(170deg,rgba(255,255,255,.86),rgba(255,255,255,.72)) padding-box,
+    linear-gradient(135deg,#fff,rgba(255,255,255,.2) 40%,rgba(255,255,255,.6)) border-box;
+  border:1px solid transparent;
+  -webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:0 40px 100px -30px rgba(20,30,80,.45),inset 0 1px 1px #fff}
+html:not([data-skin])[data-theme="dark"] dialog{
+  background:
+    linear-gradient(170deg,rgba(44,47,60,.88),rgba(28,30,40,.84)) padding-box,
+    linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.04) 40%,rgba(255,255,255,.12)) border-box;
+  box-shadow:0 40px 100px -30px rgba(0,0,0,.9),inset 0 1px 1px rgba(255,255,255,.12)}
+html:not([data-skin]) dialog::backdrop{background:rgba(20,26,50,.22);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%)}
+
+/* --- Dashboard-Karten / Hero im Glas-Look --- */
+html:not([data-skin]) .dcard{border-radius:28px}
+html:not([data-skin]) #dash[data-ds="std"] .dhero,html:not([data-skin]) #dash:not([data-ds]) .dhero{
+  border-radius:30px;
+  background:
+    radial-gradient(90% 120% at 0% 0%,rgba(255,255,255,.30),transparent 55%),
+    linear-gradient(135deg,color-mix(in srgb,var(--blue) 92%,#6aa7ff),color-mix(in srgb,var(--blue) 70%,#6a3cff));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 1px rgba(255,255,255,.12),0 24px 50px -22px color-mix(in srgb,var(--blue) 75%,transparent)}
+
+/* Seitenleiste: Text in Schriftfarbe, Symbole in Akzentfarbe (ruhiger, wie macOS) */
+@media (min-width:981px){
+  html:not([data-skin]) .toolbar .tbtn{color:var(--label);font-weight:500}
+  html:not([data-skin]) .toolbar .tbtn svg{color:var(--blue)}
+  html:not([data-skin]) .toolbar #addBtn,html:not([data-skin]) .toolbar #editBtn{color:var(--label-2);font-size:14px;padding:6px 11px}
+}
+/* Gruppen füllen die Breite */
+html:not([data-skin]) .groups{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+
+/* ===== 1.3.0: Über Gruppo, Schnellsuche, Stunde starten, Seitenleiste ===== */
+/* Suchfeld in der Seitenleiste */
+.sbsearch{display:none}
+@media (min-width:981px){
+  .sbsearch{display:flex;align-items:center;gap:8px;width:100%;border:0;margin:0 0 8px;padding:8px 10px;border-radius:12px;background:var(--fill);color:var(--label-2);font:inherit;font-size:14px;cursor:pointer;text-align:left}
+  .sbsearch:hover{background:var(--fill-2)}
+  .sbsearch svg{width:16px;height:16px;flex:none}
+  .sbsearch span{flex:1}
+  .sbsearch kbd{font:inherit;font-size:11.5px;color:var(--label-3);border:1px solid var(--hairline);border-radius:6px;padding:1px 6px}
+  html:not([data-skin]) .sbsearch{border-radius:999px;background:color-mix(in srgb,var(--label) 5%,transparent);box-shadow:inset 0 1px 2px rgba(20,30,60,.06)}
+  body[data-sb="min"] .sbsearch span,body[data-sb="min"] .sbsearch kbd{display:none}
+  body[data-sb="min"] .sbsearch{justify-content:center;padding:10px 0}
+  .sbbrand{order:20;display:flex;justify-content:center;align-items:center;border:0;background:none;padding:14px 0 4px;margin-top:6px;color:var(--label-2);cursor:pointer;opacity:.7;transition:opacity .2s}
+  .sbbrand:hover{opacity:1}
+  .sbbrand svg{height:17px;width:auto}
+  body[data-sb="min"] .sbbrand svg{height:9px}
+  footer.brand{display:none}
+}
+@media (max-width:980px){.sbbrand{display:none}}
+/* Dialog-Grundform (neue Dialoge) */
+.abdlg,.ckdlg,.lsdlg{padding:0;overflow:hidden}
+.abx{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);color:var(--label-2);font-size:20px;line-height:1;cursor:pointer;z-index:2}
+.abx:hover{background:var(--fill-2);color:var(--label)}
+/* Über Gruppo */
+.abdlg{width:min(440px,94vw);text-align:center}
+.abtop{padding:40px 34px 8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.abicon svg{width:104px;height:104px;display:block;filter:drop-shadow(0 16px 26px rgba(220,42,82,.35))}
+.abname{margin:16px 0 0;font-size:30px;font-weight:700;letter-spacing:-.03em}
+.abver{font-size:13.5px;color:var(--label-2);font-variant-numeric:tabular-nums}
+.abline{margin:12px 0 0;font-size:15.5px;line-height:1.45;color:var(--label);max-width:320px}
+.abacts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:20px 28px 6px}
+.abbtn{border:0;border-radius:999px;padding:11px 18px;font:inherit;font-size:15px;font-weight:600;background:var(--fill);color:var(--label);cursor:pointer}
+.abbtn:hover{background:var(--fill-2)}
+.abbtn.pri{background:var(--blue);color:var(--on-accent,#fff)}
+.abnew{margin:18px 24px 0;padding:14px 18px;border-radius:18px;background:var(--fill);text-align:left}
+.abnew h3{margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--label-2)}
+.abnew p{margin:0;font-size:13.5px;line-height:1.5}
+.abnote{margin:14px 28px 0;font-size:12.5px;color:var(--label-2)}
+.abfoot{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 0 24px;color:var(--label-2);font-size:13px}
+.abfoot svg{height:17px;width:auto}
+/* Schnellsuche */
+.ckdlg{width:min(620px,94vw);margin-top:12vh;align-self:start}
+.ckhead{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--hairline)}
+.ckhead svg{width:22px;height:22px;color:var(--label-2);flex:none}
+.ckin{flex:1;border:0;background:none;font-size:20px;outline:none;color:var(--label);min-width:0}
+.ckin::-webkit-search-cancel-button{display:none}
+.cklist{max-height:min(52vh,440px);overflow:auto;padding:8px}
+.ckgrp{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--label-3);padding:10px 12px 4px}
+.ckit{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:11px 12px;border-radius:12px;font:inherit;font-size:16px;color:var(--label);text-align:left;cursor:pointer}
+.ckit .ckl{flex:1;font-weight:600}
+.ckit small{color:var(--label-2);font-size:13px}
+.ckit[aria-selected="true"]{background:var(--blue);color:var(--on-accent,#fff)}
+.ckit[aria-selected="true"] small{color:inherit;opacity:.8}
+.cknone{padding:22px;text-align:center;color:var(--label-2)}
+.ckhint{padding:9px 20px 12px;border-top:1px solid var(--hairline);font-size:12px;color:var(--label-3)}
+/* Stunde starten */
+.lsdlg{width:min(620px,94vw);padding:30px 30px 26px;overflow:auto;max-height:92vh}
+.lskick{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
+.lstitle{margin:4px 0 0;font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.lssub{color:var(--label-2);font-size:15px;margin-top:4px}
+.lssec{margin-top:22px}
+.lssec h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--label-2)}
+.lssh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.lscnt{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.lsroster .chip{font-size:15px;padding:8px 14px}
+.lssec .linkbtn{margin-top:10px}
+.lsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.lstile{display:flex;align-items:center;gap:12px;border:0;border-radius:18px;padding:14px;font:inherit;font-size:15.5px;font-weight:600;color:var(--label);background:var(--fill);cursor:pointer;text-align:left;transition:transform .2s var(--spring),background .2s}
+.lstile:hover{background:var(--fill-2);transform:translateY(-2px)}
+.lstile i{width:34px;height:34px;border-radius:11px;flex:none;background:var(--c,var(--blue));box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 6px 14px -6px var(--c,var(--blue));
+  -webkit-mask:none;position:relative}
+.lstile i::after{content:"";position:absolute;inset:8px;background:#fff;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.lstile.g{--c:#2F6BFF;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='9' r='3'/%3E%3Ccircle cx='17' cy='10' r='2.4'/%3E%3Cpath d='M2.8 19c.6-3 2.7-4.6 5.2-4.6s4.6 1.6 5.2 4.6M15 15.2c2.6-.5 5 .8 6 3.6'/%3E%3C/svg%3E")}
+.lstile.s{--c:#F28A0B;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2'%3E%3Crect x='3' y='4' width='7' height='6' rx='1.5'/%3E%3Crect x='14' y='4' width='7' height='6' rx='1.5'/%3E%3Crect x='3' y='14' width='7' height='6' rx='1.5'/%3E%3Crect x='14' y='14' width='7' height='6' rx='1.5'/%3E%3C/svg%3E")}
+.lstile.t{--c:#6E56F0;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='13.5' r='7.5'/%3E%3Cpath d='M12 9.5v4l2.6 1.6M9.5 3h5'/%3E%3C/svg%3E")}
+.lstile.p{--c:#E0345A;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.4'/%3E%3Cpath d='M5 20c.8-3.6 3.4-5.4 7-5.4s6.2 1.8 7 5.4'/%3E%3C/svg%3E")}
+.lstile.c{--c:#12A07A;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E")}
+@media (prefers-reduced-motion:no-preference){
+  .abdlg[open],.ckdlg[open],.lsdlg[open]{animation:dlgIn .38s cubic-bezier(.2,1.1,.3,1) both}
+  @keyframes dlgIn{from{opacity:0;transform:translateY(12px) scale(.97)}}
+  .abdlg[open] .abicon svg{animation:abIc .7s .05s cubic-bezier(.2,1.3,.3,1) both}
+  @keyframes abIc{from{transform:scale(.6) rotate(-8deg);opacity:0}}
+}
+/* Sitzplan-Leiste: nichts bricht mehr zweizeilig um, Gruppen umbrechen sauber */
+#spOv .ovbar{flex-wrap:wrap;row-gap:8px}
+#spOv .ovtitle{white-space:nowrap}
+#spOv .ovbtn,#spOv .ovstyles button{white-space:nowrap}
+#spOv .ovstyles{flex-wrap:wrap}
+html:not([data-skin]) .ovstyles{background:color-mix(in srgb,var(--label) 6%,transparent);border-radius:999px;padding:3px;gap:2px;display:inline-flex}
+html:not([data-skin]) .ovstyles button{background:none;border-radius:999px}
+html:not([data-skin]) .ovstyles button[aria-pressed="true"]{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72));color:var(--label);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(30,40,80,.08),0 3px 10px -3px rgba(30,40,90,.3)}
+html:not([data-skin])[data-theme="dark"] .ovstyles button[aria-pressed="true"]{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.12));box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+html:not([data-skin]) .ovbtn{border-radius:999px;background:color-mix(in srgb,var(--label) 6%,transparent)}
+html:not([data-skin]) .ovbtn[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
+html:not([data-skin]) #spBuild{border-radius:24px}
+/* Mac-App: Platz für die Fensterknöpfe, Fenster an Seitenleiste und Kopf verschiebbar */
+@media (min-width:981px){
+  html.macapp .toolbar .bar{padding-top:48px!important}
+  html.macapp .toolbar h1,html.macapp .dhead,html.macapp .ovbar{-webkit-app-region:drag}
+  html.macapp .toolbar h1 *,html.macapp .dhead :is(button,select,input,a),html.macapp .ovbar :is(button,select,input,label,a),html.macapp .sbtog{-webkit-app-region:no-drag}
+  html.macapp body::after{content:"";position:fixed;left:0;right:0;top:0;height:14px;-webkit-app-region:drag;z-index:5}
+  html.macapp .toolbar .sbtog{top:14px}
+}
+/* Ton-Auswahl, Timer-Abläufe, Mini-Timer */
+.ovsel{appearance:none;-webkit-appearance:none;border:0;border-radius:999px;background:var(--fill);color:var(--label);font:inherit;font-size:13.5px;font-weight:500;padding:7px 28px 7px 12px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--label-2) 50%),linear-gradient(135deg,var(--label-2) 50%,transparent 50%);background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.tmflow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;padding:2px 18px 0}
+.tmflow .tfn{font-size:13px;color:var(--label-2);margin-right:4px}
+.tmflow .tfp{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--fill);font-size:14px;font-weight:600;color:var(--label-2);transition:all .35s var(--spring)}
+.tmflow .tfp i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--fill-2);font-size:12px}
+.tmflow .tfp.on{background:var(--blue);color:var(--on-accent,#fff);transform:scale(1.06);box-shadow:0 8px 20px -10px var(--blue)}
+.tmflow .tfp.on i{background:rgba(255,255,255,.25)}
+.tmflow .tfp.done{opacity:.5;text-decoration:line-through}
+.tmflow .tfx{border:0;background:none;color:var(--label-2);font:inherit;font-size:13px;cursor:pointer;padding:6px 8px}
+.tmnext{font-size:clamp(28px,5vw,64px)!important;color:var(--blue)!important}
+.fldlg{width:min(600px,94vw);padding:30px 28px 24px;max-height:90vh;overflow:auto}
+.flh{margin:0 0 4px;font-size:26px;font-weight:700;letter-spacing:-.03em}
+.fllist{display:grid;gap:10px;margin:18px 0 12px}
+.flrow{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:18px;background:var(--fill)}
+.flrow .flt{flex:1;min-width:0}.flrow .flt b{display:block;font-size:16px}.flrow .flt small{display:block;color:var(--label-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flrow .flgo{width:auto;margin:0;padding:9px 18px;font-size:15px}
+.flname{width:100%;margin:16px 0 10px;text-align:left!important;font-size:17px!important}
+.flphs{display:grid;gap:8px;margin-bottom:10px}
+.flph{display:grid;grid-template-columns:26px 1fr 84px auto auto;gap:8px;align-items:center}
+.flph i{font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--fill-2);font-size:12.5px;font-weight:700}
+.flph .ovtask{text-align:left;width:100%}.flph .flmin{text-align:center}
+.flft{display:flex;gap:10px;align-items:center;margin-top:16px}.flft .go{width:auto;margin:0;padding:12px 28px}
+#tmMini[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
+
 </style>
 <script>try{var l=JSON.parse(localStorage.getItem("gb_look")||"{}"),e=document.documentElement,d=l.mode==="dark"||(l.mode!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);if(l.skin&&l.skin!=="standard")e.dataset.skin=l.skin;if(l.view&&l.view!=="karten")e.dataset.view=l.view;if(l.font&&l.font!=="standard")e.dataset.font=l.font;e.dataset.theme=d?"dark":"light"}catch(x){}</script>
 </head>
@@ -1481,10 +1930,6 @@ html:is([data-skin="salbei"],[data-skin="wald"]) dialog{border-radius:30px}
         <p class="note" id="updHelp" hidden data-t="updHelp" style="margin:6px 0 0">Fragt beim Start nur die Versionsnummer ab; dabei sieht der Server technisch deine IP-Adresse.</p>
       </section>
 
-      <section class="panel glass">
-        <h2 class="ptitle" data-t="about">Über Gruppo</h2>
-        <p class="note" style="margin:0"><span data-t="aboutText">Version 1.2.0 · Alle Daten bleiben auf diesem Gerät.</span><br>© 2026 theis · <a href="https://theisapps.de/" target="_blank" rel="noopener" style="color:inherit">theis – <span data-t="tagline">Apps für die Schule</span></a><br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="color:inherit;font-weight:600">☕ <span data-t="support">Einen Kaffee ausgeben</span></a> <span data-t="supportNote">· freiwillig, die App bleibt kostenlos</span></p>
-      </section>
     </div>
 
     <section class="board" id="board" aria-live="polite">
@@ -1663,7 +2108,7 @@ const T = {
   confirmClear:c=>`Verlauf für ${c} löschen?`, confirmDel:c=>`Klasse ${c} wirklich löschen?`, confirmImp:"Vorhandene Klassen mit gleichem Namen werden ersetzt. Fortfahren?",
   dlgAdd:"Klasse hinzufügen", dlgEdit:c=>`${c} bearbeiten`, dlgName:"Name der Klasse", dlgLang:"Sprache dieser Klasse (für „Je nach Fach“)", dlgNames:"Namen",
   dlgHelp:"Einer pro Zeile. Die Klassenliste aus dem PDF einfach komplett einfügen – Kopfzeilen werden ignoriert.",
-  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppo", tagline:"Apps für die Schule", aboutText:"Version 1.2.0 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
+  dlgDelete:"Klasse löschen", cancel:"Abbrechen", save:"Sichern", custom:"Eigene Zahl", about:"Über Gruppo", tagline:"Apps für die Schule", aboutText:"Version 1.3.0 · Alle Daten bleiben auf diesem Gerät.", support:"Einen Kaffee ausgeben", supportNote:"· freiwillig, die App bleibt kostenlos", importFile:"Datei einlesen (PDF, Excel, CSV) …", swapNames:"Vor- und Nachname tauschen", importOk:n=>`${n} Namen übernommen – bitte kurz prüfen`, importNone:"Keine Namen erkannt", importErr:"Datei konnte nicht gelesen werden" },
  en:{ title:"Gruppo", addClass:"Add class", edit:"Edit", size:"Group size", modeSize:"Students per group", modeCount:"Number of groups",
   updChk:"Check for a new version at startup", updHelp:"Only asks for the version number at startup; the server technically sees your IP address.", updNew:v=>`New version ${v} available. Your classes are kept when you update.`, updGet:"Download",
   restBig:"Add extras to groups", restSmall:"Smaller groups", mix:"Mix girls and boys evenly", preferNew:"New combinations where possible",
@@ -1681,7 +2126,7 @@ const T = {
   confirmClear:c=>`Clear the history for ${c}?`, confirmDel:c=>`Delete ${c}?`, confirmImp:"Classes with the same name will be replaced. Continue?",
   dlgAdd:"Add class", dlgEdit:c=>`Edit ${c}`, dlgName:"Class name", dlgLang:"Language of this class (for “By subject”)", dlgNames:"Names",
   dlgHelp:"One per line. You can paste the whole class list from the PDF – header lines are ignored.",
-  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppo", tagline:"apps for schools", aboutText:"Version 1.2.0 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
+  dlgDelete:"Delete class", cancel:"Cancel", save:"Save", custom:"Custom number", about:"About Gruppo", tagline:"apps for schools", aboutText:"Version 1.3.0 · All data stays on this device.", support:"Buy me a coffee", supportNote:"· optional, the app stays free", importFile:"Import file (PDF, Excel, CSV) …", swapNames:"Swap first and last name", importOk:n=>`${n} names added – please check`, importNone:"No names found", importErr:"Could not read the file" },
  it:{ title:"Gruppo", addClass:"Aggiungi classe", edit:"Modifica", size:"Dimensione dei gruppi", modeSize:"Alunni per gruppo", modeCount:"Numero di gruppi",
   updChk:"Cerca nuove versioni all’avvio", updHelp:"All’avvio richiede solo il numero di versione; il server vede tecnicamente il tuo indirizzo IP.", updNew:v=>`Nuova versione ${v} disponibile. Le tue classi restano dopo l’aggiornamento.`, updGet:"Scarica",
   restBig:"Aggiungi i restanti", restSmall:"Gruppi più piccoli", mix:"Distribuisci ragazze e ragazzi in modo equilibrato", preferNew:"Possibilmente combinazioni nuove",
@@ -1699,7 +2144,7 @@ const T = {
   confirmClear:c=>`Cancellare la cronologia di ${c}?`, confirmDel:c=>`Eliminare ${c}?`, confirmImp:"Le classi con lo stesso nome verranno sostituite. Continuare?",
   dlgAdd:"Aggiungi classe", dlgEdit:c=>`Modifica ${c}`, dlgName:"Nome della classe", dlgLang:"Lingua di questa classe (per «Secondo la materia»)", dlgNames:"Nomi",
   dlgHelp:"Uno per riga. Puoi incollare l'intera lista dal PDF: le intestazioni vengono ignorate.",
-  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppo", tagline:"app per la scuola", aboutText:"Versione 1.2.0 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" },
+  dlgDelete:"Elimina classe", cancel:"Annulla", save:"Salva", custom:"Numero a scelta", about:"Info su Gruppo", tagline:"app per la scuola", aboutText:"Versione 1.3.0 · Tutti i dati restano su questo dispositivo.", support:"Offrimi un caffè", supportNote:"· facoltativo, l’app resta gratuita", importFile:"Importa file (PDF, Excel, CSV) …", swapNames:"Scambia nome e cognome", importOk:n=>`${n} nomi aggiunti – controlla`, importNone:"Nessun nome trovato", importErr:"Impossibile leggere il file" },
  fr:{ title:"Gruppo", addClass:"Ajouter une classe", edit:"Modifier", size:"Taille des groupes", modeSize:"Élèves par groupe", modeCount:"Nombre de groupes",
   updChk:"Rechercher une nouvelle version au démarrage", updHelp:"Ne demande que le numéro de version au démarrage ; le serveur voit techniquement votre adresse IP.", updNew:v=>`Nouvelle version ${v} disponible. Vos classes sont conservées lors de la mise à jour.`, updGet:"Télécharger",
   restBig:"Répartir les restes", restSmall:"Groupes plus petits", mix:"Répartir filles et garçons de façon équilibrée", preferNew:"De préférence de nouvelles combinaisons",
@@ -1719,7 +2164,7 @@ const T = {
   dlgAdd:"Ajouter une classe", dlgEdit:c=>`Modifier ${c}`, dlgName:"Nom de la classe", dlgLang:"Langue de cette classe (pour « Selon la matière »)", dlgNames:"Noms",
   dlgHelp:"Un par ligne. Vous pouvez coller toute la liste du PDF : les en-têtes sont ignorés.",
   dlgDelete:"Supprimer la classe", cancel:"Annuler", save:"Enregistrer", custom:"Nombre au choix",
-  about:"À propos de Gruppo", tagline:"applications pour l’école", aboutText:"Version 1.2.0 · Toutes les données restent sur cet appareil.", support:"Offrir un café", supportNote:"· facultatif, l’application reste gratuite",
+  about:"À propos de Gruppo", tagline:"applications pour l’école", aboutText:"Version 1.3.0 · Toutes les données restent sur cet appareil.", support:"Offrir un café", supportNote:"· facultatif, l’application reste gratuite",
   importFile:"Importer un fichier (PDF, Excel, CSV) …", swapNames:"Inverser prénom et nom", importOk:n=>`${n} noms ajoutés – à vérifier`, importNone:"Aucun nom trouvé", importErr:"Impossible de lire le fichier" },
  es:{ title:"Gruppo", addClass:"Añadir clase", edit:"Editar", size:"Tamaño de los grupos", modeSize:"Alumnos por grupo", modeCount:"Número de grupos",
   updChk:"Buscar nueva versión al iniciar", updHelp:"Solo consulta el número de versión al iniciar; el servidor ve técnicamente tu dirección IP.", updNew:v=>`Nueva versión ${v} disponible. Tus clases se conservan al actualizar.`, updGet:"Descargar",
@@ -1740,7 +2185,7 @@ const T = {
   dlgAdd:"Añadir clase", dlgEdit:c=>`Editar ${c}`, dlgName:"Nombre de la clase", dlgLang:"Idioma de esta clase (para «Según la asignatura»)", dlgNames:"Nombres",
   dlgHelp:"Uno por línea. Puedes pegar la lista completa del PDF: se ignoran los encabezados.",
   dlgDelete:"Eliminar clase", cancel:"Cancelar", save:"Guardar", custom:"Otro número",
-  about:"Acerca de Gruppo", tagline:"apps para la escuela", aboutText:"Versión 1.2.0 · Todos los datos permanecen en este dispositivo.", support:"Invítame a un café", supportNote:"· voluntario, la app sigue siendo gratuita",
+  about:"Acerca de Gruppo", tagline:"apps para la escuela", aboutText:"Versión 1.3.0 · Todos los datos permanecen en este dispositivo.", support:"Invítame a un café", supportNote:"· voluntario, la app sigue siendo gratuita",
   importFile:"Importar archivo (PDF, Excel, CSV) …", swapNames:"Intercambiar nombre y apellido", importOk:n=>`${n} nombres añadidos: revísalos`, importNone:"No se encontró ningún nombre", importErr:"No se pudo leer el archivo" }
 };
 
@@ -2394,7 +2839,7 @@ function renderAll(){ renderUpd(); $('autoNote').hidden = $('autoRow').hidden = 
 });
 
 const SKIN_ORDER = ["standard", "apple", "neon", "heft", "salbei", "terrakotta", "graphit", "laguna", "klar", "glut", "wald", "tag"];
-const SKIN_SW = {"standard": ["#EDEEF2", "#0071E3", "#9db8ff"], "apple": ["#F2F2F7", "#007AFF", "#5856D6"], "neon": ["#f6f0ff", "#d4127a", "#2f5bff"], "heft": ["#f4efe2", "#2c4a9a", "#c0392b"], "salbei": ["#edf1ea", "#3b7a57", "#3b7a57"], "terrakotta": ["#f6eee4", "#b9491f", "#d99a1c"], "graphit": ["#ffffff", "#0040d0", "#0040d0"], "laguna": ["#f1f7f7", "#0b7f8e", "#0a64a8"], "klar": ["#f2f2f7", "#0a64e0", "#0a64e0"], "glut": ["#fff6ee", "#c2410c", "#b3261e"], "wald": ["#f1f8f3", "#166534", "#0e7490"], "tag": ["#eef8ff", "#0a6fb3", "#1760c4"]};
+const SKIN_SW = {"standard": ["#E9ECF4", "#0A6CFF", "#FF9CC2"], "apple": ["#F2F2F7", "#007AFF", "#5856D6"], "neon": ["#f6f0ff", "#d4127a", "#2f5bff"], "heft": ["#f4efe2", "#2c4a9a", "#c0392b"], "salbei": ["#edf1ea", "#3b7a57", "#3b7a57"], "terrakotta": ["#f6eee4", "#b9491f", "#d99a1c"], "graphit": ["#ffffff", "#0040d0", "#0040d0"], "laguna": ["#f1f7f7", "#0b7f8e", "#0a64a8"], "klar": ["#f2f2f7", "#0a64e0", "#0a64e0"], "glut": ["#fff6ee", "#c2410c", "#b3261e"], "wald": ["#f1f8f3", "#166534", "#0e7490"], "tag": ["#eef8ff", "#0a6fb3", "#1760c4"]};
 
 /* ===== Werkzeuge: Darstellung, Timer, Uhr, „Wer ist dran?“ ===== */
 (function(){
@@ -2415,6 +2860,7 @@ const X = {
  sound:['Ton am Ende','Sound at the end','Suono alla fine','Son à la fin','Sonido al final'],
  groupsShow:['Gruppen zeigen','Show groups','Mostra gruppi','Afficher les groupes','Mostrar grupos'],
  group:['Gruppe','Group','Gruppo','Groupe','Grupo'],
+ groups:['Gruppen','groups','gruppi','groupes','grupos'],
  done:['Zeit ist um!','Time’s up!','Tempo scaduto!','Temps écoulé !','¡Se acabó el tiempo!'],
  s_ring:['Ring','Ring','Anello','Anneau','Anillo'],
  s_slice:['Zeitscheibe','Disc','Spicchio','Disque','Sector'],
@@ -2426,6 +2872,7 @@ const X = {
  s_glass:['Sanduhr','Hourglass','Clessidra','Sablier','Reloj de arena'],
  s_bar:['Balken','Bar','Barra','Barre','Barra'],
  s_wave:['Wasser','Water','Acqua','Eau','Agua'],
+ s_moka:['Moka','Moka','Moka','Moka','Moka'],
  s_dots:['Punkte','Dots','Punti','Points','Puntos'],
  s_analog:['Analog','Analog','Analogico','Analogique','Analógico'],
  s_minimal:['Pur','Minimal','Minimal','Épuré','Minimal'],
@@ -2450,7 +2897,7 @@ const X = {
  tagNote:['„Tageslicht“ wechselt Farben und Helligkeit selbst mit der Tageszeit.','“Daylight” changes colours and brightness with the time of day.','«Luce del giorno» cambia colori e luminosità con l’ora del giorno.','« Lumière du jour » change couleurs et luminosité selon l’heure.','«Luz del día» cambia colores y brillo según la hora.'],
  fontNote:['Die Schrift gilt für die ganze App. Alles bleibt auf diesem Gerät.','The font applies to the whole app. Everything stays on this device.','Il carattere vale per tutta l’app. Tutto resta su questo dispositivo.','La police s’applique à toute l’app. Tout reste sur cet appareil.','La fuente se aplica a toda la app. Todo queda en este dispositivo.']
 };
-const SKN = {apple:['Apple','Apple','Apple','Apple','Apple'],standard:['Standard','Standard','Standard','Standard','Estándar'],neon:['Neon','Neon','Neon','Néon','Neón'],heft:['Heft','Notebook','Quaderno','Cahier','Cuaderno'],salbei:['Salbei','Sage','Salvia','Sauge','Salvia'],terrakotta:['Terrakotta','Terracotta','Terracotta','Terre cuite','Terracota'],graphit:['Graphit','Graphite','Grafite','Graphite','Grafito'],laguna:['Laguna','Lagoon','Laguna','Lagune','Laguna'],klar:['Klar','Clear','Chiaro','Clair','Claro'],glut:['Glut','Ember','Brace','Braise','Brasa'],wald:['Wald','Forest','Bosco','Forêt','Bosque'],tag:['Tageslicht','Daylight','Luce del giorno','Lumière du jour','Luz del día']};
+const SKN = {apple:['Apple','Apple','Apple','Apple','Apple'],standard:['Liquid Glass','Liquid Glass','Liquid Glass','Liquid Glass','Liquid Glass'],neon:['Neon','Neon','Neon','Néon','Neón'],heft:['Heft','Notebook','Quaderno','Cahier','Cuaderno'],salbei:['Salbei','Sage','Salvia','Sauge','Salvia'],terrakotta:['Terrakotta','Terracotta','Terracotta','Terre cuite','Terracota'],graphit:['Graphit','Graphite','Grafite','Graphite','Grafito'],laguna:['Laguna','Lagoon','Laguna','Lagune','Laguna'],klar:['Klar','Clear','Chiaro','Clair','Claro'],glut:['Glut','Ember','Brace','Braise','Brasa'],wald:['Wald','Forest','Bosco','Forêt','Bosque'],tag:['Tageslicht','Daylight','Luce del giorno','Lumière du jour','Luz del día']};
 const lx = () => LI[lang()] ?? 0;
 const x = k => { const v = X[k]; if (!v) { (window.__xmiss = window.__xmiss || new Set()).add(k); return k; } return v[lx()] || v[0]; };
 window._x = x;
@@ -2602,7 +3049,7 @@ $('lookOk').onclick = () => $('lookDlg').close();
 $('lookDlg').addEventListener('click', e => { if (e.target === $('lookDlg')) $('lookDlg').close(); });
 
 /* ---------- Timer ---------- */
-const TM_STYLES = ['ring','slice','digit','glass','bar','wave','dots'];
+const TM_STYLES = ['ring','slice','digit','glass','moka','bar','wave','dots'];
 const T = {total: (wt.tsec || 300), left: (wt.tsec || 300), running:false, endAt:0, style: TM_STYLES.includes(wt.tstyle) ? wt.tstyle : 'ring', upd:null, int:null, last:'', showGroups:false, doneFired:false};
 const PRESETS = [1,2,3,5,10,15,20,30,45,60,90];
 function fmt(s){ s = Math.max(0, Math.ceil(s - 1e-6)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (T.total >= 3600 || h) ? `${h}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`; }
@@ -2713,6 +3160,70 @@ const TM_BUILD = {
       const h = 250 * f; top.setAttribute('y', 300 - h); top.setAttribute('height', h);
       const b = 240 * (1 - f); bot.setAttribute('y', 540 - b); bot.setAttribute('height', b);
       stream.setAttribute('y2', f > 0 && f < 1 || (T.running && f > 0) ? 540 - b : 300); stream.style.display = T.running && f > 0 ? '' : 'none';
+      tt.textContent = fmt(left); tk.textContent = taskText();
+    };
+  },
+  moka(st){
+    /* Bialetti-Kanne: oben füllt sich der Kaffee, während die Zeit vergeht; am Ende dampft es */
+    const s = svgEl('svg', {viewBox:'0 0 600 720', class:'tmsvg tmmoka'}, st);
+    const defs = svgEl('defs', {}, s);
+    const alu = (id, dark) => { const g = svgEl('linearGradient', {id, x1:0, x2:1, y1:0, y2:0}, defs);
+      const c = dark ? ['#7d848e','#a9b0b9','#c6ccd3','#9aa2ac','#b8bfc7','#8a929c','#aeb5be','#737a84'] : ['#9aa1ab','#d4d9df','#f3f5f8','#bcc2ca','#e6e9ee','#aab1ba','#dce0e6','#8f96a0'];
+      const at = [0,.11,.25,.38,.5,.62,.76,.9,1];
+      c.forEach((col, i) => { svgEl('stop', {offset:at[i], 'stop-color':col}, g); svgEl('stop', {offset:at[i + 1] - .001, 'stop-color':col}, g); }); };
+    alu('mkAlu', false); alu('mkAluD', true);
+    const cof = svgEl('linearGradient', {id:'mkCof', x1:0, y1:0, x2:0, y2:1}, defs);
+    [['0','#d39a5c'],['.05','#a8642e'],['.14','#6b3818'],['1','#3a1c0b']].forEach(([o, c]) => svgEl('stop', {offset:o, 'stop-color':c}, cof));
+    const fl = svgEl('radialGradient', {id:'mkFlame', cx:.5, cy:.85, r:.8}, defs);
+    [['0','#ffffff'],['.25','#9fd3ff'],['.6','#2f7bff'],['1','rgba(47,123,255,0)']].forEach(([o, c]) => svgEl('stop', {offset:o, 'stop-color':c}, fl));
+    /* Formen (achteckige Kanne, von vorn) */
+    const UP = 'M168 152 L432 152 L392 322 L208 322 Z';            /* Kanne oben */
+    const UPI = 'M184 166 L416 166 L382 312 L218 312 Z';            /* innen (Kaffee) */
+    const LO = 'M206 348 L394 348 L446 566 L154 566 Z';             /* Kessel unten */
+    const cp = svgEl('clipPath', {id:'mkClip'}, defs); svgEl('path', {d:UPI}, cp);
+    /* Achteck-Facetten: Streifen laufen mit der Form zusammen */
+    const SH = ['#8f96a0','#c9ced5','#eef1f4','#d9dde3','#b4bbc4','#c3c9d1','#a2a9b3','#868d97'];
+    const facets = (x1, x2, y1, x3, x4, y2, dk) => { const gg = svgEl('g', {class:'mkfac'}, s), n = SH.length;
+      for (let i = 0; i < n; i++){ const a = i / n, b = (i + 1) / n, L = (u, v, t) => u + (v - u) * t;
+        svgEl('path', {d:`M${L(x1, x2, a)} ${y1} L${L(x1, x2, b)} ${y1} L${L(x3, x4, b)} ${y2} L${L(x3, x4, a)} ${y2} Z`, fill:SH[i], style:dk ? 'filter:brightness(.86)' : ''}, gg); }
+      return gg; };
+    /* Herdflamme */
+    const flame = svgEl('g', {class:'mkflame'}, s);
+    for (let i = 0; i < 7; i++){ const x = 210 + i * 30; svgEl('path', {d:`M${x - 13} 606 Q${x - 9} 586 ${x} 572 Q${x + 9} 586 ${x + 13} 606 Z`, fill:'url(#mkFlame)', style:`animation-delay:${(i * .13).toFixed(2)}s`}, flame); }
+    svgEl('rect', {x:150, y:604, width:300, height:12, rx:6, class:'mkstove'}, s);
+    /* Kessel */
+    facets(206, 394, 348, 154, 446, 566); svgEl('path', {d:LO, class:'mkedge'}, s);
+    svgEl('path', {d:'M206 348 L394 348 L399 368 L201 368 Z', class:'mkshade'}, s);
+    svgEl('circle', {cx:356, cy:452, r:13, class:'mkvalve'}, s); svgEl('circle', {cx:356, cy:452, r:5, class:'mkvalvein'}, s);
+    /* Mitte (Schraubring) */
+    facets(200, 400, 318, 196, 404, 352, 1); svgEl('path', {d:'M200 318 L400 318 L404 352 L196 352 Z', class:'mkedge'}, s);
+    /* Kanne oben: Körper + Kaffee im Sichtfenster */
+    facets(168, 432, 152, 208, 392, 322); svgEl('path', {d:UP, class:'mkedge'}, s);
+    svgEl('path', {d:UPI, class:'mkwin'}, s);
+    const g = svgEl('g', {'clip-path':'url(#mkClip)'}, s);
+    const lvl = svgEl('g', {}, g);
+    const wav = svgEl('g', {class:'mkcof'}, lvl);
+    svgEl('path', {d:'M100 0 Q150 -8 200 0 T300 0 T400 0 T500 0 T600 0 V200 H100 Z', fill:'url(#mkCof)'}, wav);
+    svgEl('path', {d:'M100 0 Q150 -8 200 0 T300 0 T400 0 T500 0 T600 0', class:'mkcrema'}, wav);
+    const col = svgEl('rect', {x:292, y:236, width:16, height:80, rx:4, class:'mkcol'}, g);
+    const spray = svgEl('g', {class:'mkspray'}, g);
+    for (let i = 0; i < 6; i++) svgEl('circle', {cx:300 + (i % 2 ? 1 : -1) * (6 + i * 4), cy:228, r:4 - i * .4, style:`animation-delay:${(i * .12).toFixed(2)}s;--dx:${(i % 2 ? 1 : -1) * (14 + i * 6)}px`}, spray);
+    svgEl('path', {d:'M190 172 L206 172 L232 306 L222 306 Z', class:'mkshine'}, s);
+    /* Deckel, Knauf, Ausguss, Griff */
+    svgEl('path', {d:'M106 124 L172 150 L172 162 L140 158 Z', fill:'#d7dbe1', class:'mkbody'}, s);
+    facets(160, 440, 152, 160, 440, 152); const lid = svgEl('path', {d:'M160 152 Q300 112 440 152 Z', fill:'url(#mkAlu)', class:'mkbody'}, s);
+    svgEl('path', {d:'M282 128 L318 128 L314 100 Q300 92 286 100 Z', class:'mkknob'}, s);
+    svgEl('path', {d:'M428 168 L482 168 Q500 168 500 186 L494 300 Q492 318 474 318 L392 318 L398 296 L466 296 L472 190 L424 190 Z', class:'mkhandle'}, s);
+    /* Dampf */
+    const steam = svgEl('g', {class:'mksteam'}, s);
+    [[118,112],[300,88],[150,104]].forEach(([x, y], i) => svgEl('path', {d:`M${x} ${y} q-16 -26 0 -52 t0 -52`, style:`animation-delay:${i * .45}s`}, steam));
+    const tt = svgEl('text', {x:300, y:690, 'text-anchor':'middle', class:'tm-time', 'font-size':80}, s);
+    const tk = svgEl('text', {x:300, y:40, 'text-anchor':'middle', class:'tm-task', 'font-size':26}, s);
+    return (f, left) => {
+      const full = 1 - Math.max(0, Math.min(1, f)), y = 314 - 146 * full;
+      lvl.setAttribute('transform', `translate(0 ${y.toFixed(1)})`);
+      s.classList.toggle('run', T.running && left > 0); s.classList.toggle('done', !T.running && left <= 0 && T.doneFired);
+      spray.setAttribute('transform', `translate(0 ${Math.max(0, y - 236).toFixed(1)})`); spray.style.display = T.running && y > 236 ? '' : 'none';
       tt.textContent = fmt(left); tk.textContent = taskText();
     };
   },
@@ -2962,7 +3473,7 @@ Object.assign(X, {
  pdfOk:['PDF gespeichert.','PDF saved.','PDF salvato.','PDF enregistré.','PDF guardado.'],pdfPrint:['Im Druckfenster „Als PDF sichern“ wählen.','In the print window choose “Save as PDF”.','Nella finestra di stampa scegli «Salva come PDF».','Dans la fenêtre d’impression, choisissez « Enregistrer en PDF ».','En la ventana de impresión elige «Guardar como PDF».'],pdfHtml:['Als druckbare Datei gespeichert (Seite öffnen, drucken).','Saved as a printable file (open it and print).','Salvato come file stampabile (aprilo e stampa).','Enregistré comme fichier imprimable (ouvrir et imprimer).','Guardado como archivo imprimible (ábrelo e imprime).'],
  fillNote:['Im Beamer-Modus füllen die Karten automatisch den ganzen Bildschirm.','In full-screen mode the cards fill the whole screen automatically.','A schermo intero le schede riempiono automaticamente lo schermo.','En plein écran, les cartes remplissent tout l’écran.','En pantalla completa las tarjetas llenan toda la pantalla.']
 });
-SKN.standard = ['Bunt (Original)','Colourful (original)','Colorato (originale)','Coloré (original)','Colorido (original)'];
+SKN.standard = ['Liquid Glass','Liquid Glass','Liquid Glass','Liquid Glass','Liquid Glass'];
 const VIEWS = ['karten','farbig','schlicht','chips','schilder'];
 if (!VIEWS.includes(look.view)) look.view = 'karten';
 function applyView(){ if (look.view === 'karten') delete document.documentElement.dataset.view; else document.documentElement.dataset.view = look.view; }
@@ -3299,6 +3810,7 @@ function spApply(kind){
   const seated = new Set(c.desks.map(d => d.s).filter(Boolean));
   /* Wer in der Aufstellung keinen Platz hatte (z. B. fehlt in den Gruppen), bleibt in der Leiste „Noch ohne Platz“ */
   spSave(); spRender(true);
+  try { spBtns(); } catch (e) {} /* 1.3.0: gewählte Aufstellung bleibt markiert */
 }
 function spShuffle(){ const c = spCls(), ids = c.desks.map(d => d.s).filter(Boolean), pool = ids.slice().sort(() => Math.random() - .5); let k = 0; c.desks.forEach(d => { if (d.s) d.s = pool[k++]; }); spSave(); spRender(true); }
 function spGroupIdx(k){ if (!lastResult) return -1; return lastResult.findIndex(g => g.some(s => skey(s) === k)); }
@@ -3443,9 +3955,9 @@ ol{list-style:none;margin:0;padding:3px 11px 8px}li{font-size:12pt;line-height:1
 .nc{break-inside:avoid;border-radius:12px;background:#fff;margin-bottom:9px;overflow:hidden;box-shadow:0 0 0 .7pt color-mix(in srgb,var(--h) 35%,#fff);display:grid;grid-template-columns:50mm 1fr}.nh{background:var(--h);color:#fff;padding:9px 11px}.nh b{display:block;font-size:12.5pt;margin-bottom:5px}.nh span{display:block}.nh i{display:block;font-style:normal;font-size:11pt;line-height:1.5;border-top:.5pt solid #fff5;padding:2px 0}.nh .rl{background:#fff3;color:#fff}
 .nb{min-height:40mm;padding:5px 12px;background:repeating-linear-gradient(transparent 0 7.2mm,color-mix(in srgb,var(--h) 30%,#bbb) 7.2mm calc(7.2mm + .5pt))}.nb em{font-style:normal;font-size:7.5pt;text-transform:uppercase;letter-spacing:.06em;color:#888;background:#fff;padding-right:6px}
 .rt{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:11px;break-inside:avoid;font-size:11pt;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 0 0 .7pt color-mix(in srgb,var(--h) 35%,#fff)}.rt th{background:var(--h);color:#fff;text-align:left;padding:6px 11px}.rt .sub td{font-size:7.5pt;color:#666;text-transform:uppercase;letter-spacing:.05em;padding:3px 11px;background:color-mix(in srgb,var(--h) 8%,#fff)}.rt td{border-top:.5pt solid color-mix(in srgb,var(--h) 25%,#ccc);padding:7px 11px;height:9mm}.rt td.nm{width:34%;font-weight:600}.rt td:nth-child(2){width:28%}.rt td+td{border-left:.5pt solid color-mix(in srgb,var(--h) 25%,#ccc)}`;
-  const sub = m.det === 'min' ? '' : `${x('sub')} · ${total} ${x('pupils')} · ${G.length} ${gw}`;
+  const sub = m.det === 'min' ? '' : `${x('sub')} · ${total} ${x('pupils')} · ${G.length} ${G.length === 1 ? gw : x('groups')}`;
   const allS = lastResult.flat(), nf = allS.filter(s => s.g === 'w').length, nmm = allS.filter(s => s.g === 'm').length;
-  const chips = m.det === 'full' ? statChips(T, [[total, x('pupils')], [G.length, gw], [(total / Math.max(1, G.length)).toLocaleString(LOC[lx()], {maximumFractionDigits: 1}), x('stAvg')]].concat(nf || nmm ? [[nf + ' / ' + nmm, x('stF') + ' / ' + x('stM')]] : [])) : '';
+  const chips = m.det === 'full' ? statChips(T, [[total, x('pupils')], [G.length, G.length === 1 ? gw : x('groups')], [(total / Math.max(1, G.length)).toLocaleString(LOC[lx()], {maximumFractionDigits: 1}), x('stAvg')]].concat(nf || nmm ? [[nf + ' / ' + nmm, x('stF') + ' / ' + x('stM')]] : [])) : '';
   return wrapDoc(T, m.title, css + STCSS, hdHtml(T, m.title, sub, m.teacher, d) + chips + body, false, preview);
 }
 function seatPrintHtml(m, preview){
@@ -3638,7 +4150,9 @@ tipIcons(); new MutationObserver(tipIcons).observe(document.querySelector('.tool
 /* ---------- Sitzplan: Tische frei zusammenstellen + Regeln beim automatischen Setzen ---------- */
 Object.assign(X, {
  spBuildBtn:['Tische bauen','Build desks','Componi i banchi','Composer les tables','Montar pupitres'],
- spBuildHint:['Reihen von der Tafel nach hinten. Tippe einen Tisch, um seine Größe zu ändern (1 – 2 – 3 – 4 – 6 Plätze).','Rows from the board to the back. Tap a desk to change its size (1 – 2 – 3 – 4 – 6 seats).','File dalla lavagna verso il fondo. Tocca un banco per cambiarne la misura (1 – 2 – 3 – 4 – 6 posti).','Rangées du tableau vers le fond. Touchez une table pour changer sa taille (1 – 2 – 3 – 4 – 6 places).','Filas desde la pizarra hacia atrás. Toca un pupitre para cambiar su tamaño (1 – 2 – 3 – 4 – 6 plazas).'],
+ spBuildHint:['Wie im Plan: Tafel unten, Reihe 1 vorn. Tisch antippen ändert die Größe (1 – 2 – 3 – 4 – 6 Plätze), Rechtsklick entfernt ihn.','As in the plan: board at the bottom, row 1 at the front. Tap a desk to change its size (1 – 2 – 3 – 4 – 6 seats), right-click removes it.','Come nella piantina: lavagna in basso, fila 1 davanti. Tocca un banco per cambiarne la misura (1 – 2 – 3 – 4 – 6 posti), clic destro lo toglie.','Comme sur le plan : tableau en bas, rangée 1 devant. Touchez une table pour changer sa taille (1 – 2 – 3 – 4 – 6 places), clic droit la retire.','Como en el plano: pizarra abajo, fila 1 delante. Toca un pupitre para cambiar su tamaño (1 – 2 – 3 – 4 – 6 plazas), clic derecho lo quita.'],
+ spBoard:['Tafel','Board','Lavagna','Tableau','Pizarra'],
+ spBack:['hinten','back','in fondo','au fond','al fondo'],
  spRowW:['Reihe','Row','Fila','Rangée','Fila'],
  spAddRow:['+ Reihe','+ Row','+ Fila','+ Rangée','+ Fila'],
  spSeats:['Plätze','Seats','Posti','Places','Plazas'],
@@ -3707,7 +4221,9 @@ Object.assign(X, {
       const ad = document.createElement('button'); ad.type = 'button'; ad.className = 'sbadd'; ad.textContent = '+'; ad.setAttribute('aria-label', '+'); ad.onclick = () => { row.push(row[row.length - 1] || 2); applySpec(); }; r.appendChild(ad);
       const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'sbrm'; rm.textContent = '×'; rm.setAttribute('aria-label', '×'); rm.onclick = () => { if (row.length > 1){ row.pop(); } else if (c.spec.length > 1) c.spec.splice(ri, 1); applySpec(); }; r.appendChild(rm);
       rows.appendChild(r); });
-    box.appendChild(rows);
+    const tf = document.createElement('div'); tf.className = 'sbtafel'; tf.textContent = x('spBoard');
+    const bk = document.createElement('div'); bk.className = 'sbback'; bk.textContent = '↑ ' + x('spBack');
+    box.append(bk, rows, tf);
     const ft = document.createElement('div'); ft.className = 'sbft';
     const ar = document.createElement('button'); ar.type = 'button'; ar.className = 'ovbtn'; ar.textContent = x('spAddRow'); ar.onclick = () => { const last = c.spec[c.spec.length - 1] || [2]; c.spec.push(last.slice()); applySpec(); };
     const fl = document.createElement('button'); fl.type = 'button'; fl.className = 'ovbtn'; fl.textContent = x('spFill'); fl.onclick = () => { let guard = 0; const last = c.spec[c.spec.length - 1]; while (total(c.spec) < n && guard++ < 60){ const need = n - total(c.spec); const row = c.spec[c.spec.length - 1]; if (row.length < 8) row.push(Math.min(row[row.length - 1] || 2, need <= 1 ? 1 : need >= 2 ? Math.min(row[row.length - 1] || 2, need) : 1)); else c.spec.push([1]); } applySpec(); };
@@ -3822,6 +4338,60 @@ Object.assign(X, {
   document.addEventListener('keydown', () => {}, true);
 })();
 
+
+/* ===== 1.3.0: Texte für Über Gruppo, Schnellsuche, Stunde starten ===== */
+Object.assign(X, {
+  abTitle: ['Über Gruppo', 'About Gruppo', 'Info su Gruppo', 'À propos de Gruppo', 'Acerca de Gruppo'],
+  abLine: ['Gruppen, Timer, Sitzplan und Stundenplan für den Unterricht.', 'Groups, timer, seating plan and timetable for your lessons.', 'Gruppi, timer, piantina e orario per le lezioni.', 'Groupes, minuteur, plan de classe et emploi du temps pour vos cours.', 'Grupos, temporizador, plano de aula y horario para tus clases.'],
+  abData: ['Alle Daten bleiben auf diesem Gerät.', 'All data stays on this device.', 'Tutti i dati restano su questo dispositivo.', 'Toutes les données restent sur cet appareil.', 'Todos los datos permanecen en este dispositivo.'],
+  abWeb: ['Website', 'Website', 'Sito web', 'Site web', 'Sitio web'],
+  abCoffee: ['Einen Kaffee ausgeben', 'Buy me a coffee', 'Offrimi un caffè', 'Offrir un café', 'Invítame a un café'],
+  abCoffeeNote: ['freiwillig, die App bleibt kostenlos', 'optional, the app stays free', 'facoltativo, l’app resta gratuita', 'facultatif, l’app reste gratuite', 'opcional, la app sigue siendo gratuita'],
+  abNew: ['Neu in 1.3', 'New in 1.3', 'Novità della 1.3', 'Nouveau dans la 1.3', 'Novedades de la 1.3'],
+  abNews: [
+    'Neuer Look „Liquid Glass“ · Schnellsuche mit ⌘K · „Stunde starten“ · Timer „Moka“ · Tische bauen aus Lehrersicht · modernes Magazin-Dashboard · schönere PDFs',
+    'New “Liquid Glass” look · quick search with ⌘K · “Start lesson” · “Moka” timer · build desks from the teacher’s view · modern magazine dashboard · nicer PDFs',
+    'Nuovo aspetto “Liquid Glass” · ricerca rapida con ⌘K · “Inizia lezione” · timer “Moka” · banchi dalla vista del docente · dashboard rivista moderna · PDF più belli',
+    'Nouveau look « Liquid Glass » · recherche rapide ⌘K · « Commencer le cours » · minuteur « Moka » · tables vues depuis le bureau · tableau de bord magazine · PDF plus beaux',
+    'Nuevo aspecto “Liquid Glass” · búsqueda rápida ⌘K · “Empezar clase” · temporizador “Moka” · pupitres desde la vista del docente · panel tipo revista · PDF más bonitos'],
+  ckPh: ['Klasse, Werkzeug oder Zahl für den Timer …', 'Class, tool or a number for the timer …', 'Classe, strumento o numero per il timer …', 'Classe, outil ou nombre pour le minuteur …', 'Clase, herramienta o número para el temporizador …'],
+  ckSearch: ['Suchen', 'Search', 'Cerca', 'Rechercher', 'Buscar'],
+  ckCls: ['Klasse', 'Class', 'Classe', 'Classe', 'Clase'],
+  ckTool: ['Werkzeug', 'Tool', 'Strumento', 'Outil', 'Herramienta'],
+  ckTimerN: ['Timer: {n} Min. starten', 'Start timer: {n} min', 'Avvia timer: {n} min', 'Lancer le minuteur : {n} min', 'Iniciar temporizador: {n} min'],
+  ckNone: ['Nichts gefunden', 'Nothing found', 'Nessun risultato', 'Aucun résultat', 'Sin resultados'],
+  ckHint: ['↑↓ wählen · ↵ öffnen · esc schließen', '↑↓ select · ↵ open · esc close', '↑↓ scegli · ↵ apri · esc chiudi', '↑↓ choisir · ↵ ouvrir · échap fermer', '↑↓ elegir · ↵ abrir · esc cerrar'],
+  ckGroupsOf: ['Gruppen bilden: {c}', 'Make groups: {c}', 'Forma gruppi: {c}', 'Former des groupes : {c}', 'Formar grupos: {c}'],
+  lsStart: ['Stunde starten', 'Start lesson', 'Inizia lezione', 'Commencer le cours', 'Empezar clase'],
+  lsWho: ['Wer fehlt heute?', 'Who is absent today?', 'Chi manca oggi?', 'Qui est absent aujourd’hui ?', '¿Quién falta hoy?'],
+  lsWhoNote: ['Antippen, wer fehlt. Gilt für Gruppen, „Wer ist dran?“ und den Sitzplan.', 'Tap who is absent. Applies to groups, “Who’s next?” and the seating plan.', 'Tocca chi manca. Vale per gruppi, “A chi tocca?” e piantina.', 'Touchez les absents. Vaut pour les groupes, « À qui le tour ? » et le plan.', 'Toca a quien falta. Vale para grupos, “¿A quién le toca?” y el plano.'],
+  lsPresent: ['{n} von {t} da', '{n} of {t} here', '{n} su {t} presenti', '{n} sur {t} présents', '{n} de {t} presentes'],
+  lsThen: ['Und dann?', 'And then?', 'E poi?', 'Et ensuite ?', '¿Y después?'],
+  lsOnlyCls: ['Nur Klasse öffnen', 'Just open the class', 'Apri solo la classe', 'Ouvrir la classe', 'Solo abrir la clase'],
+  lsNoCls: ['Diese Klasse gibt es in Gruppo noch nicht.', 'This class doesn’t exist in Gruppo yet.', 'Questa classe non esiste ancora in Gruppo.', 'Cette classe n’existe pas encore dans Gruppo.', 'Esta clase aún no existe en Gruppo.'],
+  lsAdd: ['Klasse anlegen', 'Add class', 'Aggiungi classe', 'Ajouter la classe', 'Añadir clase'],
+  lsAll: ['Alle da', 'All here', 'Tutti presenti', 'Tous présents', 'Todos presentes']
+});
+
+Object.assign(X, {
+  cdBreak: ['Pause in {0}', 'Break in {0}', 'Pausa tra {0}', 'Pause dans {0}', 'Recreo en {0}'],
+  cdBreakNow: ['Pause bis {0}', 'Break until {0}', 'Pausa fino alle {0}', 'Pause jusqu’à {0}', 'Recreo hasta las {0}'],
+  cdEnd: ['Schluss {0} · in {1}', 'Done at {0} · in {1}', 'Fine alle {0} · tra {1}', 'Fin à {0} · dans {1}', 'Fin a las {0} · en {1}'],
+  cdFirst: ['Erste Stunde {0} · in {1}', 'First lesson {0} · in {1}', 'Prima ora {0} · tra {1}', 'Premier cours {0} · dans {1}', 'Primera clase {0} · en {1}'],
+  cdTom: ['Nächster Schultag: {0} ab {1}', 'Next school day: {0} from {1}', 'Prossimo giorno: {0} dalle {1}', 'Prochain jour : {0} dès {1}', 'Próximo día: {0} desde las {1}'],
+  cdDone: ['Für heute geschafft', 'Done for today', 'Per oggi è fatta', 'Terminé pour aujourd’hui', 'Hecho por hoy'],
+  wkTitle: ['Diese Woche', 'This week', 'Questa settimana', 'Cette semaine', 'Esta semana'],
+  wkHours: ['{0} Stunden', '{0} lessons', '{0} ore', '{0} heures', '{0} horas'],
+  wkFree: ['Nächster freier Tag', 'Next day off', 'Prossimo giorno libero', 'Prochain jour libre', 'Próximo día libre'],
+  wkNone: ['Kein Stundenplan eingelesen', 'No timetable loaded', 'Nessun orario caricato', 'Aucun emploi du temps', 'Sin horario'],
+  clNext: ['Nächste Stunde', 'Next lesson', 'Prossima ora', 'Prochain cours', 'Próxima clase'],
+  clTrend: ['Einteilungen, letzte 8 Wochen', 'Groupings, last 8 weeks', 'Gruppi, ultime 8 settimane', 'Groupes, 8 dernières semaines', 'Grupos, últimas 8 semanas'],
+  clAgo: ['vor {0} Tagen', '{0} days ago', '{0} giorni fa', 'il y a {0} jours', 'hace {0} días'],
+  clToday: ['heute', 'today', 'oggi', 'aujourd’hui', 'hoy'], clYest: ['gestern', 'yesterday', 'ieri', 'hier', 'ayer'],
+  potdSet: ['Bild des Tages (Wikipedia) im Kopf der Übersicht', 'Picture of the day (Wikipedia) in the overview header', 'Immagine del giorno (Wikipedia) nella panoramica', 'Image du jour (Wikipédia) dans l’aperçu', 'Imagen del día (Wikipedia) en el resumen'],
+  potdNote: ['Lädt einmal am Tag das Bild des Tages von Wikimedia. Dabei sieht der Anbieter technisch deine IP-Adresse. Es werden keine Daten aus Gruppo gesendet.', 'Loads the picture of the day from Wikimedia once a day. The provider technically sees your IP address. No Gruppo data is sent.', 'Carica una volta al giorno l’immagine del giorno da Wikimedia. Il fornitore vede tecnicamente il tuo indirizzo IP. Nessun dato di Gruppo viene inviato.', 'Charge une fois par jour l’image du jour de Wikimedia. Le fournisseur voit techniquement votre adresse IP. Aucune donnée de Gruppo n’est envoyée.', 'Carga una vez al día la imagen del día de Wikimedia. El proveedor ve técnicamente tu dirección IP. No se envían datos de Gruppo.'],
+  potdBy: ['Bild des Tages', 'Picture of the day', 'Immagine del giorno', 'Image du jour', 'Imagen del día']
+});
 
 /* ===== W10: Dashboard (Startseite mit 3 Schwerpunkten) + Piantina/Orario eingebettet neben der Seitenleiste ===== */
 wt.view = 'dash'; /* beim Öffnen immer das Dashboard (nicht die zuletzt benutzte Ansicht) */
@@ -3982,6 +4552,9 @@ Object.assign(X, {
   const nwLab = el('label', 'row'); nwLab.style.padding = '11px 0'; const nwT = el('span', ''); const nwSw = el('input', 'sw'); nwSw.type = 'checkbox'; nwLab.append(nwT, nwSw);
   const nwNote = el('p', 'note'); nwNote.style.margin = '0'; nwRow.append(nwLab, nwNote); genPane.appendChild(nwRow);
   nwSw.checked = !!wt.news; nwSw.onchange = () => { wt.news = nwSw.checked; saveTool(); if (wt.view === 'dash') renderDash(); };
+  const pdRow = el('div', ''); pdRow.style.marginTop = '10px'; const pdLab = el('label', 'row'); pdLab.style.padding = '11px 0'; const pdT = el('span', ''); const pdSw = el('input', 'sw'); pdSw.type = 'checkbox'; pdLab.append(pdT, pdSw);
+  const pdNote = el('p', 'note'); pdNote.style.margin = '0'; pdRow.append(pdLab, pdNote); genPane.appendChild(pdRow);
+  pdSw.checked = !!wt.potd; pdSw.onchange = () => { wt.potd = pdSw.checked; saveTool(); if (wt.view === 'dash') renderDash(); };
   const LAYS = [['std', 'dlStd'], ['mag', 'dsMag'], ['bento', 'dsBento'], ['heft', 'dsHeft'], ['cockpit', 'dsCockpit'], ['tafel', 'dsTafel'], ['aurora', 'dsAurora']];
   const lyRow = el('div', ''); lyRow.style.marginTop = '20px'; const lyT = el('h3', ''); lyT.style.margin = '0 0 8px'; const lySel = el('select', 'ovtask'); lySel.style.cssText = 'width:100%;text-align:left;font-size:16px';
   LAYS.forEach(([k]) => { const o = el('option'); o.value = k; lySel.appendChild(o); });
@@ -3990,9 +4563,9 @@ Object.assign(X, {
   const applyPick = () => { const b = $d('pkBtn'); if (b) b.hidden = !!wt.pickOff; };
   lySel.onchange = () => { wt.dashStyle = lySel.value; saveTool(); if (wt.view === 'dash') renderDash(); };
   pkSw.onchange = () => { wt.pickOff = !pkSw.checked; saveTool(); applyPick(); if (wt.view === 'dash') renderDash(); };
-  const syncSet = () => { nameIn.value = nm(); nwSw.checked = !!wt.news; lySel.value = wt.dashStyle; pkSw.checked = !wt.pickOff; };
+  const syncSet = () => { nameIn.value = nm(); nwSw.checked = !!wt.news; pdSw.checked = !!wt.potd; lySel.value = LAYS.some(l => l[0] === wt.dashStyle) ? wt.dashStyle : 'std'; pkSw.checked = !wt.pickOff; };
   setBtn.addEventListener('click', syncSet); prof.addEventListener('click', syncSet); const _os = window._openSet; window._openSet = t => { syncSet(); _os(t); };
-  const labelSet = () => { lyT.textContent = x('dLayout'); LAYS.forEach(([k, l], i) => { lySel.options[i].textContent = x(l); }); pkT.textContent = x('dPickSet'); nwT.textContent = x('nwSet'); nwNote.textContent = x('nwNote'); nameIn.placeholder = x('setNamePh'); };
+  const labelSet = () => { lyT.textContent = x('dLayout'); LAYS.forEach(([k, l], i) => { lySel.options[i].textContent = x(l); }); pkT.textContent = x('dPickSet'); nwT.textContent = x('nwSet'); nwNote.textContent = x('nwNote'); pdT.textContent = x('potdSet'); pdNote.textContent = x('potdNote'); nameIn.placeholder = x('setNamePh'); };
 
   /* ===== Daten ===== */
   function meDay() { const D = jget('orario_v1'), n = jget('orario_me'); return D && n && D.teachers && D.teachers[n] ? { D, n } : null; }
@@ -4011,6 +4584,67 @@ Object.assign(X, {
   const fmtDate = iso => { try { return new Date(iso).toLocaleDateString(LOC[lx()], { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
   const hueOf = n => 'var(--g' + (1 + (Object.keys(classes).indexOf(n) % 8 + 8) % 8) + ')';
   const plansN = n => { const m = wt.spPlans && wt.spPlans[n]; return m ? m.list.length : 1; };
+  /* ===== 1.3.0: Countdown, Tagesband, Wochenblick, Tageszeit, Bild des Tages ===== */
+  const dur = m => m < 60 ? m + ' ' + x('minute') : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+  const hm2b = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+  function countdown(T0) {
+    const out = []; if (!T0) return out; const rows = T0.rows, m = T0.m;
+    const per = window._effPer(T0.M.D.periods).filter(p => !p.out).map(p => ({ a: mins(p.from), b: mins(p.to) })).filter(p => p.a != null && p.b != null).sort((u, v) => u.a - v.a);
+    if (rows.length) {
+      const first = rows[0], end = Math.max(...rows.map(r => r.b));
+      if (m < first.a) out.push(fillC2('cdFirst', first.from, dur(first.a - m)));
+      else if (m < end) {
+        /* nächste Pause: Ende einer Stunde, nach der mindestens 10 Minuten frei sind */
+        let br = null; for (let i = 0; i < per.length; i++) { const p = per[i], nx = per[i + 1]; if (p.b <= m) continue; if (m >= p.a && m < p.b || p.a > m) { if (!nx || nx.a - p.b >= 10) { br = p; break; } } }
+        const inBreak = per.some((p, i) => per[i + 1] && m >= p.b && m < per[i + 1].a && per[i + 1].a - p.b >= 10);
+        if (inBreak) { const nx = per.find(p => p.a > m); if (nx) out.push(fillC('cdBreakNow', hm2b(nx.a))); }
+        else if (br && br.b < end) out.push(fillC('cdBreak', dur(br.b - m)));
+        out.push(fillC2('cdEnd', hm2b(end), dur(end - m)));
+      } else out.push(x('cdDone'));
+    }
+    if (!rows.length || m >= Math.max(...rows.map(r => r.b))) { for (let k = 1; k <= 7; k++) { const t = today(k); if (t && t.rows.length) { const d = dayAt(k); out.push(fillC2('cdTom', k === 1 ? x('calTom') : d.toLocaleDateString(LOC[lx()], { weekday: 'long' }), t.rows[0].from)); break; } } }
+    return out;
+  }
+  function fillC2(k, a, b) { return x(k).split('{0}').join(a).split('{1}').join(b); }
+  function band(TD, live) {
+    const rows = TD.rows; if (!rows.length) return null;
+    const a0 = Math.floor((rows[0].a - 10) / 30) * 30, b0 = Math.ceil((Math.max(...rows.map(r => r.b)) + 10) / 30) * 30, W = b0 - a0, pc = m => ((m - a0) / W * 100).toFixed(2) + '%';
+    const wrap = el('div', 'dband'), tr = el('div', 'dbtrack');
+    for (let h = Math.ceil(a0 / 60) * 60; h <= b0; h += 60) { const t = el('span', 'dbtick'); t.style.left = pc(h); t.textContent = (h / 60) + ':00'; tr.appendChild(t); }
+    rows.forEach(r => { const m2 = findCls(r.cls, r.fach), b = el('button', 'dbk' + (live && TD.m >= r.a && TD.m < r.b ? ' live' : '') + (live && TD.m >= r.b ? ' past' : '')); b.type = 'button';
+      b.style.left = pc(r.a); b.style.width = 'calc(' + ((r.b - r.a) / W * 100).toFixed(2) + '% - 4px)'; b.style.setProperty('--h', m2 ? hueOf(m2) : 'var(--label-3)');
+      b.append(el('b', '', r.cls), el('small', '', [r.fach, r.room].filter(Boolean).join(' · ')), el('i', '', r.from)); b.title = r.from + '–' + r.to + ' · ' + r.cls + (r.fach ? ' · ' + r.fach : '') + (r.room ? ' · ' + r.room : '');
+      if (m2) b.onclick = () => pickCls(m2, true); else b.disabled = true; tr.appendChild(b); });
+    if (live && TD.m >= a0 && TD.m <= b0) { const n = el('span', 'dbnow'); n.style.left = pc(TD.m); n.appendChild(el('em', '', hm2b(TD.m))); tr.appendChild(n); }
+    wrap.appendChild(tr); return wrap;
+  }
+  function weekCard(host) {
+    const c = card(x('wkTitle'), 'dweek'), M = meDay();
+    if (M) {
+      const L = M.D.teachers[M.n].lessons.filter(l => !l.mentor), cnt = [0, 1, 2, 3, 4].map(d => L.filter(l => l.d === d).reduce((a, l) => a + l.p1 - l.p0 + 1, 0)), mx = Math.max(1, ...cnt), td = (new Date().getDay() + 6) % 7;
+      const g = el('div', 'dwk'); const mon = new Date(); mon.setDate(mon.getDate() - td);
+      cnt.forEach((n, d) => { const dd = new Date(mon); dd.setDate(mon.getDate() + d); const fr = window._cal && window._cal.info ? window._cal.info(dd) : null, off = fr && fr.kind !== 'we';
+        const col = el('div', 'dwc' + (d === td ? ' on' : '') + (off ? ' off' : '')); const bar = el('i'); bar.style.height = (off ? 6 : 8 + n / mx * 72) + 'px';
+        col.append(el('b', '', off ? '–' : String(n)), bar, el('span', '', dd.toLocaleDateString(LOC[lx()], { weekday: 'short' }).replace('.', ''))); col.title = off ? x(fr.key) : n + ''; g.appendChild(col); });
+      c.append(g, el('p', 'dnote', fillC('wkHours', cnt.reduce((a, b) => a + b, 0))));
+    } else c.append(el('p', 'dnote', x('wkNone')));
+    if (window._cal && window._cal.upcoming) { const u = window._cal.upcoming(new Date(), 6).find(q => q.days >= 1); if (u) { const f = el('button', 'dwfree'); f.type = 'button';
+      f.append(el('small', '', x('wkFree')), el('b', '', u.ti || x(u.key)), el('span', '', fmtD(u.a) + ' · ' + (u.days === 1 ? x('calTom') : fillC('calIn', u.days)))); f.onclick = () => window._cal.show(u.key, u.a, u.b, u.c); c.appendChild(f); } }
+    host.appendChild(c);
+  }
+  const tod = () => { const h = new Date().getHours(); return h < 10 ? 'morgen' : h < 13 ? 'mittag' : h < 17 ? 'nachmittag' : 'abend'; };
+  /* Bild des Tages (Wikimedia), nur wenn eingeschaltet; einmal am Tag, im Gerät zwischengespeichert */
+  const POTD = { busy: false };
+  function potd() {
+    if (!wt.potd) return null; const day = new Date().toISOString().slice(0, 10); let c = null; try { c = JSON.parse(localStorage.getItem('gb_potd') || 'null'); } catch (e) {}
+    if (c && c.day === day) return c.url ? c : null;
+    if (!POTD.busy) { POTD.busy = true; const d = new Date(), u = 'https://api.wikimedia.org/feed/v1/wikipedia/' + (['de', 'en', 'it', 'fr', 'es'][lx()] || 'de') + '/featured/' + d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+      const got = j => { const im = j && j.image, th = im && (im.thumbnail || im.image); const r = { day, url: th && /^https:\/\/upload\.wikimedia\.org\//.test(th.source) ? th.source : '', title: im && im.description && im.description.text ? String(im.description.text).replace(/<[^>]+>/g, '').slice(0, 140) : '', by: im && im.artist && im.artist.text ? String(im.artist.text).replace(/<[^>]+>/g, '').slice(0, 60) : '' };
+        if (r.url) r.url = r.url.replace(/\/\d+px-/, '/1280px-'); try { localStorage.setItem('gb_potd', JSON.stringify(r)); } catch (e) {} POTD.busy = false; if (r.url && wt.view === 'dash') renderDash(); };
+      const fail = () => { POTD.busy = false; };
+      (window.gbNative && window.gbNative.potd ? window.gbNative.potd(u).then(t => got(t ? JSON.parse(t) : null)) : fetch(u, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(got)).catch(fail); }
+    return null;
+  }
 
   /* ===== Nachrichten ===== */
   const FEEDS = {
@@ -4140,10 +4774,14 @@ Object.assign(X, {
     { const nw = new Date(), hc = el('div', 'hclock'); hc.append(String(nw.getHours()).padStart(2, '0'), el('i', '', ':'), String(nw.getMinutes()).padStart(2, '0')); hero.append(hc);
       if (cur && T0) { const rg = el('div', 'hring'), pc = Math.round((T0.m - cur.a) / (cur.b - cur.a) * 100); rg.style.setProperty('--p', pc); const ri = el('i'); ri.append(el('b', '', String(cur.b - T0.m)), el('small', '', x('dLeft'))); rg.appendChild(ri); hero.append(rg); } }
     const acts = el('div', 'dacts'); const mine = f && findCls(f.cls, f.fach);
-    acts.append(btn('dwhite', x('dOpenCls'), () => { if (f && !mine) toast(fillC('dNoCls', f.cls), 4200); pickCls(mine || settings.cls, true); }), btn('dglass', '10 ' + x('minute'), () => quickTimer(10)), ...(wt.pickOff ? [] : [btn('dglass', x('pk'), () => { if (mine && mine !== settings.cls) pickCls(mine); $d('pkBtn').click(); })]));
+    acts.append(btn('dwhite dstart', x('lsStart'), () => window._lesson(f ? (mine || false) : settings.cls, f ? { title: f.cls + (f.fach ? ' · ' + f.fach : ''), sub: f.from + ' – ' + f.to + (f.room ? ' · ' + f.room : '') } : null)), btn('dglass', x('dOpenCls'), () => { if (f && !mine) toast(fillC('dNoCls', f.cls), 4200); pickCls(mine || settings.cls, true); }), btn('dglass', '10 ' + x('minute'), () => quickTimer(10)), ...(wt.pickOff ? [] : [btn('dglass', x('pk'), () => { if (mine && mine !== settings.cls) pickCls(mine); $d('pkBtn').click(); })]));
     hero.append(acts); if (shown) hero.append(chipsOf(shown));
     if (window._cal) { const ob = window._cal.obs(new Date()); if (ob.length) { const cw = el('div', 'dchips'); ob.forEach(o => { const b2 = el('button', 'dchip'); b2.type = 'button'; b2.style.cursor = 'pointer'; b2.textContent = x('calToday') + ': ' + x(o.key); b2.onclick = () => window._cal.show(o.key, o.a, o.b, o.c); cw.appendChild(b2); }); hero.append(cw); } }
+    { const cd = countdown(T0 && !FRI ? T0 : null); if (cd.length) { const w = el('div', 'dcount'); cd.forEach(t => w.appendChild(el('span', '', t))); hero.insertBefore(w, hero.querySelector('.dacts')); } }
+    hero.dataset.tod = tod();
+    { const P = potd(); if (P && P.url) { hero.classList.add('potd'); hero.style.setProperty('--potd', 'url("' + P.url.replace(/"/g, '') + '")'); const cr = el('span', 'dpcred', x('potdBy') + (P.title ? ' · ' + P.title : '') + (P.by ? ' · ' + P.by : '')); hero.appendChild(cr); } }
     host.appendChild(hero);
+    if (styleOf() === 'std') weekCard(host);
     const day = card(x('dDay'), 'dday');
     const TD = T0 && dOff ? today(dOff) : T0, dd = dayAt(dOff), fr = window._cal && window._cal.info ? window._cal.info(dd) : null;
     if (T0) {
@@ -4160,7 +4798,7 @@ Object.assign(X, {
     else if (!T0) { day.append(el('p', 'dnote', x('dNoMe')), btn('dgo', x('dOpenPlan'), () => $d('stBtn').click())); }
     else if (fr && fr.kind !== 'we' && (dOff || !TD.rows.length)) day.append(el('p', 'dnote dfree', fillC('dFreeDay', x(fr.key))));
     else if (!TD.rows.length) day.append(el('p', 'dnote', dOff || (new Date().getDay() % 6 === 0) ? (new Date(dd).getDay() % 6 === 0 ? x('dWeekend') : x('dNoLessonDay')) : x('dNoLesson')));
-    else { const ul = el('div', 'dlist'); let mk = false; TD.rows.forEach(r => {
+    else { if (styleOf() === 'std') { const bd = band(TD, !dOff); if (bd) { day.appendChild(bd); day.classList.add('hasband'); } } const ul = el('div', 'dlist'); let mk = false; TD.rows.forEach(r => {
       if (!dOff && !mk && TD.m >= r.a && TD.m < r.b) mk = true;
       if (!dOff && !mk && TD.m < r.a) { mk = true; ul.appendChild(el('div', 'tlnow', x('dNowMark') + ' · ' + hm2(TD.m))); }
       const m2 = findCls(r.cls, r.fach), live = TD.m >= r.a && TD.m < r.b, past = TD.m >= r.b; const row = el('button', 'drow' + (live ? ' live' : '') + (past ? ' past' : '')); row.type = 'button';
@@ -4185,6 +4823,9 @@ Object.assign(X, {
     host.appendChild(c);
   }
 
+  /* nächste eigene Stunde einer Klasse (aus dem Stundenplan, bis 7 Schultage voraus) */
+  function nextLesson(n) {
+    if (!wt.plan || !wt.plan.on) return ''; for (let k = 0; k <= 7; k++) { const t = today(k); if (!t) return ''; const r = t.rows.find(r => findCls(r.cls, r.fach) === n && (k || r.b > t.m)); if (r) { const d = k ? dayAt(k) : new Date(); return (k === 0 ? x('clToday') : k === 1 ? x('calTom') : d.toLocaleDateString(LOC[lx()], { weekday: 'short' })) + ' ' + r.from + (r.room ? ' · ' + r.room : ''); } } return ''; }
   /* ===== Fokus: Klassen ===== */
   function viewClasses(host) {
     const grid = el('div', 'dclasses');
@@ -4197,6 +4838,10 @@ Object.assign(X, {
         const mini = el('div', 'dmini'); const xs = sp.desks.map(d => d.x), ys = sp.desks.map(d => d.y); const x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(1, Math.max(...xs) - x0), h = Math.max(1, Math.max(...ys) - y0);
         sp.desks.slice(0, 80).forEach(d => { const k = el('i'); k.style.cssText = `left:${4 + (d.x - x0) / w * 84}%;top:${6 + (d.y - y0) / h * 76}%`; mini.appendChild(k); }); c.appendChild(mini);
       }
+      { const nx = nextLesson(n); if (nx) c.appendChild(el('div', 'dcnext', x('clNext') + ': ' + nx)); }
+      { const h = store.get(histKey(n), []); if (h.length) { const now = Date.now(), wk = Array(8).fill(0); h.forEach(r => { const d = (now - new Date(r.date).getTime()) / 864e5; if (d >= 0 && d < 56) wk[7 - Math.floor(d / 7)]++; }); const mx = Math.max(1, ...wk);
+        const tr = el('div', 'dctrend'); tr.title = x('clTrend'); wk.forEach(v => { const i = el('i'); i.style.height = (3 + v / mx * 22) + 'px'; if (!v) i.className = 'z'; tr.appendChild(i); });
+        const last = h[h.length - 1], ago = Math.floor((now - new Date(last.date).getTime()) / 864e5); tr.appendChild(el('span', '', ago <= 0 ? x('clToday') : ago === 1 ? x('clYest') : fillC('clAgo', ago))); c.appendChild(tr); } }
       c.onclick = () => pickCls(n, true); grid.appendChild(c);
     });
     const add = el('button', 'dcard dcls dadd'); add.type = 'button'; add.innerHTML = '<b>+</b><span></span>'; add.lastChild.textContent = x('dAdd'); add.onclick = () => $d('addBtn').click(); grid.appendChild(add);
@@ -4794,7 +5439,9 @@ Object.assign(X, {
 let PRPLAN = null;
 window._planPrint = function (p) { PRPLAN = p; openPrint('plan'); };
 function planPrintHtml(m, preview) {
-  const T = ptheme(m.theme), p = PRPLAN || { lessons: [], periods: [], tab: 't', name: '' }, t = p.tab === 't', rr = p.tab === 'r', P = p.periods, L = p.lessons;
+  const T = ptheme(m.theme), p = PRPLAN || { lessons: [], periods: [], tab: 't', name: '' }, t = p.tab === 't', rr = p.tab === 'r', L = p.lessons;
+  /* 1.3.0: leere Stunden am Anfang und Ende weglassen, Zeilen füllen die Seite */
+  let P = p.periods; { const used = L.reduce((a, l) => { for (let k = l.p0; k <= l.p1; k++) a.add(k); return a; }, new Set()); if (used.size) { const lo = Math.min(...used), hi = Math.max(...used); const Q = P.filter(q => q.n >= Math.min(lo, 1 + 0) && q.n <= hi); if (Q.length) P = Q; } }
   const mn = s => { const q = /^(\d+):(\d+)/.exec(s || ''); return q ? +q[1] * 60 + +q[2] : null; };
   const days = L.some(l => l.d === 5) ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4], dn = d => new Date(2024, 0, 1 + d).toLocaleDateString(LOC[lx()], { weekday: 'long' });
   const key = l => (t || rr) ? (l.cls || l.fach || '') : (l.fach || ''), keys = Array.from(new Set(L.map(key).filter(Boolean))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })), hue = k => T.hue(Math.max(0, keys.indexOf(k)));
@@ -4819,14 +5466,15 @@ function planPrintHtml(m, preview) {
   const legend = m.det === 'full' ? `<div class="lg">${keys.map(k => `<span style="--h:${hue(k)}"><i></i>${esc(k)} <em>${cnt[k]}</em></span>`).join('')}</div>` : '';
   const meta = [t ? (p.homeroom ? x('tpHome') + ': ' + p.homeroom : '') : [p.leader && x('tpHome') + ': ' + p.leader].filter(Boolean).join(''), p.year ? p.year : '', p.valid && m.det !== 'min' ? x('tpValid') + ' ' + p.valid : ''].filter(Boolean).join(' · ');
   const d = m.date ? new Date().toLocaleDateString(LOC[lx()]) : '';
+  const nBr = P.filter((q, i) => gap(i)).length, rowH = Math.max(m.det === 'min' ? 9 : 10.5, Math.min(21, ((m.det === 'full' ? 112 : 132) - nBr * (m.det === 'min' ? 2.6 : 5.4)) / Math.max(1, P.length)));
   const css = `.tt{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:${m.det === 'min' ? 11 : 9.5}pt}.tt th{font-weight:600;color:${T.acc};padding:3px 2px;text-align:center;font-size:9.5pt;text-transform:uppercase;letter-spacing:.05em}
 .tt th.pn{width:15mm;background:#fff;border-radius:9px;color:#222;box-shadow:0 0 0 .6pt rgba(0,0,0,.12);text-transform:none;letter-spacing:0;padding:2px 3px}.tt th.pn b{display:block;font-size:13pt;color:${T.acc};line-height:1.1}.tt th.pn span{display:block;font-size:6.8pt;color:#777;font-weight:400;line-height:1.2}
-.tt td{background:#fff;border-radius:9px;padding:2px;vertical-align:middle;height:${m.det === 'min' ? 10 : 12.5}mm;box-shadow:0 0 0 .6pt rgba(0,0,0,.08)}.tt td.em{background:transparent;box-shadow:none}.tt td.ce{background:transparent;box-shadow:none;padding:0}
-.ls{height:100%;min-height:100%;border-radius:9px;background:color-mix(in srgb,var(--h) 16%,#fff);border-left:2.2mm solid var(--h);padding:3px 6px;display:flex;flex-direction:column;justify-content:center;break-inside:avoid}.ls+.ls{margin-top:2px}.ls b{font-size:1.18em;line-height:1.15}.ls span{font-size:.82em;color:#555;display:flex;justify-content:space-between;gap:6px}.ls i{font-style:normal;font-weight:600;color:color-mix(in srgb,var(--h) 70%,#000)}
+.tt td{background:#fff;border-radius:9px;padding:2px;vertical-align:middle;height:${rowH.toFixed(1)}mm;box-shadow:0 0 0 .6pt rgba(0,0,0,.08)}.tt td.em{background:transparent;box-shadow:none}.tt td.ce{background:transparent;box-shadow:none;padding:0}
+.ls{height:100%;min-height:100%;border-radius:9px;background:color-mix(in srgb,var(--h) 16%,#fff);border-left:2.2mm solid var(--h);padding:3px 6px;display:flex;flex-direction:column;justify-content:center;break-inside:avoid}.ls+.ls{margin-top:2px}.ls b{font-size:1.32em;line-height:1.12;letter-spacing:-.01em}.ls span{font-size:.9em;color:#555;margin-top:1px;display:flex;justify-content:space-between;gap:6px}.ls i{font-style:normal;font-weight:600;color:color-mix(in srgb,var(--h) 70%,#000)}
 .tt tr.br td{background:repeating-linear-gradient(135deg,#0000 0 5px,rgba(0,0,0,.05) 5px 10px);height:4.6mm;font-size:7pt;color:#777;text-align:center;letter-spacing:.06em;text-transform:uppercase;box-shadow:none;border-radius:6px;padding:0}.tt tr.br.s td{height:2.2mm}
 .lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:11px;font-size:8.5pt}.lg span{display:flex;align-items:center;gap:5px}.lg i{width:9px;height:9px;border-radius:3px;background:var(--h)}.lg em{font-style:normal;color:#777}`;
   const title = m.title, sub = meta;
-  return wrapDoc(T, title, css + STCSS, hdHtml(T, title, sub, '', d) + chips + `<table class="tt"><thead><tr><th></th>${days.map(k => `<th>${esc(dn(k))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${legend}`, true, preview);
+  return wrapDoc(T, title, css + STCSS, hdHtml(T, title, sub, '', d) + chips + `<table class="tt"><thead><tr><th style="width:17mm"></th>${days.map(k => `<th>${esc(dn(k))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${legend}`, true, preview);
 }
 
 /* theis Tresor – verschlüsselter Abgleich (AES-256-GCM, Schlüssel aus Passwort via PBKDF2-SHA256).
@@ -5025,6 +5673,310 @@ Object.assign(X, {
 })();
 
 /* Start */
+
+/* ===== 1.3.0: Über Gruppo · Schnellsuche (⌘K) · Stunde starten ===== */
+(function () {
+  const E = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const fill = (k, o) => x(k).replace(/\{(\w)\}/g, (_, q) => o[q]);
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  const SITE = 'https://theisapps.de/', SUPPORT = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
+  const ICON = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="abG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b8b"/><stop offset="1" stop-color="#dc2a52"/></linearGradient></defs><rect width="120" height="120" rx="27" fill="url(#abG)"/><g fill="#fff"><circle cx="60" cy="47" r="22" fill-opacity=".86"/><circle cx="46" cy="70" r="22" fill-opacity=".62"/><circle cx="74" cy="70" r="22" fill-opacity=".5"/></g><rect x=".75" y=".75" width="118.5" height="118.5" rx="26.5" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/></svg>';
+  const openLink = u => { try { if (window.native && window.native.openExternal) return window.native.openExternal(u); } catch (e) {} window.open(u, '_blank', 'noopener'); };
+
+  /* ---------- Über Gruppo ---------- */
+  const ab = E('dialog', 'abdlg'); ab.id = 'abDlg'; document.body.appendChild(ab);
+  function openAbout() {
+    ab.textContent = '';
+    const v = (document.documentElement.dataset.appv || '1.3.0');
+    const top = E('div', 'abtop'); const ic = E('div', 'abicon'); ic.innerHTML = ICON;
+    const nm = E('h2', 'abname', 'Gruppo'), ver = E('div', 'abver', 'Version ' + v);
+    top.append(ic, nm, ver, E('p', 'abline', x('abLine')));
+    const acts = E('div', 'abacts');
+    const w = E('button', 'abbtn', x('abWeb')); w.type = 'button'; w.onclick = () => openLink(SITE);
+    const k = E('button', 'abbtn pri', '☕ ' + x('abCoffee')); k.type = 'button'; k.onclick = () => openLink(SUPPORT);
+    acts.append(w, k);
+    const nw = E('div', 'abnew'); nw.append(E('h3', '', x('abNew')), E('p', '', x('abNews')));
+    const ft = E('div', 'abfoot'); const lg = document.querySelector('footer.brand svg, .sbbrand svg');
+    ft.append(E('span', '', '© 2026')); if (lg) ft.appendChild(lg.cloneNode(true));
+    const note = E('p', 'abnote', x('abData') + ' · ' + x('abCoffeeNote'));
+    const cl = E('button', 'abx', '×'); cl.type = 'button'; cl.setAttribute('aria-label', '×'); cl.onclick = () => ab.close();
+    ab.append(cl, top, acts, nw, note, ft); ab.showModal();
+  }
+  ab.addEventListener('click', e => { if (e.target === ab) ab.close(); });
+  window._about = openAbout;
+  /* Logo unten in der Seitenleiste öffnet „Über Gruppo“ */
+  const bar = document.querySelector('.toolbar .bar'), brand = document.querySelector('footer.brand');
+  if (bar && brand) {
+    const sb = E('button', 'sbbrand'); sb.type = 'button'; sb.title = x('abTitle'); const svg = brand.querySelector('svg'); if (svg) sb.appendChild(svg.cloneNode(true));
+    sb.onclick = openAbout; bar.appendChild(sb);
+  }
+  /* In den Einstellungen (Reiter Allgemein) */
+  const gp = document.querySelector('[data-pane="gen"]');
+  if (gp) { const b = E('button', 'ovbtn abopen'); b.type = 'button'; b.onclick = () => { $('setDlg').close(); openAbout(); }; gp.appendChild(b); b._lab = () => b.textContent = x('abTitle'); }
+
+  /* ---------- Schnellsuche ⌘K ---------- */
+  const ck = E('dialog', 'ckdlg'); ck.id = 'ckDlg'; document.body.appendChild(ck);
+  const inp = E('input', 'ckin'); inp.type = 'search'; inp.autocomplete = 'off'; inp.spellcheck = false;
+  const list = E('div', 'cklist'); list.setAttribute('role', 'listbox'); const hint = E('div', 'ckhint');
+  const head = E('div', 'ckhead'); head.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>'; head.appendChild(inp);
+  ck.append(head, list, hint);
+  let items = [], sel = 0;
+  const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const vis = id => { const b = $(id); return b && !b.hidden; };
+  function tools() {
+    const T = [];
+    const add = (lab, id, fn) => T.push({ k: 'tool', lab, run: fn || (() => $(id).click()), ok: !id || vis(id) || id === 'vDashBtn' || id === 'vGroupsBtn' });
+    add(x('vDash') || 'Übersicht', 'vDashBtn', () => window._view && window._view('dash'));
+    add(x('vGroups') || 'Gruppen', 'vGroupsBtn', () => window._view && window._view('groups'));
+    add(x('lsStart'), null, () => window._lesson && window._lesson());
+    add(x('tm'), 'tmBtn'); add(x('cl'), 'clBtn'); add(x('pk'), 'pkBtn'); add(x('sp'), 'spBtn'); add(x('stOn'), 'stBtn');
+    add(x('set') || 'Einstellungen', 'setBtn'); add(x('abTitle'), null, openAbout);
+    return T.filter(t => t.ok);
+  }
+  function build(q) {
+    const f = fold(q).trim(); const out = [];
+    const n = /^\d{1,3}$/.test(f) ? +f : (/^(timer|t)\s*(\d{1,3})$/.exec(f) || [])[2];
+    if (n && +n > 0 && +n <= 240) out.push({ k: 'timer', lab: fill('ckTimerN', { n: +n }), run: () => { $('tmBtn').click(); tmSet(+n * 60); $('tmGo').click(); } });
+    Object.keys(classes).sort((a, b) => a.localeCompare(b, 'de', { numeric: true })).forEach(c => {
+      if (!f || fold(c).includes(f)) out.push({ k: 'cls', lab: c, sub: classes[c].students.length + ' ' + (x('dPupils') || ''), run: () => { if (c !== settings.cls) { settings.cls = c; save(); absent.clear(); lastResult = null; renderAll(); } window._view && window._view('groups'); } });
+    });
+    tools().forEach(t => { if (!f || fold(t.lab).includes(f)) out.push(t); });
+    return out.slice(0, 40);
+  }
+  function draw() {
+    items = build(inp.value); if (sel >= items.length) sel = Math.max(0, items.length - 1); list.textContent = '';
+    if (!items.length) list.appendChild(E('div', 'cknone', x('ckNone')));
+    let lastK = '';
+    items.forEach((it, i) => {
+      if (it.k !== lastK) { list.appendChild(E('div', 'ckgrp', it.k === 'cls' ? x('ckCls') : it.k === 'tool' ? x('ckTool') : x('tm'))); lastK = it.k; }
+      const b = E('button', 'ckit'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', i === sel);
+      b.append(E('span', 'ckl', it.lab)); if (it.sub) b.append(E('small', '', it.sub));
+      b.onmousemove = () => { if (sel !== i) { sel = i; mark(); } }; b.onclick = () => go(i); list.appendChild(b);
+    });
+    mark();
+  }
+  function mark() { [...list.querySelectorAll('.ckit')].forEach((b, i) => { b.setAttribute('aria-selected', i === sel); if (i === sel) b.scrollIntoView({ block: 'nearest' }); }); }
+  function go(i) { const it = items[i]; if (!it) return; ck.close(); try { closeOv(); } catch (e) {} setTimeout(() => it.run(), 30); }
+  inp.oninput = () => { sel = 0; draw(); };
+  inp.onkeydown = e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); mark(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); mark(); }
+    else if (e.key === 'Enter') { e.preventDefault(); go(sel); }
+    else if (e.key === 'Escape') { e.preventDefault(); ck.close(); }
+  };
+  ck.addEventListener('click', e => { if (e.target === ck) ck.close(); });
+  function openCk() { if (ck.open) return; inp.placeholder = x('ckPh'); hint.textContent = x('ckHint'); inp.value = ''; sel = 0; draw(); ck.showModal(); setTimeout(() => inp.focus(), 20); }
+  window._search = openCk;
+  addEventListener('keydown', e => {
+    if ((isMac ? e.metaKey : e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+      if (document.querySelector('dialog[open]:not(#ckDlg)')) return; e.preventDefault(); openCk();
+    }
+  });
+  /* Suchfeld oben in der Seitenleiste */
+  const sbs = E('button', 'sbsearch'); sbs.type = 'button'; sbs.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span></span><kbd></kbd>';
+  sbs.onclick = openCk;
+  const pk = document.querySelector('.toolbar .picker'); if (pk) pk.parentNode.insertBefore(sbs, pk);
+
+  /* ---------- Stunde starten ---------- */
+  const ls = E('dialog', 'lsdlg'); ls.id = 'lsDlg'; document.body.appendChild(ls);
+  ls.addEventListener('click', e => { if (e.target === ls) ls.close(); });
+  function lesson(cls, info) {
+    const none = cls === false;
+    if (!cls && !none) { const pc = window._planCls && window._planCls(); cls = pc || settings.cls; }
+    if (cls && classes[cls] && cls !== settings.cls) { settings.cls = cls; save(); absent.clear(); lastResult = null; renderAll(); }
+    ls.textContent = '';
+    const C = none ? null : classes[settings.cls];
+    const cl = E('button', 'abx', '×'); cl.type = 'button'; cl.setAttribute('aria-label', '×'); cl.onclick = () => ls.close();
+    const hd = E('div', 'lshead'); hd.append(E('div', 'lskick', x('lsStart')), E('h2', 'lstitle', info && info.title ? info.title : settings.cls || '—'));
+    if (info && info.sub) hd.append(E('div', 'lssub', info.sub));
+    ls.append(cl, hd);
+    if (!C) { ls.append(E('p', 'note', x('lsNoCls'))); const a = E('button', 'go', x('lsAdd')); a.type = 'button'; a.onclick = () => { ls.close(); $('addBtn').click(); }; ls.append(a); ls.showModal(); return; }
+    const sec = E('div', 'lssec'); const sh = E('div', 'lssh'); const cnt = E('span', 'lscnt'); sh.append(E('h3', '', x('lsWho')), cnt); sec.appendChild(sh);
+    const box = E('div', 'roster lsroster'); sec.appendChild(box); sec.appendChild(E('p', 'note', x('lsWhoNote')));
+    const all = E('button', 'linkbtn', x('lsAll')); all.type = 'button'; all.onclick = () => { absent.clear(); drawR(); renderRoster(); }; sec.appendChild(all);
+    function drawR() {
+      box.textContent = '';
+      C.students.forEach((s, i) => { const b = E('button', 'chip'); b.type = 'button'; b.setAttribute('aria-pressed', !absent.has(i)); b.innerHTML = '<span class="dot ' + s.g + '"></span>'; b.append(s.first + (s.last && C.students.some((o, j) => j !== i && o.first === s.first) ? ' ' + s.last[0] + '.' : ''));
+        b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); drawR(); renderRoster(); try { $('preview').textContent = describe(present().length); } catch (e) {} }; box.appendChild(b); });
+      cnt.textContent = fill('lsPresent', { n: C.students.length - absent.size, t: C.students.length });
+    }
+    drawR();
+    const go = E('div', 'lssec'); go.append(E('h3', '', x('lsThen')));
+    const grid = E('div', 'lsgrid');
+    const T = (lab, cls2, fn, ok = true) => { if (!ok) return; const b = E('button', 'lstile ' + cls2); b.type = 'button'; b.innerHTML = '<i></i>'; b.append(E('span', '', lab)); b.onclick = () => { ls.close(); setTimeout(fn, 40); }; grid.appendChild(b); };
+    T(t('go'), 'g', () => { window._view && window._view('groups'); $('goBtn').click(); });
+    T(x('sp'), 's', () => $('spBtn').click(), vis('spBtn'));
+    T(x('tm'), 't', () => $('tmBtn').click());
+    T(x('pk'), 'p', () => $('pkBtn').click(), vis('pkBtn'));
+    T(x('lsOnlyCls'), 'c', () => window._view && window._view('groups'));
+    go.appendChild(grid);
+    ls.append(sec, go); ls.showModal();
+  }
+  window._lesson = lesson;
+
+  /* Mac-App: Fenster ohne Titelleiste (Ampel-Knöpfe in der Seitenleiste), Menü „Über Gruppo“ öffnet das eigene Fenster */
+  const nb = window.gbNative;
+  if (nb && nb.mac) document.documentElement.classList.add('macapp');
+  if (nb && nb.onAbout) nb.onAbout(() => { document.querySelectorAll('dialog[open]').forEach(d => { try { d.close(); } catch (e) {} }); openAbout(); });
+
+  const _ax = applyX; applyX = function () { _ax(); sbs.querySelector('span').textContent = x('ckSearch'); sbs.querySelector('kbd').textContent = isMac ? '⌘K' : 'Ctrl K'; const b = document.querySelector('.abopen'); if (b) b.textContent = x('abTitle'); };
+})();
+
+/* ===== 1.3.0: Ton am Ende wählbar · Timer-Abläufe · Mini-Timer im Vordergrund ===== */
+Object.assign(X, {
+  sndKind: ['Ton', 'Sound', 'Suono', 'Son', 'Sonido'],
+  snd_glocke: ['Glocke', 'Bell', 'Campanella', 'Cloche', 'Campana'],
+  snd_gong: ['Gong', 'Gong', 'Gong', 'Gong', 'Gong'],
+  snd_schale: ['Klangschale', 'Singing bowl', 'Campana tibetana', 'Bol chantant', 'Cuenco tibetano'],
+  snd_moka: ['Moka blubbert', 'Moka gurgle', 'Moka che borbotta', 'Moka qui glougloute', 'Moka burbujeando'],
+  snd_sanft: ['Sanft', 'Gentle', 'Delicato', 'Doux', 'Suave'],
+  flBtn: ['Ablauf …', 'Sequence …', 'Sequenza …', 'Séquence …', 'Secuencia …'],
+  flTitle: ['Timer-Ablauf', 'Timer sequence', 'Sequenza di timer', 'Séquence de minuteurs', 'Secuencia de temporizadores'],
+  flNote: ['Mehrere Phasen hintereinander. Am Ende jeder Phase ertönt der Ton, dann startet die nächste von selbst.', 'Several phases in a row. At the end of each phase the sound plays and the next one starts by itself.', 'Più fasi di seguito. Alla fine di ogni fase suona il segnale e la successiva parte da sola.', 'Plusieurs phases à la suite. À la fin de chaque phase, le son retentit et la suivante démarre seule.', 'Varias fases seguidas. Al final de cada fase suena el aviso y la siguiente empieza sola.'],
+  flStart: ['Starten', 'Start', 'Avvia', 'Démarrer', 'Iniciar'],
+  flNew: ['+ Eigener Ablauf', '+ Own sequence', '+ Sequenza propria', '+ Séquence perso', '+ Secuencia propia'],
+  flName: ['Name des Ablaufs', 'Name of the sequence', 'Nome della sequenza', 'Nom de la séquence', 'Nombre de la secuencia'],
+  flPhase: ['Phase', 'Phase', 'Fase', 'Phase', 'Fase'],
+  flAdd: ['+ Phase', '+ Phase', '+ Fase', '+ Phase', '+ Fase'],
+  flSave: ['Sichern', 'Save', 'Salva', 'Enregistrer', 'Guardar'],
+  flDel: ['Löschen', 'Delete', 'Elimina', 'Supprimer', 'Eliminar'],
+  flEnd: ['Ablauf beenden', 'End sequence', 'Termina sequenza', 'Terminer la séquence', 'Terminar secuencia'],
+  flNext: ['Gleich: {p}', 'Next: {p}', 'Tra poco: {p}', 'Ensuite : {p}', 'A continuación: {p}'],
+  flEdit: ['Bearbeiten', 'Edit', 'Modifica', 'Modifier', 'Editar'],
+  flTps: ['Think – Pair – Share', 'Think – Pair – Share', 'Think – Pair – Share', 'Think – Pair – Share', 'Think – Pair – Share'],
+  flAlone: ['Allein', 'Alone', 'Da soli', 'Seul', 'Solo'], flPair: ['Zu zweit', 'In pairs', 'In coppia', 'À deux', 'En parejas'], flPlenum: ['Plenum', 'Whole class', 'Plenaria', 'En classe entière', 'Pleno'],
+  flGroup: ['Gruppenarbeit', 'Group work', 'Lavoro di gruppo', 'Travail de groupe', 'Trabajo en grupo'],
+  flRead: ['Lesen', 'Read', 'Leggere', 'Lire', 'Leer'], flWork: ['Arbeiten', 'Work', 'Lavorare', 'Travailler', 'Trabajar'], flPresent: ['Vorstellen', 'Present', 'Presentare', 'Présenter', 'Presentar'],
+  flStations: ['Stationen', 'Stations', 'Stazioni', 'Ateliers', 'Estaciones'], flStation: ['Station', 'Station', 'Stazione', 'Atelier', 'Estación'],
+  miBtn: ['Mini-Timer', 'Mini timer', 'Mini timer', 'Mini-minuteur', 'Mini temporizador'],
+  miHint: ['Der Mini-Timer bleibt über allen Fenstern, z. B. über deiner Präsentation.', 'The mini timer stays above all windows, e.g. your presentation.', 'Il mini timer resta sopra tutte le finestre, ad es. sulla presentazione.', 'Le mini-minuteur reste au-dessus de toutes les fenêtres.', 'El mini temporizador queda encima de todas las ventanas.']
+});
+(function () {
+  const E = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+  /* ---------- Ton am Ende ---------- */
+  const SNDS = ['glocke', 'gong', 'schale', 'moka', 'sanft'];
+  if (!SNDS.includes(wt.tsnd)) wt.tsnd = 'glocke';
+  const _chime = chime;
+  function tone(f, s, dur, vol, type) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(vol, s + .015); g.gain.exponentialRampToValueAtTime(.0005, s + dur); o.connect(g); g.connect(AC.destination); o.start(s); o.stop(s + dur + .05); return o; }
+  function noise(dur) { const b = AC.createBuffer(1, Math.max(1, AC.sampleRate * dur | 0), AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const n = AC.createBufferSource(); n.buffer = b; return n; }
+  function play(kind) {
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
+      const t0 = AC.currentTime + .03;
+      if (kind === 'gong') { [[98, .5, 5], [196, .3, 4], [293.7, .22, 3.4], [415, .12, 2.6], [588, .08, 1.8]].forEach(([f, v, d]) => { tone(f, t0, d, v); tone(f * 1.003, t0, d, v * .6); }); const n = noise(.08), g = AC.createGain(), bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800; g.gain.setValueAtTime(.25, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .08); n.connect(bp); bp.connect(g); g.connect(AC.destination); n.start(t0); return; }
+      if (kind === 'schale') { [0, 2.6].forEach(off => { const s = t0 + off; [[528, .22, 6], [531.5, .18, 6], [1365, .07, 4], [2840, .025, 2.5]].forEach(([f, v, d]) => tone(f, s, d, v)); }); return; }
+      if (kind === 'sanft') { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t0 + i * .22, 1.6, .12)); return; }
+      if (kind === 'moka') {
+        /* Blubbern: kurze, gefilterte Geräusch-Blasen mit steigender Tonhöhe, dazu leises Zischen */
+        for (let i = 0; i < 26; i++) { const s = t0 + i * .095 + Math.random() * .05, n = noise(.09), bp = AC.createBiquadFilter(), g = AC.createGain(); bp.type = 'bandpass'; bp.Q.value = 9; bp.frequency.setValueAtTime(260 + Math.random() * 300, s); bp.frequency.exponentialRampToValueAtTime(700 + Math.random() * 600, s + .08); g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(.55, s + .01); g.gain.exponentialRampToValueAtTime(.001, s + .085); n.connect(bp); bp.connect(g); g.connect(AC.destination); n.start(s); }
+        const h = noise(2.8), hp = AC.createBiquadFilter(), g = AC.createGain(); hp.type = 'highpass'; hp.frequency.value = 3500; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.05, t0 + .6); g.gain.linearRampToValueAtTime(0, t0 + 2.8); h.connect(hp); hp.connect(g); g.connect(AC.destination); h.start(t0); return;
+      }
+      _chime();
+    } catch (e) {}
+  }
+  chime = () => play(wt.tsnd);
+  /* Auswahl neben „Ton am Ende“ */
+  const lab = $('tmSnd').closest('label'); const sel = E('select', 'ovsel'); sel.id = 'tmSndKind';
+  SNDS.forEach(k => { const o = E('option'); o.value = k; sel.appendChild(o); });
+  sel.value = wt.tsnd; sel.onchange = () => { wt.tsnd = sel.value; saveTool(); prime(); play(sel.value); };
+  sel.addEventListener('keydown', e => e.stopPropagation());
+  lab.after(sel);
+
+  /* ---------- Timer-Abläufe ---------- */
+  const PRESET = () => [
+    { id: 'tps', name: x('flTps'), ph: [[x('flAlone'), 2], [x('flPair'), 3], [x('flPlenum'), 5]] },
+    { id: 'grp', name: x('flGroup'), ph: [[x('flRead'), 3], [x('flWork'), 12], [x('flPresent'), 5]] },
+    { id: 'sta', name: x('flStations'), ph: [1, 2, 3, 4].map(i => [x('flStation') + ' ' + i, 8]) }];
+  wt.flows = Array.isArray(wt.flows) ? wt.flows.filter(f => f && Array.isArray(f.ph) && f.ph.length) : [];
+  let FL = null; /* { name, ph:[[name,min]], i } */
+  const flBtn = E('button', 'wchip'); flBtn.type = 'button'; flBtn.id = 'tmFlowBtn'; $('tmReset').after(flBtn);
+  const strip = E('div', 'tmflow'); strip.id = 'tmFlow'; strip.hidden = true; $('tmStage').before(strip);
+  function drawStrip() {
+    strip.hidden = !FL; strip.textContent = ''; if (!FL) return;
+    strip.appendChild(E('b', 'tfn', FL.name));
+    FL.ph.forEach(([n, m], i) => { const c = E('span', 'tfp' + (i === FL.i ? ' on' : i < FL.i ? ' done' : '')); c.append(E('i', '', String(i + 1)), n + ' · ' + m + ' ' + x('minute')); strip.appendChild(c); });
+    const z = E('button', 'tfx', '× ' + x('flEnd')); z.type = 'button'; z.onclick = endFlow; strip.appendChild(z);
+  }
+  function phaseSet(i) { FL.i = i; const [n, m] = FL.ph[i]; $('tmTask').value = n; flowSetting = true; tmSet(m * 60); flowSetting = false; drawStrip(); }
+  let flowSetting = false;
+  function startFlow(f) { prime(); FL = { name: f.name, ph: f.ph.map(p => [String(p[0] || x('flPhase')), Math.max(.25, +p[1] || 1)]), i: 0 }; flDlg.close(); if (!openOv || openOv.id !== 'tmOv') $('tmBtn').click(); phaseSet(0); tmToggle(); }
+  function endFlow() { FL = null; $('tmTask').value = ''; drawStrip(); tmRender(); }
+  const _set = tmSet; tmSet = function (sec) { if (!flowSetting && FL) { FL = null; drawStrip(); } return _set(sec); };
+  const _fin = tmFinish;
+  tmFinish = function () {
+    if (FL && FL.i < FL.ph.length - 1) {
+      T.running = false; T.left = 0; tmTickStop(); if ($('tmSnd').checked) chime();
+      const nx = FL.ph[FL.i + 1][0], st = $('tmStage'), d = E('div', 'tmdone tmnext', x('flNext').replace('{p}', nx)); st.appendChild(d);
+      setTimeout(() => { d.remove(); if (!FL) return; phaseSet(FL.i + 1); tmToggle(); }, 2600);
+      return;
+    }
+    if (FL) { FL.i = FL.ph.length; drawStrip(); }
+    _fin();
+  };
+  const _reset = tmReset; tmReset = function () { if (FL) { FL.i = 0; const [n, m] = FL.ph[0]; $('tmTask').value = n; flowSetting = true; _set(m * 60); flowSetting = false; drawStrip(); return; } _reset(); };
+  $('tmReset').onclick = () => tmReset();
+
+  const flDlg = E('dialog', 'fldlg'); flDlg.id = 'flDlg'; document.body.appendChild(flDlg);
+  flDlg.addEventListener('click', e => { if (e.target === flDlg) flDlg.close(); });
+  function openFlows() {
+    flDlg.textContent = '';
+    const cl = E('button', 'abx', '×'); cl.type = 'button'; cl.onclick = () => flDlg.close();
+    flDlg.append(cl, E('h2', 'flh', x('flTitle')), E('p', 'note', x('flNote')));
+    const list = E('div', 'fllist');
+    const row = (f, own) => { const r = E('div', 'flrow'); const t = E('div', 'flt'); t.append(E('b', '', f.name), E('small', '', f.ph.map(p => p[0] + ' ' + p[1] + '′').join(' → ')));
+      const go = E('button', 'go flgo', x('flStart')); go.type = 'button'; go.onclick = () => startFlow(f); r.append(t);
+      if (own) { const ed = E('button', 'wchip', x('flEdit')); ed.type = 'button'; ed.onclick = () => edit(f); r.append(ed); }
+      r.append(go); list.appendChild(r); };
+    PRESET().forEach(f => row(f, false)); wt.flows.forEach(f => row(f, true));
+    const nw = E('button', 'linkbtn', x('flNew')); nw.type = 'button'; nw.onclick = () => edit(null);
+    flDlg.append(list, nw); if (!flDlg.open) flDlg.showModal();
+  }
+  function edit(f) {
+    const draft = f ? { name: f.name, ph: f.ph.map(p => p.slice()) } : { name: '', ph: [[x('flAlone'), 2], [x('flPair'), 3]] };
+    flDlg.textContent = '';
+    const cl = E('button', 'abx', '×'); cl.type = 'button'; cl.onclick = () => openFlows();
+    const nm = E('input', 'ovtask flname'); nm.placeholder = x('flName'); nm.value = draft.name; nm.maxLength = 40; nm.oninput = () => draft.name = nm.value;
+    const box = E('div', 'flphs');
+    const draw = () => { box.textContent = ''; draft.ph.forEach((p, i) => { const r = E('div', 'flph'); r.append(E('i', '', String(i + 1)));
+      const a = E('input', 'ovtask'); a.value = p[0]; a.maxLength = 30; a.placeholder = x('flPhase') + ' ' + (i + 1); a.oninput = () => p[0] = a.value;
+      const b = E('input', 'ovtask flmin'); b.type = 'number'; b.min = '0.5'; b.max = '180'; b.step = '0.5'; b.value = p[1]; b.oninput = () => p[1] = +b.value;
+      const m = E('span', 'note', x('minute')); const del = E('button', 'wchip', '×'); del.type = 'button'; del.onclick = () => { if (draft.ph.length > 1) { draft.ph.splice(i, 1); draw(); } };
+      [a, b].forEach(q => q.addEventListener('keydown', e => e.stopPropagation()));
+      r.append(a, b, m, del); box.appendChild(r); }); };
+    draw();
+    const add = E('button', 'wchip', x('flAdd')); add.type = 'button'; add.onclick = () => { draft.ph.push([x('flPhase') + ' ' + (draft.ph.length + 1), 5]); draw(); };
+    const ft = E('div', 'flft');
+    const sv = E('button', 'go', x('flSave')); sv.type = 'button'; sv.onclick = () => { draft.name = (draft.name || '').trim() || x('flTitle'); draft.ph = draft.ph.filter(p => +p[1] > 0); if (!draft.ph.length) return; if (f) Object.assign(f, draft); else wt.flows.push(draft); saveTool(); openFlows(); };
+    ft.append(sv);
+    if (f) { const dl = E('button', 'wchip', x('flDel')); dl.type = 'button'; dl.onclick = () => { wt.flows = wt.flows.filter(q => q !== f); saveTool(); openFlows(); }; ft.append(dl); }
+    flDlg.append(cl, E('h2', 'flh', x('flTitle')), nm, box, add, ft);
+    if (!flDlg.open) flDlg.showModal(); setTimeout(() => nm.focus(), 30);
+  }
+  flBtn.onclick = openFlows;
+
+  /* ---------- Mini-Timer (Mac/Windows): kleines Fenster über allen anderen ---------- */
+  const nb = window.gbNative; let miOn = false, miIv = null;
+  const mi = E('button', 'ovbtn'); mi.type = 'button'; mi.id = 'tmMini'; mi.hidden = !(nb && nb.miniOpen);
+  mi.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2.5"/><rect x="12" y="11" width="7" height="5" rx="1.2" fill="currentColor" stroke="none"/></svg><span></span>';
+  $('tmFull').before(mi);
+  const miState = () => ({ total: T.total, left: T.left, running: T.running, endAt: T.endAt, task: $('tmTask').value.trim(), done: T.doneFired, flow: FL ? (FL.i + 1) + '/' + FL.ph.length : '', theme: document.documentElement.dataset.theme, skin: document.documentElement.dataset.skin || '' });
+  function miTick() { if (!miOn) return; try { nb.miniSend(miState()); } catch (e) {} }
+  mi.onclick = async () => {
+    if (miOn) { try { nb.miniClose(); } catch (e) {} return; }
+    let ok = false; try { ok = await nb.miniOpen(); } catch (e) {}
+    if (!ok) return; miOn = true; mi.setAttribute('aria-pressed', 'true'); clearInterval(miIv); miIv = setInterval(miTick, 500); setTimeout(miTick, 300); toast(x('miHint'));
+  };
+  if (nb && nb.onMiniClosed) nb.onMiniClosed(() => { miOn = false; clearInterval(miIv); mi.setAttribute('aria-pressed', 'false'); });
+  if (nb && nb.onMiniAct) nb.onMiniAct(a => { if (a === 'toggle') tmToggle(); if (a === 'reset') tmReset(); miTick(); });
+  ['tmGo', 'tmReset'].forEach(i => $(i).addEventListener('click', () => setTimeout(miTick, 30)));
+
+  const _ax = applyX; applyX = function () { _ax();
+    [...sel.options].forEach(o => o.textContent = x('snd_' + o.value)); sel.title = x('sndKind');
+    flBtn.textContent = x('flBtn'); mi.querySelector('span').textContent = x('miBtn'); mi.title = x('miHint'); drawStrip(); };
+})();
+
+/* Start (Ende des Werkzeuge-Blocks) */
 window._xApply = applyX;
 applyLook(); applyX();
 })();

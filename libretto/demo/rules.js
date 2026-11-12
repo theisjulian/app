@@ -22,7 +22,11 @@
     prak: { label: 'Praktische Leistung',   short: 'Pr',  big: false, area: 'praktisch' },
     proj: { label: 'Projekt',               short: 'Proj',big: false, area: 'schriftlich' },
     sonst:{ label: 'Sonstiger kleiner LN',  short: 'kLN', big: false, area: 'schriftlich' },
+    kp:   { label: 'Künstlerisches Projekt', short: 'KP', big: false, area: 'praktisch', own: true },   /* nur Leistungsfach Kunst, Q12/13 (§ 29 Abs. 3 GSO) */
+    mp:   { label: 'Praktische Prüfung',     short: 'PP', big: false, area: 'praktisch', own: true },   /* nur Leistungsfach Musik, Q12/13 (§ 29 Abs. 4 GSO) */
   };
+  /* eigene dritte Komponente der Halbjahresleistung (Kunst/Musik als Leistungsfach) – kein kleiner LN */
+  const isOwn = a => !!(a && TYPES[a.type] && TYPES[a.type].own);
   const AREAS = ['schriftlich', 'mündlich', 'praktisch'];
   /* Zählt ein Nachweis als großer LN? Jahrgangsstufentest: je nach Entscheidung der Schule (countAs: 'big' | 'small') */
   const isBig = a => !!a && (a.type === 'sa' || (a.type === 'jst' && a.countAs === 'big'));
@@ -40,15 +44,33 @@
   const LANGS = ['Englisch', 'Französisch', 'Italienisch', 'Latein', 'Spanisch', 'Griechisch', 'Russisch', 'Chinesisch', 'Tschechisch', 'Türkisch', 'Japanisch', 'Polnisch', 'Portugiesisch', 'Arabisch'];
   const SUBJECTS = ['Deutsch', 'Mathematik', ...LANGS.slice(0, 7), 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Natur und Technik', 'Geschichte', 'Geographie', 'Politik und Gesellschaft', 'Wirtschaft und Recht', 'Religionslehre (ev.)', 'Religionslehre (kath.)', 'Ethik', 'Kunst', 'Musik', 'Sport', 'Wirtschaftsinformatik', 'Sozialkunde', 'W-Seminar', 'P-Seminar'];
   const isLang = s => LANGS.some(l => (s || '').toLowerCase().startsWith(l.toLowerCase()));
+  /* moderne Fremdsprachen (ohne Latein und Griechisch): nur dort gibt es Schreibaufgabe/Sprachmittlung mit Inhalt und Sprache und die Prüfungsteile der Oberstufe */
+  const isModernLang = s => isLang(s) && !/^(latein|griechisch)/i.test((s || '').trim());
+  const isAncient = s => /^(latein|griechisch)/i.test((s || '').trim());
+  /* Zweigeteilte Schulaufgabe in Latein und Griechisch (KMS 31.07.2023, V.3-BS5402.7/135/1, Anlagen 3 und 4):
+     Übersetzung : Aufgabenteil – Latein 5–8 = 3 : 1, 9–10 = 2 : 1, ab 11 = 1 : 1; Griechisch 8–9 = 3 : 1, 10 = 2 : 1, ab 11 = 1 : 1.
+     Teile getrennt bewerten (ganze Noten bzw. Notenpunkte), bei n,5 die bessere Note.
+     Latein 9/10: Gesamt „ausreichend“ nur, wenn die Übersetzung mindestens „mangelhaft“ ist.
+     Ab 11: „befriedigend“ (7 Punkte) nur, wenn kein Teil „ungenügend“ ist (Q: Tabelle Anlage 2 – höchstens 6 Punkte, wenn ein Teil 0 Punkte hat). */
+  function altRule(subject, grade) {
+    const s = (subject || '').trim().toLowerCase(), g = +grade;
+    if (!g) return null;
+    const lat = s.startsWith('latein'), gr = s.startsWith('griechisch');
+    if (!lat && !gr) return null;
+    if (g >= 12) return { w: [1, 1], up: true };
+    if (g === 11) return { w: [1, 1], g11: true };
+    if (lat) return g >= 9 ? { w: [2, 1], ue5: true } : { w: [3, 1] };
+    return g >= 10 ? { w: [2, 1] } : { w: [3, 1] };
+  }
 
-  /* Mindestzahl Schulaufgaben (§ 22 Abs. 2 GSO) – nur, wo die GSO sie festlegt */
+  /* Mindestzahl Schulaufgaben (§ 22 Abs. 1 GSO): Deutsch 3, Mathematik 4 in 5–7 sonst 3, Fremdsprachen 3 bzw. 4 ab 4 Wochenstunden, übrige Fächer mit Schulaufgaben 2 */
   function minSA(course) {
     const g = +course.grade, s = (course.subject || '').toLowerCase();
     if (g < 5 || g > 11 || !course.hasSA) return null;
     if (s.startsWith('deutsch')) return 3;
     if (s.startsWith('mathe')) return g <= 7 ? 4 : 3;
     if (isLang(course.subject)) return (+course.hours || 0) >= 4 ? 4 : 3;
-    return null;
+    return 2;   /* übrige Fächer mit Schulaufgaben (z. B. Physik, Chemie am NTG, Wirtschaft und Recht am WWG, Musik am MuG): mindestens 2 */
   }
 
   /* ---------- Noten & Punkte ---------- */
@@ -97,6 +119,12 @@
   }
   /* Aufrunden auf das Raster der Schule (z. B. halbe Punkte); die Toleranz verhindert Rechenfehler wie 14.000000000000002 -> 14,5 */
   const ceilStep = (v, step) => Math.round(Math.ceil(v / step - 1e-9) * step * 100) / 100;
+  /* Kaufmännisch runden auf das Raster (x,5 aufwärts). So entstehen die amtlichen BE-Tabellen zum KMK-Raster:
+     z. B. 90 BE: 2 Punkte ab 24 BE (27 % = 24,3), 15 Punkte ab 86 BE (95 % = 85,5) – ISB-Kontaktbrief Oberstufe 2025, Mathematik-KMS 23.07.2024, Altsprachen-KMS 31.07.2023 Anlage 2 */
+  const roundStep = (v, step) => Math.round(Math.floor(v / step + 0.5 + 1e-9) * step * 100) / 100;
+  /* KMK-Raster: bei ganzen Punkten wie die amtlichen Tabellen (kaufmännisch), bei halben/Viertelpunkten wie bisher aufgerundet
+     (so rechnen auch die verbreiteten Excel-Notenlisten – amtliche Tabellen gibt es nur für ganze BE) */
+  const kmkStep = (v, step) => (+step >= 1 ? roundStep(v, step) : ceilStep(v, step));
   /* Vorschlag für einen Notenschlüssel (Prozent je Note, anpassbar) */
   const DEFAULT_PCT = [87.5, 75, 62.5, 50, 25];
   function suggestKey(max, pct = DEFAULT_PCT, step = 0.5) {
@@ -105,30 +133,43 @@
   /* Prozentgrenzen aus „Ankern“: Note 4 ab p4 %, Note 5 ab p5 %; Noten 1–3 gleichmäßig zwischen p4 und 100 % */
   function pctFromAnchors(p4, p5) { const st = (100 - p4) / 4; return [p4 + 3 * st, p4 + 2 * st, p4 + st, p4, p5].map(x => Math.round(x * 10) / 10); }
   /* Oberstufe: 5 Punkte ab p5 %, 1 Punkt ab p1 %; 6–15 gleichmäßig zwischen p5 und 100 %, 2–4 zwischen p1 und p5 */
-  function pct15FromAnchors(p5, p1) {
+  /* Oberstufe, eigene Grenzen: Anker = untere Grenze der Note 4, also 4 Punkte (4–), und 1 Punkt (5–).
+     Dazwischen und darüber gleichmäßig – mit 40 % / 20 % ergibt das fast genau das KMK-Raster (4 P. ab 40 %, 3 ab 33,3, 2 ab 26,7, 1 ab 20). */
+  function pct15FromAnchors(p4, p1) {
+    const out = [];
+    for (let p = 15; p >= 1; p--) out.push(Math.round((p >= 4 ? p4 + (100 - p4) * (p - 4) / 12 : p1 + (p4 - p1) * (p - 1) / 3) * 10) / 10);
+    return out;
+  }
+  /* gespeicherte Vorgaben bis 1.0.2 hatten den Anker „5 Punkte ab p5“ – umgerechnet: 4 Punkte 5 Prozentpunkte darunter (45 → 40 wie KMK) */
+  /* Bis 1.0.2 lautete der Anker „5 Punkte ab p5“. Damit eine gespeicherte Vorgabe genau denselben Schlüssel ergibt wie vorher,
+     rechnet Libretto sie mit der alten Formel (pct15Old) und zeigt als 4-Punkte-Wert den daraus folgenden Prozentsatz. */
+  function pct15Old(p5, p1) {
     const out = [];
     for (let p = 15; p >= 1; p--) out.push(Math.round((p >= 5 ? p5 + (100 - p5) * (p - 5) / 11 : p1 + (p5 - p1) * (p - 1) / 4) * 10) / 10);
     return out;
   }
+  const anchor4 = pre => pre && pre.q4 != null ? +pre.q4 : pre && pre.p5 != null ? pct15Old(+pre.p5, +pre.p1 || 0)[11] : 40;
   /* Oberstufe: Punkte aus Rohpunkten */
   function keyPoints(points, key) {
     if (points == null || !key || !key.pointThresholds) return null;
     for (let p = 15; p >= 1; p--) if (points >= key.pointThresholds[15 - p]) return p;
     return 0;
   }
-  /* KMK-Raster: „Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung“ (Beschluss vom 16.03.2023), Anlage 1, Ziff. 8.4.2:
+  /* KMK-Raster: „Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung“ (KMK-Beschluss vom 07.07.1972 i. d. F. vom 06.06.2024),
+     in Bayern umgesetzt ab Abitur 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4):
      Mindestanteil der erreichbaren Punkte für 15, 14, …, 1 Notenpunkte. Ohne Rundung der Prozentwerte. */
   const DEFAULT_PCT15 = [95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 33, 27, 20];
   const KMK_PCT15 = DEFAULT_PCT15;
   /* dasselbe Raster als Noten 1–5 (13, 10, 7, 4, 1 Punkte): Note 1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %, darunter 6 */
   const KMK_PCT5 = [85, 70, 55, 40, 20];
-  function suggestKey15(max, pct = DEFAULT_PCT15, step = 0.5) {
-    return { max, pointThresholds: pct.map(p => ceilStep(max * p / 100, step)), pct15: pct.slice() };
+  function suggestKey15(max, pct = DEFAULT_PCT15, step = 0.5, rnd = ceilStep) {
+    return { max, pointThresholds: pct.map(p => rnd(max * p / 100, step)), pct15: pct.slice() };
   }
   /* KMK-Schlüssel: Oberstufe in Notenpunkten; Unterstufe/Mittelstufe in Noten, auf Wunsch mit Tendenz (15 P. = 1+, 14 = 1, 13 = 1-, … 1 = 5-) */
   function suggestKeyKmk(max, upper, step = 0.5, tend = true) {
-    if (upper) return { ...suggestKey15(max, KMK_PCT15, step), preset: 'kmk' };
-    return { ...suggestKey(max, KMK_PCT5, step), tendThresholds: KMK_PCT15.map(p => ceilStep(max * p / 100, step)), tend: !!tend, preset: 'kmk' };
+    /* Oberstufe: immer die amtliche BE-Tabelle (ganze BE, kaufmännisch) – ISB-Kontaktbrief Oberstufe 2025, S. 4: 120/100/90/60 BE */
+    if (upper) return { ...suggestKey15(max, KMK_PCT15, 1, roundStep), preset: 'kmk' };
+    return { max, thresholds: KMK_PCT5.map(p => kmkStep(max * p / 100, step)), pct: KMK_PCT5.slice(), tendThresholds: KMK_PCT15.map(p => kmkStep(max * p / 100, step)), tend: !!tend, preset: 'kmk' };
   }
   /* Ergebnis (Note bzw. Notenpunkte, ggf. mit Tendenz) aus Punkten */
   function keyResult(points, key, upper) {
@@ -140,24 +181,76 @@
     }
     return { v };
   }
-  /* Punkte je Aufgabe: Summe, Lösungsquote, Ergebnis. a.tasks = [{id, label, max}], r.pts = {aufgabenId: Punkte} */
+  /* Punkte je Aufgabe: Summe, Lösungsquote, Ergebnis. a.tasks = [{id, label, max, f?}], r.pts = {aufgabenId: Punkte}
+     f = Faktor der Aufgabe (fehlt = 1): Die eingetragenen Punkte zählen f-fach, z. B. Schreibaufgabe „Inhalt 4 + Sprache 6“ mit Faktor 2,5 = 25 Punkte.
+     Eingetragen und gespeichert werden immer die einfachen Punkte (r.pts), der Faktor wirkt nur in der Summe. */
   const byTask = a => !!(a && a.byTask && a.tasks && a.tasks.length);
-  const tasksMax = a => Math.round((a.tasks || []).reduce((s, t) => s + (+t.max || 0), 0) * 100) / 100;
+  const taskF = t => { const f = t ? +t.f : 0; return f > 0 ? f : 1; };
+  const r2 = x => Math.round(x * 100) / 100;
+  const tasksMax = a => r2((a.tasks || []).reduce((s, t) => s + (+t.max || 0) * taskF(t), 0));
+  /* gewichtete Summe der eingetragenen Aufgabenpunkte einer Person (fehlende zählen 0) */
+  const tasksSum = (a, pts) => r2((a.tasks || []).reduce((s, t) => s + (+(pts || {})[t.id] || 0) * taskF(t), 0));
   /* Rechnet r (Ergebnis einer Person) aus den Aufgabenpunkten neu. Erst wenn jede Aufgabe einen Wert hat (auch 0), gibt es Punkte und Note. */
   function applyTasks(a, r, upper) {
     const ts = a.tasks || [], p = r.pts || {};
     delete r.raw; delete r.v; delete r.tend;
     if (!ts.length || !ts.every(t => p[t.id] != null && p[t.id] !== '')) return r;
-    r.raw = Math.round(ts.reduce((s, t) => s + (+p[t.id] || 0), 0) * 100) / 100;
+    r.raw = tasksSum(a, p);
     const k = keyResult(r.raw, a.key, upper); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; }
     return r;
   }
+  /* ---- Oberstufe: Bewertung nach Prüfungsteilen (ISB-Rechentabelle „PULST“, moderne Fremdsprachen, Stand 12/2025) ----
+     a.byParts = true, a.parts = [{ id, label, kind: 'be' | 'is', max (nur 'be'), w (Gewicht in %) }], r.pp = { teilId: Zahl | { i, s } }
+     'be': erreichte Bewertungseinheiten → Teilnote über den Lösungsgrad (Tabelle wie Abitur Prüfungsteil A: 95 % = 15 … 20 % = 1, darunter 0)
+     'is': Notenpunkte für Inhalt (40 %) und Sprache (60 %), je 0–15; ist eins davon 0 Punkte, höchstens 3 Notenpunkte (Sperrklausel)
+     Gesamt = nach den Gewichten gemittelte Teilnoten (ungerundet, r.exact), gerundet = Notenpunkte (r.v). */
+  const byParts = a => !!(a && a.byParts && a.parts && a.parts.length);
+  const PART_W = { i: 0.4, s: 0.6 };
+  function partNote(p, val) {
+    if (val == null || val === '') return null;
+    if (p.kind === 'n') return { tn: +val };   /* Teilnote direkt (z. B. Übersetzung in Latein) */
+    if (p.kind === 'is') {
+      if (typeof val !== 'object' || val.i == null || val.i === '' || val.s == null || val.s === '') return null;
+      const i = +val.i, sp = +val.s, x = r2(PART_W.i * i + PART_W.s * sp);
+      return { tn: (i === 0 || sp === 0) ? Math.min(3, x) : x, sperr: (i === 0 || sp === 0) && x > 3 };
+    }
+    const mx = +p.max; if (!(mx > 0)) return null;
+    const lg = +val / mx * 100;
+    for (let k = 15; k >= 1; k--) if (lg >= KMK_PCT15[15 - k] - 1e-9) return { tn: k, lg };
+    return { tn: 0, lg };
+  }
+  /* Ergebnis einer Person neu rechnen: erst wenn alle Teile eingetragen sind, gibt es Notenpunkte */
+  function applyParts(a, r) {
+    const ps = a.parts || [], pp = r.pp || {};
+    delete r.v; delete r.exact; delete r.raw; delete r.tend;
+    if (r.status || !ps.length) return r;
+    const tns = ps.map(p => partNote(p, pp[p.id]));
+    if (tns.some(x => x == null)) return r;
+    const W = ps.reduce((x, p) => x + (+p.w || 0), 0); if (!(W > 0)) return r;
+    const x = ps.reduce((x, p, i) => x + tns[i].tn * (+p.w || 0), 0) / W;
+    r.exact = r2(x);
+    delete r.cap;
+    if (a.alt) {   /* zweigeteilte Schulaufgabe Latein/Griechisch: bei n,5 die bessere Note */
+      const u = tns[0].tn, t = tns[1] ? tns[1].tn : u; let v;
+      if (a.alt.up) { v = Math.max(0, Math.min(15, Math.floor(x + 0.5 + 1e-9))); if ((u === 0 || t === 0) && v > 6) { v = 6; r.cap = 'Ein Teil 0 Punkte: höchstens 6 Punkte'; } }
+      else {
+        v = Math.max(1, Math.min(6, Math.ceil(x - 0.5 - 1e-9)));
+        if (a.alt.ue5 && u === 6 && v < 5) { v = 5; r.cap = 'Übersetzung ungenügend: Gesamtnote höchstens 5'; }
+        if (a.alt.g11 && (u === 6 || t === 6) && v < 4) { v = 4; r.cap = 'Ein Teil ungenügend: Gesamtnote höchstens 4'; }
+      }
+      r.v = v; return r;
+    }
+    r.v = Math.max(0, Math.min(15, Math.round(r.exact + 1e-9)));
+    return r;
+  }
+  /* Vorlage wie im Abitur (KMS „Schriftliche Prüfungsformen in der Profil- und Leistungsstufe und im Abitur“): A 20 %, B 55 %, C 25 % */
+  const PARTS_ABI = () => [{ label: 'Hörverstehen', kind: 'be', max: '', w: 20 }, { label: 'Schreiben', kind: 'is', w: 55 }, { label: 'Sprachmittlung', kind: 'is', w: 25 }];
   /* Auswertung je Aufgabe: Anzahl, Ø Punkte, Lösungsquote (Ø ÷ erreichbar) */
   function taskStats(a, students) {
     return (a.tasks || []).map(t => {
       const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && !r.status && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' ? +r.pts[t.id] : null; }).filter(v => v != null);
       const avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null;
-      return { id: t.id, label: t.label, max: +t.max, n: vals.length, avg, quote: avg != null && +t.max ? avg / +t.max : null };
+      return { id: t.id, label: t.label, max: +t.max, f: taskF(t), n: vals.length, avg, quote: avg != null && +t.max ? avg / +t.max : null };
     });
   }
 
@@ -232,7 +325,7 @@
   function computeLower(course, sid, scope) {
     const as = (course.assessments || []).filter(a => inScope(a, scope));
     const big = as.filter(a => TYPES[a.type] && isBig(a));
-    const small = as.filter(a => TYPES[a.type] && !isBig(a)).concat(entryItems(course, sid, scope));
+    const small = as.filter(a => TYPES[a.type] && !isBig(a) && !isOwn(a)).concat(entryItems(course, sid, scope));
     const saVals = big.map(a => valueOf(a.results && a.results[sid], false)).filter(v => v != null);
     const saAvg = course.hasSA ? bigAverage(big, sid, false) : null;
     const smAvg = smallAverage(course, small, sid, false);
@@ -259,19 +352,48 @@
   /* Gibt es in diesem Halbjahr eine Schulaufgabe? (§ 29 GSO; 13/2: nur Deutsch, Mathematik, Leistungsfach) */
   function termHasSA(course, term) {
     if (course.seminar) return false;
+    if (/^sport/i.test((course.subject || '').trim()) && !course.lf) return false;
     if (term === '13/2') {
       const s = (course.subject || '').toLowerCase();
       return !!course.lf || s.startsWith('deutsch') || s.startsWith('mathe');
     }
     return true;
   }
+  /* Besondere Halbjahresleistung (§ 29 Abs. 3–5 GSO): 'kunst' / 'musik' als Leistungsfach, 'sport' */
+  function upperFormula(course) {
+    if (!course || course.seminar) return null;
+    const s = (course.subject || '').trim().toLowerCase();
+    if (s.startsWith('sport')) return 'sport';
+    if (course.lf && s.startsWith('kunst')) return 'kunst';
+    if (course.lf && s.startsWith('musik')) return 'musik';
+    return null;
+  }
   function computeTerm(course, sid, term) {
     const as = (course.assessments || []).filter(a => a.term === term);
     const big = as.filter(a => TYPES[a.type] && isBig(a));
-    const small = as.filter(a => TYPES[a.type] && !isBig(a)).concat(entryItems(course, sid, { term }));
+    const own = as.filter(a => isOwn(a));
+    const small = as.filter(a => TYPES[a.type] && !isBig(a) && !isOwn(a)).concat(entryItems(course, sid, { term }));
     const saV = bigAverage(big, sid, true);
     const smV = smallAverage(course, small, sid, true);
     let raw = null, note = '';
+    const fm = upperFormula(course);
+    if (fm === 'sport') {
+      /* § 29 Abs. 5 GSO: doppelt gewichteter Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN */
+      const pr = small.filter(a => areaOf(a) === 'praktisch' && a.type === 'prak'), rest = small.filter(a => !pr.includes(a));
+      const prV = smallAverage({ ...course, smallMode: 'flat' }, pr, sid, true), reV = smallAverage({ ...course, smallMode: 'flat' }, rest, sid, true);
+      if (prV != null && reV != null) raw = (2 * prV + reV) / 3; else if (prV != null) { raw = prV; note = 'nur praktische Leistungen'; } else if (reV != null) { raw = reV; note = 'praktische Leistungen fehlen'; }
+      const pts = roundPoints(raw), open = as.filter(a => a.results && a.results[sid] && a.results[sid].status === 'ent').map(a => a.id);
+      return { term, sa: prV, small: reV, raw, points: pts, note, open, zero: pts === 0, under5: pts != null && pts < 5, formula: fm };
+    }
+    if (fm === 'kunst' || fm === 'musik') {
+      /* § 29 Abs. 3/4 GSO: Durchschnitt aus Schulaufgabe, künstlerischem Projekt bzw. praktischer Prüfung und Durchschnitt der kleinen LN */
+      const owV = wmean(own.map(a => ({ v: valueOf(a.results && a.results[sid], true), w: 1 })));
+      const comps = [termHasSA(course, term) ? saV : null, owV, smV].filter(v => v != null);
+      raw = comps.length ? comps.reduce((x, y) => x + y, 0) / comps.length : null;
+      if (comps.length && comps.length < 3) note = 'noch nicht alle drei Teile';
+      const pts = roundPoints(raw), open = as.filter(a => a.results && a.results[sid] && a.results[sid].status === 'ent').map(a => a.id);
+      return { term, sa: saV, own: owV, small: smV, raw, points: pts, note, open, zero: pts === 0, under5: pts != null && pts < 5, formula: fm };
+    }
     if (termHasSA(course, term)) {
       if (saV != null && smV != null) raw = (saV + smV) / 2;
       else if (saV != null) { raw = saV; note = 'nur Schulaufgabe'; }
@@ -401,8 +523,8 @@
   /* Schuljahr aus Datum ("2026/27") */
   function schoolYearOf(d = new Date()) { const y = d.getFullYear(), m = d.getMonth() + 1; const s = m >= 8 ? y : y - 1; return `${s}/${String((s + 1) % 100).padStart(2, '0')}`; }
 
-  return { entryItems, pctFromAnchors, pct15FromAnchors, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
-    keyGrade, suggestKey, keyPoints, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, KMK_PCT15, KMK_PCT5, suggestKeyKmk, keyResult, byTask, tasksMax, applyTasks, taskStats, ceilStep, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
+  return { entryItems, pctFromAnchors, pct15FromAnchors, anchor4, pct15Old, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
+    keyGrade, suggestKey, keyPoints, roundStep, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, KMK_PCT15, KMK_PCT5, suggestKeyKmk, keyResult, byTask, tasksMax, tasksSum, taskF, applyTasks, taskStats, byParts, partNote, applyParts, altRule, isAncient, isOwn, upperFormula, PARTS_ABI, PART_W, isModernLang, ceilStep, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
     roundPoints, computeLower, termsOf, termHasSA, computeTerm, seminarPaper, semTermAt, semTermOver, secondSchoolDayNov, countSmall, semStatus, SEM_MID, courseWarnings, studentWarnings, dateConflicts, isoWeek,
     fmtDate, classOf, distribution, schoolYearOf, inScope };
 });

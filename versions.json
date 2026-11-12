@@ -1,25 +1,24 @@
 {
  "libretto": {
-  "version": "0.9.10",
+  "version": "1.0.3",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Neu: Leiste links mit Suche, Kursen und Schnellzugriffen; sechs Farbwelten (Themes), jeweils hell und dunkel. Davor: Punkte je Aufgabe (optional) mit ausführlichem Ausdruck, Notenschlüssel nach KMK-Raster. Davor: Kursliste in drei Ansichten (nach Jahrgangsstufe, nach Fach, als Karten), Doppelklick auf einen Kurs öffnet die Kurseinstellungen. Davor: W-Seminar mit Betreuungskarten, Protokollen, Dateien und Seminararbeit; Papierkorb für Gelöschtes; noch mehr Schutz vor Datenverlust. Dazu Klassen austauschen (theis-Klassen), Tab-Taste wie im Infoportal, Notenspiegel als Diagramm, Dateinamen mit Datum.",
-  "betaEnd": "2027-09-30",
+  "notes": "Alle Regeln mit GSO, KMS und ISB-Vorgaben abgeglichen: Notenschlüssel der modernen Fremdsprachen nach dem ISB-Leitfaden („ausreichend“ ab 50 %), KMK-Raster wie die amtlichen BE-Tabellen, zweigeteilte Schulaufgabe in Latein und Griechisch, Sport sowie Kunst und Musik als Leistungsfach, spät beginnende Fremdsprachen, Schreibaufgabe und Sprachmittlung als eine Aufgabe, Oberstufe nach Prüfungsteilen, neue Ausdrucke, Rückgabefrist, Nachteilsausgleich/Notenschutz, Elternsprechtag-Ansicht, Hilfe mit Quellenverzeichnis.",
   "minVersion": null,
   "message": ""
  },
  "gruppen": {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "url": "https://theisapps.de/gruppen/",
-  "notes": "Neu: Übersicht mit Tagesplan und Stundenplan, Timer und Uhr für den Beamer, Sitzplan, elf Farbwelten, PDF-Ausdrucke. Die Browser-Version entfällt."
+  "notes": "Neu: Liquid-Glass-Design, neue Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche (⌘K bzw. Strg+K), „Stunde starten“, Timer-Abläufe (z. B. Think–Pair–Share), Mini-Timer über allen Fenstern, Timer „Moka“ und wählbarer Ton, Tische bauen aus Lehrersicht, schönere PDFs."
  },
  "sportwahl": {
   "version": "1.6.0",
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "1.8.1",
+  "version": "1.9.2",
   "url": "https://theisapps.de/voce/",
-  "notes": "Neu: Note und Worturteil passen immer zusammen, auch bei eigenem Notenschlüssel; Bausteine für das Worturteil nach den ISB-Beschreibungen; Hinweis, wenn ein von Hand geändertes Worturteil nicht mehr zu den Punkten passt; mehr Schutz vor Datenverlust; Bewertungsbögen in Word bleiben einseitig; neue Darstellung für Farbe, Modus und Schrift."
+  "notes": "Neu: Die Schritte einer Prüfung klappen in der Seitenleiste direkt unter ihr auf. „Drucken …“ direkt aus der Vorschau. Die Sprache der Bewertungsbögen steht neben „Alle Bewertungsbögen als Word“ und ist immer zuerst Deutsch. Einheitliche Dateinamen mit Datum, Klasse und Fach. Vorgaben für neue Prüfungen in den Einstellungen, Größe der Oberfläche wählbar. Anleitung passend für Mac oder Windows. Davor: fünf Farbwelten, vier Druckdesigns."
  },
  "foliva": {
   "version": "0.9.11",
