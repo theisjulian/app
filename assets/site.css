@@ -547,11 +547,13 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .bar.on{border-bottom-color:rgba(245,243,238,.35)}
 :root[data-style=plakat] .bar .brand .dot,:root[data-style=plakat] .brand .dot{fill:#ff4b2b}
 :root[data-style=plakat] .bar nav a.l{color:rgba(245,243,238,.8)}
-:root[data-style=plakat] .bar .btn.line{border-radius:0;box-shadow:inset 0 0 0 1.5px rgba(245,243,238,.7)}
-:root[data-style=plakat] .bar .btn.line:hover{background:#ff4b2b;color:#0e1230;box-shadow:none}
-:root[data-style=plakat] .pick{background:transparent;box-shadow:inset 0 0 0 1px rgba(245,243,238,.35);border-radius:0}
+:root[data-style=plakat] .bar .btn.line{border-radius:0;background:#ff4b2b;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .bar .btn.line:hover{background:#f5f3ee;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .pick{background:rgba(14,18,48,.32);box-shadow:none;border-radius:0;padding:3px;gap:2px}
 :root[data-style=plakat] .pick button{border-radius:0;color:rgba(245,243,238,.8)}
-:root[data-style=plakat] .pick button[aria-checked=true]{background:#f5f3ee;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .pick button[aria-checked=true]{background:#0e1230;color:#f5f3ee;box-shadow:inset 0 -2px 0 #ff4b2b}
+:root[data-style=plakat] .pick button:hover{color:#f5f3ee}
+:root[data-style=plakat] .pick i{box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 :root[data-style=plakat] .appstrip{background:#0e1230}
 /* Schrift: groß, eng, plakativ; das markierte Wort steht auf einem orangen Block */
 :root[data-style=plakat] :is(h1,h2){letter-spacing:-.045em}
@@ -611,3 +613,4 @@ p,li,figcaption{text-wrap:pretty}
  :root[data-style=plakat] :is(.grid>div,.next,.reads a):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #ff4b2b}}
 :root[data-style=plakat] #tip{border-radius:0;border:2px solid #f5f3ee;background:#0e1230;-webkit-backdrop-filter:none;backdrop-filter:none}
 :root[data-style=plakat] .tip-s button{border-radius:0;background:transparent;box-shadow:inset 0 0 0 1px rgba(245,243,238,.4);color:#f5f3ee}
+:root[data-style=plakat] .pick button[aria-checked=true] i{box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 0 0 2px #0e1230,0 0 0 3.5px #ff4b2b}
