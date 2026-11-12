@@ -2,7 +2,7 @@
 (function(){
   var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat'];
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#f1ede3','#0f1226']};
+  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#1d35c8','#1d35c8']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;

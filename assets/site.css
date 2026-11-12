@@ -524,91 +524,90 @@ p,li,figcaption{text-wrap:pretty}
 
 @media(prefers-reduced-motion:reduce){body::after{animation:none!important}}
 
+.pick .p,#tip .p{background:radial-gradient(circle at 70% 30%,#ff4b2b 0 24%,transparent 26%),#1d35c8;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 /* ===================================================================
-   Stil „Plakat“ – wie die Schulwebsite-Entwürfe, Konzept 7 (allgemein):
-   Schweizer Plakatraster auf Papier, Tinte, Ultramarin, Signalorange,
-   Bilder auf Rasterdruck, Passermarken. Dunkel: Tintenblau mit Orange.
+   Stil „Plakat“ – Farben aus OVMG-Konzept 7: die ganze Seite in kräftigem
+   Ultramarin, Papierweiß als Schrift, Signalorange als Akzent, Tinte für
+   Leisten. Eine Fassung, unabhängig von Hell/Dunkel des Geräts.
    =================================================================== */
-:root[data-style=plakat]{--bg:#f5f3ee;--ink:#0e1230;--grey:#4a4f66;--line:#d6d2c6;--surf:#fffefb;--blue:#1d35c8;--blueSoft:#e4e7f8;--onblue:#f5f3ee;--dot:#ff4b2b;--hot:#ff4b2b;--tint:#ebe8e0;--ntint:#ebe8e0;--bar:#1d35c8;--barInk:#f5f3ee;--shadow:0 30px 60px -34px rgba(14,18,48,.45);--shot:0 16px 36px -22px rgba(14,18,48,.45);color-scheme:light}
-@media(prefers-color-scheme:dark){:root[data-style=plakat]{--bg:#0e1230;--ink:#f5f3ee;--grey:#aab0cf;--line:#28305e;--surf:#141a44;--blue:#ff4b2b;--blueSoft:#1c2352;--onblue:#0e1230;--dot:#ff4b2b;--hot:#ff4b2b;--tint:#151b46;--ntint:#151b46;--bar:#141a44;--barInk:#f5f3ee;--shadow:0 30px 60px -30px rgba(0,0,0,.8);--shot:0 16px 36px -20px rgba(0,0,0,.7);color-scheme:dark}}
-:root[data-style=plakat] [class*="a-"]{--tint:var(--blue)}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] [class*="a-"]{--tint:#1d35c8}}
-/* Papierkorn und Passermarken in den vier Ecken wie auf einem Druckbogen */
-:root[data-style=plakat] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.07;
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .07 0 0 0 0 .19 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] body::after{opacity:.06;filter:invert(1)}}
-@media(min-width:900px){:root[data-style=plakat] body::before{content:"";position:fixed;inset:14px;z-index:40;pointer-events:none;
- --m:var(--ink);opacity:.55;
+:root[data-style=plakat]{--bg:#1d35c8;--ink:#f5f3ee;--grey:#d6daf3;--line:rgba(245,243,238,.28);--surf:#1a2fb4;--blue:#ff4b2b;--blueSoft:#2a42d4;--onblue:#0e1230;--dot:#ff4b2b;--hot:#ff4b2b;--tinte:#0e1230;--tint:#1529a3;--ntint:#1529a3;--app:#ff4b2b;--shadow:0 30px 60px -28px rgba(8,10,40,.7);--shot:0 18px 40px -18px rgba(8,10,40,.7);color-scheme:dark}
+:root[data-style=plakat] [class*="a-"]{--tint:#1529a3;--app:#ff4b2b}
+:root[data-style=plakat] body{background:#1d35c8}
+/* Papierkorn auf dem Blau und Passermarken in den Ecken wie auf einem Druckbogen */
+:root[data-style=plakat] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.10;mix-blend-mode:screen;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@media(min-width:900px){:root[data-style=plakat] body::before{content:"";position:fixed;inset:14px;z-index:40;pointer-events:none;--m:rgba(245,243,238,.7);
  background:
   linear-gradient(var(--m),var(--m)) 0 0/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 0 0/1px 16px no-repeat,
   linear-gradient(var(--m),var(--m)) 100% 0/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 100% 0/1px 16px no-repeat,
   linear-gradient(var(--m),var(--m)) 0 100%/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 0 100%/1px 16px no-repeat,
   linear-gradient(var(--m),var(--m)) 100% 100%/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 100% 100%/1px 16px no-repeat}}
-/* Kopfzeile: ultramarines Band wie der Kopf des Plakats, Programmleiste in Tinte */
-:root[data-style=plakat] .bar,:root[data-style=plakat] .bar.on{background:var(--bar);color:var(--barInk);border-bottom:0;-webkit-backdrop-filter:none;backdrop-filter:none}
-:root[data-style=plakat] .bar .brand{color:var(--barInk)}
-:root[data-style=plakat] .bar .brand .dot{fill:var(--hot)}
-:root[data-style=plakat] .bar nav a.l{color:color-mix(in srgb,var(--barInk) 78%,transparent)}
-:root[data-style=plakat] .bar nav a.l:hover,:root[data-style=plakat] .bar nav a.l[aria-current]{color:var(--barInk)}
-:root[data-style=plakat] .bar .btn.line{color:var(--barInk);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--barInk) 60%,transparent);border-radius:0}
-:root[data-style=plakat] .bar .btn.line:hover{background:var(--hot);color:#0e1230;box-shadow:none}
-:root[data-style=plakat] .bar .pick{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--barInk) 35%,transparent);border-radius:0}
-:root[data-style=plakat] .bar .pick button{color:color-mix(in srgb,var(--barInk) 75%,transparent);border-radius:0}
-:root[data-style=plakat] .bar .pick button[aria-checked=true]{background:var(--barInk);color:var(--ink)}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] .bar .pick button[aria-checked=true]{color:#0e1230}}
-:root[data-style=plakat] .appstrip{background:#0e1230;color:#f5f3ee}
-:root[data-style=plakat] .appstrip a{color:color-mix(in srgb,#f5f3ee 75%,transparent)}
-:root[data-style=plakat] .appstrip a:hover,:root[data-style=plakat] .appstrip a[aria-current]{color:#f5f3ee}
+/* Kopfzeile: Blau mit Papierlinie, Programmleiste in Tinte */
+:root[data-style=plakat] .bar,:root[data-style=plakat] .bar.on{background:#1d35c8;border-bottom:1px solid transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=plakat] .bar.on{border-bottom-color:rgba(245,243,238,.35)}
+:root[data-style=plakat] .bar .brand .dot,:root[data-style=plakat] .brand .dot{fill:#ff4b2b}
+:root[data-style=plakat] .bar nav a.l{color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .bar .btn.line{border-radius:0;box-shadow:inset 0 0 0 1.5px rgba(245,243,238,.7)}
+:root[data-style=plakat] .bar .btn.line:hover{background:#ff4b2b;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .pick{background:transparent;box-shadow:inset 0 0 0 1px rgba(245,243,238,.35);border-radius:0}
+:root[data-style=plakat] .pick button{border-radius:0;color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .pick button[aria-checked=true]{background:#f5f3ee;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .appstrip{background:#0e1230}
 /* Schrift: groß, eng, plakativ; das markierte Wort steht auf einem orangen Block */
 :root[data-style=plakat] :is(h1,h2){letter-spacing:-.045em}
 :root[data-style=plakat] h1{line-height:.98}
-:root[data-style=plakat] .hl{background:var(--hot);color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-:root[data-style=plakat] ::selection{background:var(--hot);color:#0e1230}
-/* Nummerierte Abschnitte mit kräftiger Linie wie die Rubriken im Entwurf */
+:root[data-style=plakat] .hl{background:#ff4b2b;color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+:root[data-style=plakat] ::selection{background:#ff4b2b;color:#0e1230}
+:root[data-style=plakat] a{text-decoration-color:rgba(245,243,238,.5)}
+/* Nummerierte Abschnitte mit kräftiger Linie */
 :root[data-style=plakat] main{counter-reset:pk}
-:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2){counter-increment:pk;border-top:3px solid var(--ink);padding-top:16px}
-:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2)::before{content:counter(pk,decimal-leading-zero);display:block;font-size:14px;font-weight:600;letter-spacing:.08em;color:var(--hot);margin-bottom:10px}
-/* Flächen: Papierbögen, eckig, Haarlinie */
-:root[data-style=plakat] :is(.steps li,.grid>div,.box,.inst li,.mail,.next,.reads a,.safe){background:var(--surf);border:1px solid var(--line);border-radius:0;box-shadow:none}
-:root[data-style=plakat] .grid>div{border-top:3px solid var(--ink)}
-:root[data-style=plakat] :is(.pic,.stage,.app-stage,.vid){border-radius:0}
-/* Bildflächen als Rasterdruck: Ultramarin mit Punkten, dazu ein Hauch Orange */
-:root[data-style=plakat] :is(.app-stage,.fx .pic,.pair .pic,.basis .pic,.panel .pic){background-color:var(--blue);background-image:radial-gradient(rgba(245,243,238,.22) 1.2px,transparent 1.6px);background-size:9px 9px}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] :is(.app-stage,.fx .pic,.pair .pic,.basis .pic,.panel .pic){background-color:#1d35c8}}
-:root[data-style=plakat] .fx .pic.t{background-color:var(--ink);background-image:radial-gradient(rgba(255,75,43,.35) 1.2px,transparent 1.6px)}
-:root[data-style=plakat] :is(.fx .pic img,.pair .pic img,.basis .pic img){border-radius:0;box-shadow:0 18px 40px -18px rgba(0,0,0,.55)}
-:root[data-style=plakat] .pair figcaption{border-top:1px solid var(--ink);padding-top:8px;font-size:15px}
-/* Knöpfe: eckig, Ultramarin; Orange beim Darüberfahren */
+:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2){counter-increment:pk;border-top:3px solid #f5f3ee;padding-top:16px}
+:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2)::before{content:counter(pk,decimal-leading-zero);display:block;font-size:14px;font-weight:600;letter-spacing:.08em;color:#ff4b2b;margin-bottom:10px}
+/* Flächen: Tinte auf Blau, eckig, Papierlinien */
+:root[data-style=plakat] :is(.steps li,.grid>div,.box,.inst li,.mail,.next,.reads a,.safe,details.q){background:rgba(14,18,48,.22);border:1px solid rgba(245,243,238,.22);border-radius:0;box-shadow:none;color:#f5f3ee}
+:root[data-style=plakat] .grid>div{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] :is(.pic,.stage,.app-stage,.vid){border-radius:0;border:0}
+/* Bildflächen als Rasterdruck */
+:root[data-style=plakat] :is(.stage,.app-stage,.fx .pic,.pair .pic,.basis .pic,.panel .pic){background-color:#1529a3;background-image:radial-gradient(rgba(245,243,238,.18) 1.2px,transparent 1.6px);background-size:9px 9px}
+:root[data-style=plakat] .fx .pic.t{background-color:#0e1230;background-image:radial-gradient(rgba(255,75,43,.4) 1.2px,transparent 1.6px)}
+:root[data-style=plakat] :is(.fx .pic img,.pair .pic img,.basis .pic img){border-radius:0;box-shadow:0 18px 40px -16px rgba(8,10,40,.8)}
+:root[data-style=plakat] .pair figcaption{border-top:1px solid rgba(245,243,238,.5);padding-top:8px;font-size:15px;color:#d6daf3}
+/* Knöpfe: Signalorange mit Tinte, zweite Wahl als Papierrahmen */
 :root[data-style=plakat] .btn{border-radius:0;font-weight:600}
-:root[data-style=plakat] .btn:not(.sec):not(.line):not(.off):hover{background:var(--hot);color:#0e1230}
-:root[data-style=plakat] .btn.sec{background:transparent;box-shadow:inset 0 0 0 2px var(--ink)}
-:root[data-style=plakat] .btn.sec:hover{background:var(--ink);color:var(--bg)}
-:root[data-style=plakat] .btn.line{border-radius:0}
-:root[data-style=plakat] :is(.seg,.pick){border-radius:0}:root[data-style=plakat] :is(.seg button,.pick button){border-radius:0}
-:root[data-style=plakat] .seg button[aria-selected=true]{background:var(--ink);color:var(--bg);box-shadow:none}
+:root[data-style=plakat] .btn:not(.sec):not(.line):not(.off){background:#ff4b2b;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .btn:not(.sec):not(.line):not(.off):hover{background:#f5f3ee;color:#0e1230}
+:root[data-style=plakat] .btn.sec{background:transparent;color:#f5f3ee;box-shadow:inset 0 0 0 2px #f5f3ee}
+:root[data-style=plakat] .btn.sec:hover{background:#f5f3ee;color:#0e1230}
+:root[data-style=plakat] .btn.line{border-radius:0;color:#f5f3ee}
+:root[data-style=plakat] .seg{background:rgba(14,18,48,.3);border-radius:0;box-shadow:none}
+:root[data-style=plakat] .seg button{border-radius:0;color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .seg button[aria-selected=true]{background:#f5f3ee;color:#0e1230;box-shadow:none}
 /* Kennzeichen, Zahlen, Listen */
-:root[data-style=plakat] .badge{background:var(--hot);color:#0e1230;border-radius:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
-:root[data-style=plakat] :is(.steps li,.inst li)::before{background:none;box-shadow:none;width:auto;justify-content:flex-start;font-size:54px;font-weight:700;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--hot)}
-:root[data-style=plakat] .facts{border-top:3px solid var(--ink);border-bottom:1px solid var(--ink)}
-:root[data-style=plakat] .ticks li::before{border-color:var(--hot)}
-:root[data-style=plakat] .ticks li{border-top-color:var(--line)}
-:root[data-style=plakat] details.q{border-radius:0;background:none;border-width:0 0 1px;border-color:var(--ink)}
-:root[data-style=plakat] details.q:first-of-type{border-top:3px solid var(--ink)}
-:root[data-style=plakat] .why>div{border-top:3px solid var(--ink)}
-:root[data-style=plakat] :is(.kick,.refs li::before){color:var(--hot)}
-:root[data-style=plakat] .reads .ft{background:var(--blue);color:var(--onblue)}
-:root[data-style=plakat] .idx a.on{background:none;box-shadow:inset 3px 0 0 var(--hot);border-radius:0}
+:root[data-style=plakat] .badge{background:#ff4b2b;color:#0e1230;border-radius:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+:root[data-style=plakat] :is(.steps li,.inst li)::before{background:none;box-shadow:none;width:auto;justify-content:flex-start;font-size:54px;font-weight:700;line-height:1;color:transparent;-webkit-text-stroke:1.5px #ff4b2b}
+:root[data-style=plakat] .facts{background:none;border:0;border-top:3px solid #f5f3ee;border-bottom:1px solid #f5f3ee;border-radius:0;padding:0}
+:root[data-style=plakat] .facts div+div{border-left-color:rgba(245,243,238,.3)}
+:root[data-style=plakat] .ticks li{border-top-color:rgba(245,243,238,.22)}
+:root[data-style=plakat] .ticks li::before{border-color:#ff4b2b}
+:root[data-style=plakat] details.q{background:none;border-width:0 0 1px;border-color:rgba(245,243,238,.5);margin:0}
+:root[data-style=plakat] details.q:first-of-type{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] details.q summary::after{border-color:#f5f3ee}
+:root[data-style=plakat] .why>div{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] :is(.kick,.refs li::before){color:#ff4b2b}
+:root[data-style=plakat] .refs li{border-color:rgba(245,243,238,.22)}
+:root[data-style=plakat] .refs b{color:#f5f3ee}
+:root[data-style=plakat] .reads .ft{background:#ff4b2b;color:#0e1230}
+:root[data-style=plakat] .idx a.on{background:rgba(14,18,48,.3);box-shadow:inset 3px 0 0 #ff4b2b;border-radius:0}
 :root[data-style=plakat] .crumb{text-transform:uppercase;letter-spacing:.08em;font-size:13px;font-weight:600}
-/* Unterstützen: ein Plakat für sich */
-:root[data-style=plakat] .cup{background-color:var(--blue);background-image:radial-gradient(rgba(245,243,238,.18) 1.2px,transparent 1.6px);background-size:9px 9px;color:#f5f3ee;border-radius:0;box-shadow:none}
-:root[data-style=plakat] .cup .btn{background:var(--hot);color:#0e1230}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] .cup{background-color:#1d35c8}}
-/* Bewegung: Karten rücken beim Darüberfahren leicht, die Linie wird Orange */
+/* Unterstützen: Tinte mit oranger Kante */
+:root[data-style=plakat] .cup{background:#0e1230;color:#f5f3ee;border-radius:0;box-shadow:inset 0 3px 0 #ff4b2b}
+:root[data-style=plakat] .cup .btn{background:#ff4b2b!important;color:#0e1230}
+/* Fußzeile und Leiste unten */
+:root[data-style=plakat] footer{background:#0e1230;border-top:0}
+:root[data-style=plakat] .appdock{background:rgba(14,18,48,.92);border-radius:0;box-shadow:0 16px 40px -16px rgba(0,0,0,.6)}
+/* Bewegung: Karten rücken beim Darüberfahren, mit orangem Druckversatz */
 @media(hover:hover) and (prefers-reduced-motion:no-preference){
- :root[data-style=plakat] :is(.grid>div,.next,.reads a){transition:transform .2s,border-color .2s}
- :root[data-style=plakat] :is(.grid>div,.next,.reads a):hover{transform:translate(-2px,-2px);border-color:var(--ink);box-shadow:4px 4px 0 var(--hot)}}
-:root[data-style=plakat] #tip{border-radius:0;border:2px solid var(--ink);background:var(--surf);-webkit-backdrop-filter:none;backdrop-filter:none}
-:root[data-style=plakat] .tip-s button{border-radius:0}
-.pick .p,#tip .p{background:radial-gradient(circle at 70% 30%,#ff4b2b 0 24%,transparent 26%),#1d35c8;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
-:root[data-style=plakat] .stage{border-radius:0;background-color:var(--blue);background-image:radial-gradient(rgba(245,243,238,.22) 1.2px,transparent 1.6px);background-size:9px 9px;border:0}
-@media(prefers-color-scheme:dark){:root[data-style=plakat] .stage{background-color:#1d35c8}:root[data-style=plakat] .fx .pic.t{background-color:#141a44}}
+ :root[data-style=plakat] :is(.grid>div,.next,.reads a){transition:transform .2s,box-shadow .2s}
+ :root[data-style=plakat] :is(.grid>div,.next,.reads a):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #ff4b2b}}
+:root[data-style=plakat] #tip{border-radius:0;border:2px solid #f5f3ee;background:#0e1230;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=plakat] .tip-s button{border-radius:0;background:transparent;box-shadow:inset 0 0 0 1px rgba(245,243,238,.4);color:#f5f3ee}
