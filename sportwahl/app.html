@@ -340,6 +340,49 @@ th.hj-done{color:var(--muted)}
 .lk-row button.ft[aria-pressed="true"]{background:var(--bg,transparent);color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .lk-row button:focus-visible,.lk-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:700px){.brand .app-ic{width:34px;height:34px}.lk-row button.ft{font-size:16px;padding:10px 14px}}
+
+/* Übersichtlicher: Halbjahresspalten, Nullen blass, Verteilung kompakter */
+.kursgrid td.hjc,.kursgrid th.hjc,.dist th.hjc{border-left:1px solid var(--line)}
+.kursgrid td.hjc.h0,.kursgrid td.hjc.h1,.kursgrid th.hjc.h0,.kursgrid th.hjc.h1{background:color-mix(in srgb,var(--accent,#2f6bff) 4%,transparent)}
+.kursgrid td.hjc.h2,.kursgrid td.hjc.h3,.kursgrid th.hjc.h2,.kursgrid th.hjc.h3{background:color-mix(in srgb,var(--accent,#2f6bff) 8%,transparent)}
+.kursgrid .cell input{width:40px;text-align:center;font-weight:700;border-radius:8px}
+.kursgrid .cell input.z{color:var(--muted);font-weight:500;opacity:.55;background:transparent}
+.kursgrid .cell input.on{background:color-mix(in srgb,var(--accent,#2f6bff) 14%,var(--glass-solid,#fff));border-color:color-mix(in srgb,var(--accent,#2f6bff) 45%,transparent);color:var(--ink,inherit)}
+.kursgrid .cell input:focus{opacity:1}
+.kursgrid .cell.wm{gap:2px}.kursgrid .cell.wm label{font-size:10px;margin-left:4px}
+.kursgrid input[type=number]::-webkit-inner-spin-button,.kursgrid input[type=number]::-webkit-outer-spin-button{opacity:0}
+.kursgrid input[type=number]:hover::-webkit-inner-spin-button,.kursgrid input[type=number]:focus::-webkit-inner-spin-button{opacity:1}
+.kursgrid tbody tr:hover td{background-image:linear-gradient(color-mix(in srgb,var(--ink,#000) 3%,transparent),color-mix(in srgb,var(--ink,#000) 3%,transparent))}
+.dist td{vertical-align:top}
+.dist td:nth-child(2){max-width:250px}
+.dist td select{min-width:0;width:100%;min-width:168px;font-size:12.5px}
+.dist tbody tr:hover td{background-image:linear-gradient(color-mix(in srgb,var(--ink,#000) 3%,transparent),color-mix(in srgb,var(--ink,#000) 3%,transparent))}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:0 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .lg{width:18px;height:12px;border-radius:4px;border:1.5px solid var(--line)}
+.legend .lg.alt{border-color:var(--warn)}.legend .lg.miss{border-color:var(--bad);background:var(--badbg)}
+.legend .lg.fix{border-color:var(--ink,#333);background:var(--ink,#333);width:12px}
+@media print{.legend{display:none}}
+
+
+/* Hilfe: Suche, Schritte, Zeitplan, Begriffe */
+.help-head{flex-wrap:wrap}.help-head h2{margin-right:auto}
+.help-q{flex:1 1 220px;max-width:340px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);font:inherit;font-size:14px}
+.help-nav button[hidden]{display:none}
+.help-steps{counter-reset:st;list-style:none;padding:0!important}
+.help-steps li{counter-increment:st;position:relative;padding:8px 10px 8px 44px;border:1px solid var(--line);border-radius:10px;background:var(--sunk)}
+.help-steps li::before{content:counter(st);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 13px/24px var(--f-body);text-align:center}
+.help-time{list-style:none;padding:0!important;gap:0!important;border-left:2px solid var(--line);margin-left:6px!important}
+.help-time li{display:grid;grid-template-columns:170px 1fr;gap:4px 14px;padding:7px 0 7px 16px;position:relative}
+.help-time li::before{content:"";position:absolute;left:-6px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.help-time .when{font-weight:600}
+@media(max-width:640px){.help-time li{grid-template-columns:1fr}}
+.help-faq dt,.help-gloss dt{color:var(--ink)}
+.help-gloss{grid-template-columns:minmax(120px,170px) 1fr;column-gap:14px}
+.help-gloss dt{margin-top:0}
+@media(max-width:640px){.help-gloss{grid-template-columns:1fr}}
+.help-body [hidden]{display:none!important}
+
 </style>
 </head>
 <body>
@@ -468,6 +511,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
 <dialog id="help" class="help" aria-labelledby="help-title">
   <div class="help-head">
     <h2 id="help-title">Hilfe</h2>
+    <input type="search" id="help-q" class="help-q" placeholder="Hilfe durchsuchen, z. B. Prüfziffer" aria-label="Hilfe durchsuchen" autocomplete="off">
     <button class="btn quiet" type="button" id="help-close">Schließen</button>
   </div>
   <nav class="help-nav" id="help-nav" aria-label="Abschnitte der Hilfe"></nav>
@@ -478,6 +522,32 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
   <div class="help-note"><b>Wo liegen die Daten?</b> Nur im Browser dieses Rechners, nichts wird ins Internet gesendet. Das Tool speichert automatisch. Die Sicherung und der Weg zu Kollegen oder auf einen anderen Rechner ist die Projektdatei: Reiter 5, <b>Projekt speichern</b> und dort <b>Projekt öffnen</b>.</div>
 </section>
 
+<section id="h-schnellstart">
+  <h3>Schnellstart</h3>
+  <p>Die ganze Sportwahl in sechs Schritten. Die Zahlen sind die Reiter oben.</p>
+  <ol class="help-steps">
+    <li><b>Reiter 1 Angebot:</b> Schule, Jahrgang, Abgabefrist eintragen und die Sportarten ankreuzen, die die Schule anbietet.</li>
+    <li><b>Wahlbogen herunterladen</b> und als Datei in den Mebis-Kurs hochladen, dazu eine Feedback-Aktivität für die Abgabe anlegen.</li>
+    <li><b>Schüler wählen</b> am Handy oder Rechner und geben ihren Wahlcode in Mebis ab.</li>
+    <li><b>Reiter 2 Wahlen:</b> nach der Frist die Antworten aus Mebis kopieren und einfügen.</li>
+    <li><b>Reiter 3 Kursplanung:</b> „Kursangebot vorschlagen“, dann an Hallen und Lehrkräfte anpassen, bis überall „reicht“ steht.</li>
+    <li><b>Reiter 4 Verteilung</b> und <b>Reiter 5 Export:</b> automatisch verteilen, einzelne Schüler umsetzen, Kurslisten ausgeben und das Projekt speichern.</li>
+  </ol>
+  <div class="help-note"><b>Erst ausprobieren?</b> Sportivo startet mit erfundenen Beispieldaten. Wer schon ein eigenes Projekt hat, öffnet die Beispieldaten jederzeit über <b>Beispieldaten ansehen</b> (Reiter 5 oder ganz unten). Dort wird nichts gespeichert.</div>
+</section>
+<section id="h-zeitplan">
+  <h3>Zeitplan durchs Schuljahr</h3>
+  <p>Ein Beispiel, wie sich die Sportwahl auf das Jahr verteilt. Die Termine legt jede Schule selbst fest.</p>
+  <ol class="help-time">
+    <li><span class="when">Im Winter der 11. Klasse</span><span>Angebot mit der Fachschaft klären: Hallen, Bad, Lehrkräfte mit Zusatzqualifikation. Im Reiter 1 eintragen.</span></li>
+    <li><span class="when">Vor der Wahl</span><span>Wahlbogen herunterladen, in Mebis hochladen, Abgabe einrichten, einmal mit einem Schülerzugang testen.</span></li>
+    <li><span class="when">Wahlzeitraum</span><span>Die Schüler wählen und geben ihren Code ab. Für das Leistungsfach gilt die Wahl bis 15. April.</span></li>
+    <li><span class="when">Nach der Frist</span><span>Wahlen einlesen, Meldungen prüfen, Nachzügler nachtragen.</span></li>
+    <li><span class="when">Bis zum Stundenplan</span><span>Kurse planen, verteilen, nachsteuern. Kurslisten an Stundenplan und Kollegium geben.</span></li>
+    <li><span class="when">Vor den Sommerferien</span><span><b>Projekt speichern</b> und die Datei gut aufheben, zum Beispiel im Fachschaftsordner.</span></li>
+    <li><span class="when">Vor der 13</span><span>Projekt öffnen und die 13 neu planen, ohne die 12 zu verändern (siehe „Das zweite Jahr“).</span></li>
+  </ol>
+</section>
 <section id="h-angebot">
   <h3><span class="no">1</span>Angebot festlegen</h3>
   <p>Im Reiter <b>1 Angebot</b> stehen Schule, Jahrgang, Abgabefrist und der Ort der Abgabe in Mebis. Diese Angaben erscheinen später genau so auf dem Wahlbogen der Schüler.</p>
@@ -590,6 +660,41 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
   </ul>
 </section>
 
+<section id="h-jahr2">
+  <h3>Das zweite Jahr: die 13 neu planen</h3>
+  <p>Nach der 12 ändern sich oft Hallen, Lehrkräfte oder Gruppengrößen. Sportivo plant die 13 dann neu und lässt die gelaufenen Halbjahre, wie sie waren.</p>
+  <ol>
+    <li>Die gespeicherte Projektdatei öffnen: Reiter 5 → <b>Projekt öffnen</b>.</li>
+    <li>Im Reiter 4 bei <b>Bereits gelaufen</b> „12/1 und 12/2“ wählen.</li>
+    <li>Im Reiter 3 das Kursangebot für 13/1 und 13/2 anpassen. Der Vorschlag rechnet nur noch mit den Wünschen, die offen sind.</li>
+    <li>Im Reiter 4 neu verteilen. Die Einteilung in 12/1 und 12/2 bleibt unverändert.</li>
+  </ol>
+  <div class="help-note"><b>Zugänge und Wiederholer:</b> Fehlt bei jemandem die Belegung aus der 12, steht in dieser Spalte ein Auswahlfeld „früher belegt?“. Dort die Sportart eintragen, die die Person in einem anderen Jahrgang hatte. Dann zählen die Regeln richtig.</div>
+</section>
+<section id="h-probleme">
+  <h3>Probleme lösen</h3>
+  <dl class="help-faq">
+    <dt>Das Tool findet keine Wahlcodes.</dt><dd>Die ganze Antworttabelle direkt von der Mebis-Seite kopieren, nicht aus einer in Excel neu gespeicherten Datei. Excel setzt manchmal Anführungszeichen in die Codes.</dd>
+    <dt>„Prüfziffer falsch“ bei einem Schüler.</dt><dd>Der Code wurde beim Kopieren verändert. Den Schüler bitten, den Bogen noch einmal zu öffnen und den Code neu abzugeben.</dd>
+    <dt>In der Summenzeile steht nicht „reicht“.</dt><dd>In diesem Halbjahr gibt es weniger Plätze als Schüler. Einen Kurs mehr anlegen oder bei einzelnen Sportarten mehr Plätze erlauben (Plätze je Halbjahr einstellen).</dd>
+    <dt>Schüler „ohne vollständigen Platz“.</dt><dd>Im Reiter 4 „nur Abweichungen“ anhaken. Meist fehlt eine Sportart in einem passenden Halbjahr: im Reiter 3 ergänzen und neu verteilen, oder den Schüler von Hand umsetzen.</dd>
+    <dt>Ein Kurs ist rot.</dt><dd>Der Kurs ist überbelegt, meist nach einem Umsetzen von Hand. Sportivo verschiebt dann nichts automatisch. Jemanden umsetzen oder die Plätze erhöhen.</dd>
+    <dt>Ein Schüler wird bei neuer Verteilung nicht verändert.</dt><dd>Er ist fixiert (Häkchen in der Spalte „Fix“). Wer von Hand umgesetzt wird, ist automatisch fixiert. Häkchen entfernen, dann teilt Sportivo ihn wieder mit ein.</dd>
+    <dt>Der Wahlbogen sieht in Mebis kaputt aus.</dt><dd>Er muss als <b>Datei</b> hochgeladen werden, Anzeige „In neuem Fenster“. In eine Textseite kopiert, entfernt Mebis Gestaltung und Funktionen.</dd>
+    <dt>Namen mit besonderen Buchstaben.</dt><dd>Namen wie Yılmaz, Kovačević, Hodžić, Şahin oder Wiśniewski werden in Sportivo, in den Kurslisten und in den PDFs richtig ausgegeben. Die CSV-Dateien öffnen sich in Excel per Doppelklick mit allen Zeichen.</dd>
+    <dt>Die Beispieldaten sind weg.</dt><dd>Nach „Leeres Projekt anlegen“ arbeitet Sportivo mit den eigenen Daten. Die Beispieldaten gibt es weiter über <b>Beispieldaten ansehen</b> (Reiter 5 oder ganz unten), in einem eigenen Fenster.</dd>
+  </dl>
+</section>
+<section id="h-daten">
+  <h3>Daten und Sicherung</h3>
+  <ul>
+    <li><b>Automatisch gespeichert</b> wird im Browser dieses Rechners. Nichts geht ins Internet.</li>
+    <li><b>Die Projektdatei ist die Sicherung.</b> Werden die Browserdaten gelöscht oder wechselt der Rechner, hilft nur die Datei. Deshalb nach jedem großen Schritt <b>Projekt speichern</b>: nach dem Einlesen, nach der Verteilung, vor den Ferien.</li>
+    <li><b>Weitergeben:</b> Die Projektdatei an die Oberstufenkoordination oder eine Kollegin schicken. Dort mit <b>Projekt öffnen</b> laden. Immer nur an einer Stelle weiterarbeiten, sonst entstehen zwei Stände.</li>
+    <li><b>Zeigen ohne echte Namen:</b> Beispieldaten ansehen öffnet ein eigenes Fenster mit erfundenen Daten. Das eigene Projekt bleibt unberührt.</li>
+    <li><b>Verantwortlich</b> für die Schülerdaten ist die Schule. Die Wahlen liegen in Mebis und, nach dem Einlesen, nur in diesem Browser.</li>
+  </ul>
+</section>
 <section id="h-fragen">
   <h3>Häufige Fragen</h3>
   <dl>
@@ -599,8 +704,29 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
     <dt>Ich bekomme eine neue Version des Tools.</dt><dd>Vorher in der alten Datei „Projekt speichern“. Die neue Datei öffnen; fehlen dort die Wahlen, „Projekt öffnen“ wählen. Wahlcodes der Schüler bleiben gültig.</dd>
     <dt>Ich will an einem anderen Rechner weiterarbeiten.</dt><dd>„Projekt speichern“, am anderen Rechner „Projekt öffnen“.</dd>
     <dt>Ich will von vorn anfangen.</dt><dd>Reiter 2 → „Alle Wahlen löschen“. Angebot und Kursplanung bleiben erhalten.</dd>
+  
+    <dt>Eine Kollegin soll mitarbeiten.</dt><dd>„Projekt speichern“ und die Datei weitergeben. Sie öffnet sie mit „Projekt öffnen“. Danach nur noch an ihrem Stand weiterarbeiten.</dd>
+    <dt>Ich brauche die Kurslisten auf Papier.</dt><dd>Reiter 5 → „Kurslisten als PDF“: alle Kurse mit Namen, Klasse und Hinweis auf das Leistungsfach, fertig zum Drucken.</dd>
+    <dt>Ich will Sportivo im Kollegium zeigen.</dt><dd>„Beispieldaten ansehen“ öffnet die erfundenen Daten in einem eigenen Fenster. So sieht niemand echte Namen.</dd>
+    <dt>Einfach oder Rangliste?</dt><dd>Einfach (vier Wünsche plus Ersatz) reicht bei den meisten Schulen. Die Rangliste lohnt sich bei einem großen Angebot, weil Sportivo dann mehr Ausweichmöglichkeiten kennt.</dd>
   </dl>
 </section>
+<section id="h-begriffe">
+  <h3>Begriffe</h3>
+  <dl class="help-gloss">
+    <dt>Sport (gA)</dt><dd>Sport auf grundlegendem Anforderungsniveau, das Fach Sport aller Schüler in der 12 und 13.</dd>
+    <dt>Leistungsfach</dt><dd>Sport als Leistungsfach: zwei Sportarten aus verschiedenen Gruppen, jede für zwei Halbjahre, dazu Sporttheorie.</dd>
+    <dt>Gruppen A, B, C</dt><dd>Die Einteilung der Sportarten nach der Bekanntmachung. Über die vier Halbjahre braucht jeder Sportarten aus mindestens zwei Gruppen.</dd>
+    <dt>Halbjahre 12/1 bis 13/2</dt><dd>Die vier Halbjahre der Qualifikationsphase. In jedem Halbjahr belegt jeder genau eine Sportart.</dd>
+    <dt>getrennt</dt><dd>Die Sportart läuft in eigenen Kursen für Schülerinnen (w) und Schüler (m), etwa Fußball oder Gerätturnen.</dd>
+    <dt>Ersatzwunsch</dt><dd>Wird genommen, wenn ein Wunsch in keinem passenden Halbjahr frei ist.</dd>
+    <dt>Rangliste</dt><dd>Wahlverfahren, bei dem die Schüler alle Sportarten der Reihe nach ordnen.</dd>
+    <dt>Wahlcode</dt><dd>Die Zeichenfolge, die der Wahlbogen erzeugt. Sie enthält Name, Klasse, Wünsche und eine Prüfziffer.</dd>
+    <dt>Fixiert</dt><dd>Diese Einteilung bleibt bei einer neuen Verteilung, wie sie ist.</dd>
+    <dt>Bereits gelaufen</dt><dd>Halbjahre, die schon vorbei sind. Sie werden beim Planen und Verteilen nicht mehr verändert.</dd>
+  </dl>
+</section>
+
   </div>
 </dialog>
 <input type="file" id="file-project" accept=".json,application/json" hidden>
@@ -1238,14 +1364,22 @@ const PDFKIT = (() => {
   const WH=[278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 761, 556, 0, 222, 556, 333, 1000, 556, 556, 333, 1000, 667, 333, 1000, 0, 611, 0, 0, 222, 222, 333, 333, 350, 556, 1000, 333, 1000, 500, 333, 944, 0, 500, 667, 278, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 333, 737, 333, 400, 584, 333, 333, 333, 556, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556, 556, 556, 556, 584, 611, 556, 556, 556, 556, 500, 556, 500], WB=[278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 761, 556, 0, 278, 556, 500, 1000, 556, 556, 333, 1000, 667, 333, 1000, 0, 611, 0, 0, 278, 278, 500, 500, 350, 556, 1000, 333, 1000, 556, 333, 944, 0, 500, 667, 278, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 333, 737, 333, 400, 584, 333, 333, 333, 611, 556, 278, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 584, 611, 611, 611, 611, 611, 556, 611, 556];
   const CP = { 0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E,
     0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F };
-  // Zeichen für die Standardschrift (Windows-1252). Alles andere (zum Beispiel ğ oder č) wird zum Grundbuchstaben vereinfacht.
+  // Buchstaben außerhalb von Windows-1252 (z. B. ı, č, ć, ş, ğ, ł, ő), die die Standard-Helvetica unter festem Namen kennt.
+  // Sie kommen in eine zweite Kodierung derselben Schrift (F3/F4), damit jeder Name richtig gedruckt wird.
+  const EXT = {};
+  'Amacron amacron Abreve abreve Aogonek aogonek Cacute cacute _ _ _ _ Ccaron ccaron Dcaron dcaron Dcroat dcroat Emacron emacron _ _ Edotaccent edotaccent Eogonek eogonek Ecaron ecaron _ _ Gbreve gbreve _ _ Gcommaaccent gcommaaccent _ _ _ _ _ _ Imacron imacron _ _ Iogonek iogonek Idotaccent dotlessi _ _ _ _ Kcommaaccent kcommaaccent _ Lacute lacute Lcommaaccent lcommaaccent Lcaron lcaron _ _ Lslash lslash Nacute nacute Ncommaaccent ncommaaccent Ncaron ncaron _ _ _ Omacron omacron _ _ Ohungarumlaut ohungarumlaut _ _ Racute racute Rcommaaccent rcommaaccent Rcaron rcaron Sacute sacute _ _ Scedilla scedilla _ _ Tcommaaccent tcommaaccent Tcaron tcaron _ _ _ _ Umacron umacron _ _ Uring uring Uhungarumlaut uhungarumlaut Uogonek uogonek _ _ _ _ _ Zacute zacute Zdotaccent zdotaccent'
+    .split(' ').forEach((g, i) => { if (g !== '_') EXT[0x100 + i] = g; });
+  EXT[0x0218] = 'Scommaaccent'; EXT[0x0219] = 'scommaaccent'; EXT[0x021A] = 'Tcommaaccent'; EXT[0x021B] = 'tcommaaccent';
+  // Grundbuchstabe für Breite und Notbehelf, wo die Zerlegung keinen liefert
+  const BASE = { 0x0131: 'i', 0x0141: 'L', 0x0142: 'l', 0x0110: 'D', 0x0111: 'd' };
+  // Zeichen für die Standardschrift (Windows-1252). Alles andere wird für Breite und Notbehelf zum Grundbuchstaben vereinfacht.
   function codes(str) {
     const out = [];
     for (const ch of String(str)) {
       let c = ch.codePointAt(0);
       if (CP[c]) { out.push(CP[c]); continue; }
       if ((c >= 32 && c < 127) || (c >= 160 && c < 256)) { out.push(c); continue; }
-      const base = ch.normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const base = BASE[c] || ch.normalize('NFD').replace(/[̀-ͯ]/g, '');
       if (base !== ch && base.length) { out.push(...codes(base)); continue; }
       out.push(c === 0x2009 || c === 0x202F ? 32 : 63);
     }
@@ -1260,6 +1394,7 @@ const PDFKIT = (() => {
   function create(opt) {
     const PW = 210, PH = 297;
     const pages = []; let cur = null;
+    const extMap = new Map();   // Unicode -> Code in der zweiten Kodierung
     const o = Object.assign({ title: 'Dokument', logo: null }, opt);
     const api = {
       PW, PH,
@@ -1269,7 +1404,18 @@ const PDFKIT = (() => {
         if (str === '' || str == null) return;
         const w = width(str, size, bold) / PT;
         const x0 = align === 'r' ? x - w : align === 'c' ? x - w / 2 : x;
-        cur.push(`BT /${bold ? 'F2' : 'F1'} ${num(size)} Tf ${rgb(color)} rg ${num(x0 * PT)} ${num((PH - y) * PT)} Td ${hex(str)} Tj ET`);
+        const runs = []; let run = null;
+        for (const ch of String(str)) {
+          const c = ch.codePointAt(0); let ext = false, cs;
+          if (!CP[c] && !((c >= 32 && c < 127) || (c >= 160 && c < 256)) && EXT[c] && (extMap.has(c) || extMap.size < 200)) {
+            if (!extMap.has(c)) extMap.set(c, 33 + extMap.size);
+            ext = true; cs = [extMap.get(c)];
+          } else cs = codes(ch);
+          if (!run || run.ext !== ext) { run = { ext, cs: [] }; runs.push(run); }
+          run.cs.push(...cs);
+        }
+        const fo = e => e ? (bold ? 'F4' : 'F3') : (bold ? 'F2' : 'F1');
+        cur.push(`BT ${rgb(color)} rg ${num(x0 * PT)} ${num((PH - y) * PT)} Td ` + runs.map(r => `/${fo(r.ext)} ${num(size)} Tf <${r.cs.map(c => c.toString(16).padStart(2, '0')).join('')}> Tj`).join(' ') + ' ET');
       },
       width: (str, size, bold) => width(str, size, bold) / PT,
       // Text kürzen, bis er in w mm passt
@@ -1300,13 +1446,17 @@ const PDFKIT = (() => {
         add('PAGES');                                                               // 2
         add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');       // 3
         add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');   // 4
+        const diff = [...extMap.entries()].sort((a, b) => a[1] - b[1]).map(([u]) => '/' + EXT[u]).join(' ');
+        const enc = `<< /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [33 ${diff || '/exclam'}] >>`;
+        const f3 = add(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding ${enc} >>`);
+        const f4 = add(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding ${enc} >>`);
         let xo = '';
         if (o.logo) {
           const st = o.logo.content;
-          const id = add(`<< /Type /XObject /Subtype /Form /BBox [0 0 ${num(o.logo.w)} ${num(o.logo.h)}] /Length ${st.length} >>\nstream\n${st}\nendstream`);
+          const id = add(`<< /Type /XObject /Subtype /Form /BBox [${num(-o.logo.h * .2)} ${num(-o.logo.h * .5)} ${num(o.logo.w + o.logo.h * .2)} ${num(o.logo.h * 1.3)}] /Length ${st.length} >>\nstream\n${st}\nendstream`);
           xo = ` /XObject << /Lg ${id} 0 R >>`;
         }
-        const res = `<< /Font << /F1 3 0 R /F2 4 0 R >>${xo} >>`;
+        const res = `<< /Font << /F1 3 0 R /F2 4 0 R /F3 ${f3} 0 R /F4 ${f4} 0 R >>${xo} >>`;
         const kids = [];
         pages.forEach(p => {
           const st = p.join('\n');
@@ -1315,7 +1465,7 @@ const PDFKIT = (() => {
           kids.push(pid + ' 0 R');
         });
         objs[1] = `<< /Type /Pages /Count ${kids.length} /Kids [${kids.join(' ')}] >>`;
-        const info = add(`<< /Title ${hex(o.title)} /Producer ${hex('theis Sportivo')} >>`);
+        const info = add(`<< /Title ${hex(o.title)} /Producer ${hex('Sportivo · theisapps')} >>`);
         let out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'; const off = [];
         objs.forEach((s, i) => { off.push(out.length); out += `${i + 1} 0 obj\n${s}\nendobj\n`; });
         const xr = out.length;
@@ -1389,15 +1539,26 @@ const EXAMPLE = (() => {
     const pickW = (weights) => { const tot = Object.values(weights).reduce((a, b) => a + b, 0); let r = rnd() * tot; for (const k in weights) { r -= weights[k]; if (r <= 0) return k; } return Object.keys(weights)[0]; };
     const W = { GYT: 5, LA: 3, SW: 4, VB: 6, BB: 2, FB: 1.2, GT: 1.5, BAD: 5, TT: 2, FIT: 5 };
     const M = { GYT: 0.6, LA: 3, SW: 3, VB: 5, BB: 4, FB: 6, GT: 1.2, BAD: 3, TT: 4, FIT: 4 };
-    const fw = ['Anna', 'Lea', 'Marie', 'Sophie', 'Emma', 'Lina', 'Mia', 'Hannah', 'Clara', 'Laura', 'Johanna', 'Paula', 'Nele', 'Ida', 'Frieda', 'Greta', 'Theresa', 'Amelie', 'Luisa', 'Zoe', 'Elif', 'Selin', 'Nina', 'Carla'];
-    const fm = ['Lukas', 'Felix', 'Jonas', 'Leon', 'Paul', 'Maximilian', 'Elias', 'Noah', 'Ben', 'Finn', 'Jakob', 'Moritz', 'Tim', 'David', 'Simon', 'Anton', 'Emil', 'Luca', 'Niklas', 'Samuel', 'Tobias', 'Can', 'Deniz', 'Valentin'];
-    const ln = ['Huber', 'Bauer', 'Wagner', 'Müller', 'Schmid', 'Maier', 'Hofmann', 'Fischer', 'Weber', 'Brunner', 'Lechner', 'Gruber', 'Schneider', 'Kaiser', 'Wolf', 'Berger', 'Winkler', 'Lang', 'Sommer', 'Keller', 'Hartmann', 'Vogel', 'Frank', 'Roth', 'Ertl', 'Obermeier', 'Kraus', 'Seidl', 'Yılmaz', 'Novak', 'Rossi', 'Pichler'];
+    // Namen wie in einem durchschnittlichen Jahrgang eines bayerischen Gymnasiums: überwiegend deutsche und bairische
+    // Nachnamen, dazu Familien mit türkischen, kroatischen, bosnischen, serbischen, polnischen, tschechischen, italienischen,
+    // griechischen, ungarischen und vietnamesischen Wurzeln. Fast jeder Nachname nur einmal, wenige doppelt.
+    const fw = ['Anna', 'Lea', 'Marie', 'Sophie', 'Emma', 'Lina', 'Mia', 'Hannah', 'Clara', 'Laura', 'Johanna', 'Paula', 'Lena', 'Ida', 'Frieda', 'Greta', 'Theresa', 'Amelie', 'Luisa', 'Charlotte', 'Emilia', 'Leonie', 'Katharina', 'Magdalena', 'Antonia', 'Helena', 'Sarah', 'Valentina', 'Elif', 'Zeynep', 'Ayşe', 'Ivana', 'Marija', 'Ana', 'Mila', 'Nele', 'Julia', 'Franziska', 'Veronika', 'Lucia'];
+    const fm = ['Lukas', 'Felix', 'Jonas', 'Leon', 'Paul', 'Maximilian', 'Elias', 'Noah', 'Ben', 'Finn', 'Jakob', 'Moritz', 'Tim', 'David', 'Simon', 'Anton', 'Emil', 'Luca', 'Niklas', 'Samuel', 'Tobias', 'Valentin', 'Benedikt', 'Korbinian', 'Quirin', 'Leonhard', 'Florian', 'Sebastian', 'Konstantin', 'Vincent', 'Raphael', 'Julian', 'Philipp', 'Matteo', 'Can', 'Emir', 'Luka', 'Mehmet', 'Jakub', 'Minh'];
+    const lnPool = ['Huber', 'Bauer', 'Wagner', 'Müller', 'Schmid', 'Maier', 'Hofmann', 'Fischer', 'Weber', 'Brunner', 'Lechner', 'Gruber', 'Schneider', 'Kaiser', 'Wolf', 'Berger', 'Winkler', 'Lang', 'Sommer', 'Keller',
+      'Hartmann', 'Vogel', 'Frank', 'Roth', 'Ertl', 'Obermeier', 'Kraus', 'Seidl', 'Pichler', 'Zimmermann', 'Schuster', 'Hahn', 'Fuchs', 'Graf', 'Moser', 'Stadler', 'Reiter', 'Eder', 'Steiner', 'Hölzl',
+      'Strobl', 'Riedl', 'Mayr', 'Bichler', 'Aigner', 'Wimmer', 'Brandl', 'Thalhammer', 'Gschwendtner', 'Bachmeier', 'Forster', 'Hauser', 'Lindner', 'Engel', 'Vogt', 'Scholz', 'Lorenz', 'Böhm', 'Jäger', 'Herrmann',
+      'Schäfer', 'Koch', 'Richter', 'Klein', 'Neumann', 'Schwarz', 'Ziegler', 'Sauer', 'Haas', 'Bergmann', 'Ludwig', 'Weiß', 'Kellner', 'Hirschberger', 'Zeller', 'Rauscher', 'Kurz',
+      'Yılmaz', 'Kaya', 'Öztürk', 'Şahin', 'Kovačević', 'Hodžić', 'Jurić', 'Petrović', 'Nowak', 'Wiśniewski', 'Dvořák', 'Rossi', 'Esposito', 'Papadopoulos', 'Szabó', 'Nguyen',
+      'Müller', 'Huber', 'Maier'];
+    // Nachnamen mischen (gleiche Reihenfolge bei jedem Start)
+    for (let k = lnPool.length - 1; k > 0; k--) { const r = Math.floor(rnd() * (k + 1)); [lnPool[k], lnPool[r]] = [lnPool[r], lnPool[k]]; }
     const idx = SPW.index(SPW.catalog());
     const used = new Set();
     for (let i = 0; i < 96; i++) {
       const g = i === 40 ? 'd' : (rnd() < 0.52 ? 'w' : 'm');
       let name;
-      do { name = `${ln[Math.floor(rnd() * ln.length)]}, ${(g === 'm' ? fm : fw)[Math.floor(rnd() * 24)]}`; } while (used.has(name));
+      const fn = g === 'm' ? fm : fw;
+      do { name = `${lnPool[i]}, ${fn[Math.floor(rnd() * fn.length)]}`; } while (used.has(name));
       used.add(name);
       const lf = i % 12 === 5;
       let wishes;
@@ -1885,12 +2046,12 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
           const w = +c.w || 0, m = +c.m || 0; courses += w + m;
           const cp = ENGINE.capOf(P, id, h); seatsSport += (w + m) * cp;
           seat[i].all += (w + m) * cp; seat[i].w += w * cp; seat[i].m += m * cp; seat[i].n += w + m;
-          return `<td><div class="cell"><label for="g-${id}-${i}-w">w</label><input type="number" min="0" max="9" id="g-${id}-${i}-w" data-id="${id}" data-h="${h}" data-k="w" value="${w}"${dis(i)}><label for="g-${id}-${i}-m">m</label><input type="number" min="0" max="9" id="g-${id}-${i}-m" data-id="${id}" data-h="${h}" data-k="m" value="${m}"${dis(i)}></div></td>`;
+          return `<td class="hjc h${i}"><div class="cell wm"><label for="g-${id}-${i}-w">w</label><input type="number" min="0" max="9" id="g-${id}-${i}-w" data-id="${id}" data-h="${h}" data-k="w" value="${w}" class="${+w ? 'on' : 'z'}"${dis(i)}><label for="g-${id}-${i}-m">m</label><input type="number" min="0" max="9" id="g-${id}-${i}-m" data-id="${id}" data-h="${h}" data-k="m" value="${m}" class="${+m ? 'on' : 'z'}"${dis(i)}></div></td>`;
         }
         const n = +c.n || 0; courses += n;
         seatsSport += n * ENGINE.capOf(P, id, h);
         seat[i].all += n * ENGINE.capOf(P, id, h); seat[i].n += n;
-        return `<td><div class="cell"><input type="number" min="0" max="9" id="g-${id}-${i}" data-id="${id}" data-h="${h}" data-k="n" value="${n}" aria-label="${esc(s.name)} ${h} Kurse"${dis(i)}></div></td>`;
+        return `<td class="hjc h${i}"><div class="cell"><input type="number" min="0" max="9" id="g-${id}-${i}" data-id="${id}" data-h="${h}" data-k="n" value="${n}" class="${+n ? 'on' : 'z'}" aria-label="${esc(s.name)} ${h} Kurse"${dis(i)}></div></td>`;
       }).join('');
       const cover = e.total ? seatsSport / e.total : null;
       const pill = !e.total ? (courses ? '<span class="pill info">ohne Wünsche</span>' : '') : cover >= 1 ? '<span class="pill ok">reicht</span>' : cover >= .85 ? '<span class="pill warn">knapp</span>' : '<span class="pill bad">zu wenig</span>';
@@ -1907,7 +2068,7 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       const mixed = s.all - s.w - s.m;
       if (s.w + mixed < nd[i].w) lack.push('zu wenig Plätze für Schülerinnen');
       if (s.m + mixed < nd[i].m) lack.push('zu wenig Plätze für Schüler');
-      return `<td class="c"><div><b>${s.n}</b> Kurse · ${s.all} Plätze</div><div class="small muted">nötig: ${nd[i].n}</div>${lack.length ? `<span class="pill bad">${lack.join(', ')}</span>` : '<span class="pill ok">reicht</span>'}</td>`;
+      return `<td class="c hjc h${i}"><div><b>${s.n}</b> Kurse · ${s.all} Plätze</div><div class="small muted">nötig: ${nd[i].n}</div>${lack.length ? `<span class="pill bad">${lack.join(', ')}</span>` : '<span class="pill ok">reicht</span>'}</td>`;
     }).join('');
     const lfCands = off.filter(id => P.sports[id].lf);
     // Vorrang-Modus: Was wünschen die Schüler mit Leistungsfach, und läuft jede Sportart oft genug?
@@ -1968,8 +2129,8 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
           <button class="btn ghost" type="button" id="k-prop" ${N ? '' : 'disabled'}>Kursangebot vorschlagen</button>
           ${clN ? `<p class="small hint-info" style="flex-basis:100%">${HJ.slice(0, clN).join(', ').replace(/, ([^,]*)$/, ' und $1')} ${clN === 1 ? 'ist' : 'sind'} bereits gelaufen und ${clN === 1 ? 'bleibt' : 'bleiben'}, wie ${clN === 1 ? 'es war' : 'sie waren'}. Der Vorschlag rechnet nur noch mit den Wünschen, die in den übrigen Halbjahren offen sind. Umstellen in Reiter 4.</p>` : ''}
         </div>
-        ${off.length ? `<div class="tbl-wrap"><table class="grid-in">
-          <thead><tr><th>Sportart</th><th class="num">Wünsche</th><th class="num">w/m</th><th class="num">Ersatz</th>${HJ.map((h, i) => `<th class="c${cl[i] ? ' hj-done' : ''}">${h}${cl[i] ? ' <span class="small" title="bereits gelaufen">✓</span>' : ''}</th>`).join('')}<th class="num">Plätze</th><th></th></tr></thead>
+        ${off.length ? `<div class="tbl-wrap"><table class="grid-in kursgrid">
+          <thead><tr><th>Sportart</th><th class="num">Wünsche</th><th class="num">w/m</th><th class="num">Ersatz</th>${HJ.map((h, i) => `<th class="c hjc h${i}${cl[i] ? ' hj-done' : ''}">${h}${cl[i] ? ' <span class="small" title="bereits gelaufen">✓</span>' : ''}</th>`).join('')}<th class="num">Plätze</th><th></th></tr></thead>
           <tbody id="k-body">${rows}</tbody>
           <tfoot><tr><td colspan="4"><b>Summe je Halbjahr</b>${nLF && lfSome ? '<div class="small muted">Bedarf einschließlich Leistungsfach</div>' : ''}</td>${foot}<td colspan="2"></td></tr></tfoot>
         </table></div>` : '<p class="muted">Zuerst im Reiter 1 Sportarten anbieten.</p>'}
@@ -2165,8 +2326,8 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
         ${cells}<td>${status}</td>
         <td class="c"><input type="checkbox" data-lock="${st.id}" ${P.locks[st.id] ? 'checked' : ''} title="Fixiert: bleibt bei neuer Verteilung" aria-label="${esc(st.name)} fixieren"></td></tr>`;
     }).join('');
-    box.innerHTML = `<div class="tbl-wrap" style="max-height:75vh"><table>
-      <thead><tr><th>Name</th><th>Wünsche</th>${HJ.map(h => `<th>${h}</th>`).join('')}<th>Status</th><th class="c" title="Fixiert">Fix</th></tr></thead>
+    box.innerHTML = `<div class="legend small"><span><i class="lg alt"></i>kein Erstwunsch</span><span><i class="lg miss"></i>kein Kurs</span><span><i class="lg fix"></i>fixiert: bleibt bei neuer Verteilung</span><span class="muted">In Klammern: belegt/Plätze</span></div><div class="tbl-wrap" style="max-height:75vh"><table class="dist">
+      <thead><tr><th>Name</th><th>Wünsche</th>${HJ.map((h, i) => `<th class="hjc h${i}">${h}</th>`).join('')}<th>Status</th><th class="c" title="Fixiert">Fix</th></tr></thead>
       <tbody>${rows || '<tr><td colspan="8" class="muted">Keine Treffer.</td></tr>'}</tbody></table></div>
       <p class="small muted">Gelb umrandet: Kurs entspricht keinem Erstwunsch. Rot: kein Kurs. Wer von Hand umgesetzt wird, ist automatisch fixiert. Rot: Kurs überbelegt, es wird nichts automatisch verschoben.</p>`;
     box.addEventListener('change', e => {
@@ -2302,9 +2463,9 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
           });
           // Fußzeile: Text links, rechts © 2026 und Logo (immer ganz auf der Seite)
           const lh = 3.6, lw = doc.logoWidth(lh), fy = 281;
-          doc.text(L, fy + 2.7, 'Sportivo · theisapps.de', { size: 8, color: '#777777' });
+          doc.text(L, fy + 2.7, 'Sportivo · theisapps.de', { size: 8, color: '#3c414b' });
           doc.logo(R, fy, lh);
-          doc.text(R - lw - 1.6, fy + 2.7, '© 2026', { size: 8, color: '#777777', align: 'r' });
+          doc.text(R - lw - 1.6, fy + 2.7, '© 2026', { size: 8, color: '#3c414b', align: 'r' });
         }
       });
       return doc.finish();
@@ -2330,7 +2491,7 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
       P.students.forEach(st => { const w = SPW.countBy(st.wishes, x => x), a = SPW.countBy(stat[st.id].sp.filter(Boolean), x => x); Object.keys(w).forEach(id => { if (sp[id]) sp[id].ful += Math.min(w[id], a[id] || 0); }); });
       const sports = Object.values(sp).sort((a, b) => b.dem - a.dem || a.name.localeCompare(b.name, 'de'));
       const wrap = (str, w, size) => { const out = []; let line = ''; String(str).split(' ').forEach(wd => { const t = line ? line + ' ' + wd : wd; if (doc.width(t, size) <= w || !line) line = t; else { out.push(line); line = wd; } }); if (line) out.push(line); return out; };
-      const footer = () => { const lh = 3.6, lw = doc.logoWidth(lh), fy = 281; doc.line(L, fy - 3, R, fy - 3, { color: LINE, lw: .25 }); doc.text(L, fy + 2.7, 'Erstellt mit Sportivo · theisapps.de', { size: 8, color: '#777777' }); doc.logo(R, fy, lh); doc.text(R - lw - 1.6, fy + 2.7, '© 2026', { size: 8, color: '#777777', align: 'r' }); };
+      const footer = () => { const lh = 3.6, lw = doc.logoWidth(lh), fy = 281; doc.line(L, fy - 3, R, fy - 3, { color: LINE, lw: .25 }); doc.text(L, fy + 2.7, 'Erstellt mit Sportivo · theisapps.de', { size: 8, color: '#3c414b' }); doc.logo(R, fy, lh); doc.text(R - lw - 1.6, fy + 2.7, '© 2026', { size: 8, color: '#3c414b', align: 'r' }); };
       const head = (title, sub) => {
         doc.rect(L, 13, 11, 11, { fill: ACC });
         [[3, 4], [5.2, 6.5], [7.4, 5]].forEach(([dx, h], i) => doc.rect(L + dx, 21.2 - h, 1.5, h, { fill: '#ffffff' }));
@@ -2448,7 +2609,21 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
     const b = document.createElement('button'); b.type = 'button';
     b.textContent = sec.querySelector('h3').textContent.replace(/^\d+/, '').trim();
     b.onclick = () => sec.scrollIntoView({ block: 'start' });
-    $('help-nav').appendChild(b);
+    $('help-nav').appendChild(b); sec._nav = b;
+  });
+  // Suche in der Hilfe: zeigt nur Abschnitte und Fragen, in denen alle Suchwörter vorkommen
+  const helpEmpty = document.createElement('p'); helpEmpty.className = 'muted help-empty'; helpEmpty.hidden = true;
+  helpEmpty.textContent = 'Nichts gefunden. Andere Wörter versuchen, zum Beispiel „Code“, „Kurs“ oder „Datei“.'; helpBody.prepend(helpEmpty);
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  $('help-q').addEventListener('input', e => {
+    const words = norm(e.target.value).split(/\s+/).filter(Boolean); let any = false;
+    helpBody.querySelectorAll('section').forEach(sec => {
+      const all = !words.length || words.every(w => norm(sec.textContent).includes(w));
+      const titleHit = words.length && words.every(w => norm(sec.querySelector('h3').textContent).includes(w));
+      sec.querySelectorAll('dt').forEach(dt => { const dd = dt.nextElementSibling; const hit = !words.length || titleHit || words.every(w => norm(dt.textContent + ' ' + (dd ? dd.textContent : '')).includes(w)); dt.hidden = !hit; if (dd) dd.hidden = !hit; });
+      sec.hidden = !all; if (sec._nav) sec._nav.hidden = !all; if (all) any = true;
+    });
+    helpEmpty.hidden = any; helpBody.scrollTop = 0;
   });
   // Öffnet die Hilfe beim Abschnitt, der zum aktuellen Reiter gehört
   function openHelp(id) {
