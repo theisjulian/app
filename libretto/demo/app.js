@@ -468,7 +468,7 @@ function courseView(c) {
   const conf = upper(c) ? [] : classesOf(c).flatMap(cls => R.dateConflicts(classBigDates(cls)).map(cf => classesOf(c).length > 1 ? { ...cf, text: `Klasse ${cls}: ${cf.text}` } : cf));
   if (conf.length) hints.push({ cls: '', short: 'Termin prüfen', html: `<b>Termin prüfen (§ 22 GSO)</b>` + conf.map(cf => `<p style="margin:6px 0 0">${esc(cf.text)}</p>`).join('') });
   const openN = c.assessments.reduce((n, a) => n + Object.values(a.results || {}).filter(r => r && r.status === 'ent').length, 0);
-  if (openN) hints.push({ cls: 'info', short: openN === 1 ? '1 Nachtermin offen' : openN + ' Nachtermine offen', html: `<b>${openN} Nachtermin(e) offen</b> – in der Tabelle mit „E“ markiert. Note einfach überschreiben, sobald nachgeschrieben.` });
+  if (openN) hints.push({ cls: 'info', short: openN === 1 ? '1 Nachtermin offen' : openN + ' Nachtermine offen', html: `<b>${openN} Nachtermin(e) offen</b> – in der Tabelle mit „E“ markiert. Note einfach überschreiben, sobald nachgeschrieben – sie wird dann als Nachtermin (NT) markiert: zählt für die Person, aber nicht im Notenspiegel/Ø der Arbeit.` });
   HINTS = hints;
   const chips = hints.length ? `<div class="hintChips" id="hintChips">${hints.map((h, i) => `<button type="button" class="hchip ${h.cls}" data-hint="${i}" aria-expanded="false"><i></i>${esc(h.short)}</button>`).join('')}</div>` : '';
   let scope = '';
@@ -522,12 +522,13 @@ function cellHTML(c, a, s) {
   const r = a.results && a.results[s.id], up = upper(c), tk = R.byTask(a) || R.byParts(a);
   let txt = a.usePoints && r && !r.status && r.raw != null ? String(r.raw).replace('.', ',') : R.cellText(r, up);
   if (tk && r && !r.status && r.raw == null && r.v == null && ((r.pts && Object.keys(r.pts).length) || (r.pp && Object.keys(r.pp).length))) txt = '…';   /* Aufgabenpunkte noch nicht vollständig */
-  const cls = r && r.status ? (r.status === 'n6' || r.status === 'us' ? 'st n6' : 'st') : '';
+  const cls = r && r.status ? (r.status === 'n6' || r.status === 'us' ? 'st n6' : 'st') : (r && r.nt ? 'nt' : '');
   const sub = a.usePoints && r && !r.status && r.v != null ? `<span class="rawpts">${up ? r.v + ' P.' : 'Note ' + r.v + (r.tend || '')}</span>` : '';
   const aw = !r && isAway(c, s.id, a.date);
   const xs = xState(c, xKeyA(a, s.id), r);
+  const ntAttr = r && r.nt && !r.status ? ' title="Nachtermin – zählt für die Person, nicht im Notenspiegel/Ø der Arbeit"' : '';
   const tkAttr = tk ? ` readonly data-tk="1" title="${R.byParts(a) ? (a.alt ? 'Übersetzung und Aufgabenteil' : 'Prüfungsteile') : 'Punkte je Aufgabe'} – Klick oder Enter zum Eintragen${r && r.exact != null && !r.status ? ' · genau ' + String(r.exact).replace('.', ',') : ''}"` : '';
-  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${tk ? 'tk' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}" value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''}${tkAttr} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
+  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${tk ? 'tk' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}"${ntAttr} value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''}${tkAttr} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
 }
 function gradeBadge(sug, ov) {
   if (ov) return `<span class="gb g${ov} ov" title="Von dir festgelegt">${ov}</span>`;
@@ -665,6 +666,9 @@ function bindGrid(c) {
       if (r.error) { bad(el, r.error + ' · Kürzel: E, B, N, U'); return; }
       a.results[sid] = a.results[sid] && a.results[sid].pts ? { pts: a.results[sid].pts, ...r } : r;
     }
+    /* Nachtermin: Wer entschuldigt gefehlt hat (E) und jetzt eine Note bekommt, hat den Nachtermin geschrieben –
+       die Note zählt für die Person, aber nicht im Notenspiegel / Durchschnitt der Arbeit */
+    { const nr = a.results[sid]; if (nr && !nr.status && (nr.v != null || nr.raw != null) && prev && (prev.status === 'ent' || prev.nt)) { if (!nr.nt) { nr.nt = true; toast('Nachtermin: Die Note zählt für ' + c.students.find(x => x.id === sid).name + ', aber nicht im Notenspiegel und Ø der Arbeit (Kürzel NT)'); } } }
     save();
     const tr = el.closest('tr'), s = c.students.find(x => x.id === sid);
     const after = shown(a.results[sid]);
@@ -1045,7 +1049,8 @@ function assessmentSheet(c, a) {
         <div class="field"><span>Schnell: Höchstpunkte aller Aufgaben in einer Zeile (z. B. 2 3 4 3 2 2 2; auch aus Excel einfügbar)</span><input type="text" id="tQuick" placeholder="2 3 4 3 2 2 2 – dann Enter" autocomplete="off"></div>
         <div id="taskRows"></div>
         <div class="panelBtns"><button type="button" class="mini" id="tAdd">+ Aufgabe</button><button type="button" class="mini" id="tPrev" hidden></button><button type="button" class="mini accent" id="tEnter">Sichern und Aufgabenpunkte eintragen …</button></div>
-        <p class="hint" id="tHint"></p></div>
+        <p class="hint" id="tHint"></p>
+        <details class="sim tfSim" id="aTfSim" hidden><summary>Simulation: Was passiert, wenn eine Aufgabe anders zählt (z. B. halb oder doppelt)? – mit ganzer Klassenliste</summary><div id="aTfBody"></div></details></div>
       <div class="grid3 kGrid">${field('Erreichbare Punkte', `<input type="number" step="0.5" min="1" id="aMax" value="${esc(a.key && a.key.max || '')}">`)}
         ${field('Schlüssel', `<select id="aPreset"><option value="custom" ${preset0 === 'custom' ? 'selected' : ''}>Eigene Grenzen</option><option value="kmk" ${preset0 === 'kmk' ? 'selected' : ''}>${up ? 'Amtliche BE-Tabelle (Abitur: 4 P. ab 40 %)' : 'KMK-Raster (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %)'}</option></select>`)}
         <span id="anchorBox" style="display:contents">${up ? field('4 P. (Note 4–) ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${R.anchor4(pre)}">`) + field('1 P. (Note 5–) ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p1}">`)
@@ -1059,7 +1064,7 @@ function assessmentSheet(c, a) {
       <p class="hint" id="kmkSrc" hidden>${up ? 'Amtliche BE-Tabelle der Abiturprüfung ab 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4; KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 P. ab 95 %, 6 P. ab 50 %, 5 P. ab 45 %, 4 P. ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Die Grenzen sind ganze BE, kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). ' + (R.isAncient(c.subject) ? 'In Latein und Griechisch ist dieser KMK-Bewertungsschlüssel für BE-Bewertungen in der Qualifikationsphase verbindlich (KMS vom 31.07.2023, Anlage 3 Nr. 8 bzw. Anlage 4 Nr. 9); die Übersetzung wird getrennt nach Fehlern bewertet.' : 'Verbindlich für BE-bewertete Abiturprüfungen bzw. Prüfungsteile; für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht.') : 'KMK-Raster: die Prozentgrenzen der Abitur-Tabelle als Noten (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %). Bei ganzen Punkten kaufmännisch gerundet, bei halben Punkten aufgerundet. Eine Vorlage – keine Pflicht für die Unter- und Mittelstufe.'}</p>
       <p class="hint" id="ownHint">${up ? 'Die Punkte 5–15 werden gleichmäßig zwischen der Grenze für 4 Punkte (unterste 4) und 100 % verteilt, 2 und 3 Punkte zwischen 1 und 4 Punkten.' : 'Die Noten 1–3 werden gleichmäßig zwischen der Grenze für die 4 und 100 % verteilt.'} Jede Grenze kannst du danach noch einzeln ändern.</p>
     </div>
-    ${dist && dist.n ? `<div class="subhead">Notenspiegel <small class="hint" style="font-weight:400">– ändert sich live mit den Grenzen</small></div><div id="distLive">${distHTML(dist, null, up)}</div>
+    ${dist && dist.n ? `<div class="subhead">Notenspiegel <small class="hint" style="font-weight:400">– ändert sich live mit den Grenzen</small></div><div id="distLive">${distHTML(dist, null, up, countSpan(c, a, up))}</div>
       <details class="sim" id="simBox"><summary>Simulation: Was passiert, wenn ich die Grenzen verschiebe?</summary><div id="simBody"></div></details>` : ''}
     <div id="impSec"><div class="subhead">Noten aus Datei übernehmen</div>
     <div class="importBox"><div><b>Notenliste einlesen</b><p class="hint">Z. B. die „Notenliste (CSV)“ aus <b>Viva</b> nach einer mündlichen Schulaufgabe. Libretto ordnet die ${up ? 'Notenpunkte' : 'Noten'} über die Namen zu; du kannst sie danach in der Tabelle ändern.</p><p class="hint" id="aImpInfo" hidden></p></div>
@@ -1194,30 +1199,37 @@ function assessmentSheet(c, a) {
     const list = c.students.map(s => { const r = a.results && a.results[s.id]; if (!r) return null; if (ok && !r.status && r.raw != null) { const k = R.keyResult(r.raw, key, up); if (k) return k.v; } return R.valueOf(r, up); }).filter(v => v != null);
     const counts = up ? Array(16).fill(0) : Array(6).fill(0); list.forEach(v => counts[up ? v : v - 1]++);
     const weak = up ? list.filter(v => v < 5).length : list.filter(v => v >= 5).length;
-    box.innerHTML = distHTML({ counts, n: list.length, avg: R.mean(list), weak, weakShare: list.length ? weak / list.length : 0 }, dist.avg, up);
+    box.innerHTML = distHTML({ counts, n: list.length, avg: R.mean(list), weak, weakShare: list.length ? weak / list.length : 0 }, dist.avg, up, countSpan(c, a, up));
   }
   /* Simulation: dieselben Rohpunkte mit verschiedenen Notenschlüsseln durchgerechnet – nur zum Vergleichen, gespeichert wird erst mit „Sichern“ */
+  let simShow = null;   /* Index der Variante, deren Klassenliste aufgeklappt ist */
   function simRender() {
     const box = dlg.querySelector('#simBody'), det = dlg.querySelector('#simBox'); if (!box || !det || !det.open) return;
     const max = +dlg.querySelector('#aMax').value, step = +dlg.querySelector('#aStep').value || 0.5;
-    const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && !r.status && r.raw != null).map(r => +r.raw);
+    const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && !r.status && !r.nt && r.raw != null).map(r => +r.raw);
     if (!dlg.querySelector('#aPts').checked || !max || !raws.length) { box.innerHTML = '<p class="hint">Die Simulation rechnet mit den eingetragenen Rohpunkten. Sobald Punkte da sind, siehst du hier, wie sich Durchschnitt und Notenspiegel mit anderen Grenzen ändern.</p>'; return; }
     const a1 = +dlg.querySelector('#aA1').value, a2 = +dlg.querySelector('#aA2').value, kn = up ? 'pointThresholds' : 'thresholds';
     const curTh = $$('[data-k]', dlg).map(i => i.value === '' ? NaN : +i.value), same = th => th.length === curTh.length && th.every((x, i) => Math.abs(x - curTh[i]) < 1e-9);
+    const rawOf = st => { const r = a.results && a.results[st.id]; return r && !r.status && r.raw != null ? +r.raw : null; };
+    const sAt = th => st => { const p = rawOf(st); if (p == null) return null; const k = R.keyResult(p, { [kn]: th }, up); return k ? k.v : null; };
+    const sNow = curTh.every(x => !isNaN(x)) ? sAt(curTh) : st => { const r = a.results && a.results[st.id]; return r && !r.status && r.v != null ? r.v : null; };
     const rows = [];
     const add = (label, sub, th, apply) => { if (!th || th.some(x => x == null || isNaN(x))) return;
       const vs = raws.map(p => { const k = R.keyResult(p, { [kn]: th }, up); return k ? k.v : null; }).filter(v => v != null); if (!vs.length) return;
       const counts = up ? null : [1, 2, 3, 4, 5, 6].map(g => vs.filter(v => v === g).length);
-      rows.push({ label, sub, avg: R.mean(vs), counts, weak: up ? vs.filter(v => v < 5).length : vs.filter(v => v >= 5).length, good: up ? vs.filter(v => v >= 10).length : null, cur: same(th), apply }); };
+      rows.push({ label, sub, th, avg: R.mean(vs), counts, weak: up ? vs.filter(v => v < 5).length : vs.filter(v => v >= 5).length, good: up ? vs.filter(v => v >= 10).length : null, cur: same(th), apply }); };
     if (curTh.every(x => !isNaN(x))) add('Jetzt eingestellt', '', curTh, null);
     (up ? [55, 50, 45, 40] : [60, 55, 50, 45, 40]).forEach(x => { const y = a2 > 0 && a2 < x ? Math.min(a2, x - (up ? 15 : 10)) : Math.round(x / 2);
       const th = up ? R.suggestKey15(max, R.pct15FromAnchors(x, y), step).pointThresholds : R.suggestKey(max, R.pctFromAnchors(x, y), step).thresholds;
       add(up ? `4 Punkte (4–) ab ${x} %` : `Note 4 ab ${x} %`, up ? `1 Punkt ab ${y} %` : `Note 5 ab ${y} %`, th, { preset: 'custom', x, y }); });
-    const kk = R.suggestKeyKmk(max, up, step, true); add('KMK-Raster', up ? '4 Punkte ab 40 %, 5 Punkte ab 45 %' : 'Note 4 ab 40 %', up ? kk.pointThresholds : kk.thresholds, { preset: 'kmk' });
+    const kk = R.suggestKeyKmk(max, up, step, true); add(up ? 'Amtliche BE-Tabelle' : 'KMK-Raster', up ? '4 Punkte ab 40 %, 5 Punkte ab 45 %' : 'Note 4 ab 40 %', up ? kk.pointThresholds : kk.thresholds, { preset: 'kmk' });
     /* „Jetzt eingestellt“ nur zeigen, wenn es keiner der Vorschläge ist */
     const list = rows.filter((r, i) => i > 0 || !rows.slice(1).some(x => x.cur));
-    box.innerHTML = `<table class="simTbl"><thead><tr><th>Schlüssel</th><th>Ø</th>${up ? '<th>ab 10 P.</th>' : [1, 2, 3, 4, 5, 6].map(g => `<th><i style="background:var(--gr${g})"></i>${g}</th>`).join('')}<th>${up ? 'unter 5 P.' : '5 und 6'}</th><th></th></tr></thead><tbody>${list.map((r, i) => `<tr class="${r.cur ? 'cur' : ''}"><td><b>${esc(r.label)}</b>${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</td><td class="n"><b>${fmt(r.avg, 2)}</b></td>${up ? `<td class="n">${r.good}</td>` : r.counts.map(n => `<td class="n">${n || '<span class="z">·</span>'}</td>`).join('')}<td class="n">${r.weak}<small>${Math.round(r.weak / raws.length * 100)} %</small></td><td>${r.cur ? '<span class="pill done">aktuell</span>' : r.apply ? `<button type="button" class="mini" data-sim="${i}">Übernehmen</button>` : ''}</td></tr>`).join('')}</tbody></table>
-      <p class="hint">Gerechnet mit den Rohpunkten von ${raws.length} ${raws.length === 1 ? 'Person' : 'Personen'}. „Übernehmen“ trägt die Grenzen oben ein – gespeichert wird erst mit „Sichern“. Welche Grenzen gelten, legt die Fachschaft fest; Libretto schlägt nichts vor.</p>`;
+    box.innerHTML = `<table class="simTbl"><thead><tr><th>Schlüssel</th><th>Ø</th>${up ? '<th>ab 10 P.</th>' : [1, 2, 3, 4, 5, 6].map(g => `<th><i style="background:var(--gr${g})"></i>${g}</th>`).join('')}<th>${up ? 'unter 5 P.' : '5 und 6'}</th><th></th></tr></thead><tbody>${list.map((r, i) => `<tr class="${r.cur ? 'cur' : ''}"><td><b>${esc(r.label)}</b>${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</td><td class="n"><b>${fmt(r.avg, 2)}</b></td>${up ? `<td class="n">${r.good}</td>` : r.counts.map(n => `<td class="n">${n || '<span class="z">·</span>'}</td>`).join('')}<td class="n">${r.weak}<small>${Math.round(r.weak / raws.length * 100)} %</small></td><td class="simAct">${r.cur ? '<span class="pill done">aktuell</span>' : `<button type="button" class="mini ${simShow === i ? 'on' : ''}" data-simcls="${i}" title="Klassenliste: bei wem sich mit diesem Schlüssel die Note ändert">Klasse</button>${r.apply ? `<button type="button" class="mini" data-sim="${i}">Übernehmen</button>` : ''}`}</td></tr>`).join('')}</tbody></table>
+      ${simShow != null && list[simShow] ? `<p class="simFor">Klassenliste: <b>jetzt</b> → <b>${esc(list[simShow].label)}</b>${list[simShow].sub ? ' (' + esc(list[simShow].sub) + ')' : ''}</p>` + simClassHTML(c, up, sNow, sAt(list[simShow].th)) : ''}
+      <p class="hint">Gerechnet mit den Rohpunkten von ${raws.length} ${raws.length === 1 ? 'Person' : 'Personen'}. „Klasse“ zeigt, bei wem sich die Note ändern würde. „Übernehmen“ trägt die Grenzen oben ein – gespeichert wird erst mit „Sichern“. Welche Grenzen gelten, legt die Fachschaft fest.</p>`;
+    $$('[data-simcls]', box).forEach(b => b.onclick = () => { const i = +b.dataset.simcls; simShow = simShow === i ? null : i; simRender(); });
+    if (simShow != null && list[simShow]) simPrintWire(box, () => modelSim(c, a, `Notenschlüssel „${list[simShow].label}${list[simShow].sub ? ' · ' + list[simShow].sub : ''}“ statt des jetzt eingestellten`, sNow, sAt(list[simShow].th)));
     $$('[data-sim]', box).forEach(b => b.onclick = () => { const ap = list[+b.dataset.sim].apply; if (!ap) return;
       dlg.querySelector('#aPreset').value = ap.preset; if (ap.preset === 'custom') { dlg.querySelector('#aA1').value = ap.x; dlg.querySelector('#aA2').value = ap.y; }
       upd(); manualKey = false; suggest(true); });
@@ -1260,8 +1272,25 @@ function assessmentSheet(c, a) {
     if (!manualKey) suggest(true); else showPct();
   };
   const drawTasks = () => { dlg.querySelector('#taskRows').innerHTML = tasks.map((t, i) => taskRow(t, i + 1)).join(''); updTasks(); };
+  /* Faktor-Simulation direkt hier (gleicher Baustein wie in „Punkte je Aufgabe“) */
+  const aTf = {};
+  const aTfRender = () => {
+    const det = dlg.querySelector('#aTfSim'), box = dlg.querySelector('#aTfBody'); if (!det) return;
+    const valid = tasks.filter(t => +t.max > 0);
+    const hasPts = Object.values(a.results || {}).some(r => r && !r.status && r.pts && Object.keys(r.pts).length);
+    det.hidden = !a.key || !valid.length || !hasPts; if (det.hidden || !det.open) return;
+    const B = JSON.parse(JSON.stringify(a)); B.tasks = JSON.parse(JSON.stringify(valid)); B.results = B.results || {};
+    rekeyAssessment(B, up);
+    Object.values(B.results).forEach(r => { if (r && !r.status && r.pts && B.tasks.every(x => r.pts[x.id] != null && r.pts[x.id] !== '')) R.applyTasks(B, r, up); });
+    renderFactorSim(box, c, B, up, aTf, (u, f) => {
+      $$('.trowE', dlg).filter(r => u.ids.includes(r.dataset.tid)).forEach(r => { const sel = r.querySelector('[data-tf]'); if (![...sel.options].some(o => +o.value === f)) sel.insertAdjacentHTML('beforeend', `<option value="${f}">× ${String(f).replace('.', ',')}</option>`); sel.value = String(f); });
+      syncTasks(); updTasks(); aTfRender(); toast(`${u.label} zählt jetzt × ${String(f).replace('.', ',')} – wird mit „Sichern“ gespeichert`); }, 'ab jetzt');
+  };
+  dlg.querySelector('#aTfSim').addEventListener('toggle', aTfRender);
+  ['input', 'change'].forEach(ev => dlg.querySelector('#taskRows').addEventListener(ev, () => setTimeout(() => { if (dlg.querySelector('#aTfSim').open) aTfRender(); })));
   if (!tasks.length) tasks.push({ id: uid(), label: '', max: '' });
   drawTasks();
+  aTfRender();
   dlg.querySelector('#aTasks').addEventListener('change', () => { if (dlg.querySelector('#aTasks').checked) updTasks(); });
   dlg.querySelector('#tAdd').onclick = () => { syncTasks(); tasks.push({ id: uid(), label: '', max: '' }); drawTasks(); const l = $$('[data-tl]', dlg); l[l.length - 1].focus(); };
   dlg.querySelector('#taskRows').addEventListener('input', () => { syncTasks(); updTasks(); });
@@ -1332,12 +1361,93 @@ function assessmentSheet(c, a) {
 }
 
 /* Notenspiegel (Balken + Kennzahlen); old = Durchschnitt vor der Änderung der Grenzen (zeigt „bisher …“, wenn er sich unterscheidet) */
-function distHTML(dist, old, up) {
+function distHTML(dist, old, up, cnt) {
   const chg = old != null && dist.avg != null && Math.abs(old - dist.avg) > 0.004;
   return `<div class="distBar" style="--n:${dist.counts.length}">${dist.counts.map((n, i) => `<div>${n}<i style="height:${dist.n ? Math.max(2, n / Math.max(1, ...dist.counts) * 56) : 2}px;background:var(--gr${up ? R.POINT_GRADE(i) : i + 1})"></i>${up ? i : i + 1}</div>`).join('')}</div>
-      <p class="meta"><span class="avgPill">Ø <b>${fmt(dist.avg, 2)}</b>${chg ? ` <small>bisher ${fmt(old, 2)}</small>` : ''}</span><span>Teilnehmer: <b>${dist.n}</b></span><span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${dist.weak} (${Math.round(dist.weakShare * 100)} %)</b></span></p>`;
+      <p class="meta"><span class="avgPill">Ø <b>${fmt(dist.avg, 2)}</b>${chg ? ` <small>bisher ${fmt(old, 2)}</small>` : ''}</span>${cnt || `<span>Gewertet: <b>${dist.n}</b></span>`}<span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${dist.weak} (${Math.round(dist.weakShare * 100)} %)</b></span></p>`;
 }
 /* Faktor einer Aufgabe (Punkte zählen mehrfach) */
+/* Notenschlüssel an eine neue Gesamtpunktzahl anpassen (KMK neu, eigene Grenzen im gleichen Prozentverhältnis) */
+function rekeyAssessment(a, up) {
+  const max = R.tasksMax(a), k = a.key; if (!k || !max) return; const old = +k.max || 0; if (max === old) return;
+  const step = (k.anchors && +k.anchors.step) || 0.5;
+  if (k.preset === 'kmk') {
+    const kk = R.suggestKeyKmk(max, up, step, up ? true : k.tend !== false);
+    if (up) k.pointThresholds = kk.pointThresholds; else { k.thresholds = kk.thresholds; if (k.tend) k.tendThresholds = kk.tendThresholds; }
+  } else if (old) {
+    /* Eigene Grenzen: Sind sie noch genau die aus den Prozentwerten berechneten, wird für die neue Summe wieder aus den Prozentwerten gerechnet
+       (sonst gingen sie bei kleinen Summen – etwa der Startspalte mit 1 Punkt – durch das Runden verloren). Von Hand geänderte Grenzen wandern im gleichen Verhältnis mit. */
+    const key = up ? 'pointThresholds' : 'thresholds', pct = up ? k.pct15 : k.pct;
+    const calc = m => pct && pct.length ? (up ? R.suggestKey15(m, pct, step).pointThresholds : R.suggestKey(m, pct, step).thresholds) : null;
+    const was = calc(old), untouched = was && k[key] && was.length === k[key].length && was.every((x, i) => Math.abs(x - +k[key][i]) < 1e-9);
+    if (untouched) k[key] = calc(max); else if (k[key]) k[key] = k[key].map(x => R.ceilStep(x / old * max, step));
+  }
+  k.max = max;
+}
+/* Simulation „Faktor einer Aufgabe ändern“ – an einer Kopie; units = Aufgaben bzw. Schreibaufgaben (Inhalt + Sprache als eine) */
+function factorUnits(a) { const out = [], seen = new Set();
+  (a.tasks || []).forEach(t => { if (t.g) { if (seen.has(t.g)) return; seen.add(t.g); const l = a.tasks.filter(x => x.g === t.g); out.push({ ids: l.map(x => x.id), label: (t.gl || 'Schreiben') + ' (' + l.map(x => x.label).join(' + ') + ')', f: R.taskF(t), key: 'g:' + t.g }); }
+    else out.push({ ids: [t.id], label: 'Aufgabe ' + t.label, f: R.taskF(t), key: 't:' + t.id }); });
+  return out; }
+function simFactor(a, up, ids, f) {
+  const A = JSON.parse(JSON.stringify(a)); A.results = A.results || {};
+  const auto = Object.values(A.results).filter(r => r && !r.status && r.pts && r.raw != null && A.tasks.every(x => r.pts[x.id] != null && r.pts[x.id] !== '') && Math.abs(r.raw - R.tasksSum(A, r.pts)) < 1e-9);
+  A.tasks.filter(t => ids.includes(t.id)).forEach(x => { if (f > 0 && f !== 1) x.f = f; else delete x.f; });
+  rekeyAssessment(A, up); auto.forEach(r => R.applyTasks(A, r, up));
+  Object.values(A.results).forEach(r => { if (!r || r.status || auto.includes(r) || r.raw == null) return; const k = R.keyResult(r.raw, A.key, up); if (k) r.v = k.v; });
+  return A; }
+function renderFactorSim(box, c, a, up, st, onApply, applyWord) {
+  const vOf = A => s => { const r = A.results && A.results[s.id]; return r && !r.status && r.v != null ? r.v : null; };
+  const fp = x => String(Math.round(x * 100) / 100).replace('.', ','), lbl = f => '× ' + fp(f);
+  const us = factorUnits(a); if (!us.length) { box.innerHTML = ''; return; }
+  if (!(st.u < us.length)) st.u = 0; const u = us[st.u]; if (st.f == null) st.f = u.f === 1 ? 0.5 : 1;
+  if (!c.students.some(s => vOf(a)(s) != null)) { box.innerHTML = '<p class="hint">Sobald für alle Aufgaben Punkte eingetragen sind, siehst du hier, wie sich Durchschnitt und Noten mit einem anderen Faktor ändern würden – für die ganze Klasse.</p>'; return; }
+  const A = simFactor(a, up, u.ids, st.f), d0 = R.distribution(a, c.students, up), d1 = R.distribution(A, c.students, up);
+  box.innerHTML = `<div class="tfCtl"><label>Aufgabe <select data-tfu>${us.map((x, i) => `<option value="${i}" ${i === st.u ? 'selected' : ''}>${esc(x.label)} – jetzt ${lbl(x.f)}</option>`).join('')}</select></label>
+      <span class="tfSeg">zählt ${[0.5, 1, 1.5, 2, 2.5, 3].map(f => `<button type="button" class="mini ${f === st.f ? 'on' : ''}" data-tff="${f}">${lbl(f)}</button>`).join('')}</span></div>
+    <table class="simTbl tfTbl"><thead><tr><th></th><th>erreichbar</th><th>Ø</th><th>${up ? 'unter 5 P.' : '5 und 6'}</th></tr></thead><tbody>
+      <tr class="cur"><td><b>Jetzt</b><small>${esc(u.label)} ${lbl(u.f)}</small></td><td class="n">${fp(R.tasksMax(a))}</td><td class="n"><b>${fmt(d0.avg, 2)}</b></td><td class="n">${d0.weak}</td></tr>
+      <tr><td><b>Simuliert</b><small>${esc(u.label)} ${lbl(st.f)}</small></td><td class="n">${fp(R.tasksMax(A))}</td><td class="n"><b>${fmt(d1.avg, 2)}</b></td><td class="n">${d1.weak}</td></tr></tbody></table>
+    ${simClassHTML(c, up, vOf(a), vOf(A))}
+    <div class="panelBtns">${st.f !== u.f && !READONLY ? `<button type="button" class="mini accent" data-tfapply>${esc(u.label)} ${applyWord} ${lbl(st.f)} zählen</button>` : ''}</div>
+    <p class="hint">Gerechnet wird an einer Kopie – geändert wird erst mit dem Knopf. ${a.key && a.key.preset === 'kmk' ? 'Der Notenschlüssel wird für die neue Summe neu berechnet.' : 'Eigene Grenzen wandern im gleichen Prozentverhältnis mit.'}</p>`;
+  box.querySelector('[data-tfu]').onchange = e => { st.u = +e.target.value; st.f = null; renderFactorSim(box, c, a, up, st, onApply, applyWord); };
+  $$('[data-tff]', box).forEach(b => b.onclick = () => { st.f = +b.dataset.tff; renderFactorSim(box, c, a, up, st, onApply, applyWord); });
+  simPrintWire(box, () => modelSim(c, a, `${u.label} zählt × ${fp(st.f)} statt ${lbl(u.f)} (erreichbar ${fp(R.tasksMax(A))} statt ${fp(R.tasksMax(a))} Punkte${a.key && a.key.preset === 'kmk' ? ', Schlüssel neu nach amtlicher Tabelle' : ', Grenzen im gleichen Prozentverhältnis'})`, vOf(a), vOf(A)));
+  const ap = box.querySelector('[data-tfapply]'); if (ap) ap.onclick = () => { const f = st.f; st.f = null; onApply(u, f); };
+}
+/* Simulation: ganze Klassenliste „jetzt → simuliert“; wer sich ändert, ist farbig hervorgehoben (grün besser, rot schlechter) */
+function simClassHTML(c, up, nowOf, simOf) {
+  const rows = c.students.map(s => ({ s, n: nowOf(s), m: simOf(s) })).filter(x => x.n != null || x.m != null);
+  const better = x => up ? x.m > x.n : x.m < x.n, lab = v => v == null ? '–' : up ? v + ' P.' : String(v);
+  const ch = rows.filter(x => x.n !== x.m), nb = ch.filter(better).length;
+  return `<div class="simCls"><p class="simClsH">${ch.length ? `<b>${ch.length}</b> ${ch.length === 1 ? 'Person ändert' : 'Personen ändern'} sich – <span class="cUp">${nb} besser</span>, <span class="cDn">${ch.length - nb} schlechter</span>` : 'Bei niemandem ändert sich die Note.'}</p>
+    <div class="simList">${rows.map(x => { const d = x.n !== x.m; return `<div class="${d ? (better(x) ? 'chg up' : 'chg down') : ''}"><span>${esc(x.s.name)}</span><b>${lab(x.n)}${d ? ` <i>→</i> ${lab(x.m)}` : ''}</b></div>`; }).join('')}</div>
+    <div class="panelBtns simPrint"><button type="button" class="mini" data-simprint="pdf">Simulation drucken (PDF)</button><button type="button" class="mini" data-simprint="docx">Word</button></div></div>`;
+}
+/* Ausdruck einer Simulation: Klassenliste jetzt → simuliert (nur zum Besprechen, z. B. mit der Fachbetreuung – an den Noten ändert sich nichts) */
+function modelSim(c, a, what, nowOf, simOf) {
+  const up = upper(c), lab = v => v == null ? '–' : up ? v + ' P.' : String(v), better = (n, m) => up ? m > n : m < n;
+  const stOf = f => { const vs = c.students.map(f).filter(v => v != null); const weak = up ? vs.filter(v => v < 5).length : vs.filter(v => v >= 5).length; return { n: vs.length, avg: vs.length ? R.mean(vs) : null, weak, vs }; };
+  const s0 = stOf(nowOf), s1 = stOf(simOf);
+  let nUp = 0, nDn = 0;
+  const rows = groupedRows(c, (s, i) => { const n = nowOf(s), m = simOf(s); const d = n != null && m != null && n !== m; if (d) { if (better(n, m)) nUp++; else nDn++; }
+    return { cells: [String(i + 1), s.name, lab(n), lab(m), d ? (better(n, m) ? 'besser' : 'schlechter') : ''], cls: d ? (better(n, m) ? 'up' : 'down') : '' }; });
+  rows.push({ cells: ['', 'Ø', s0.avg == null ? '' : fmt(s0.avg, 2), s1.avg == null ? '' : fmt(s1.avg, 2), ''], cls: 'foot' });
+  const weakL = up ? 'Unter 5 Punkten' : 'Noten 5 und 6';
+  const stats = [{ l: 'Ø jetzt', v: s0.avg == null ? '–' : fmt(s0.avg, 2), s: up ? 'Notenpunkte' : 'Note' }, { l: 'Ø simuliert', v: s1.avg == null ? '–' : fmt(s1.avg, 2), s: up ? 'Notenpunkte' : 'Note', key: true },
+    { l: weakL, v: s0.weak + ' → ' + s1.weak, s: 'jetzt → simuliert' }, { l: 'Geändert', v: String(nUp + nDn), s: `${nUp} besser · ${nDn} schlechter` }];
+  const labels = up ? Array.from({ length: 16 }, (_, i) => 15 - i) : [1, 2, 3, 4, 5, 6];
+  const cnt = st => labels.map(g => String(st.vs.filter(v => v === g).length));
+  const spiegel = { head: [up ? 'Punkte' : 'Note', ...labels.map(String)], rows: [['jetzt', ...cnt(s0)], ['simuliert', ...cnt(s1)]], small: true, keep: true, align: ['l'], widths: [5, ...labels.map(() => up ? 1.6 : 2.4)] };
+  const lnT = a.title || R.TYPES[a.type].label;
+  return { eyebrow: 'Simulation · ' + R.TYPES[a.type].label, title: lnT, file: fileName(lnT + ' Simulation', c, a.date),
+    subtitle: `${cLabel(c)}${a.date ? ' · ' + wdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c),
+    blocks: [{ note: 'Simuliert: ' + what + '\nNur ein Gedankenspiel – an den eingetragenen Noten ändert dieser Ausdruck nichts.' }, { stats },
+      { table: { head: ['Nr.', 'Name', 'jetzt', 'simuliert', 'Änderung'], rows, align: ['c', 'l'], bold: [3], widths: [3, 16, 5, 5, 6], dense: c.students.length > 24 } },
+      { h: 'Notenspiegel' }, { table: spiegel }] };
+}
+const simPrintWire = (box, mk) => $$('[data-simprint]', box).forEach(b => b.onclick = () => exportModel(mk(), b.dataset.simprint));
 const FACTORS = [0.5, 1, 1.5, 2, 2.5, 3, 4];   /* ×0,5: eine Aufgabe nachträglich nur halb werten (z. B. weil sie sehr schlecht ausgefallen ist) */
 const factorOpts = f => { const cur = +f > 0 ? +f : 1; return (FACTORS.includes(cur) ? FACTORS : FACTORS.concat(cur).sort((x, y) => x - y)).map(x => `<option value="${x}" ${x === cur ? 'selected' : ''}>× ${String(x).replace('.', ',')}</option>`).join(''); };
 /* Schritt (Raster) eines Notenschlüssels */
@@ -1381,8 +1491,8 @@ function partsSheet(c, a, focusSid) {
   const ps = a.parts, fp = x => x == null || x === '' ? '' : String(Math.round(x * 100) / 100).replace('.', ',');
   const up = upper(c), alt = !!a.alt, tnOn = p => p.kind !== 'n', unitW = up ? 'Punkte' : 'Note';
   a.results = a.results || {};
-  const STAT = up ? [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', '0*', '0* – versäumt ohne Entschuldigung oder verweigert: 0 Punkte (§ 26 Abs. 4 GSO)'], ['us', 'U', 'U – Unterschleif: 0 Punkte']]
-    : [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', '6*', '6* – versäumt ohne Entschuldigung oder verweigert: Note 6 (§ 26 Abs. 4 GSO)'], ['us', 'U', 'U – Unterschleif: Note 6']];
+  const STAT = up ? [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['nt', 'NT', 'NT – Nachtermin geschrieben: zählt für die Person, nicht im Notenspiegel/Ø der Arbeit'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', '0*', '0* – versäumt ohne Entschuldigung oder verweigert: 0 Punkte (§ 26 Abs. 4 GSO)'], ['us', 'U', 'U – Unterschleif: 0 Punkte']]
+    : [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['nt', 'NT', 'NT – Nachtermin geschrieben: zählt für die Person, nicht im Notenspiegel/Ø der Arbeit'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', '6*', '6* – versäumt ohne Entschuldigung oder verweigert: Note 6 (§ 26 Abs. 4 GSO)'], ['us', 'U', 'U – Unterschleif: Note 6']];
   const statText = (sel, long) => [...sel.options].forEach(o => { const x = STAT.find(z => z[0] === o.value); if (x) o.textContent = long ? x[2] : x[1]; });
   const keys = p => p.kind === 'is' ? ['i', 's'] : ['v'];
   const valOf = (r, p, k) => { const v = r && r.pp && r.pp[p.id]; if (v == null || v === '') return ''; return p.kind === 'is' ? (v[k] == null ? '' : v[k]) : v; };
@@ -1392,11 +1502,11 @@ function partsSheet(c, a, focusSid) {
     const res = r && r.status ? R.cellText(r, up) : r && r.v != null ? (up ? r.v + ' P.' : String(r.v)) + (r.cap ? ` <span class="sperr" title="${esc(r.cap)}">!</span>` : '') : '';
     return { ex, res }; };
   const rowHTML = (s, n) => { const r = a.results[s.id], cc = rowCells(s), dis = r && r.status ? 'disabled' : '';
-    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}</td>${ps.map(p => keys(p).map((k, j) => `<td class="${j === 0 ? 'pS' : ''}"><input class="cell ppc" data-s="${s.id}" data-p="${p.id}" data-k="${k}" value="${esc(fp(valOf(r, p, k)))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${dis} ${READONLY ? 'readonly' : ''}></td>`).join('') + (tnOn(p) ? `<td class="tn" data-tn="${p.id}">${tnCell(r, p)}</td>` : '')).join('')}<td class="sum">${cc.ex}</td><td class="res"><b>${cc.res}</b></td><td><select class="tkst" tabindex="-1" data-st="${s.id}" ${READONLY ? 'disabled' : ''}>${STAT.map(([v, sh]) => `<option value="${v}" ${(r && r.status || '') === v ? 'selected' : ''}>${sh}</option>`).join('')}</select></td></tr>`; };
+    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}</td>${ps.map(p => keys(p).map((k, j) => `<td class="${j === 0 ? 'pS' : ''}"><input class="cell ppc" data-s="${s.id}" data-p="${p.id}" data-k="${k}" value="${esc(fp(valOf(r, p, k)))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${dis} ${READONLY ? 'readonly' : ''}></td>`).join('') + (tnOn(p) ? `<td class="tn" data-tn="${p.id}">${tnCell(r, p)}</td>` : '')).join('')}<td class="sum">${cc.ex}</td><td class="res"><b>${cc.res}</b></td><td><select class="tkst" tabindex="-1" data-st="${s.id}" ${READONLY ? 'disabled' : ''}>${STAT.map(([v, sh]) => `<option value="${v}" ${(r && (r.status || (r.nt ? 'nt' : '')) || '') === v ? 'selected' : ''}>${sh}</option>`).join('')}</select></td></tr>`; };
   const avg = list => { const v = list.filter(x => x != null && x !== '' && isFinite(+x)).map(Number); return v.length ? fp(R.mean(v)) : ''; };
   const foot = () => { const rs = c.students.map(s => a.results[s.id]).filter(r => r && !r.status && r.pp);
     return `<tr class="avgRow"><td></td><td class="nm">Ø ${up ? 'Kurs' : 'Klasse'}</td>${ps.map(p => keys(p).map(k => `<td>${avg(rs.map(r => valOf(r, p, k)))}</td>`).join('') + (tnOn(p) ? `<td class="tn">${avg(rs.map(r => { const n = R.partNote(p, r.pp[p.id]); return n ? n.tn : null; }))}</td>` : '')).join('')}<td class="sum">${avg(rs.map(r => r.exact))}</td><td class="res"><b>${avg(rs.map(r => r.v))}</b></td><td></td></tr>`; };
-  const summary = () => { const d = R.distribution(a, c.students, up); return d.n ? `<span class="avgPill">Ø <b>${fmt(d.avg, 2)}</b>${up ? ' Punkte' : ''}</span><span>Teilnehmer: <b>${d.n}</b></span><span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${d.weak}</b></span>` : 'Noch keine vollständigen Ergebnisse.'; };
+  const summary = () => { const d = R.distribution(a, c.students, up); return d.n ? `<span class="avgPill">Ø <b>${fmt(d.avg, 2)}</b>${up ? ' Punkte' : ''}</span>${countSpan(c, a, up)}<span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${d.weak}</b></span>` : 'Noch keine vollständigen Ergebnisse.'; };
   const head = () => `<tr class="hg1"><th rowspan="2">Nr.</th><th rowspan="2">Name</th>${ps.map(p => `<th colspan="${keys(p).length + (tnOn(p) ? 1 : 0)}" class="tkG"><div class="tkGh"><b>${esc(p.label)}</b><span class="pwB">${alt ? 'Gewicht ' + fp(p.w) : fp(p.w) + ' %'}</span></div></th>`).join('')}<th rowspan="2" title="Gewichteter Durchschnitt der Teilnoten, ungerundet">genau</th><th rowspan="2">${unitW}</th><th rowspan="2" title="Besonderheit statt Punkten">Status</th></tr>
     <tr class="hg2">${ps.map(p => p.kind === 'n' ? `<th class="gsub" title="Teilnote ${up ? 'in Notenpunkten' : 'als ganze Note'}">${unitW}<small>${up ? '0–15' : '1–6'}</small></th>` : (p.kind === 'is' ? `<th class="gsub" title="Inhalt und Textstruktur, 0–15 Notenpunkte (40 %)">Inhalt<small>0–15</small></th><th class="gsub" title="Sprache, 0–15 Notenpunkte (60 %)">Sprache<small>0–15</small></th>` : `<th class="gsub" title="Erreichte Bewertungseinheiten">BE<small>max. ${fp(p.max)}</small></th>`) + '<th class="gsub tnH" title="Teilnote in Notenpunkten">Teilnote</th>').join('')}</tr>`;
   const body = () => alt ? `<details class="tkHelp"><summary><span>Je Person die Teilnote für <b>Übersetzung</b> und <b>Aufgabenteil</b> (${up ? 'Notenpunkte 0–15' : 'ganze Noten 1–6'}). <b>Enter</b> = eine Zeile nach unten, <b>Tab</b> = ein Feld nach rechts.</span><em>Mehr dazu</em></summary>
@@ -1404,7 +1514,7 @@ function partsSheet(c, a, focusSid) {
       <p class="hint">BE-Teile: Teilnote nach dem Lösungsgrad wie im Abitur (95 % = 15, 90 % = 14 … 27 % = 2, 20 % = 1, darunter 0). Inhalt + Sprache: Teilnote = 40 % Inhalt + 60 % Sprache; ist Inhalt oder Sprache 0 Punkte, höchstens 3 Notenpunkte (Sperrklausel, rot markiert). Ergebnis: Teilnoten nach den Anteilen gemittelt („genau“), dann gerundet. Erst wenn alle Teile einer Person eingetragen sind, gibt es Punkte. Prüfungsteile und Anteile änderst du unter „Leistungsnachweis bearbeiten“.</p></details>
     ${bodyTbl()}`;
   const bodyTbl = () => `<div class="tkWrap"><table class="tkTbl ppTbl"><thead>${head()}</thead><tbody>${groupsOf(c).map(g => (g.label ? `<tr class="grpRow"><td colspan="99">${esc(g.label)}</td></tr>` : '') + g.students.map(s => rowHTML(s, c.students.indexOf(s) + 1)).join('')).join('')}</tbody><tfoot>${foot()}</tfoot></table></div>
-    <p class="tkLegend"><b>Status</b> – nur wenn jemand keine Teilnoten bekommt: <b>E</b> entschuldigt gefehlt (Nachtermin offen, zählt noch nicht) · <b>B</b> befreit (zählt nicht) · <b>${up ? '0*' : '6*'}</b> versäumt ohne Entschuldigung oder verweigert = ${up ? '0 Punkte' : 'Note 6'} · <b>U</b> Unterschleif = ${up ? '0 Punkte' : 'Note 6'}</p>
+    <p class="tkLegend"><b>Status</b> – nur wenn jemand keine Teilnoten bekommt: <b>E</b> entschuldigt gefehlt (Nachtermin offen, zählt noch nicht) · <b>NT</b> Nachtermin geschrieben (zählt für die Person, nicht im Notenspiegel) · <b>B</b> befreit (zählt nicht) · <b>${up ? '0*' : '6*'}</b> versäumt ohne Entschuldigung oder verweigert = ${up ? '0 Punkte' : 'Note 6'} · <b>U</b> Unterschleif = ${up ? '0 Punkte' : 'Note 6'}</p>
     <p class="meta" id="tkSum">${summary()}</p>`;
   const { dlg } = sheet({ title: (a.title || R.TYPES[a.type].label) + (alt ? ' – Übersetzung und Aufgabenteil' : ' – Prüfungsteile'), ok: '', cancel: 'Fertig', wide: true, body: body() });
   dlg.classList.add('tkDlg');
@@ -1435,9 +1545,11 @@ function partsSheet(c, a, focusSid) {
       save(); refresh(sid);
     } else if (el.matches('.tkst')) {
       const sid = el.dataset.st; const r = a.results[sid] || (a.results[sid] = {});
-      if (el.value) { r.status = el.value; delete r.v; delete r.exact; } else { delete r.status; R.applyParts(a, r); }
-      if (!Object.keys(r.pp || {}).length && !r.status) delete a.results[sid];
-      save(); const tr = el.closest('tr'); $$('.ppc', tr).forEach(i => i.disabled = !!el.value); refresh(sid);
+      const wasE = r.status === 'ent';
+      if (el.value && el.value !== 'nt') { r.status = el.value; delete r.nt; delete r.v; delete r.exact; } else { delete r.status; if (el.value === 'nt' || wasE) { r.nt = true; if (wasE && !el.value) { el.value = 'nt'; toast('Als Nachtermin markiert (NT) – zählt für die Person, nicht im Notenspiegel/Ø der Arbeit'); } } else delete r.nt; R.applyParts(a, r); }
+      const dis0 = !!el.value && el.value !== 'nt';
+      if (!Object.keys(r.pp || {}).length && !r.status && !r.nt) delete a.results[sid];
+      save(); const tr = el.closest('tr'); $$('.ppc', tr).forEach(i => i.disabled = dis0); refresh(sid);
     }
   });
   ['mousedown', 'focusin', 'keydown'].forEach(ev => dlg.addEventListener(ev, e => { if (e.target.matches && e.target.matches('.tkst')) statText(e.target, true); }));
@@ -1466,7 +1578,7 @@ function taskSheet(c, a, focusSid) {
   tasks.forEach((t, i) => { const n = tasks[i + 1]; if (!t.g && n && !n.g && t.label === 'Inhalt' && n.label === 'Sprache' && R.taskF(t) === R.taskF(n)) { const g = uid(); t.g = n.g = g; t.gl = n.gl = 'Schreiben'; } });
   const WORST = up ? '0 Punkte' : 'Note 6';
   /* [Wert, Kürzel in der Tabelle, ausgeschrieben (erscheint, sobald die Auswahl aufklappt)] */
-  const STAT = [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', up ? '0*' : '6*', `${up ? '0*' : '6*'} – versäumt ohne Entschuldigung oder verweigert: ${WORST} (§ 26 Abs. 4 GSO)`], ['us', 'U', `U – Unterschleif: ${WORST}`]];
+  const STAT = [['', '–', '– nichts Besonderes'], ['ent', 'E', 'E – entschuldigt gefehlt, Nachtermin offen (zählt noch nicht)'], ['nt', 'NT', 'NT – Nachtermin geschrieben: zählt für die Person, nicht im Notenspiegel/Ø der Arbeit'], ['bef', 'B', 'B – befreit (zählt nicht)'], ['n6', up ? '0*' : '6*', `${up ? '0*' : '6*'} – versäumt ohne Entschuldigung oder verweigert: ${WORST} (§ 26 Abs. 4 GSO)`], ['us', 'U', `U – Unterschleif: ${WORST}`]];
   const statText = (sel, long) => [...sel.options].forEach(o => { const x = STAT.find(z => z[0] === o.value); if (x) o.textContent = long ? x[2] : x[1]; });
   const cells = s => {
     const r = a.results[s.id] || {}, ent = tasks.filter(t => r.pts && r.pts[t.id] != null && r.pts[t.id] !== '');
@@ -1490,7 +1602,7 @@ function taskSheet(c, a, focusSid) {
   };
   const rowHTML = (s, n) => {
     const r = a.results[s.id] || {}, cc = cells(s), aw = !a.results[s.id] && isAway(c, s.id, a.date);
-    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}${aw ? ' <small class="hint">abwesend laut Kurseinstellung</small>' : ''}</td>${tasks.map((t, i) => `<td${t.g ? ` class="tkInG${!i || tasks[i - 1].g !== t.g ? ' gS' : ''}${i === tasks.length - 1 || tasks[i + 1].g !== t.g ? ' gE' : ''}"` : ''}><input class="cell tkc" data-s="${s.id}" data-t="${t.id}" value="${esc(fp(r.pts && r.pts[t.id]))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${r.status ? 'disabled' : ''}></td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${cc.sum}</td><td class="res"><b>${cc.res}</b>${cc.near}</td><td><select class="tkst" tabindex="-1" data-st="${s.id}" title="Besonderheit: E entschuldigt gefehlt (Nachtermin) · B befreit · ${up ? '0*' : '6*'} versäumt/verweigert · U Unterschleif">${STAT.map(([v, l]) => `<option value="${v}" ${(r.status || '') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`;
+    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}${aw ? ' <small class="hint">abwesend laut Kurseinstellung</small>' : ''}</td>${tasks.map((t, i) => `<td${t.g ? ` class="tkInG${!i || tasks[i - 1].g !== t.g ? ' gS' : ''}${i === tasks.length - 1 || tasks[i + 1].g !== t.g ? ' gE' : ''}"` : ''}><input class="cell tkc" data-s="${s.id}" data-t="${t.id}" value="${esc(fp(r.pts && r.pts[t.id]))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${r.status ? 'disabled' : ''}></td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${cc.sum}</td><td class="res"><b>${cc.res}</b>${cc.near}</td><td><select class="tkst" tabindex="-1" data-st="${s.id}" title="Besonderheit: E entschuldigt gefehlt (Nachtermin) · B befreit · ${up ? '0*' : '6*'} versäumt/verweigert · U Unterschleif">${STAT.map(([v, l]) => `<option value="${v}" ${(r.status || (r.nt ? 'nt' : '')) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`;
   };
   const colN = () => tasks.length + 6;
   const foot = () => {
@@ -1499,7 +1611,7 @@ function taskSheet(c, a, focusSid) {
     return `<tr class="ft"><td></td><td class="nm">Ø Punkte</td>${st.map(t => `<td>${t.avg == null ? '' : fp(t.avg)}</td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${dist.n ? fp(c.students.map(x => a.results[x.id]).filter(r => r && !r.status && r.raw != null).reduce((x, r, _, l) => x + r.raw / l.length, 0)) : ''}</td><td colspan="2"></td></tr>
       <tr class="ft"><td></td><td class="nm">Lösungsquote</td>${st.map(t => `<td>${pct(t.quote)}</td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${dist.n ? pct(c.students.map(x => a.results[x.id]).filter(r => r && !r.status && r.raw != null).reduce((x, r, _, l) => x + r.raw / l.length, 0) / R.tasksMax(a)) : ''}</td><td colspan="2"></td></tr>`;
   };
-  const summary = () => { const d = R.distribution(a, c.students, up); return d.n ? `<span class="avgPill" title="Durchschnitt der bisher vollständigen Ergebnisse">Ø <b>${fmt(d.avg, 2)}</b></span><span>Teilnehmer: <b>${d.n}</b></span><span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${d.weak}</b></span>${nearCount() ? `<span class="near">knapp dran: <b>${nearCount()}</b></span>` : ''}` : 'Noch keine vollständigen Ergebnisse.'; };
+  const summary = () => { const d = R.distribution(a, c.students, up); return d.n ? `<span class="avgPill" title="Durchschnitt der bisher vollständigen Ergebnisse">Ø <b>${fmt(d.avg, 2)}</b></span>${countSpan(c, a, up)}<span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${d.weak}</b></span>${nearCount() ? `<span class="near">knapp dran: <b>${nearCount()}</b></span>` : ''}` : 'Noch keine vollständigen Ergebnisse.'; };
   let n = 0;
   const hasAnyPts = () => Object.values(a.results).some(r => r && r.pts && Object.keys(r.pts).length);
   const taskTh = (t, sub, rs) => `<th data-t="${t.id}"${rs ? ' rowspan="2"' : ''}${sub ? ' class="gsub"' : ''}><input class="tkl" data-t="${t.id}" value="${esc(t.label)}" maxlength="12" title="Name der Aufgabe – zum Ändern anklicken" aria-label="Name der Aufgabe" ${READONLY ? 'readonly' : ''}><input class="tkm" data-t="${t.id}" value="${fp(t.max)}" inputmode="decimal" title="Erreichbare Punkte dieser Aufgabe" aria-label="Höchstpunkte Aufgabe ${esc(t.label)}" ${READONLY ? 'readonly' : ''}>${sub ? '' : `<select class="tkf${R.taskF(t) !== 1 ? ' on' : ''}" data-t="${t.id}" tabindex="-1" title="Faktor: Die Punkte dieser Aufgabe zählen mehrfach – z. B. × 2" aria-label="Faktor Aufgabe ${esc(t.label)}" ${READONLY ? 'disabled' : ''}>${factorOpts(t.f)}</select>${!READONLY && tasks.length > 1 ? `<button type="button" class="tkdel" data-t="${t.id}" title="Aufgabe entfernen" aria-label="Aufgabe ${esc(t.label)} entfernen">×</button>` : ''}`}</th>`;
@@ -1521,11 +1633,13 @@ function taskSheet(c, a, focusSid) {
     <div class="tkWrap"><table class="tkTbl"><thead>${headHTML()}</thead>
       <tbody>${(n = 0, groupsOf(c).map(g => (g.label ? `<tr class="clsRow"><td colspan="${colN()}">${esc(g.label)}</td></tr>` : '') + g.students.map(s => rowHTML(s, ++n)).join('')).join(''))}</tbody><tfoot>${foot()}</tfoot></table></div>
     <div class="tkKey" id="tkKey" title="Der Notenschlüssel dieser Arbeit – ändern kannst du ihn unter „Leistungsnachweis bearbeiten“">${keyStrip()}</div>
-    <p class="tkLegend"><b>Status</b> – nur wenn jemand keine Punkte bekommt: <b>E</b> entschuldigt gefehlt (Nachtermin offen, zählt noch nicht) · <b>B</b> befreit (zählt nicht) · <b>${up ? '0*' : '6*'}</b> versäumt ohne Entschuldigung oder verweigert = ${WORST} · <b>U</b> Unterschleif = ${WORST}</p>
+    <p class="tkLegend"><b>Status</b> – nur wenn jemand keine Punkte bekommt: <b>E</b> entschuldigt gefehlt (Nachtermin offen, zählt noch nicht) · <b>NT</b> Nachtermin geschrieben (zählt für die Person, nicht im Notenspiegel) · <b>B</b> befreit (zählt nicht) · <b>${up ? '0*' : '6*'}</b> versäumt ohne Entschuldigung oder verweigert = ${WORST} · <b>U</b> Unterschleif = ${WORST}</p>
     <p class="meta" id="tkSum">${summary()}</p>`;
-  const body = () => `<div id="tkRoot">${inner()}</div>`;
+  const body = () => `<div id="tkRoot">${inner()}</div>
+    <details class="sim tfSim" id="tfSim"><summary>Simulation: Was passiert, wenn eine Aufgabe anders zählt (z. B. halb oder doppelt)?</summary><div id="tfBody"></div></details>`;
   const { dlg } = sheet({ title: (a.title || R.TYPES[a.type].label) + ' – Punkte je Aufgabe', ok: '', cancel: 'Fertig', wide: true, body: body() });
   dlg.classList.add('tkDlg');
+  dlg.querySelector('#tfSim').addEventListener('toggle', tfRender);
   const refreshRow = sid => { const s = c.students.find(x => x.id === sid), tr = dlg.querySelector(`tr[data-s="${sid}"]`); if (!s || !tr) return; const cc = cells(s); tr.querySelector('.sum').innerHTML = cc.sum; tr.querySelector('.res').innerHTML = `<b>${cc.res}</b>${cc.near}`; const kb = dlg.querySelector('#tkKey'); if (kb) kb.innerHTML = keyStrip(); dlg.querySelector('tfoot').innerHTML = foot(); dlg.querySelector('#tkSum').innerHTML = summary(); };
   const bad = (el, msg) => { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast(msg); const r0 = a.results[el.dataset.s]; el.value = fp(r0 && r0.pts ? r0.pts[el.dataset.t] : null); el.select(); };
   dlg.addEventListener('change', e => {
@@ -1541,9 +1655,11 @@ function taskSheet(c, a, focusSid) {
       save(); refreshRow(sid);
     } else if (el.matches('.tkst')) {
       const sid = el.dataset.st; let r = a.results[sid] || (a.results[sid] = {});
-      if (el.value) { r.status = el.value; delete r.raw; delete r.v; delete r.tend; } else { delete r.status; R.applyTasks(a, r, up); }
-      if (!Object.keys(r.pts || {}).length && !r.status) delete a.results[sid];
-      save(); const tr = el.closest('tr'); $$('.tkc', tr).forEach(i => i.disabled = !!el.value); refreshRow(sid);
+      const wasE = r.status === 'ent';
+      if (el.value && el.value !== 'nt') { r.status = el.value; delete r.nt; delete r.raw; delete r.v; delete r.tend; } else { delete r.status; if (el.value === 'nt' || wasE) { r.nt = true; if (wasE && !el.value) { el.value = 'nt'; toast('Als Nachtermin markiert (NT) – zählt für die Person, nicht im Notenspiegel/Ø der Arbeit'); } } else delete r.nt; R.applyTasks(a, r, up); }
+      const dis0 = !!el.value && el.value !== 'nt';
+      if (!Object.keys(r.pts || {}).length && !r.status && !r.nt) delete a.results[sid];
+      save(); const tr = el.closest('tr'); $$('.tkc', tr).forEach(i => i.disabled = dis0); refreshRow(sid);
     }
   });
   dlg.addEventListener('keydown', e => {
@@ -1563,7 +1679,7 @@ function taskSheet(c, a, focusSid) {
   ['mousedown', 'focusin', 'keydown'].forEach(ev => dlg.addEventListener(ev, e => { if (e.target.matches && e.target.matches('.tkst')) statText(e.target, true); }));
   ['change', 'focusout'].forEach(ev => dlg.addEventListener(ev, e => { if (e.target.matches && e.target.matches('.tkst')) statText(e.target, false); }));
   /* ---- Aufgaben im Blatt anlegen / ändern (wie in Excel) ---- */
-  const redraw = () => { dlg.querySelector('#tkRoot').innerHTML = inner(); };
+  const redraw = () => { dlg.querySelector('#tkRoot').innerHTML = inner(); tfRender(); };
   const recompute = () => {
     Object.values(a.results).forEach(r => {
       if (!r || r.status) return;
@@ -1574,22 +1690,18 @@ function taskSheet(c, a, focusSid) {
     });
   };
   /* Summe geändert: Notenschlüssel auf die neue Summe umrechnen (KMK-Raster neu, eigene Grenzen im gleichen Prozentverhältnis) */
-  const rekey = () => {
-    const max = R.tasksMax(a), k = a.key; if (!k || !max) return; const old = +k.max || 0; if (max === old) return;
-    const step = (k.anchors && +k.anchors.step) || 0.5;
-    if (k.preset === 'kmk') {
-      const kk = R.suggestKeyKmk(max, up, step, up ? true : k.tend !== false);
-      if (up) k.pointThresholds = kk.pointThresholds; else { k.thresholds = kk.thresholds; if (k.tend) k.tendThresholds = kk.tendThresholds; }
-    } else if (old) {
-      /* Eigene Grenzen: Sind sie noch genau die aus den Prozentwerten berechneten, wird für die neue Summe wieder aus den Prozentwerten gerechnet
-         (sonst gingen sie bei kleinen Summen – etwa der Startspalte mit 1 Punkt – durch das Runden verloren). Von Hand geänderte Grenzen wandern im gleichen Verhältnis mit. */
-      const key = up ? 'pointThresholds' : 'thresholds', pct = up ? k.pct15 : k.pct;
-      const calc = m => pct && pct.length ? (up ? R.suggestKey15(m, pct, step).pointThresholds : R.suggestKey(m, pct, step).thresholds) : null;
-      const was = calc(old), untouched = was && k[key] && was.length === k[key].length && was.every((x, i) => Math.abs(x - +k[key][i]) < 1e-9);
-      if (untouched) k[key] = calc(max); else if (k[key]) k[key] = k[key].map(x => R.ceilStep(x / old * max, step));
-    }
-    k.max = max;
-  };
+  const rekey = () => rekeyOf(a);
+  const rekeyOf = A => rekeyAssessment(A, up);
+  /* ---- Simulation: Faktor einer Aufgabe ändern (gemeinsamer Baustein, auch im Fenster „Leistungsnachweis bearbeiten“) ---- */
+  const tfState = {};
+  function tfRender() {
+    const det = dlg.querySelector('#tfSim'), box = dlg.querySelector('#tfBody'); if (!det || !box) return;
+    det.hidden = !a.tasks.length || !a.key; if (!det.open || det.hidden) return;
+    renderFactorSim(box, c, a, up, tfState, (u, f) => {
+      const sel = u.key.startsWith('g:') ? dlg.querySelector(`select.tkf[data-g="${u.key.slice(2)}"]`) : dlg.querySelector(`select.tkf[data-t="${u.key.slice(2)}"]`);
+      if (!sel) return; if (![...sel.options].some(o => +o.value === f)) sel.insertAdjacentHTML('beforeend', `<option value="${f}">× ${String(f).replace('.', ',')}</option>`);
+      sel.value = String(f); sel.dispatchEvent(new Event('change', { bubbles: true })); toast(`${u.label} zählt jetzt × ${String(f).replace('.', ',')}`); }, 'ab jetzt');
+  }
   const changed = (focusSel) => { rekey(); recompute(); save(); redraw(); if (focusSel) { const el = dlg.querySelector(focusSel); if (el) { el.focus(); el.select && el.select(); } } };
   const numOf = v => { const x = String(v).trim().replace(',', '.'); return /^\d+(\.\d+)?$/.test(x) && +x > 0 && +x <= 1000 ? +x : null; };
   const addTask = (v) => {
@@ -2223,9 +2335,23 @@ const cLabel = c => (c.name || '').toLowerCase().includes((c.subject || '').toLo
 const f2 = x => x == null || x === '' || !isFinite(+x) ? '' : String(Math.round(+x * 100) / 100).replace('.', ',');
 const avgTxt = (list, dg = 2) => { const v = list.filter(x => x != null && x !== '' && isFinite(+x)).map(Number); return v.length ? fmt(R.mean(v), dg) : ''; };
 /* Kürzel-Erklärung nur für die Kürzel, die im Ausdruck vorkommen */
+/* Wer zählt bei einer Arbeit? Gewertet = alle mit Note, auch 6* (unentschuldigt versäumt, § 26 Abs. 4 GSO) und Unterschleif;
+   nicht gewertet: entschuldigt (Nachtermin offen), befreit, noch ohne Eintrag */
+function countInfo(c, a, up) {
+  const rs = c.students.map(s => a.results && a.results[s.id]);
+  const by = k => rs.filter(r => r && r.status === k).length;
+  const nt = rs.filter(r => r && r.nt && R.valueOf(r, up) != null).length;
+  const n = rs.filter(r => r && !r.nt && R.valueOf(r, up) != null).length, n6 = by('n6'), us = by('us'), ent = by('ent'), bef = by('bef');
+  const leer = c.students.length - n - nt - ent - bef;
+  const inn = [n6 ? `${n6} × ${up ? '0*' : '6*'} (unentschuldigt versäumt)` : '', us ? `${us} × Unterschleif` : ''].filter(Boolean);
+  const out = [nt ? `${nt} Nachtermin (eigene Arbeit)` : '', ent ? `${ent} entschuldigt` : '', bef ? `${bef} befreit` : '', leer > 0 ? `${leer} ohne Eintrag` : ''].filter(Boolean);
+  return { n, all: c.students.length, txt: `${n} von ${c.students.length}` + (inn.length ? ' · mitgezählt: ' + inn.join(', ') : '') + (out.length ? ' · nicht gezählt: ' + out.join(', ') : '') };
+}
+const countSpan = (c, a, up) => { const ci = countInfo(c, a, up); return `<span title="${esc(ci.txt)}">Gewertet: <b>${ci.n}</b> von ${ci.all}</span>`; };
 function statusNote(results, up) {
   const used = new Set(Object.values(results || {}).filter(r => r && r.status).map(r => r.status));
-  const T = { ent: 'E = entschuldigt, Nachtermin offen', bef: 'B = befreit (zählt nicht)', n6: (up ? '0*' : '6*') + ' = versäumt ohne Entschuldigung oder verweigert (§ 26 Abs. 4 GSO)', us: 'U = Unterschleif' };
+  if (Object.values(results || {}).some(r => r && r.nt && !r.status)) used.add('nt');
+  const T = { nt: 'NT = Nachtermin (zählt für die Person, nicht im Notenspiegel/Ø dieser Arbeit)', ent: 'E = entschuldigt, Nachtermin offen', bef: 'B = befreit (zählt nicht)', n6: (up ? '0*' : '6*') + ' = versäumt ohne Entschuldigung oder verweigert (§ 26 Abs. 4 GSO)', us: 'U = Unterschleif' };
   const list = Object.keys(T).filter(k => used.has(k)).map(k => T[k]);
   return list.length ? 'Kürzel: ' + list.join(' · ') + '.' : '';
 }
@@ -2292,14 +2418,14 @@ function modelAssessment(c, a, opt = {}) {
   const lnT = a.title || R.TYPES[a.type].label, parts = R.byParts(a), tasksMode = R.byTask(a);
   const detail = !!opt.detail && (tasksMode || parts);
   const res = s => a.results && a.results[s.id];
-  const noteTxt = s => R.cellText(res(s), up) || (isAway(c, s.id, a.date) ? 'abw.' : '–');
-  const raws = a.usePoints ? c.students.map(res).filter(r => r && !r.status && r.raw != null && r.raw !== '' && isFinite(+r.raw)).map(r => +r.raw).sort((x, y) => x - y) : [];
+  const noteTxt = s => { const r = res(s); const t = R.cellText(r, up); return t ? t + (r && r.nt && !r.status ? ' NT' : '') : (isAway(c, s.id, a.date) ? 'abw.' : '–'); };
+  const raws = a.usePoints ? c.students.map(res).filter(r => r && !r.status && !r.nt && r.raw != null && r.raw !== '' && isFinite(+r.raw)).map(r => +r.raw).sort((x, y) => x - y) : [];
   const avgRaw = raws.length ? R.mean(raws) : null, maxP = a.key && (tasksMode ? R.tasksMax(a) : +a.key.max);
   const exacts = parts ? c.students.map(res).filter(r => r && !r.status && r.exact != null).map(r => +r.exact) : [];
   /* Kennzahlen oben – der Durchschnitt groß und hervorgehoben */
   const stats = [{ l: 'Durchschnitt', v: dist.n ? fmt(dist.avg, 2) : '–', s: dist.n ? unit : 'noch keine Ergebnisse', key: true },
-    { l: 'Teilnehmer', v: String(dist.n), s: `von ${c.students.length} Schülern` },
-    { l: up ? 'Unter 5 Punkten' : 'Noten 5 und 6', v: String(dist.weak), s: dist.n ? Math.round(dist.weakShare * 100) + ' % der Teilnehmer' : '' }];
+    { l: 'Gewertet', v: String(dist.n), s: `von ${c.students.length} Schülern` },
+    { l: up ? 'Unter 5 Punkten' : 'Noten 5 und 6', v: String(dist.weak), s: dist.n ? Math.round(dist.weakShare * 100) + ' % der Gewerteten' : '' }];
   if (raws.length && maxP) stats.push({ l: 'Ø Punkte', v: f2(avgRaw), s: `von ${f2(maxP)} · ${Math.round(avgRaw / maxP * 100)} %` });
   if (parts && exacts.length) stats.push({ l: 'Ø ungerundet', v: f2(R.mean(exacts)), s: (up ? 'Notenpunkte' : 'Noten') + ' vor dem Runden' });
   /* Liste */
@@ -2344,23 +2470,31 @@ function modelAssessment(c, a, opt = {}) {
   if (dist.n) right.push({ bars: { labels, values: counts, upper: up, w: up ? 330 : 300, h: 132 } }); else right.push({ note: 'Noch keine Ergebnisse.' });
   const kr = a.usePoints && a.key ? keyRanges(a, up) : null;
   if (kr) {
-    right.push({ h: 'Notenschlüssel' + (a.key.preset === 'kmk' ? ' (KMK-Raster)' : '') });
-    right.push({ table: { head: [up ? 'Punkte' : 'Note', 'Rohpunkte', 'Anzahl'], rows: kr.map((g, i) => [up ? `${g.label} (${R.POINT_LABEL(+g.label)})` : g.label, `${f2(g.lo)} – ${f2(g.hi)}`, String(counts[i] || 0)]), small: up, widths: [3, 6, 3] } });
+    right.push({ h: 'Notenschlüssel' + (a.key.preset === 'kmk' ? (up ? ' (amtliche BE-Tabelle)' : ' (KMK-Raster)') : '') });
+    const kRow = (g, i) => [up ? `${g.label} (${R.POINT_LABEL(+g.label)})` : g.label, `${f2(g.lo)} – ${f2(g.hi)}`, String(counts[i] || 0)];
+    if (up) {   /* 16 Stufen in zwei Hälften nebeneinander (15–8 | 7–0): halb so hoch, passt neben bzw. unter die Liste, ohne Seitenumbruch */
+      const h = Math.ceil(kr.length / 2);
+      right.push({ table: { head: ['Punkte', 'Rohpunkte', 'Anz.', 'Punkte', 'Rohpunkte', 'Anz.'], rows: kr.slice(0, h).map((g, i) => [...kRow(g, i), ...(kr[i + h] ? kRow(kr[i + h], i + h) : ['', '', ''])]), small: true, keep: true, widths: [3.4, 5, 2, 3.4, 5, 2], gEdge: { 2: 'gR', 3: 'gL' } } });
+    } else right.push({ table: { head: ['Note', 'Rohpunkte', 'Anzahl'], rows: kr.map(kRow), keep: true, widths: [3, 6, 3] } });
   }
-  if (parts && a.alt) right.push({ h: 'Gewichtung' }, { table: { head: ['Teil', 'Bewertung', 'Gewicht'], rows: a.parts.map(p => [p.label, up ? 'Notenpunkte' : 'ganze Note', f2(p.w)]), align: ['l', 'l'], small: true, widths: [5, 7, 2.4] } });
-  else if (parts) right.push({ h: 'Gewichtung' }, { table: { head: ['Prüfungsteil', 'Bewertung', 'Anteil'], rows: a.parts.map(p => [p.label, p.kind === 'is' ? 'Inhalt 40 % · Sprache 60 %' : `BE (max. ${f2(p.max)}) → Lösungsgrad`, f2(p.w) + ' %']), align: ['l', 'l'], small: true, widths: [5, 7, 2.4] } });
+  if (parts && a.alt) right.push({ h: 'Gewichtung' }, { table: { head: ['Teil', 'Bewertung', 'Gewicht'], rows: a.parts.map(p => [p.label, up ? 'Notenpunkte' : 'ganze Note', f2(p.w)]), align: ['l', 'l'], small: true, keep: true, widths: [5, 7, 2.4] } });
+  else if (parts) right.push({ h: 'Gewichtung' }, { table: { head: ['Prüfungsteil', 'Bewertung', 'Anteil'], rows: a.parts.map(p => [p.label, p.kind === 'is' ? 'Inhalt 40 % · Sprache 60 %' : `BE (max. ${f2(p.max)}) → Lösungsgrad`, f2(p.w) + ' %']), align: ['l', 'l'], small: true, keep: true, widths: [5, 7, 2.4] } });
   const notes = [];
   if (raws.length) { const med = raws.length % 2 ? raws[(raws.length - 1) / 2] : (raws[raws.length / 2 - 1] + raws[raws.length / 2]) / 2; notes.push(`Rohpunkte: Ø ${f2(avgRaw)} · Median ${f2(med)} · höchste ${f2(raws[raws.length - 1])} · niedrigste ${f2(raws[0])}${maxP ? ' · erreichbar ' + f2(maxP) : ''}.`); }
   if (!up && a.usePoints && a.key && a.key.preset === 'kmk' && a.key.tend) notes.push('Tendenzen aus dem 15-Punkte-Raster.');
   if (parts && a.alt) notes.push(`Zweigeteilte Schulaufgabe nach KMS vom 31.07.2023 (V.3-BS5402.7/135/1): Übersetzung und Aufgabenteil getrennt bewertet, Gesamtnote = gewichteter Durchschnitt ${f2(a.parts[0].w)} : ${f2(a.parts[1].w)}, bei n,5 die bessere Note.${a.alt.ue5 ? ' „Ausreichend“ nur bei mindestens „mangelhafter“ Übersetzung.' : ''}${a.alt.g11 ? ' „Befriedigend“ nur, wenn kein Teil „ungenügend“ ist.' : ''}${a.alt.up ? ' Hat ein Teil 0 Punkte, höchstens 6 Punkte (Anlage 2).' : ''}`);
   else if (parts) notes.push('Teilnote Hörverstehen o. Ä.: Anteil der BE nach Abitur-Tabelle (95 % = 15 … 20 % = 1 Punkt). Schreiben/Sprachmittlung: 40 % Inhalt + 60 % Sprache; ist Inhalt oder Sprache 0 Punkte, höchstens 3 Punkte (Sperrklausel' + (opt._sperr ? ', mit * markiert' : '') + '). Gesamt: gewichteter Durchschnitt, gerundet.');
   const sn = statusNote(a.results, up); if (sn) notes.push(sn);
+  { const ci = countInfo(c, a, up); if (ci.n !== ci.all) notes.push('Gewertet: ' + ci.txt + '.'); }
   if (notes.length) right.push({ note: notes.join('\n') });
+  /* lange Klassenlisten (bis ca. 34) etwas enger setzen, damit Liste und Auswertung möglichst auf eine Seite passen */
+  if (table && c.students.length > 20) table.dense = true;
   const sideBySide = !detail && c.students.length <= 34;
   const blocks = [{ stats }];
-  if (sideBySide) blocks.push({ split: [[{ table }], right], cols: '1.25fr 1fr' });
+  /* Unterschrift gehört zur Auswertung (rechte Spalte) – so steht sie nie allein auf einer neuen Seite */
+  right.push({ sig: R.isBig(a) ? ['Datum, Unterschrift der Lehrkraft', 'Kenntnisnahme Fachbetreuung'] : ['Datum, Unterschrift der Lehrkraft'] });
+  if (sideBySide) blocks.push({ split: [[{ table }], right], cols: '1.25fr 1fr', long: c.students.length > 22 });
   else { blocks.push({ table }); const [h0, b0, ...rest] = right; blocks.push({ split: [[h0, b0], rest], cols: '1fr 1fr' }); }
-  blocks.push({ sig: R.isBig(a) ? ['Datum, Unterschrift der Lehrkraft', 'Kenntnisnahme Fachbetreuung'] : ['Datum, Unterschrift der Lehrkraft'] });
   return { eyebrow: (detail ? (R.isBig(a) ? 'Auswertung für die Fachbetreuung · ' : 'Auswertung · ') : 'Notenliste · ') + R.TYPES[a.type].label + (R.isBig(a) ? ' (großer LN' + (a.bigWeight && +a.bigWeight !== 1 ? ', ' + wLabel(a.bigWeight) : '') + ')' : ' (kleiner LN)'),
     title: lnT, file: fileName(lnT + (detail ? ' Auswertung' : ''), c, a.date), subtitle: `${cLabel(c)}${a.date ? ' · ' + wdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks,
     landscape: detail && ((tasksMode && a.tasks.length > 8) || (parts && a.parts.reduce((x, p) => x + (p.kind === 'is' ? 3 : 2), 0) > 9)) };
@@ -2901,6 +3035,8 @@ function helpSheet() {
   ['eintragen', 'Noten eintragen', 'Im Alltag', `
     <p>Zelle anklicken, Note tippen, ${kbd('Enter')} oder ${kbd('Tab')} – weiter zur nächsten Person (${kbd('Shift')}+${kbd('Tab')} zurück; am Spaltenende geht es oben in der nächsten Spalte weiter, wie im Infoportal). Die Zeile, in der du schreibst, ist farbig hervorgehoben. Tendenzen wie 2+ werden angezeigt, gerechnet wird mit ganzen Noten. Leere Zellen sind kein Problem – gerechnet wird nur mit vorhandenen Noten.</p>
     <p><b>Kürzel statt Note:</b> ${kbd('E')} entschuldigt, Nachtermin offen (zählt noch nicht) · ${kbd('B')} befreit (zählt nicht) · ${kbd('N')} versäumt ohne Entschuldigung oder verweigert – Note 6 bzw. 0 Punkte, angezeigt als 6* (§ 26 Abs. 4 GSO) · ${kbd('U')} Unterschleif.</p>
+    <p><b>Wer wird gewertet?</b> Im Notenspiegel und im Durchschnitt einer Arbeit zählen alle mit Note – auch ${kbd('N')} (Note 6 bzw. 0 Punkte, versäumt ohne Entschuldigung, § 26 Abs. 4 GSO) und Unterschleif, denn das sind echte Noten. Nicht gezählt werden ${kbd('E')} (entschuldigt, Nachtermin offen), ${kbd('B')} (befreit) und leere Felder. „Gewertet: 10 von 12“ zeigt beim Darüberfahren, wer genau mitzählt.</p>
+    <p><b>Nachtermin (NT):</b> Wer mit ${kbd('E')} markiert war und dann eine Note bekommt, hat den Nachtermin geschrieben: Die Note zählt für die Person (Zeugnis), aber nicht im Notenspiegel und Durchschnitt der Arbeit – der Nachtermin ist an einem anderen Tag mit anderen Aufgaben. In der Zelle steht ein kleines „NT“, im Ausdruck „NT“ hinter der Note. Die GSO regelt das nicht ausdrücklich; wenn eure Fachschaft den Nachtermin mitzählt, im Eingabeblatt den Status von „NT“ auf „–“ stellen.</p>
     <p><b>Vertippt?</b> Überschreibst oder löschst du eine vorhandene Note, erscheint unten kurz „Rückgängig“. Die unterste Zeile <b>„Ø Klasse“</b> zeigt den Durchschnitt je Spalte und rechnet mit. Kleine Marken rechts über der Tabelle (z. B. „1 Nachtermin offen“) klappen beim Anklicken ihre Erklärung auf.</p>${fig('tabelle', 'Notentabelle')}
     <p><b>Einzelnoten mit Datum</b> (Unterrichtsbeiträge, Rechenschaftsablagen – nicht die ganze Klasse am selben Tag): Spalte „Einzeln“, Note ins Feld „+“ tippen und ${kbd('Enter')}. Gespeichert wird mit dem heutigen Datum; ein Klick auf eine Note öffnet die Liste zum Ändern oder Löschen. Die Art für die schnelle Eingabe stellst du über den Spaltenkopf ein.</p>${fig('einzeln', 'Einzelnoten')}`],
   ['ln', 'Leistungsnachweise, Gewichte und Notenschlüssel', 'Leistungsnachweise', `
@@ -2909,7 +3045,8 @@ function helpSheet() {
     <p><b>Oberstufe (Notenpunkte):</b> Bei „Eigene Grenzen“ legst du fest, ab wie viel Prozent es <b>4 Punkte (Note 4–)</b> – also die unterste 4 – und <b>1 Punkt (Note 5–)</b> gibt; dazwischen und darüber verteilt Libretto gleichmäßig. Nach dem KMK-Raster (Abitur-Tabelle) beginnt die 4 bei 40 % (4 Punkte), 5 Punkte gibt es ab 45 %, 6 Punkte (4+) ab 50 %. <b>Moderne Fremdsprachen:</b> Wo in Q12/13 mit BE bewertet wird – etwa Wortschatz- und Grammatikaufgaben –, gilt nach dem ISB-Leitfaden (April 2025) „ausreichend“ ab 50 % und „mangelhaft“ ab 33 %; Libretto schlägt deshalb 4 Punkte ab 50 % und 1 Punkt ab 33 % vor. Das Hörverstehen in Klausuren rechnet dagegen – wie die Excel-Tabelle des ISB – mit der Abitur-Tabelle (4 Punkte ab 40 %). Zur Erinnerung: 15/14/13 Punkte = 1+/1/1–, 12/11/10 = 2+/2/2–, 9/8/7 = 3+/3/3–, 6/5/4 = 4+/4/4–, 3/2/1 = 5+/5/5–, 0 = 6. Halbjahresleistungen unter 5 Punkten gelten als unterpunktet.</p>
     <p><b>Amtliche BE-Tabelle / KMK-Raster</b> (Abiturprüfung ab 2026 nach dem ISB-Kontaktbrief Oberstufe 2025, S. 4, und der KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 5 ab 45 %, 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Für die modernen Fremdsprachen in Jgst. 5–11 und die spät beginnenden Fremdsprachen nennt das ISB als Schwellenwert für „ausreichend“ 50–60 % und für „mangelhaft“ 33 % – Libretto schlägt dort Note 4 ab 50 % und Note 5 ab 33 % vor. In der Unter- und Mittelstufe ergibt das KMK-Raster die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen. Vorgewählt in Mathematik und in der Oberstufe (außer moderne Fremdsprachen). In der Oberstufe setzt Libretto die Grenzen immer in ganzen BE kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). In der Unter- und Mittelstufe wird bei halben Punkten – wie in den üblichen Excel-Notenlisten – aufgerundet. Wichtig: Verbindlich ist die Tabelle für BE-bewertete Abiturprüfungen und Prüfungsteile sowie – nach dem Altsprachen-KMS vom 31.07.2023 – für BE-Bewertungen in Latein und Griechisch in der Qualifikationsphase (dort empfohlen schon ab Jgst. 11). Für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht (BayEUG Art. 52). Deutsch-Aufsätze werden nicht über Rohpunkte, sondern ganzheitlich bewertet (KMS vom 28.09.2026).</p>
     <p><b>Was ist verbindlich, was entscheidet die Fachschaft?</b> Für die meisten Fächer in Jgst. 5–11 gibt es <b>keinen</b> landesweiten Prozentschlüssel – den legen Lehrkraft und Fachschaft fest (BayEUG Art. 52, § 26 GSO). Verbindlich sind dagegen die Tabellen der Abiturprüfung und die Raster, deren Verwendung ein KMS vorschreibt (z. B. Oberstufe moderne Fremdsprachen, zweigeteilte Schulaufgabe in Latein und Griechisch).</p>
-    <p><b>Simulation:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ für Note 4 ab 60 / 55 / 50 / 45 / 40 % und das KMK-Raster nebeneinander Durchschnitt, Verteilung und Anteil der 5er und 6er. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>`],
+    <p><b>Simulation des Notenschlüssels:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ verschiedene Schlüssel nebeneinander – z. B. Note 4 ab 60 / 55 / 50 / 45 / 40 % (Oberstufe: 4 Punkte ab …) und das KMK-Raster bzw. die amtliche BE-Tabelle – mit Durchschnitt, Verteilung und Anteil der 5er und 6er bzw. der Ergebnisse unter 5 Punkten. <b>„Klasse“</b> klappt die ganze Klassenliste auf: Wer mit diesem Schlüssel eine andere Note bekäme, ist grün (besser) oder rot (schlechter) markiert, mit „jetzt → neu“. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>
+    <p><b>Simulation des Faktors:</b> Im Fenster „Leistungsnachweis bearbeiten“ direkt unter den Aufgaben (sobald Punkte eingetragen sind) und im Eingabeblatt „Punkte je Aufgabe“ unten steht „Was passiert, wenn eine Aufgabe anders zählt?“. Aufgabe wählen (eine Schreibaufgabe zählt als eine Aufgabe), Faktor antippen (× 0,5 … × 3) – Libretto zeigt erreichbare Punkte, Durchschnitt und die Klassenliste mit allen, deren Note sich ändern würde. Gerechnet wird an einer Kopie; erst der Knopf „… ab jetzt × … zählen“ ändert die Arbeit. Mit „Simulation drucken“ (PDF oder Word) bekommst du die Klassenliste jetzt → simuliert mit Notenspiegel auf Papier, z. B. für die Fachbetreuung – das gibt es auch bei der Schlüssel-Simulation, sobald du dort „Klasse“ antippst.</p>`],
   ['aufgaben', 'Punkte je Aufgabe, Faktor und nachträgliche Gewichtung', 'Leistungsnachweise', `
     <p>Unter „Rohpunkte“ gibt es „Punkte je Aufgabe eingeben“. Im Eingabeblatt stehen oben die <b>erreichbaren Punkte</b> je Aufgabe: eintippen und ${kbd('Tab')} – bei „+“ entsteht die nächste Aufgabe. Darunter trägst du je Person die Punkte ein; sobald alle Aufgaben eingetragen sind (auch 0), rechnet Libretto Summe und Note. Leere Felder zählen nicht als 0. Unten: Ø Punkte und Lösungsquote je Aufgabe, darunter immer der <b>Notenschlüssel</b> mit Punktbereichen und der <b>Durchschnitt</b> groß.</p>
     <p><b>Knapp dran:</b> ↑ neben der Note heißt: höchstens 1 Punkt fehlt zur nächstbesseren Note; ↓ erscheint knapp über der Grenze zur 5. Nur ein Hinweis zum Nochmal-Ansehen – Libretto ändert keine Note.</p>
@@ -3163,7 +3300,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.3: Oberstufe „Eigene Grenzen“ – du legst jetzt fest, ab wie viel Prozent die unterste 4 (4 Punkte) beginnt; mit 40 % entspricht das genau dem KMK-Raster · alle Regeln mit den Vorschriften abgeglichen · Latein und Griechisch: zweigeteilte Schulaufgabe nach KMS · Sport sowie Kunst und Musik als Leistungsfach · spät beginnende Fremdsprachen · Hilfe mit Quellenverzeichnis';
+const NEW_IN = 'Neu in 1.0.6: Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();

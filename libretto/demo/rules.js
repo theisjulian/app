@@ -512,7 +512,8 @@
 
   /* Notenspiegel einer Arbeit */
   function distribution(a, students, upper) {
-    const vals = students.map(s => valueOf(a.results && a.results[s.id], upper)).filter(v => v != null);
+    /* Nachtermin (nt): zählt für die Person, aber nicht im Notenspiegel / Ø der Arbeit – andere Aufgaben, anderer Tag */
+    const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && r.nt ? null : valueOf(r, upper); }).filter(v => v != null);
     const counts = upper ? Array(16).fill(0) : Array(6).fill(0);
     vals.forEach(v => { if (upper) counts[v]++; else counts[v - 1]++; });
     const n = vals.length, avg = mean(vals);

@@ -525,3 +525,38 @@ dialog.tvDlg{width:min(1100px,96vw)}
 .gateBrand svg{height:20px;width:auto}
 .keyGrid .kp{font-size:10.5px;font-weight:500;color:var(--label-3);min-height:13px;font-variant-numeric:tabular-nums}
 .keyPct:empty{display:none}
+
+/* ---------- Simulationen: Klassenliste mit Veränderungen ---------- */
+.simAct{white-space:nowrap} .simAct .mini + .mini{margin-left:6px}
+.simAct .mini.on, .tfSeg .mini.on{background:var(--blue);color:var(--on-accent,#fff)}
+.simFor{margin:12px 0 4px;font-size:13px;color:var(--label-2)}
+.simCls{margin:6px 0 10px}
+.simClsH{margin:0 0 8px;font-size:13.5px} .simClsH .cUp{color:var(--green)} .simClsH .cDn{color:var(--red)}
+.simList{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:3px 16px}
+.simList > div{display:flex;justify-content:space-between;gap:10px;padding:4px 8px;border-radius:8px;font-size:13px}
+.simList > div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.simList > div b{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.simList > div b i{font-style:normal;opacity:.6}
+.simList > div.chg{font-weight:600}
+.simList > div.chg.up{background:color-mix(in srgb,var(--green) 16%,transparent)}
+.simList > div.chg.down{background:color-mix(in srgb,var(--red) 14%,transparent)}
+.tfSim{margin-top:14px}
+.tfCtl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:8px 0 10px}
+.tfCtl label{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.tfCtl select{padding:6px 10px;border-radius:10px;border:0;background:var(--fill);font:inherit}
+.tfSeg{display:flex;align-items:center;gap:5px;font-size:13.5px;flex-wrap:wrap}
+.tfTbl{max-width:560px}
+/* Tempo (1.0.6): Solange ein Fenster offen ist, kein Weichzeichner – der wird beim Rollen bei jedem Bild neu berechnet.
+   Stattdessen deckende Fenster und ein etwas dunklerer Hintergrund. */
+body:has(dialog[open]) *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+dialog,html:not([data-skin]) dialog,.sheethead,html:not([data-skin]) .sheethead{-webkit-backdrop-filter:none;backdrop-filter:none}
+dialog{background:linear-gradient(var(--glass-solid),var(--glass-solid)),var(--sheet)}
+html:not([data-skin]) dialog{background:linear-gradient(170deg,#fcfdff,#f6f8fd) padding-box,linear-gradient(135deg,#fff,rgba(255,255,255,.2) 40%,rgba(255,255,255,.6)) border-box}
+html:not([data-skin])[data-theme="dark"] dialog{background:linear-gradient(170deg,#2c2f3c,#1c1e28) padding-box,linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.04) 40%,rgba(255,255,255,.12)) border-box}
+html:not([data-skin]) .sheethead{background:var(--sheet)}
+dialog::backdrop{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,14,22,.48)}
+html:not([data-skin]) dialog::backdrop{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(20,26,50,.5)}
+.simPrint{margin-top:8px}
+/* Nachtermin: kleines „NT“ in der Zelle */
+td:has(> input.cell.nt){position:relative}
+td:has(> input.cell.nt)::after{content:'NT';position:absolute;top:3px;right:4px;font-size:8.5px;font-weight:700;letter-spacing:.03em;color:var(--blue);pointer-events:none}
