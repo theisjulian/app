@@ -2,7 +2,7 @@
 (function(){
   var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat','desktop'];
   /* Desktop: Seiten laufen dort als Fenster (iframe); im Fenster erscheint die Seite schlicht im Stil Glas, ohne Kopf- und Fußzeile */
-  var EMB=false;try{EMB=self!==top&&!!parent.document.querySelector('.dk,.hm')}catch(e){}
+  var EMB=false;try{EMB=self!==top&&!!parent.document.querySelector('.dk,.ct')}catch(e){}
   if(EMB)r.classList.add('emb');
   var ME=document.currentScript&&document.currentScript.src;
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
@@ -26,7 +26,7 @@
     var sc=document.createElement('script');sc.id='desk-js';sc.src=base+'desk.js'+DESKV;
     l.onload=function(){document.body.appendChild(sc)};document.head.appendChild(l);
   }
-  var DESKV='?v=0f5bdcd19277';
+  var DESKV='?v=2381d969eace';
   function apply(st){
     if(EMB&&st==='desktop')st='normal';
     r.setAttribute('data-style',st);

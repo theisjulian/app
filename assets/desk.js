@@ -1,6 +1,6 @@
 /* theis-Website, Stil „Desktop“.
    Computer: Schreibtisch mit Menüleiste, Symbolen, Notizzettel, Dock und verschiebbaren Fenstern. Jede Seite der Website öffnet sich als Fenster (iframe derselben Seite, dort ohne Kopf- und Fußzeile).
-   Handy: Home-Bildschirm mit Widgets und App-Symbolen; eine App füllt den Bildschirm, die Leiste unten führt zurück.
+   Handy: ein Chat mit theisapps; Fragen antippen oder tippen, die Antworten kommen als Nachrichten und Karten.
    Wird von site.js nur in diesem Stil geladen. Merkt sich offene Fenster nur für diesen Tab (sessionStorage). */
 (function(){
   if(window.theisDesk)return;
@@ -38,7 +38,7 @@
     ['neon','Neon','linear-gradient(120deg,#ff3ea5,#8a3ffc 55%,#2f6bff)'],
     ['heft','Schulheft','linear-gradient(#b9c8de 1px,transparent 1px) 0 0/7px 7px,linear-gradient(90deg,#b9c8de 1px,transparent 1px) 0 0/7px 7px,#f8f4e8'],
     ['plakat','Plakat','radial-gradient(circle at 70% 30%,#ff4b2b 0 24%,transparent 26%),#1d35c8'],
-    ['desktop',MOBILE?'Home-Bildschirm':'Desktop','linear-gradient(#fff,#fff) 22% 26%/56% 44% no-repeat,linear-gradient(#ffffffaa,#ffffffaa) 35% 86%/30% 8% no-repeat,linear-gradient(140deg,#5d7dff,#9b6bff)']];
+    ['desktop',MOBILE?'Chat':'Desktop','linear-gradient(#fff,#fff) 22% 26%/56% 44% no-repeat,linear-gradient(#ffffffaa,#ffffffaa) 35% 86%/30% 8% no-repeat,linear-gradient(140deg,#5d7dff,#9b6bff)']];
 
   /* Was zeigt eine Adresse? Schlüssel, Name, Symbol */
   function info(href){
@@ -99,17 +99,17 @@
       {t:'Unterstützen',f:function(){open(ROOT+'#unterstuetzen')}},'-',
       {t:'Zur normalen Website',f:function(){leave('normal')}}],'dk-logo');
     lb.setAttribute('aria-label','theisapps-Menü');
-    appName=menu('Finder',function(){var w=top1();var a=w&&w.app;return [
+    appName=menu('Schreibtisch',function(){var w=top1();var a=w&&w.app;return [
       {t:'Über '+(w?w.name:'theisapps'),dis:!w,f:function(){}},'-',
       a?{t:a.n+'-Seite öffnen',f:function(){open(a.u)}}:{t:'Startseite öffnen',f:function(){open(ROOT)}},
       a&&a.demo?{t:a.n+' im Browser ausprobieren',f:function(){open(a.u+'demo/')}}:{t:'Programme',f:folder},
       a&&a.id!=='aula'&&a.id!=='sportwahl'&&a.id!=='namo'?{t:'Herunterladen …',f:function(){open(a.u+'#laden')}}:{t:'Alle Programme',f:folder}]},'dk-app');
     menu('Ablage',function(){var w=top1();return [
-      {t:'Neues Fenster: Startseite',k:'⌘N',f:function(){open(ROOT,true)}},
+      {t:'Neues Fenster: Startseite',f:function(){open(ROOT,true)}},
       {t:'Programme',f:folder},'-',
       {t:'In neuem Tab öffnen',dis:!w||!w.url(),f:function(){window.open(w.url(),'_blank','noopener')}},
-      {t:'Fenster schließen',k:'⌘W',dis:!w,f:function(){w.close()}}]});
-    menu('Fenster',function(){var l=[{t:'Im Dock ablegen',k:'⌘M',dis:!top1(),f:function(){top1().min()}},{t:'Vergrößern',dis:!top1(),f:function(){top1().max()}},{t:'Alle nebeneinander',dis:!wins.length,f:tile},'-'];
+      {t:'Fenster schließen',dis:!w,f:function(){w.close()}}]});
+    menu('Fenster',function(){var l=[{t:'Im Dock ablegen',dis:!top1(),f:function(){top1().min()}},{t:'Vergrößern',dis:!top1(),f:function(){top1().max()}},{t:'Alle nebeneinander',dis:!wins.length,f:tile},'-'];
       wins.forEach(function(w){l.push({t:w.name,chk:w===top1(),f:function(){w.focus()}})});if(!wins.length)l.push({t:'Keine Fenster offen',dis:1,f:function(){}});return l});
     menu('Stil',function(){return STYLES.map(function(s){return {t:s[1],chk:s[0]==='desktop',f:function(){if(s[0]!=='desktop')leave(s[0])}}}).concat(['-',{t:'Stile vergleichen …',f:stilWin}])});
     menu('Hilfe',[{t:'So funktioniert der Desktop',f:function(){note(true)}},{t:'Kontakt',f:function(){open(ROOT+'kontakt/')}}]);
@@ -161,10 +161,10 @@
     /* Fenster */
     function find(key){for(var i=0;i<wins.length;i++)if(wins[i].key===key)return wins[i];return null}
     function top1(){var t=null;wins.forEach(function(w){if(!w.hidden&&(!t||+w.el.style.zIndex>+t.el.style.zIndex))t=w});return t}
-    function area(){return {x:0,y:30,w:innerWidth,h:innerHeight-30-(dock.offsetHeight+16)}}
+    function area(){var m=menuBar.offsetHeight;return {x:0,y:m,w:innerWidth,h:innerHeight-m-(dock.offsetHeight+16)}}
     function save(){ss('theis-desk',wins.map(function(w){return {u:w.url(),k:w.key,b:w.box(),m:w.isMax,h:w.hidden,z:+w.el.style.zIndex}}))}
     function syncUrl(){var w=top1(),u=w&&w.url();try{if(u)history.replaceState(history.state,'',u);else history.replaceState(history.state,'',ROOT)}catch(e){}
-      appName.textContent=w?w.name.replace(/ – .*/,''):'Finder';document.title=w?w.name+' · theisapps':'theisapps';
+      appName.textContent=w?w.name.replace(/ – .*/,''):'Schreibtisch';document.title=w?w.name+' · theisapps':'theisapps';
       APPS.forEach(function(a){a.dk.classList.toggle('run',!!find(a.id))})}
 
     function Win(o){
@@ -200,8 +200,8 @@
       self.box=function(){return [el.offsetLeft,el.offsetTop,el.offsetWidth,el.offsetHeight]};
       function place(b){el.style.left=b[0]+'px';el.style.top=b[1]+'px';el.style.width=b[2]+'px';el.style.height=b[3]+'px'}
       self.place=place;
-      var a=area(),W=Math.min(o.w||1180,a.w-260),H=Math.min(o.h||860,a.h-30-6*26),n=seq++%7;
-      place(o.b||[Math.max(16,Math.round((a.w-130-W)/2+n*30-60)),a.y+16+n*26,W,H]);
+      var a=area(),n=seq++%5,W=Math.min(o.w||1180,a.w-260),H=Math.min(o.h||860,a.h-28-n*24);
+      place(o.b||[Math.max(16,Math.round((a.w-130-W)/2+n*30-60)),a.y+14+n*24,W,H]);
       self.focus=function(){
         if(self.hidden){self.hidden=false;el.hidden=false;if(self.mb){self.mb.remove();self.mb=null}if(!calm)el.animate([{transform:'translateY(40%) scale(.2)',opacity:0},{transform:'none',opacity:1}],{duration:280,easing:'cubic-bezier(.2,.7,.2,1)'})}
         if(el.style.zIndex!=Z)el.style.zIndex=++Z;wins.forEach(function(w){w.el.classList.toggle('on',w===self)});syncUrl();save()};
@@ -234,8 +234,8 @@
         if(e.button||e.target.closest('button'))return;e.preventDefault();
         var sx=e.clientX,sy=e.clientY,ox=el.offsetLeft,oy=el.offsetTop,moved=false;tb.setPointerCapture(e.pointerId);
         function mv(ev){var dx=ev.clientX-sx,dy=ev.clientY-sy;if(!moved&&Math.abs(dx)+Math.abs(dy)<4)return;
-          if(!moved){moved=true;D.classList.add('drag');if(self.isMax){var w0=el.offsetWidth;self.isMax=false;el.classList.remove('max');place(before||[0,0,Math.min(1100,w0),Math.min(800,innerHeight-140)]);ox=ev.clientX-el.offsetWidth*((sx-ox)/w0);oy=30;sx=ev.clientX;sy=ev.clientY;dx=dy=0}}
-          el.style.left=Math.min(innerWidth-120,Math.max(120-el.offsetWidth,ox+dx))+'px';el.style.top=Math.min(innerHeight-60,Math.max(30,oy+dy))+'px'}
+          if(!moved){moved=true;D.classList.add('drag');if(self.isMax){var w0=el.offsetWidth;self.isMax=false;el.classList.remove('max');place(before||[0,0,Math.min(1100,w0),Math.min(800,innerHeight-140)]);ox=ev.clientX-el.offsetWidth*((sx-ox)/w0);oy=menuBar.offsetHeight;sx=ev.clientX;sy=ev.clientY;dx=dy=0}}
+          el.style.left=Math.min(innerWidth-120,Math.max(120-el.offsetWidth,ox+dx))+'px';el.style.top=Math.min(innerHeight-60,Math.max(menuBar.offsetHeight,oy+dy))+'px'}
         function up(){tb.removeEventListener('pointermove',mv);tb.removeEventListener('pointerup',up);tb.removeEventListener('pointercancel',up);D.classList.remove('drag');if(moved)save()}
         tb.addEventListener('pointermove',mv);tb.addEventListener('pointerup',up);tb.addEventListener('pointercancel',up);
       });
@@ -285,12 +285,18 @@
       lput('theis-stil',st);lput('theis-stil-gefragt','1');ss('theis-desk',null);
       try{history.replaceState(null,'',u)}catch(e){}location.reload();
     }
-    /* Tastatur: ⌘/Strg + W, M, N */
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape')closeMenus();
-      if(!(e.metaKey||e.ctrlKey)||e.altKey)return;var w=top1(),k=e.key.toLowerCase();
-      if(k==='w'&&w){e.preventDefault();w.close()}else if(k==='m'&&w){e.preventDefault();w.min()}
-    });
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenus()});
+    /* Browserfenster geändert: vergrößerte Fenster anpassen, andere sichtbar halten */
+    var rz=0;addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){var a=area();wins.forEach(function(w){
+      if(w.isMax){w.place([8,a.y+8,a.w-16,a.h-12]);return}
+      var b=w.box(),W=Math.min(b[2],a.w-16),H=Math.min(b[3],a.h-10);w.place([Math.min(Math.max(8,b[0]),a.w-W-8),Math.min(Math.max(a.y+4,b[1]),a.y+a.h-H),W,H])});save()},120)});
+    /* Dock: Symbole wachsen unter dem Mauszeiger, die Nachbarn ein wenig mit */
+    if(!calm&&matchMedia('(hover:hover) and (pointer:fine)').matches){
+      var dbs=function(){return [].slice.call(dock.querySelectorAll('button'))};
+      dock.addEventListener('pointermove',function(e){dbs().forEach(function(b){var r=b.getBoundingClientRect(),d=Math.abs(e.clientX-(r.left+r.width/2)),k=Math.max(0,1-d/150),s=1+.5*k*k*(3-2*k);
+        b.style.setProperty('--z',s.toFixed(3))})});
+      dock.addEventListener('pointerleave',function(){dbs().forEach(function(b){b.style.removeProperty('--z')})});
+    }
 
     /* Start: gemerkte Fenster dieses Tabs, sonst die aufgerufene Seite */
     var saved=ss('theis-desk'),here=location.href,inf=info(here);
@@ -303,68 +309,124 @@
     return {leave:leave};
   }
 
-  /* ================= Handy ================= */
-  function home(){
-    var M=h('div','hm');M.setAttribute('aria-label','theisapps Home-Bildschirm');
-    M.innerHTML='<div class="dk-wall"></div><div class="dk-mark" aria-hidden="true">'+logo()+'</div><div class="hm-scroll"><div class="hm-top">'+logo()+'<button type="button" aria-label="Stil wählen"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>'+
-      '<div class="hm-wd"><div class="hm-w hm-clock"><small>Heute</small><big></big><span></span></div><button class="hm-w hm-news" type="button"><img src="'+IMG+'foliva-icon.png" alt=""><b>Foliva ist da</b><span>Beta 0.9.14 · Arbeitsblätter mit Lösungen</span></button></div>'+
-      '<div class="hm-grid a"></div><div class="hm-h">Ausprobieren</div><div class="hm-grid d"></div><div class="hm-h">Website</div><div class="hm-grid s"></div></div>'+
-      '<div class="hm-dock"></div>'+
-      '<div class="hm-app" hidden></div>'+
-      '<div class="hm-sheet" hidden><div role="dialog" aria-label="Stil der Website"><h3>Stil der Website</h3><p>Die Wahl gilt für alle Seiten und wird in diesem Browser gemerkt.</p><div class="dk-grid"></div></div></div>';
-    document.body.appendChild(M);
-    var big=M.querySelector('.hm-clock big'),sub=M.querySelector('.hm-clock span');
-    function tick(){var n=new Date();big.textContent=n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});sub.textContent=n.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}tick();setInterval(tick,15000);
-    function icon(g,img,name,u,badge,round){
-      var b=h('button','hm-ic','<span class="g">'+(img.charAt(0)==='<'?img:'<img'+(round?' class="round"':'')+' src="'+img+'" alt="">')+(badge?'<em>'+badge+'</em>':'')+'</span><span>'+name+'</span>');
-      b.setAttribute('aria-label',name+(badge?' '+badge:''));b.addEventListener('click',function(){typeof u==='function'?u():launch(u,b)});M.querySelector(g).appendChild(b);return b}
-    APPS.forEach(function(a){icon('.hm-grid.a',a.img,a.n,a.u,a.tag)});
-    icon('.hm-grid.a',SVG.stil,'Stil',sheet);
-    APPS.filter(function(a){return a.demo&&a.id!=='namo'}).forEach(function(a){icon('.hm-grid.d',a.img,a.n,a.u+'demo/','Demo')});
-    icon('.hm-grid.d',BYID.namo.img,'’namo.',ROOT+'namo/demo/','Demo');
-    icon('.hm-grid.s',IMG+'julian-blau.webp','Über mich',ROOT+'#ueber','',true);
-    icon('.hm-grid.s',SVG.mail,'Kontakt',ROOT+'kontakt/');
-    icon('.hm-grid.s',SVG.shield,'Datenschutz',ROOT+'datenschutz');
-    icon('.hm-grid.s',SVG.doc,'Impressum',ROOT+'impressum');
-    icon('.hm-grid.s',SVG.cup,'Kaffee',ROOT+'#unterstuetzen');
-    ['.hm-dock'].forEach(function(g){icon(g,SVG.theis,'Startseite',ROOT);icon(g,BYID.foliva.img,'Foliva',BYID.foliva.u);icon(g,BYID.libretto.img,'Libretto',BYID.libretto.u);icon(g,BYID.voce.img,'Voce',BYID.voce.u)});
-    M.querySelector('.hm-news').addEventListener('click',function(e){launch(ROOT+'foliva/',e.currentTarget)});
-    /* Stil-Blatt */
-    var sh=M.querySelector('.hm-sheet');
-    STYLES.forEach(function(s){var b=h('button','dk-sw','<i style="background:'+s[2]+'"></i>'+s[1]);b.setAttribute('role','radio');b.setAttribute('aria-checked',s[0]==='desktop'?'true':'false');
+  /* ================= Handy: Chat mit theisapps ================= */
+  /* Kein Nachbau der Website: Man fragt, theisapps antwortet mit Nachrichten und Karten. Programme für den Computer werden nicht vorgeführt, sondern als Link an den Computer geschickt. */
+  function chat(){
+    var C=h('div','ct');C.setAttribute('aria-label','theisapps im Chat');
+    var MAIL='hallo'+'@'+'theisapps.de',STRIPE='https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
+    var INFO={
+      libretto:{shot:'libretto-gemischt.webp',t:'Noten führen und nach der GSO verrechnen, von der 5. Klasse bis Q13.',f:[['Rechnet nach','GSO, KMK und ISB'],['Daten','verschlüsselt, nur lokal'],['Version','1.0.6']],pc:1},
+      voce:{shot:'voce-bewerten.webp',t:'Mündliche Schulaufgaben planen, nach den Rastern für Bayern bewerten und den Bogen für jede Schülerin und jeden Schüler ausgeben.',f:[['Für','Englisch, Italienisch, Französisch, Spanisch'],['Daten','nur auf Ihrem Rechner'],['Version','1.9.3']],pc:1},
+      foliva:{shot:'foliva-editor.webp',t:'Arbeitsblätter und Proben gestalten, mit Lösungsblatt auf Knopfdruck und fast 400 Vorlagen.',f:[['Für','Grundschule bis Gymnasium'],['Vorlagen','fast 400'],['Stand','Beta 0.9.14']],pc:1,neu:'Neu: Foliva gibt es jetzt als Beta zum Herunterladen.'},
+      aula:{shot:'aula-bilden.webp',t:'Zufällige, ausgewogene Gruppen mit einem Klick, dazu Timer, Uhr, Sitzplan und Tagesübersicht, groß am Beamer.',f:[['Früher','Gruppo'],['Daten','nur auf dem Gerät'],['Version','1.4.0']],pc:1},
+      sportwahl:{shot:'sportwahl-verteilung.webp',t:'Die Sportwahl der Oberstufe: Wahlbogen über Mebis, Kursplanung und Verteilung, mit Warnung bei Regelverstößen.',f:[['Für','Q12 und Q13 im G9'],['Läuft','im Browser'],['Daten','nur in Ihrem Browser']],web:1},
+      namo:{shot:'namo-handys.webp',t:'Klassenfahrten, Studienfahrten und andere Schülerfahrten organisieren: Programm, Zimmer, Tickets und Ansagen für die ganze Gruppe am Handy.',f:[['Für','Lehrkräfte und Reisegruppe'],['Läuft auf','Handy und Browser'],['Einrichtung','auf Anfrage']],phone:1}
+    };
+    C.innerHTML='<div class="ct-bg"></div>'+
+      '<header class="ct-hd"><span class="ct-av"><img src="'+IMG+'julian-blau.webp" alt=""><i></i></span><span class="ct-who"><b>theisapps</b><small>Julian · Software für den Schulalltag</small></span>'+
+      '<button type="button" class="ct-ib ct-stil" aria-label="Stil der Website"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7" cy="8" r="1.3" fill="currentColor"/><circle cx="10.5" cy="6.4" r="1.3" fill="currentColor"/><circle cx="13.4" cy="9" r="1.3" fill="currentColor"/><path d="M8.5 13.6c1.6.6 3 .2 3.6-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></header>'+
+      '<div class="ct-log" role="log" aria-live="polite"><div class="ct-day">Heute</div></div>'+
+      '<footer class="ct-ft"><div class="ct-chips"></div><form class="ct-in"><input type="text" enterkeyhint="send" autocomplete="off" placeholder="Frage stellen …" aria-label="Frage an theisapps"><button type="submit" aria-label="Senden"><svg viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form></footer>'+
+      '<div class="ct-sheet" hidden><div role="dialog" aria-label="Stil der Website"><i class="grab"></i><h3>Stil der Website</h3><p>Am Computer wird aus diesem Stil ein Schreibtisch mit Fenstern, am Handy dieser Chat.</p><div class="dk-grid"></div></div></div>'+
+      '<div class="ct-page" hidden><div class="ct-pg-hd"><button type="button" class="ct-ib" aria-label="Schließen"><svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><b></b><span></span></div><div class="ct-pg-bd"></div></div>';
+    document.body.appendChild(C);
+    var log=C.querySelector('.ct-log'),chips=C.querySelector('.ct-chips'),form=C.querySelector('.ct-in'),inp=form.querySelector('input'),queue=Promise.resolve(),busy=0;
+    function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+    function down(){log.scrollTo({top:log.scrollHeight,behavior:calm?'auto':'smooth'})}
+    function wait(ms){return new Promise(function(r){setTimeout(r,calm?0:ms)})}
+    function add(el){log.appendChild(el);down();return el}
+    function me(t){var r=h('div','ct-row me');r.appendChild(h('div','ct-b',esc(t)));add(r)}
+    /* Antworten nacheinander, mit kurzem Tippen davor */
+    function say(parts,next){
+      busy++;setChips([]);
+      parts.forEach(function(p){queue=queue.then(function(){
+        var ty=add(h('div','ct-row bot','<div class="ct-b ct-ty" aria-label="schreibt"><i></i><i></i><i></i></div>'));
+        return wait(typeof p==='string'?Math.min(1100,380+p.length*7):650).then(function(){ty.remove();var r=h('div','ct-row bot');
+          if(typeof p==='string')r.appendChild(h('div','ct-b',p));else r.appendChild(p);add(r);
+          r.querySelectorAll('img').forEach(function(i){i.addEventListener('load',down)});return wait(160)})})});
+      queue=queue.then(function(){busy--;setChips(next||MAINCHIPS)});
+    }
+    function setChips(list){chips.innerHTML='';list.forEach(function(c){var b=h('button','ct-chip',esc(c[0]));b.type='button';b.addEventListener('click',function(){ask(c[0],c[1])});chips.appendChild(b)});chips.scrollLeft=0}
+    function ask(label,intent){if(busy)return;me(label);run(intent)}
+    var MAINCHIPS=[['Welche Programme gibt es?','alle'],['Arbeitsblätter','foliva'],['Noten','libretto'],['Mündliche Prüfungen','voce'],['Gruppen und Timer','aula'],['Sportwahl','sportwahl'],['Schülerfahrten','namo'],['Was kostet das?','kosten'],['Meine Daten?','daten'],['Wer steckt dahinter?','ueber'],['Kontakt','kontakt']];
+    function btns(list){var d=h('div','ct-acts');list.forEach(function(x){var b=h(x.href?'a':'button','ct-act'+(x.main?' main':''),esc(x.t));if(x.href){b.href=x.href;if(/^https?:/.test(x.href)){b.target='_blank';b.rel='noopener'}}else{b.type='button';b.addEventListener('click',x.f)}d.appendChild(b)});return d}
+    function card(id){
+      var a=BYID[id],I=INFO[id],c=h('div','ct-card a-'+id);
+      c.innerHTML='<div class="ct-shot"><img src="'+IMG+I.shot+'" alt="" loading="lazy"></div><div class="ct-cbody"><div class="ct-cn"><img src="'+a.img+'" alt=""><span><b>'+a.n+(a.tag?' <em>'+a.tag+'</em>':'')+'</b><small>'+a.s+'</small></span></div><p>'+I.t+'</p><dl>'+I.f.map(function(f){return '<div><dt>'+f[0]+'</dt><dd>'+f[1]+'</dd></div>'}).join('')+'</dl></div>';
+      var acts=[];
+      if(I.phone)acts.push({t:'Demo am Handy öffnen',main:1,f:function(){page(a.u+'demo/',a.n+' – Demo')}});
+      else acts.push({t:'Link an den Computer schicken',main:1,f:function(){send(a.u,a.n)}});
+      acts.push({t:'Ganze Seite lesen',f:function(){page(a.u,a.n)}});
+      c.querySelector('.ct-cbody').appendChild(btns(acts));
+      return c;
+    }
+    function carousel(){
+      var w=h('div','ct-car');
+      APPS.forEach(function(a){var b=h('button','ct-mini','<img src="'+a.img+'" alt=""><b>'+a.n+'</b><small>'+a.s+'</small>'+(a.tag?'<em>'+a.tag+'</em>':''));b.type='button';b.addEventListener('click',function(){ask(a.n,a.id)});w.appendChild(b)});
+      return w;
+    }
+    /* Link teilen: Teilen-Menü des Handys, sonst E-Mail an sich selbst, sonst kopieren */
+    function send(u,name){
+      var url=new URL(u,location.href).href,title=name+' · theisapps';
+      var done=function(how){me(how);say(['Gut. Am Computer öffnen Sie den Link, laden das Programm und los geht’s.'],[['Andere Programme','alle'],['Was kostet das?','kosten'],['Kontakt','kontakt']])};
+      if(navigator.share){navigator.share({title:title,text:name+' für den Computer',url:url}).then(function(){done('Link geteilt')},function(){})}
+      else{location.href='mailto:?subject='+encodeURIComponent(title)+'&body='+encodeURIComponent(url);done('Per E-Mail geschickt')}
+    }
+    /* Ganze Seite: liegt als Blatt über dem Chat */
+    var pg=C.querySelector('.ct-page'),pgb=pg.querySelector('.ct-pg-bd'),pgt=pg.querySelector('b'),pgs=pg.querySelector('.ct-pg-hd span');
+    function page(u,name){
+      var inf=info(u);pgt.textContent=name;pgs.innerHTML='<img src="'+inf.icon+'" alt="">';pgb.innerHTML='';
+      var f=h('iframe');f.title=name;f.src=u;var ld=loader(inf.icon);pgb.appendChild(f);pgb.appendChild(ld);
+      f.addEventListener('load',function(){ld.classList.add('done');hook(f,function(){return info(f.contentWindow.location.href)},function(nu){try{f.contentWindow.location.href=nu}catch(e){}})});
+      pg.hidden=false;try{history.pushState({ct:1},'')}catch(e){}
+    }
+    function closePage(){if(pg.hidden)return;pg.classList.add('out');setTimeout(function(){pg.hidden=true;pg.classList.remove('out');pgb.innerHTML=''},calm?0:260)}
+    pg.querySelector('button').addEventListener('click',function(){history.state&&history.state.ct?history.back():closePage()});
+    addEventListener('popstate',closePage);
+
+    function run(k){
+      var a=BYID[k];
+      if(a){var I=INFO[k],more=[];
+        if(I.neu)more.push(I.neu);
+        if(I.pc)more.push(a.n+' ist ein Programm für Mac und Windows, am Handy lässt es sich nicht installieren. Schicken Sie sich den Link einfach an den Computer.');
+        if(I.web)more.push('Sportivo läuft im Browser, ganz ohne Installation. Für die Planung eignet sich der Computer am besten.');
+        if(I.phone)more.push('’namo. ist fürs Handy gemacht. Die Demo zeigt eine erfundene Fahrt, Sie können also gleich hier ausprobieren.');
+        var oth=APPS.filter(function(x){return x.id!==k}).slice(0,3).map(function(x){return [x.n,x.id]});
+        say([card(k)].concat(more),[['Was kostet das?','kosten']].concat(oth,[['Alle Programme','alle']]));return}
+      ({
+        hallo:function(){say(['Hallo! Hier ist theisapps.','Ich bin Julian, Lehrer für Englisch und Italienisch an einem Gymnasium in München. Ich baue Programme für den Schulalltag in Bayern: kostenlos, ohne Konto, und Ihre Daten bleiben auf Ihrem Gerät.','Was suchen Sie?'])},
+        alle:function(){say(['Sechs Programme, alle kostenlos:',carousel(),'Tippen Sie auf eines, dann erzähle ich mehr.'])},
+        kosten:function(){say(['Nichts. Alle Programme sind kostenlos, ohne Konto und ohne Werbung.',(function(){var d=h('div','ct-b','Wenn Ihnen eines Zeit spart, können Sie mir einen Kaffee ausgeben. Das ist freiwillig, bezahlt wird sicher über Stripe.');d.appendChild(btns([{t:'Einen Kaffee ausgeben',main:1,href:STRIPE}]));return d})()])},
+        daten:function(){say(['Ihre Daten bleiben auf Ihrem Gerät. Es gibt kein Konto und keinen Server, auf dem Noten, Namen oder Arbeitsblätter landen. Libretto verschlüsselt zusätzlich alle Noten.','Einzige Ausnahme ist ’namo.: Damit die ganze Reisegruppe denselben Stand sieht, liegen die Reisedaten auf einem Server in der EU und werden nach der Fahrt gelöscht.',(function(){var d=h('div','ct-b','Alles im Detail:');d.appendChild(btns([{t:'Datenschutzerklärung',f:function(){page(ROOT+'datenschutz','Datenschutz')}}]));return d})()])},
+        ueber:function(){var p=h('div','ct-photo','<img src="'+IMG+'julian-blau.webp" alt="Julian">');say([p,'Ich bin Julian und unterrichte Englisch und Italienisch an einem Gymnasium in München. Die Programme schreibe ich, weil ich sie selbst brauche oder weil Kolleginnen und Kollegen danach fragen.','Den Programmcode schreibe ich mit Hilfe von KI (Claude von Anthropic). Was die Programme können und ob sie richtig rechnen, lege ich selbst fest und prüfe es im Unterricht.'])},
+        kontakt:function(){var d=h('div','ct-b','Fragen, Fehler, Ideen? Schreiben Sie mir an <b>'+MAIL+'</b>.');d.appendChild(btns([{t:'E-Mail schreiben',main:1,href:'mailto:'+MAIL+'?subject='+encodeURIComponent('Frage zu theisapps')},{t:'Impressum',f:function(){page(ROOT+'impressum','Impressum')}}]));say([d])},
+        laden:function(){say(['Libretto, Voce, Foliva und Aula sind Programme für Mac und Windows. Am Handy lassen sie sich nicht installieren.','Am einfachsten: Sie schicken sich den Link an den Computer.',btns([{t:'Link an den Computer schicken',main:1,f:function(){send(ROOT+'#programme','Programme')}}])])},
+        demo:function(){say(['Die Demos von Libretto, Voce und Foliva brauchen einen großen Bildschirm. Am Computer oder Tablet laufen sie direkt im Browser.','Die Demo von ’namo. ist dagegen fürs Handy gemacht.',btns([{t:'’namo.-Demo öffnen',main:1,f:function(){page(ROOT+'namo/demo/','’namo. – Demo')}},{t:'Link an den Computer',f:function(){send(ROOT+'#programme','Programme')}}])])},
+        stil:function(){sheet()},
+        weiss:function(){say(['Das weiß ich leider nicht. Vielleicht hilft eines davon weiter – oder Sie schreiben mir direkt an '+MAIL+'.'])}
+      }[k]||function(){run('weiss')})();
+    }
+    var KW=[[/foliva|arbeitsbl|blatt|probe|grundschul|lösung|vorlage|förder/,'foliva'],[/libretto|note|zeugnis|gso|notenschl|schulaufgabe(?!.*mündl)/,'libretto'],[/voce|viva|mündl|prüfung|sprechen|raster/,'voce'],
+      [/aula|gruppo|gruppe|timer|sitzplan|beamer|uhr/,'aula'],[/sport|kurs|q1[23]|mebis|sportivo/,'sportwahl'],[/namo|fahrt|reise|ausflug|ticket|zimmer/,'namo'],
+      [/kost|preis|geld|gratis|kostenlos|zahl|kaffee|spend|unterstütz/,'kosten'],[/daten|dsgvo|sicher|server|cloud|privat/,'daten'],[/download|herunterl|laden|install|mac|windows|pc|computer/,'laden'],
+      [/demo|ausprobier|test/,'demo'],[/kontakt|mail|schreib|fehler|frage|impressum/,'kontakt'],[/wer|julian|über dich|über sie|lehrer|ki|claude/,'ueber'],[/programm|app|übersicht|alle|was gibt/,'alle'],[/stil|design|theme|aussehen|farbe|dunkel/,'stil'],[/^(hallo|hi|hey|servus|moin|grüß|guten)/,'hallo']];
+    form.addEventListener('submit',function(e){e.preventDefault();var t=inp.value.trim();if(!t||busy)return;inp.value='';me(t);var l=t.toLowerCase(),k='weiss';for(var i=0;i<KW.length;i++)if(KW[i][0].test(l)){k=KW[i][1];break}run(k)});
+    /* Stil wählen */
+    var sh=C.querySelector('.ct-sheet');
+    STYLES.forEach(function(s){var b=h('button','dk-sw','<i style="background:'+s[2]+'"></i>'+s[1]);b.type='button';b.setAttribute('role','radio');b.setAttribute('aria-checked',s[0]==='desktop'?'true':'false');
       b.addEventListener('click',function(){if(s[0]==='desktop'){sh.hidden=true;return}leave(s[0])});sh.querySelector('.dk-grid').appendChild(b)});
     function sheet(){sh.hidden=false;sh.querySelector('button').focus()}
     sh.addEventListener('click',function(e){if(e.target===sh)sh.hidden=true});
-    M.querySelector('.hm-top button').addEventListener('click',sheet);
-
-    var app=M.querySelector('.hm-app'),cur=null,from=null;
-    function launch(u,btn){
-      from=btn;var inf=info(u);app.innerHTML='';
-      var ifr=h('iframe');ifr.title=inf.name;ifr.src=u;var ld=loader(inf.icon);
-      var bar=h('button','hm-bar','<svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="2" y="9" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="9" y="9" width="5" height="5" rx="1.5" fill="currentColor"/></svg>Home');bar.type='button';bar.setAttribute('aria-label','Zurück zum Home-Bildschirm');
-      bar.addEventListener('click',function(){history.state&&history.state.hm?history.back():shut()});
-      app.appendChild(ifr);app.appendChild(ld);app.appendChild(bar);app.hidden=false;cur=u;
-      ifr.addEventListener('load',function(){ld.classList.add('done');hook(ifr,function(){return info(cur)},function(nu){try{ifr.contentWindow.location.href=nu}catch(e){}cur=nu});try{cur=ifr.contentWindow.location.href;history.replaceState(history.state,'',cur);document.title=ifr.contentDocument.title}catch(e){}});
-      try{history.pushState({hm:1},'',u)}catch(e){}
-      grow(btn,false);
-    }
-    function grow(btn,back){
-      if(calm||!btn||!app.animate)return Promise.resolve();
-      var g=btn.querySelector('.g')||btn,b=g.getBoundingClientRect();
-      var k='translate('+b.left+'px,'+b.top+'px) scale('+(b.width/innerWidth)+','+(b.height/innerHeight)+')';
-      var a=app.animate({transform:back?['none',k]:[k,'none'],borderRadius:back?['0px','60px']:['60px','0px'],opacity:back?[1,.4]:[.6,1]},{duration:back?300:380,easing:'cubic-bezier(.2,.7,.2,1)'});
-      return a.finished;
-    }
-    function shut(){if(app.hidden)return;var done=function(){app.hidden=true;app.innerHTML='';cur=null;document.title='theisapps';try{history.replaceState(null,'',ROOT)}catch(e){}};var p=grow(from,true);p.then(done,done)}
-    addEventListener('popstate',function(){if(!app.hidden&&!(history.state&&history.state.hm))shut()});
-    function leave(st){var u=cur||ROOT;lput('theis-stil',st);lput('theis-stil-gefragt','1');try{history.replaceState(null,'',u)}catch(e){}location.reload()}
-    /* Aufgerufene Unterseite gleich öffnen */
-    var inf=info(location.href);
-    if(inf.key!=='p:/'||location.hash){var u=location.href;try{history.replaceState(null,'',ROOT)}catch(e){}launch(u,null)}
+    C.querySelector('.ct-stil').addEventListener('click',sheet);
+    function leave(st){lput('theis-stil',st);lput('theis-stil-gefragt','1');location.reload()}
+    /* Einstieg: auf einer Programmseite gleich dieses Programm */
+    var inf=info(location.href),start=inf.app?inf.app.id:(location.hash==='#ueber'?'ueber':location.hash==='#unterstuetzen'?'kosten':/datenschutz/.test(location.pathname)?'daten':/impressum|kontakt/.test(location.pathname)?'kontakt':null);
+    run('hallo');
+    if(start){queue=queue.then(function(){var a=BYID[start];me(a?'Erzählen Sie mir von '+a.n:({ueber:'Wer steckt dahinter?',kosten:'Was kostet das?',daten:'Meine Daten?',kontakt:'Kontakt'})[start]);run(start)})}
     return {leave:leave};
   }
 
-  var api=MOBILE?home():desktop();
+  var api=MOBILE?chat():desktop();
   window.theisDesk=api;
   /* Wechsel zwischen Handy- und Computerbreite: neu aufbauen */
   matchMedia('(max-width:820px)').addEventListener('change',function(){location.reload()});
