@@ -581,9 +581,16 @@ function webMore(){var st=load()||{},c=st.gc||window.THEIS_PRESET||{};var ids=['
  if(!c.code||!c.token){ids.forEach(function(id){$(id).innerHTML='<p class="muted small" style="margin:0">Dafür oben auf „Zähler“ tippen und den GoatCounter-Zugang eintragen.</p>'});return}
  ids.forEach(function(id){$(id).textContent='Lade …'});
  var base='https://'+encodeURIComponent(c.code)+'.goatcounter.com/api/v0/',h={headers:{'Authorization':'Bearer '+c.token}},q='?start='+new Date(Date.now()-30*864e5).toISOString()+'&end='+new Date().toISOString();
- var get=function(path,extra){return fetch(base+path+q+(extra||''),h).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).catch(function(){return null})};
- Promise.all([get('stats/toprefs','&limit=10'),get('stats/sizes'),get('stats/systems','&limit=8'),get('stats/locations','&limit=8'),get('stats/browsers','&limit=8'),get('stats/hits','&limit=60')]).then(function(a){
-  if(a.every(function(x){return !x})){ids.forEach(function(id){$(id).innerHTML='<p class="muted small" style="margin:0">Der Zähler liefert gerade keine Daten. Zugang unter „Zähler“ prüfen (Recht „Statistiken lesen“).</p>'});return}
+ /* GoatCounter erlaubt nur wenige Abfragen pro Sekunde: nacheinander abfragen, bei 429 kurz warten und erneut versuchen */
+ var lastErr='',wait=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+ var get=function(path,extra,tries){tries=tries||0;return fetch(base+path+q+(extra||''),h).then(function(r){
+   if(r.status===429&&tries<4)return wait(1200*(tries+1)).then(function(){return get(path,extra,tries+1)});
+   if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).catch(function(e){lastErr=(e&&e.message)||'Netzwerkfehler';return null})};
+ var jobs=[['stats/toprefs','&limit=10'],['stats/sizes',''],['stats/systems','&limit=8'],['stats/locations','&limit=8'],['stats/browsers','&limit=8'],['stats/hits','&limit=60']],res=[];
+ var chain=wait(1500);jobs.forEach(function(j){chain=chain.then(function(){return get(j[0],j[1])}).then(function(x){res.push(x);return wait(350)})});
+ chain.then(function(){var a=res;
+  if(a.every(function(x){return !x})){var why=/401|403/.test(lastErr)?'Der Zugangsschlüssel wird abgelehnt. Unter „Zähler“ einen Schlüssel mit dem Recht „Statistiken lesen“ eintragen.':/429/.test(lastErr)?'Der Zähler hat zu viele Anfragen auf einmal bekommen. In einer Minute erneut „Aktualisieren“.':/404/.test(lastErr)?'Der Name des Zählers stimmt nicht.':'Keine Verbindung zum Zähler.';
+   ids.forEach(function(id){$(id).innerHTML='<p class="muted small" style="margin:0">'+why+' <span class="small">('+esc(lastErr)+')</span></p>'});return}
   put({refs:gcList(a[0]),sizes:gcList(a[1]),sys:gcList(a[2]),loc:gcList(a[3]),br:gcList(a[4]),hits:((a[5]&&a[5].hits)||[]).map(function(x){return {path:x.path,count:x.count||0}})})})}
 
 /* ---------- Checkliste und Links ---------- */
