@@ -1,0 +1,67 @@
+/* ===== Voce · Charakter der Farbwelten (Okt. 2026, wie Gruppo) =====
+   Jede Farbwelt ändert nicht nur Farben, sondern Hintergrund, Formen, Ränder, Schatten, Überschriften und Knöpfe.
+   Bedienung und Anordnung bleiben überall gleich. Überschrift-Schrift nur, wenn die Schrift auf „Standard“ steht (kein data-font).
+   Notenfarben (--gr1…6) und Fachfarben bleiben in allen Farbwelten gleich. */
+:root{--hd:var(--display)}
+.side h1,.panel .ptitle,.planHead h2,.gradeHead h2,.cardHead h3,.sheethead h2,.empty strong,.stat .v{font-family:var(--hd)}
+/* ---------- Neon: leuchtend – Glühen, Pillen, Verlaufstitel ---------- */
+html[data-skin="neon"] .glass{border-radius:24px;border:1px solid color-mix(in srgb,var(--blue) 30%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent2) 14%,transparent),0 18px 40px -22px color-mix(in srgb,var(--blue) 70%,transparent)}
+html[data-skin="neon"][data-theme="dark"] .glass{box-shadow:0 0 0 .5px rgba(255,62,165,.35),0 0 26px -12px rgba(255,62,165,.6)}
+html[data-skin="neon"] .side h1,html[data-skin="neon"] .planHead h2,html[data-skin="neon"] .gradeHead h2{background:linear-gradient(90deg,var(--blue),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+html[data-skin="neon"] .side h1 small{-webkit-text-fill-color:var(--label-2)}
+html[data-skin="neon"] .go,html[data-skin="neon"] .mini.accent,html[data-skin="neon"] .sbtn[aria-selected="true"],html[data-skin="neon"] .scale button[aria-pressed="true"]{background:linear-gradient(110deg,var(--blue),color-mix(in srgb,var(--blue) 45%,var(--accent2)));box-shadow:0 6px 22px -8px var(--blue)}
+html[data-skin="neon"] .go,html[data-skin="neon"] .mini,html[data-skin="neon"] .sbtn,html[data-skin="neon"] .exItem,html[data-skin="neon"] .scale button,html[data-skin="neon"] .seg,html[data-skin="neon"] .seg button{border-radius:999px}
+html[data-skin="neon"] .slot{border-radius:24px}
+html[data-skin="neon"] .exItem .cl{border-radius:50%;box-shadow:0 0 14px -2px var(--hue)}
+html[data-skin="neon"] .nowBar{border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb,var(--blue) 14%,var(--glass-solid)),color-mix(in srgb,var(--accent2) 14%,var(--glass-solid)))}
+/* ---------- Heft: Schulheft – liniertes Papier, Tinte, Serifen, Klebe-Schatten ---------- */
+html[data-skin="heft"]::before{background-image:linear-gradient(90deg,transparent 54px,color-mix(in srgb,#d4433b 45%,transparent) 54px,color-mix(in srgb,#d4433b 45%,transparent) 56px,transparent 56px),
+  repeating-linear-gradient(180deg,transparent 0 31px,color-mix(in srgb,var(--blue) 13%,transparent) 31px 32px)}
+html[data-skin="heft"] .glass{background:var(--glass-solid);-webkit-backdrop-filter:none;backdrop-filter:none;border:1.5px solid color-mix(in srgb,var(--label) 70%,transparent);
+  box-shadow:4px 4px 0 color-mix(in srgb,var(--label) 14%,transparent);border-radius:8px}
+html[data-skin="heft"] .card,html[data-skin="heft"] .panel,html[data-skin="heft"] .slot{border-radius:8px}
+html[data-skin="heft"] .slot{border:1.5px solid color-mix(in srgb,var(--label) 55%,transparent);box-shadow:3px 3px 0 color-mix(in srgb,var(--label) 12%,transparent)}
+html[data-skin="heft"] .side{background:var(--glass-solid);border-right:1.5px solid color-mix(in srgb,var(--label) 60%,transparent)}
+html[data-skin="heft"]:not([data-font]){--hd:'Lora',Georgia,serif}
+html[data-skin="heft"] .planHead h2,html[data-skin="heft"] .gradeHead h2{color:var(--blue)}
+html[data-skin="heft"] .planHead h2::first-line,html[data-skin="heft"] .gradeHead h2::first-line{background:linear-gradient(transparent 62%,color-mix(in srgb,var(--blue) 20%,transparent) 62%)}
+html[data-skin="heft"] .go,html[data-skin="heft"] .mini,html[data-skin="heft"] .scale button,html[data-skin="heft"] .sbtn,html[data-skin="heft"] .seg,html[data-skin="heft"] .seg button{border-radius:6px}
+html[data-skin="heft"] .go{box-shadow:3px 3px 0 color-mix(in srgb,var(--label) 30%,transparent)}
+html[data-skin="heft"] .sbtn[aria-selected="true"]{box-shadow:3px 3px 0 color-mix(in srgb,var(--label) 25%,transparent)}
+html[data-skin="heft"] .scale button[aria-pressed="true"]{transform:rotate(-2deg) scale(1.04);box-shadow:2px 2px 0 color-mix(in srgb,var(--label) 30%,transparent)}
+html[data-skin="heft"] .ptitle,html[data-skin="heft"] .sideH{text-transform:none;letter-spacing:.02em;font-size:13.5px;color:var(--label);border-bottom:1.5px solid color-mix(in srgb,var(--label) 25%,transparent);padding-bottom:5px}
+html[data-skin="heft"] .card .cardHead h3{text-decoration:underline;text-decoration-color:color-mix(in srgb,#d4433b 60%,transparent);text-underline-offset:5px;text-decoration-thickness:2px}
+/* ---------- Klar: ganz flach, Akzentbalken statt Flächen ---------- */
+html[data-skin="klar"]::before{background-image:none}
+html[data-skin="klar"] .glass{-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;background:var(--glass-solid);border:1px solid var(--hairline);border-radius:12px}
+html[data-skin="klar"] .slot{box-shadow:none;background:var(--glass-solid);border:1px solid var(--hairline);border-left:5px solid var(--hue)}
+html[data-skin="klar"] .sbtn[aria-selected="true"]{background:color-mix(in srgb,var(--blue) 10%,transparent);color:var(--blue);box-shadow:inset 3px 0 0 var(--blue);border-radius:4px 9px 9px 4px}
+html[data-skin="klar"] .sbtn[aria-selected="true"] em{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
+html[data-skin="klar"] .scale button{background:transparent;box-shadow:inset 0 0 0 1px var(--hairline)}
+html[data-skin="klar"] .scale button[aria-pressed="true"]{background:var(--blue);box-shadow:none;transform:none}
+html[data-skin="klar"] .go{box-shadow:none}
+html[data-skin="klar"] .card .cardHead{border-bottom:3px solid var(--blue);border-radius:0}
+html[data-skin="klar"] .nowBar{background:var(--glass-solid);border:1px solid var(--hairline);border-left:5px solid var(--red);border-radius:8px}
+/* ---------- Laguna: Wasser – Wellen, kühl, weich ---------- */
+html[data-skin="laguna"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='60'%3E%3Cpath d='M0 40 Q30 25 60 40 T120 40 T180 40 T240 40' fill='none' stroke='%232cc4d0' stroke-opacity='.18' stroke-width='2'/%3E%3C/svg%3E"),
+  radial-gradient(58vmax 50vmax at 8% -6%,var(--wash-a),transparent 60%),radial-gradient(64vmax 52vmax at 66% 104%,var(--wash-c),transparent 60%);background-size:240px 60px,auto,auto}
+html[data-skin="laguna"] .glass{border-radius:22px 22px 22px 8px}
+html[data-skin="laguna"] .card{border-bottom:4px solid color-mix(in srgb,var(--blue) 50%,transparent)}
+html[data-skin="laguna"] .sbtn[aria-selected="true"]{background:linear-gradient(90deg,var(--blue),var(--accent2))}
+html[data-skin="laguna"] .slot{border-radius:20px 20px 20px 6px}
+/* ---------- Tageslicht: Himmel je Tageszeit, Sonne bzw. Mond ---------- */
+html[data-skin="tag"]::before{transition:opacity .8s}
+html[data-skin="tag"]:is([data-phase="morgen"],[data-phase="vormittag"],[data-phase="mittag"],[data-phase="nachmittag"]) .side::after{content:"";position:absolute;right:18px;bottom:96px;width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle,#ffd25e 0 45%,rgba(255,210,94,.25) 46% 70%,transparent 71%);pointer-events:none}
+html[data-skin="tag"]:is([data-phase="abend"],[data-phase="nacht"]) .side::after{content:"";position:absolute;right:20px;bottom:96px;width:30px;height:30px;border-radius:50%;
+  box-shadow:-8px 4px 0 0 #f4f1ff;pointer-events:none}
+html[data-skin="tag"][data-phase="nacht"]::before{background-image:radial-gradient(1.5px 1.5px at 20% 12%,#fff8,transparent),radial-gradient(1.5px 1.5px at 72% 9%,#fff7,transparent),radial-gradient(1px 1px at 46% 30%,#fff6,transparent),
+  radial-gradient(1.5px 1.5px at 86% 42%,#fff7,transparent),radial-gradient(1px 1px at 12% 64%,#fff5,transparent),radial-gradient(60vmax 50vmax at 70% 100%,var(--wash-a),transparent 60%)}
+html[data-skin="tag"] .glass{border-radius:20px}
+@media (prefers-reduced-motion:reduce){html[data-skin] *{transition-duration:.01ms!important}}
+
+/* Tageslicht: Sonne/Mond nur in der breiten Leiste (in der schmalen würde sie Knöpfe verdecken) */
+html[data-skin="tag"] body.sideC .side::after{display:none}
+html[data-skin="neon"] .go.secondary{background:var(--fill);color:var(--blue);box-shadow:none}
+html[data-skin="neon"][data-theme="dark"] .go.secondary{background:rgba(255,255,255,.08);color:#ff7cc2}

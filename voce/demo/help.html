@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
+<title>Voce – Anleitung</title>
+<script src="help.js"></script>
+<style>
+html[data-os="mac"] .os-win,html[data-os="win"] .os-mac,html[data-os] .os-both{display:none}
+
+:root{--ink:#16181D;--muted:#5C6270;--line:#E3E6EC;--accent:#0A64E0;--accent-soft:#EAF2FE;--soft:#F4F6F9;--warn-bg:#FFF5E6;--warn-ink:#5A3A08;--ok:#1E8E4E;
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+html{background:#fff}
+body{margin:0;color:var(--ink);background:#fff;font:15px/1.6 var(--ui);-webkit-font-smoothing:antialiased}
+main{max-width:820px;margin:0 auto;padding:40px 32px 64px}
+a{color:var(--accent)}
+/* Kopf */
+.top{display:flex;align-items:center;gap:20px}
+.top img{width:76px;height:76px}
+h1{font:700 36px/1.08 var(--display);letter-spacing:-.025em;margin:0}
+h1 small{display:block;font:500 15px/1.35 var(--ui);color:var(--muted);letter-spacing:0;margin-top:6px}
+.lead{font-size:16.5px;color:#30353F;margin:22px 0 26px;max-width:64ch}
+/* Schnellstart */
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 28px;padding:0;list-style:none;counter-reset:q}
+.quick li{background:var(--soft);border-radius:14px;padding:13px 13px 12px;font-size:13.5px;line-height:1.4;counter-increment:q}
+.quick li::before{content:counter(q);display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font:700 13px/1 var(--ui);margin-bottom:8px}
+.quick b{display:block;font-size:14px;margin-bottom:2px}
+/* Inhaltsverzeichnis */
+.toc{border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:34px}
+.toc h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:block}
+.toc ol{columns:2;column-gap:28px;margin:0;padding-left:22px;font-size:14.5px}
+.toc li{margin:3px 0;break-inside:avoid}
+.toc a{text-decoration:none}
+/* Abschnitte */
+section{padding:28px 0 10px;border-top:1px solid var(--line)}
+h2{font:700 23px/1.25 var(--display);letter-spacing:-.015em;margin:0 0 12px;display:flex;align-items:center;gap:12px}
+h2 .n{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;background:var(--accent);color:#fff;font-size:15px;flex:none}
+h3{font:650 16px/1.35 var(--display);margin:20px 0 6px}
+p{margin:0 0 10px;max-width:70ch}
+ol,ul{margin:0 0 12px;padding-left:22px}
+li{margin:4px 0}
+li::marker{color:var(--muted)}
+figure{margin:16px 0 20px}
+figure img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 8px 24px -14px rgba(20,30,60,.35)}
+figure.mid{max-width:560px}
+figure.half{max-width:400px}
+figcaption{font-size:13px;color:var(--muted);margin-top:7px}
+.tip,.warn,.note{border-radius:12px;padding:11px 15px;margin:12px 0 16px;font-size:14px;line-height:1.55}
+.tip{background:var(--accent-soft)}
+.note{background:var(--soft)}
+.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.tip b:first-child,.warn b:first-child,.note b:first-child{display:inline}
+kbd{font:600 12px/1 var(--ui);background:#fff;border:1px solid #CBD0DA;border-bottom-width:2px;border-radius:6px;padding:2px 6px;white-space:nowrap}
+b.ui{font-weight:600;color:var(--accent)}
+table{border-collapse:collapse;font-size:13.5px;margin:8px 0 16px;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600;border-bottom:1px solid #D5DAE3}
+.designs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 16px}
+.designs div{border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;line-height:1.45}
+.designs b{display:block;font-size:14px;margin-bottom:3px}
+.check{list-style:none;padding-left:0}
+.check li{padding-left:28px;position:relative}
+.check li::before{content:"";position:absolute;left:2px;top:4px;width:16px;height:16px;border-radius:5px;border:1.6px solid var(--accent)}
+.keys td:first-child{white-space:nowrap;width:42%}
+footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.55}
+footer .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px;color:var(--ink)}
+footer .brand svg{height:18px;width:auto;overflow:visible}
+footer .brand .dot{fill:#3d5cff}
+@media screen and (max-width:720px){.quick{grid-template-columns:1fr 1fr}.designs{grid-template-columns:1fr 1fr}.toc ol{columns:1}}
+/* Druck / PDF: A4, ruhiges Satzbild, nichts wird zwischen Seiten zerschnitten */
+@page{size:A4;margin:16mm 16mm 18mm}
+@media print{
+  body{font-size:10.2pt;line-height:1.5}
+  main{padding:0;max-width:none}
+  .top img{width:58px;height:58px}
+  h1{font-size:25pt}
+  .lead{font-size:11pt;margin:12px 0 16px}
+  .quick{gap:6px;margin-bottom:16px}.quick li{font-size:9pt;padding:9px}
+  .toc{margin-bottom:0;break-after:page}
+  .toc a{color:var(--ink)}
+  section{padding:14px 0 4px;border-top:0}
+  section.newpage{break-before:page}
+  h2{font-size:15pt;margin-bottom:8px;break-after:avoid}
+  h3{font-size:11pt;break-after:avoid}
+  figure{margin:8px 0 12px;break-inside:avoid;max-width:68%}
+  figure.mid{max-width:52%}figure.half{max-width:40%}
+  figure img{box-shadow:none}
+  .tip,.warn,.note,.designs div,table,tr{break-inside:avoid}
+  footer{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <img src="icon.png" alt="">
+  <h1>Voce<small>Mündliche Prüfungen · Gymnasium Bayern · Anleitung</small></h1>
+</header>
+<p class="lead">Voce begleitet große mündliche Leistungsnachweise in den modernen Fremdsprachen von der Klassenliste bis zum fertigen Bewertungsbogen: Gruppen und Zeitplan, Prüfungskarten, Bewerten nach den ISB-Rastern während der Prüfung, Worturteil, Bewertungsbögen in Word und eine Übersicht für die Fachschaft.</p>
+
+<ol class="quick">
+  <li><b>Klasse anlegen</b>Liste als PDF, Excel oder Text einlesen.</li>
+  <li><b>Prüfung anlegen</b>Raster und Notenschlüssel schlägt Voce vor.</li>
+  <li><b>Gruppen &amp; Plan</b>Einteilen, Pausen setzen, Plan drucken.</li>
+  <li><b>Bewerten</b>Punkte antippen – Note und Worturteil entstehen mit.</li>
+  <li><b>Bögen</b>Alle Bewertungsbögen als Word speichern.</li>
+</ol>
+
+<nav class="toc" aria-label="Inhalt">
+  <h2>Inhalt</h2>
+  <ol>
+    <li><a href="#ueberblick">Überblick: Start, Leiste, Archiv</a></li>
+    <li><a href="#klasse">Klassen</a></li>
+    <li><a href="#pruefung">Prüfung anlegen</a></li>
+    <li><a href="#gruppen">Gruppen &amp; Prüfungsplan</a></li>
+    <li><a href="#aufgaben">Aufgaben &amp; Prüfungskarten</a></li>
+    <li><a href="#bewerten">Bewerten</a></li>
+    <li><a href="#boegen">Ergebnisse, Worturteile &amp; Bögen</a></li>
+    <li><a href="#drucken">Drucken und Designs</a></li>
+    <li><a href="#einstellungen">Einstellungen</a></li>
+    <li><a href="#sicherung">Sicherung &amp; Datenschutz</a></li>
+    <li><a href="#raster">Raster und Notenschlüssel</a></li>
+    <li><a href="#tag">Checkliste für den Prüfungstag</a></li>
+    <li><a href="#tasten">Tastenkürzel</a></li>
+  </ol>
+</nav>
+
+<section id="ueberblick" class="newpage">
+<h2><span class="n">1</span>Überblick: Start, Leiste, Archiv</h2>
+<p>Beim ersten Start legt Voce eine <b>Beispielprüfung</b> mit erfundenen Namen an und zeigt auf „Start“ eine kurze Begrüßung mit den vier Schritten; <b class="ui">Ausblenden</b> blendet sie aus. Die Beispielprüfung löschst du unter <b class="ui">Prüfung bearbeiten</b>.</p>
+<p><b>Start</b> zeigt, was als Nächstes ansteht und was bei jeder Prüfung noch fehlt (Gruppen, Aufgaben, Bewertung). Ein Klick führt direkt zum nächsten Schritt.</p>
+<figure><img src="help/0-start.jpg" alt="Startseite von Voce"><figcaption>Start: die nächste Prüfung mit ihrem Stand, darunter weitere Prüfungen.</figcaption></figure>
+<p>Die <b>Leiste</b> links enthält:</p>
+<ul>
+  <li>oben deine Prüfungen nach Datum,</li>
+  <li>direkt unter der gewählten Prüfung ihre vier Schritte <i>Gruppen &amp; Plan · Aufgaben · Bewerten · Ergebnisse &amp; Bögen</i> mit ihrem Stand (✓ erledigt, „6/8“ bewertet) und <b class="ui">Prüfung bearbeiten</b>,</li>
+  <li>unten Klassen, Einstellungen, Hilfe und den Sicherungsstand.</li>
+</ul>
+<p>Ein Klick auf eine andere Prüfung klappt deren Schritte auf. Das Symbol oben in der Leiste klappt die Leiste ein. Beim Bewerten klappt sie von selbst ein, damit die Prüflinge nebeneinander Platz haben.</p>
+<h3>Archiv &amp; Vorlagen</h3>
+<p>Die Leiste zeigt die kommenden und die Prüfungen der letzten zwei Wochen. Alle älteren findest du unter <b class="ui">Archiv &amp; Vorlagen</b>: mit Suche und Filtern nach Jahrgangsstufe, Fach und Schuljahr.</p>
+<p><b class="ui">Als Vorlage</b> legt eine neue Prüfung mit den Aufgaben und dem Ablauf der alten an. Gruppen und Noten übernimmt Voce nicht; Klasse und Termin wählst du neu. Prüfungen werden nie automatisch gelöscht.</p>
+<figure class="mid"><img src="help/9-archiv.jpg" alt="Archiv und Vorlagen"><figcaption>Archiv &amp; Vorlagen: frühere Prüfungen öffnen oder als Vorlage verwenden.</figcaption></figure>
+</section>
+
+<section id="klasse">
+<h2><span class="n">2</span>Klassen</h2>
+<p>In der Leiste unten <b class="ui">Klassen</b> wählen, dann <b class="ui">Klasse hinzufügen</b>.</p>
+<ol>
+  <li><b>Liste einlesen:</b> <b class="ui">Datei auswählen…</b> oder die Datei in das Feld ziehen. Voce liest PDF (z. B. Klassen- oder Kursliste aus der ASV), Excel und CSV. Namen lassen sich auch über <b class="ui">Text einfügen…</b> hineinkopieren.</li>
+  <li><b>Prüfen:</b> Die erkannten Namen erscheinen als Liste; den Klassennamen übernimmt Voce nach Möglichkeit automatisch.</li>
+  <li><b>w/m ergänzen:</b> Fehlt die Angabe (häufig bei Kurslisten der Oberstufe), steht ein orangefarbenes <b>?</b>. Antippen wechselt w → m → d. Schneller geht es, wenn du ins erste Feld klickst und nacheinander <kbd>w</kbd> oder <kbd>m</kbd> tippst; der Cursor springt weiter. Mit w/m schreibt das Worturteil „sie/er“, sonst den Vornamen.</li>
+  <li><b>Anpassen:</b> Namen direkt ändern, mit ✕ löschen, über <b class="ui">+ Gastschüler/in</b> ergänzen. Wer länger fehlt, bekommt „dabei“ ausgeschaltet. Die Person bleibt gespeichert, erscheint aber nicht bei Gruppen und Bewertung.</li>
+  <li><b class="ui">Sichern</b>.</li>
+</ol>
+<figure class="mid"><img src="help/1-klasse.jpg" alt="Klasse bearbeiten"><figcaption>Klassenliste: „dabei“ steuert, wer an der Prüfung teilnimmt.</figcaption></figure>
+<div class="tip"><b>Klassen austauschen:</b> Im Dialog <b class="ui">Klassen</b> speichert <b class="ui">Alle Klassen exportieren</b> die Listen im gemeinsamen Format der Apps von theisapps (z. B. für Aula oder Libretto). <b class="ui">Klassen einlesen …</b> vergleicht eine solche Datei mit deinen Klassen und zeigt, wer neu ist, wer sich geändert hat und wer nicht mehr in der Datei steht. Geändert wird erst nach <b class="ui">Übernehmen</b>.</div>
+</section>
+
+<section id="pruefung">
+<h2><span class="n">3</span>Prüfung anlegen</h2>
+<p><b class="ui">+ Neue Prüfung</b> in der Leiste öffnet den Dialog. Diese Felder sind entscheidend:</p>
+<ul>
+  <li><b>Fach, Jahrgangsstufe, Sprachenfolge:</b> Daraus schlägt Voce das passende ISB-Raster vor (z. B. Italienisch als 3. Fremdsprache in Jgst. 9 → A2+). Du kannst den Vorschlag ändern.</li>
+  <li><b>Sprache der Prüfungskarten:</b> In dieser Sprache stehen die Beschriftungen der Karten für die Prüflinge; Voce stellt sie passend zum Fach ein. Die Sprache der Bewertungsbögen wählst du erst bei der Ausgabe (Standard: Deutsch).</li>
+  <li><b>Grenze 4/5:</b> Standard sind 50 % laut ISB; nach fachlichem Ermessen bis 60 %. Der Notenschlüssel steht direkt darunter. Tabelle, Worturteil und Bogen verwenden immer denselben Schlüssel.</li>
+  <li><b>Ablauf:</b> Datum, Beginn, Raum, Minuten je Gruppe, Wechselzeit und Pausenlänge ergeben den Zeitplan. Ein Hinweis für den Plan (z. B. „Bitte 10 Minuten vorher vor dem Raum warten“) erscheint auf dem Ausdruck.</li>
+</ul>
+<figure class="mid"><img src="help/2-pruefung.jpg" alt="Prüfung bearbeiten"><figcaption>Raster und Notenschlüssel werden aus Jahrgangsstufe und Sprachenfolge vorgeschlagen.</figcaption></figure>
+<div class="tip"><b>Parallelklasse:</b> In <b class="ui">Prüfung bearbeiten</b> auf <b class="ui">Prüfung kopieren …</b> klicken, Klasse und Termin wählen, sichern. Aufgaben, Ablauf und Raster werden übernommen, Gruppen und Bewertungen nicht.</div>
+<div class="note"><b>Klasse wechseln:</b> Wechselst du bei einer Prüfung die Klasse, fragt Voce nach, denn Gruppen und Bewertungen dieser Prüfung werden dabei gelöscht.</div>
+</section>
+
+<section id="gruppen">
+<h2><span class="n">4</span>Gruppen &amp; Prüfungsplan</h2>
+<ol>
+  <li><b>Einteilen:</b> Gruppengröße wählen (Einzeln, 2er, 3er, 4er) und <b class="ui">Zufällig einteilen</b>. Bleibt jemand übrig, entsteht eine größere Gruppe.</li>
+  <li><b>Wunschgruppen:</b> Namen auf eine andere Gruppe ziehen. Auf einen Namen gezogen, tauschen beide die Plätze. Alternativ einen Namen antippen und dann die Zielgruppe.</li>
+  <li><b>Reihenfolge:</b> Gruppen am Griff <b>⠿</b> ziehen oder mit ↑ ↓ verschieben. Ein blauer Strich zeigt, wo die Gruppe landet.</li>
+  <li><b>Pausen:</b> Zwischen zwei Gruppen steht <b>+ Pause einfügen</b>. Die Pause erscheint als orange Leiste mit Uhrzeit. Die Länge änderst du mit − und + (5-Minuten-Schritte) oder per Klick auf die Zahl und Eintippen. Auch Pausen lassen sich ziehen; <b>Entfernen</b> nimmt sie heraus.</li>
+  <li><b class="ui">Plan drucken …</b> öffnet die Druckvorschau (siehe <a href="#drucken">Drucken und Designs</a>). <b class="ui">Als Word</b> liefert den Plan zum Weiterbearbeiten.</li>
+</ol>
+<figure><img src="help/3-gruppen.jpg" alt="Gruppen und Prüfungsplan"><figcaption>Uhrzeiten und Pausen rechnet Voce automatisch.</figcaption></figure>
+</section>
+
+<section id="aufgaben">
+<h2><span class="n">5</span>Aufgaben &amp; Prüfungskarten</h2>
+<p>Dieser Schritt ist freiwillig. Im Bereich <b class="ui">Aufgaben</b> entstehen die Karten für die Prüflinge: je Prüfling eine Karte (A, B, C, D) mit Monolog und Dialog, dazu ein Prüferblatt je Gruppe.</p>
+<ol>
+  <li><b>Aufbau:</b> Monolog und/oder Dialog einschalten, Dauer festlegen, Hinweis „Wörterbuch nicht erlaubt“ wählen und bestimmen, ob die Prüflinge zwischen bis zu vier Monolog-Themen wählen.</li>
+  <li><b>Aufgaben anlegen:</b> Mit <b class="ui">+ Aufgabe</b> entstehen die Monolog- und Dialogaufgaben. Zeilen mit „- “ werden zu Aufzählungspunkten. Beim Monolog kannst du ein Bild einfügen (Knopf oder auf die Bildfläche ziehen), beim Dialog Situation und Rollenkarten. <i>Erwartungen</i> erscheinen nur auf dem Prüferblatt.</li>
+  <li><b>Verteilen:</b> <b class="ui">Aufgaben automatisch verteilen</b> teilt sie reihum auf. Unter „Zuordnung“ lässt sich jede Wahl ändern.</li>
+  <li><b>Drucken:</b> <b class="ui">Karten für die Prüflinge …</b> und <b class="ui">Prüferblätter …</b> öffnen die Druckvorschau. Die Karten erscheinen in der Sprache der Prüfung, das Prüferblatt auf Deutsch.</li>
+</ol>
+<figure><img src="help/3b-aufgaben.jpg" alt="Aufgaben anlegen"><figcaption>Aufgaben mit Bild, Quelle und Erwartungen; links Aufbau und Verteilung.</figcaption></figure>
+<div class="warn"><b>Bilder:</b> Bitte nur verwenden, wenn die Nutzung erlaubt ist, und die Quelle im Feld „Quelle / Urheber“ angeben.</div>
+</section>
+
+<section id="bewerten">
+<h2><span class="n">6</span>Bewerten</h2>
+<p>Links steht die Gruppenliste mit Status, rechts die aktuelle Gruppe mit allen Prüflingen nebeneinander. <b>Am Prüfungstag</b> öffnet Voce die Gruppe, die laut Plan gerade dran ist, und zeigt „Jetzt: Gruppe 2 – noch 8 Min.“ sowie die nächste Gruppe.</p>
+<ul>
+  <li><b>Punkte antippen:</b> je Bereich 0–6 BE (Inhalt 0–4 BE), <b class="ui">+½</b> ergänzt einen halben Punkt. In der Oberstufe vergibst du Notenpunkte 0–15. <b>Falsch angetippt?</b> Noch einmal auf die gewählte Zahl tippen, dann sind die Punkte wieder leer.</li>
+  <li><b>ISB-Beschreibung:</b> Unter den Punkten steht die Beschreibung der gewählten Stufe, zur Kontrolle der Einstufung. <b class="ui">Beschreibungen ausblenden</b> schaltet sie für die ganze Gruppe aus.</li>
+  <li><b>Notizen:</b> Je Bereich gibt es ein Notizfeld. Notizen erscheinen auf dem Bogen als eigener Punkt beim jeweiligen Bereich, nicht im Worturteil.</li>
+  <li><b>Aussprache markieren …</b> öffnet typische Laute und häufige Fehler (Englisch, Italienisch, Französisch, Spanisch). Die Auswahl übernimmt Voce beim Schließen in die Notiz, in der Sprache des Bogens.</li>
+  <li><b>fehlt</b> markiert, wer nicht teilgenommen hat. Für diese Prüflinge legt Voce später auf Wunsch einen Nachtermin an.</li>
+  <li><b>Timer</b> oben mit Start/Pause. <b class="ui">Vorherige</b> / <b class="ui">Nächste</b> oder die Pfeiltasten <kbd>←</kbd> <kbd>→</kbd> wechseln die Gruppe.</li>
+</ul>
+<figure><img src="help/4-bewerten.jpg" alt="Bewerten einer Gruppe"><figcaption>Punkte, Rasterbeschreibung und Notizen; Summe und Note laufen mit.</figcaption></figure>
+</section>
+
+<section id="boegen">
+<h2><span class="n">7</span>Ergebnisse, Worturteile &amp; Bögen</h2>
+<p><b class="ui">Ergebnisse &amp; Bögen</b> zeigt Notenspiegel, Durchschnitt und alle Prüflinge mit Punkten, Note und Worturteil.</p>
+<ul>
+  <li><b class="ui">Worturteil</b> öffnet den Text zum Prüfen und Ändern. Er entsteht aus den Punkten (in der dritten Person, in der Sprache des Bogens) und passt immer zur Note. <b class="ui">Aus den Punkten neu erzeugen</b> setzt einen geänderten Text zurück.</li>
+  <li><b>„bitte prüfen“:</b> Hast du ein Worturteil von Hand geändert und ändern sich danach Punkte oder Notenschlüssel, markiert Voce es. Vor dem Speichern der Bögen fragt Voce dann nach.</li>
+  <li><b class="ui">Alle Bewertungsbögen als Word</b>, direkt daneben die <b>Sprache der Bögen</b> (Standard: Deutsch; Englisch, Italienisch, Französisch oder Spanisch möglich – dann erscheinen Überschriften, Rasterbeschreibungen und das automatische Worturteil in dieser Sprache): eine Datei mit einer Seite pro Person, aufgebaut wie der ISB-Bogen, mit Schullogo und Quellenangabe des ISB. <b class="ui">Bogen</b> in einer Zeile erzeugt nur diesen einen.</li>
+  <li><b class="ui">Übersicht für die Fachschaft …</b> enthält Notenspiegel, Durchschnitt je Bereich und Notenschlüssel mit Anzahl je Note, wahlweise mit Notenliste.</li>
+  <li><b class="ui">Noten kopieren</b> legt „Name + Note“ in die Zwischenablage. <b class="ui">Notenliste (CSV für Excel)</b> enthält Punkte, BE und Noten.</li>
+  <li><b class="ui">Nachtermin anlegen</b> erscheint, wenn jemand gefehlt hat. Voce legt eine neue Prüfung mit denselben Einstellungen und Aufgaben an, nur für diese Personen.</li>
+</ul>
+<figure><img src="help/5-ergebnisse.jpg" alt="Ergebnisse"><figcaption>Notenspiegel, Worturteile und alle Ausgaben an einem Ort.</figcaption></figure>
+<figure class="half"><img src="help/6-bogen.jpg" alt="Beispiel eines Bewertungsbogens"><figcaption>Bewertungsbogen im Aufbau des ISB (Beispiel Englisch, B1+).</figcaption></figure>
+</section>
+
+<section id="drucken">
+<h2><span class="n">8</span>Drucken und Designs</h2>
+<p>Prüfungsplan, Türaushang, Prüfungskarten, Prüferblätter und die Übersicht für die Fachschaft öffnen eine Druckvorschau. Links wählst du Design und Optionen, rechts siehst du sofort das Ergebnis. Unten stehen immer <b class="ui">Drucken …</b> (öffnet den Druckdialog deines Systems, Drucker und Anzahl wählst du dort) und <b class="ui">PDF speichern</b>. Voce merkt sich deine Wahl.</p>
+<div class="designs">
+  <div><b>Nüchtern</b>Schwarz-weiß, mit Tabellen und Kästen wie der ISB-Bogen. Die Grundeinstellung.</div>
+  <div><b>Modern</b>Viel Weiß, eine Akzentfarbe; der Plan als Zeitleiste.</div>
+  <div><b>Heft</b>Karopapier mit Randlinie, Klebezettel und Textmarker.</div>
+  <div><b>Freundlich</b>Bunte, runde Kacheln je Gruppe, gut für die Unterstufe.</div>
+</div>
+<ul>
+  <li><b>Prüfungsplan:</b> Fassung für die <b>Prüflinge</b> (ohne Aufgaben, zum Aushängen oder Verteilen) oder für die <b>Lehrkraft</b> (mit Aufgaben je Prüfling und Dialogrollen, deutlich gekennzeichnet).</li>
+  <li><b>Türaushang:</b> Zeiten in großer Schrift, wahlweise ohne Namen.</li>
+  <li><b>Karten:</b> A4 oder A5 (zwei Karten pro A4-Blatt, zum Halbieren), große Schrift, Monolog und Dialog wahlweise auf getrennten Blättern.</li>
+  <li>Passt eine Seite nicht ganz, verkleinert Voce sie etwas, statt etwas abzuschneiden. Die Vorschau zeigt das an.</li>
+  <li><b class="ui">Als Word (schlicht)</b> liefert eine einfache Fassung zum Weiterbearbeiten.</li>
+  <li><b>Dateinamen:</b> Alle Dateien heißen nach demselben Muster, z. B. <i>2026-11-12 10B Englisch – Prüfungsplan.pdf</i> oder <i>… – Bewertungsbögen.docx</i>. So stehen im Ordner alle Unterlagen einer Prüfung beieinander und nach Datum sortiert.</li>
+</ul>
+<figure><img src="help/7-drucken.jpg" alt="Druckvorschau"><figcaption>Druckvorschau mit den vier Designs, hier der Prüfungsplan in „Modern“.</figcaption></figure>
+<div class="note"><b>Bewertungsbögen</b> haben bewusst kein Design zur Auswahl: Sie folgen immer dem Aufbau des ISB.</div>
+</section>
+
+<section id="einstellungen">
+<h2><span class="n">9</span>Einstellungen</h2>
+<p>Die Einstellungen sind in Bereiche gegliedert; links wählst du den Bereich.</p>
+<table>
+  <tr><th style="width:24%">Bereich</th><th>Was du dort einstellst</th></tr>
+  <tr><td><b>Aussehen</b></td><td>Fünf Farbwelten (Klar, Tageslicht, Laguna, Neon, Heft), Hell/Dunkel/Automatisch, sechs Schriften und die Größe der Oberfläche (z. B. „Groß“ am Beamer). Jeder Knopf zeigt die Schrift selbst. „Tageslicht“ ändert Farben und Helligkeit mit der Tageszeit. Gilt nur auf diesem Gerät, Ausdrucke bleiben gleich.</td></tr>
+  <tr><td><b>Schule &amp; Bögen</b></td><td>Schule, Prüfer/in, Schuljahr und Schullogo (oben rechts auf Bögen und Plan); ISB-Beschreibungen auf dem Bogen; Unterschriftszeile für Erziehungsberechtigte.</td></tr>
+  <tr><td><b>Neue Prüfungen</b></td><td>Vorgaben für neue Prüfungen: Fach, Beginn, Gruppengröße, Minuten je Gruppe, Wechselzeit und Pause. Darunter, welches ISB-Raster Voce je Sprachenfolge und Jahrgangsstufe vorschlägt, vorbelegt nach der GER-Übersicht des ISB.</td></tr>
+  <tr><td><b>Worturteil mit KI</b></td><td>Freiwillig: Worturteile mit Claude, ChatGPT, Gemini oder lokal mit Ollama umformulieren lassen. Für Cloud-Anbieter ist ein API-Schlüssel nötig; ein normales Abo reicht nicht.</td></tr>
+  <tr><td><b>Sicherung &amp; Updates</b></td><td>Sicherungsstand, zweiter Sicherungsordner, frühere Stände wiederherstellen, Abfrage neuer Versionen, alle Daten als Datei speichern oder einlesen.</td></tr>
+  <tr><td><b>Hilfe &amp; Info</b></td><td>Diese Anleitung (auch als PDF), Version, Quellen und Lizenzen.</td></tr>
+</table>
+<figure class="mid"><img src="help/8-einstellungen.jpg" alt="Einstellungen"><figcaption>Einstellungen, Bereich „Aussehen“.</figcaption></figure>
+</section>
+
+<section id="sicherung">
+<h2><span class="n">10</span>Sicherung &amp; Datenschutz</h2>
+<ul>
+  <li>Alle Daten liegen nur auf diesem <span class="os-mac">Mac</span><span class="os-both">/</span><span class="os-win">PC</span> und werden bei jeder Änderung gespeichert.</li>
+  <li>Zusätzlich sichert Voce bei Änderungen etwa alle 15 Minuten und beim Beenden: die letzten 30 Stände und je einen Stand pro Tag.</li>
+  <li>Mit <b class="ui">Sicherungsordner wählen…</b> legst du einen zweiten Ort fest (z. B. einen Cloud-Ordner oder USB-Stick); dann landet jede Sicherung zusätzlich dort.</li>
+  <li><b class="ui">Frühere Sicherungen ansehen und wiederherstellen</b> holt einen älteren Stand zurück. Auch <b class="ui">Sicherung einlesen…</b> sichert vorher automatisch den jetzigen Stand.</li>
+  <li><b class="ui">Sicherungen im <span class="os-mac">Finder</span><span class="os-both">/</span><span class="os-win">Explorer</span> zeigen</b> öffnet den Ordner mit allen automatischen Sicherungen.</li>
+  <li><b class="ui">Sicherung speichern…</b> (unter „Alle Daten als Datei“) legt eine einzelne Datei an, z. B. für den Umzug auf einen anderen Rechner.</li>
+</ul>
+<div class="warn"><b>Datenschutz:</b> Voce arbeitet vollständig lokal. Beim Start fragt die App, abschaltbar unter Einstellungen → Sicherung &amp; Updates, nur die aktuelle Versionsnummer auf theisapps.de ab. Dabei sieht der Server technisch deine IP-Adresse; Namen, Noten oder Prüfungen werden nicht übertragen. Nur die freiwillige KI-Funktion sendet Daten an den gewählten Anbieter, ohne Namen, aber mit Punkten und Notizen; die lokale Variante (Ollama) sendet nichts. Ein KI-Schlüssel wird getrennt gespeichert und nie in Sicherungen übernommen. Festplattenverschlüsselung (<span class="os-mac">FileVault</span><span class="os-both"> bzw. </span><span class="os-win">BitLocker</span>) wird empfohlen. Vor dem Einsatz an der Schule bitte die Freigabe der Schulleitung einholen (§ 10 Abs. 4 AGO), ggf. mit der/dem Datenschutzbeauftragten der Schule.</div>
+</section>
+
+<section id="raster">
+<h2><span class="n">11</span>Raster und Notenschlüssel</h2>
+<p>Bewertet wird in vier Bereichen mit je 6 BE (Inhalt 4 BE). Je nach Niveaustufe werden die Bereiche unterschiedlich gewichtet:</p>
+<table>
+  <tr><th>Stufe</th><th>Aussprache</th><th>Sprachliche Mittel</th><th>Gespräch</th><th>Inhalt</th><th>Summe</th></tr>
+  <tr><td>A1 / A1+</td><td>2×</td><td>4×</td><td>1×</td><td>3×</td><td>54 BE</td></tr>
+  <tr><td>A2 / A2+</td><td>2×</td><td>4×</td><td>2×</td><td>4×</td><td>64 BE</td></tr>
+  <tr><td>B1 / B1+</td><td>1×</td><td>4×</td><td>2×</td><td>5×</td><td>62 BE</td></tr>
+  <tr><td>B1+/B2</td><td>1×</td><td>4×</td><td>2×</td><td>6×</td><td>66 BE</td></tr>
+</table>
+<p>Die Notenschlüssel entsprechen den Rechentabellen des ISB. In der Oberstufe (12/13) zählen sprachliche Leistung 40 %, Gesprächsfähigkeit 20 % und Inhalt 40 %. Wird ein Bereich mit 0 Notenpunkten bewertet, sind insgesamt höchstens 03 Notenpunkte möglich.</p>
+<p>Das Worturteil folgt den Beschreibungen des ISB für die gewählte Punktzahl. Seine Gesamteinschätzung entspricht immer der berechneten Note, auch bei einer eigenen Grenze 4/5.</p>
+</section>
+
+<section id="tag">
+<h2><span class="n">12</span>Checkliste für den Prüfungstag</h2>
+<ul class="check">
+  <li>Am Vortag einen Bewertungsbogen als Probe speichern: Logo, Schulname und Sprache prüfen.</li>
+  <li>Prüfungsplan (Fassung Prüflinge) und Türaushang drucken, Lehrkraft-Fassung und Prüferblätter mitnehmen.</li>
+  <li>Karten drucken; bei getrennten Monolog- und Dialogblättern die Reihenfolge beim Austeilen beachten.</li>
+  <li>Laptop laden, Voce öffnen: Am Prüfungstag springt „Bewerten“ zur aktuellen Gruppe.</li>
+  <li>Während der Prüfung nur Punkte antippen und kurze Notizen schreiben; Worturteile entstehen automatisch.</li>
+  <li>Danach Worturteile kurz durchsehen, Bögen speichern und eine Sicherung anlegen.</li>
+</ul>
+</section>
+
+<section id="tasten">
+<h2><span class="n">13</span>Tastenkürzel</h2>
+<table class="keys">
+  <tr><th>Aktion</th><th class="os-mac">Mac</th><th class="os-win">Windows</th></tr>
+  <tr><td>Neue Prüfung</td><td class="os-mac"><kbd>⌘</kbd> <kbd>N</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>N</kbd></td></tr>
+  <tr><td>Klassen</td><td class="os-mac"><kbd>⌘</kbd> <kbd>K</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>K</kbd></td></tr>
+  <tr><td>Einstellungen</td><td class="os-mac"><kbd>⌘</kbd> <kbd>,</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>,</kbd></td></tr>
+  <tr><td>Anleitung</td><td class="os-mac"><kbd>⌘</kbd> <kbd>?</kbd></td><td class="os-win"><kbd>F1</kbd></td></tr>
+  <tr><td>Alle Daten als Datei sichern</td><td class="os-mac"><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>S</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>Umschalt</kbd> <kbd>S</kbd></td></tr>
+  <tr><td>Größer / kleiner</td><td class="os-mac"><kbd>⌘</kbd> <kbd>+</kbd> / <kbd>⌘</kbd> <kbd>−</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>+</kbd> / <kbd>Strg</kbd> <kbd>−</kbd></td></tr>
+  <tr><td>Vorherige / nächste Gruppe (Bewerten)</td><td class="os-mac"><kbd>←</kbd> <kbd>→</kbd></td><td class="os-win"><kbd>←</kbd> <kbd>→</kbd></td></tr>
+  <tr><td>Dialog schließen</td><td class="os-mac"><kbd>Esc</kbd></td><td class="os-win"><kbd>Esc</kbd></td></tr>
+</table>
+</section>
+
+<footer>
+<div class="brand">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -1 381.8 75.2" role="img" aria-label="theisapps"><g transform="translate(0,71.86)"><path transform="translate(0.00,0) scale(0.1,-0.1)" fill="currentColor" d="M283.6005859375 0Q204.0001220703125 0 166.49993896484375 36.80023193359375Q128.999755859375 73.6004638671875 128.999755859375 152.801025390625V659.2003173828125H257.00244140625V165.20166015625Q257.00244140625 127.6015625 273.20245361328125 113.40155029296875Q289.4024658203125 99.2015380859375 322.802490234375 99.2015380859375H398.00244140625V0ZM45.3994140625 434.7987060546875V534.000244140625H398.00244140625V434.7987060546875Z"/><path transform="translate(38.70,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V710H198.402099609375V411.7999267578125L182.001708984375 412.1998291015625Q190.401611328125 458.199951171875 214.20159912109375 487.60003662109375Q238.0015869140625 517.0001220703125 273.20159912109375 531.5001831054688Q308.401611328125 546.000244140625 350.401611328125 546.000244140625Q409.4017333984375 546.000244140625 449.50177001953125 520.3002319335938Q489.601806640625 494.6002197265625 510.101806640625 448.7001953125Q530.601806640625 402.8001708984375 530.601806640625 343.400146484375V0H402.59912109375V311.7996826171875Q402.59912109375 377.198974609375 380.89947509765625 409.59869384765625Q359.1998291015625 441.9984130859375 311.600341796875 441.9984130859375Q259.60107421875 441.9984130859375 229.0015869140625 408.19873046875Q198.402099609375 374.3990478515625 198.402099609375 308.799560546875V0Z"/><path transform="translate(94.80,0) scale(0.1,-0.1)" fill="currentColor" d="M300.600830078125 -12Q220.800537109375 -12 162.10028076171875 22.4000244140625Q103.4000244140625 56.800048828125 71.29986572265625 119.7000732421875Q39.19970703125 182.60009765625 39.19970703125 267.0001220703125Q39.19970703125 351.400146484375 71.29986572265625 413.8001708984375Q103.4000244140625 476.2001953125 161.50030517578125 511.1002197265625Q219.6005859375 546.000244140625 298.200927734375 546.000244140625Q374.4013671875 546.000244140625 431.60162353515625 511.900146484375Q488.8018798828125 477.800048828125 520.1019897460938 413.7999267578125Q551.402099609375 349.7998046875 551.402099609375 259.999755859375V231.3995361328125H172.00244140625Q175.8023681640625 160.8004150390625 210.302001953125 125.60089111328125Q244.8016357421875 90.4013671875 302.200927734375 90.4013671875Q345.0003662109375 90.4013671875 373.300048828125 109.50103759765625Q401.5997314453125 128.6007080078125 412.9996337890625 163.8004150390625L543.8021240234375 155.600341796875Q522.402099609375 78.199951171875 457.70172119140625 33.0999755859375Q393.0013427734375 -12 300.600830078125 -12ZM172.00244140625 317.4002685546875H418.599609375Q414.5997314453125 382.3995361328125 381.90008544921875 413.79925537109375Q349.200439453125 445.198974609375 298.200927734375 445.198974609375Q246.801513671875 445.198974609375 213.3018798828125 412.29925537109375Q179.80224609375 379.3995361328125 172.00244140625 317.4002685546875Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" fill="currentColor" d="M70.3994140625 0V534.000244140625H198.402099609375V0Z"/><path transform="translate(149.90,0) scale(0.1,-0.1)" class="dot" d="M67.9993896484375 605.3995361328125V718.6004638671875H200.8021240234375V605.3995361328125Z"/><path transform="translate(172.80,0) scale(0.1,-0.1)" fill="currentColor" d="M287.40087890625 -12Q205.600341796875 -12 152.10009765625 11.20001220703125Q98.599853515625 34.4000244140625 70.8997802734375 75.10003662109375Q43.19970703125 115.800048828125 39.19970703125 168.2000732421875L170.0023193359375 173.800048828125Q177.2022705078125 132.200439453125 203.9019775390625 108.9007568359375Q230.6016845703125 85.60107421875 287.8009033203125 85.60107421875Q332.600341796875 85.60107421875 356.5 100.3009033203125Q380.399658203125 115.000732421875 380.399658203125 146.000244140625Q380.399658203125 164.2000732421875 371.89971923828125 176.199951171875Q363.3997802734375 188.1998291015625 338.79998779296875 197.29974365234375Q314.2001953125 206.399658203125 266.6005859375 214.799560546875Q185.8001708984375 229.1995849609375 139.99993896484375 249.799560546875Q94.19970703125 270.3995361328125 75.599609375 301.39959716796875Q56.99951171875 332.399658203125 56.99951171875 377.599853515625Q56.99951171875 452.60009765625 114.49981689453125 499.3001708984375Q172.0001220703125 546.000244140625 283.2010498046875 546.000244140625Q360.4014892578125 546.000244140625 409.7017822265625 521.7002563476562Q459.0020751953125 497.4002685546875 484.4022216796875 456.60015869140625Q509.8023681640625 415.800048828125 514.0023193359375 366.399658203125L384.3997802734375 360.399658203125Q383.1998291015625 385.399658203125 371.99993896484375 405.3995361328125Q360.800048828125 425.3994140625 338.80029296875 436.8992919921875Q316.800537109375 448.399169921875 281.2010498046875 448.399169921875Q235.8017578125 448.399169921875 212.60198974609375 430.19940185546875Q189.4022216796875 411.9996337890625 189.4022216796875 382.39990234375Q189.4022216796875 360.8001708984375 198.7021484375 346.90032958984375Q208.0020751953125 333.00048828125 231.10186767578125 324.30059814453125Q254.20166015625 315.6007080078125 293.80126953125 309.2008056640625Q376.2015380859375 297.0008544921875 424.2017822265625 276.2008056640625Q472.2020263671875 255.4007568359375 492.502197265625 223.900634765625Q512.8023681640625 192.4005126953125 512.8023681640625 147.600341796875Q512.8023681640625 71.0001220703125 451.5020751953125 29.50006103515625Q390.2017822265625 -12 287.40087890625 -12Z"/><path transform="translate(229.30,0) scale(0.0640,-0.0640)" fill="currentColor" d="M224.6 -12Q141.4 -12 90.3 26.4Q39.2 64.8 39.2 133.6Q39.2 203.2 82.2 242Q125.2 280.8 212.6 298L390.2 332.6Q390.2 389.6 364.1 418.2Q338 446.8 287.4 446.8Q240.8 446.8 214.2 425.5Q187.6 404.2 178.4 363.8L48.2 370.4Q63.6 454.6 125.7 500.3Q187.8 546 287.4 546Q401.4 546 459.8 488.7Q518.2 431.4 518.2 324.4V129.8Q518.2 108.6 525.5 100.9Q532.8 93.2 547.8 93.2H564.8V0Q558.8 -1.8 545.4 -3.1Q532 -4.4 518.4 -4.4Q485.2 -4.4 459.3 6.5Q433.4 17.4 419 43.5Q404.6 69.6 404.6 115.6L416.2 108Q407.6 72.8 381.4 45.5Q355.2 18.2 315 3.1Q274.8 -12 224.6 -12ZM251 81.2Q293.6 81.2 324.7 97.9Q355.8 114.6 373 144.9Q390.2 175.2 390.2 215.6V245.6L251.8 217.6Q209.4 209.2 190.5 191.5Q171.6 173.8 171.6 145.6Q171.6 115 192.3 98.1Q213 81.2 251 81.2Z"/><path transform="translate(266.42,0) scale(0.0640,-0.0640)" fill="currentColor" d="M70.4 -150V534H192.8L195.6 420.4L183.2 426Q203.2 484.6 248.7 515.3Q294.2 546 354.8 546Q431 546 481.3 508.2Q531.6 470.4 556.7 407.2Q581.8 344 581.8 267Q581.8 190.4 556.5 127Q531.2 63.6 480.7 25.8Q430.2 -12 354 -12Q314.2 -12 279.7 2.2Q245.2 16.4 220.7 42.2Q196.2 68 186 103.2L198.4 113.2V-150ZM324 91.6Q382.2 91.6 415.8 138.2Q449.4 184.8 449.4 267Q449.4 349.2 415.8 395.8Q382.2 442.4 324 442.4Q285.2 442.4 257.1 422.8Q229 403.2 213.7 364Q198.4 324.8 198.4 267Q198.4 209.2 213.4 170Q228.4 130.8 256.8 111.2Q285.2 91.6 324 91.6Z"/><path transform="translate(306.16,0) scale(0.0640,-0.0640)" fill="currentColor" d="M70.4 -150V534H192.8L195.6 420.4L183.2 426Q203.2 484.6 248.7 515.3Q294.2 546 354.8 546Q431 546 481.3 508.2Q531.6 470.4 556.7 407.2Q581.8 344 581.8 267Q581.8 190.4 556.5 127Q531.2 63.6 480.7 25.8Q430.2 -12 354 -12Q314.2 -12 279.7 2.2Q245.2 16.4 220.7 42.2Q196.2 68 186 103.2L198.4 113.2V-150ZM324 91.6Q382.2 91.6 415.8 138.2Q449.4 184.8 449.4 267Q449.4 349.2 415.8 395.8Q382.2 442.4 324 442.4Q285.2 442.4 257.1 422.8Q229 403.2 213.7 364Q198.4 324.8 198.4 267Q198.4 209.2 213.4 170Q228.4 130.8 256.8 111.2Q285.2 91.6 324 91.6Z"/><path transform="translate(345.91,0) scale(0.0640,-0.0640)" fill="currentColor" d="M287.4 -12Q205.6 -12 152.1 11.2Q98.6 34.4 70.9 75.1Q43.2 115.8 39.2 168.2L170 173.8Q177.2 132.2 203.9 108.9Q230.6 85.6 287.8 85.6Q332.6 85.6 356.5 100.3Q380.4 115 380.4 146Q380.4 164.2 371.9 176.2Q363.4 188.2 338.8 197.3Q314.2 206.4 266.6 214.8Q185.8 229.2 140 249.8Q94.2 270.4 75.6 301.4Q57 332.4 57 377.6Q57 452.6 114.5 499.3Q172 546 283.2 546Q360.4 546 409.7 521.7Q459 497.4 484.4 456.6Q509.8 415.8 514 366.4L384.4 360.4Q383.2 385.4 372 405.4Q360.8 425.4 338.8 436.9Q316.8 448.4 281.2 448.4Q235.8 448.4 212.6 430.2Q189.4 412 189.4 382.4Q189.4 360.8 198.7 346.9Q208 333 231.1 324.3Q254.2 315.6 293.8 309.2Q376.2 297 424.2 276.2Q472.2 255.4 492.5 223.9Q512.8 192.4 512.8 147.6Q512.8 71 451.5 29.5Q390.2 -12 287.4 -12Z"/></g></svg>
+<span>Voce · Mündliche Prüfungen · Gymnasium Bayern</span></div>
+© 2026 theisapps. Alle Rechte vorbehalten. · <a href="https://theisapps.de/" target="_blank" rel="noopener">theisapps.de</a><br>
+Quelle der Bewertungsraster, Rastertexte und Notenschlüssel: Staatsinstitut für Schulqualität und Bildungsforschung München (ISB), <a href="https://www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/" target="_blank" rel="noopener">www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/</a>. Verwendung mit freundlicher Genehmigung des ISB. Die Übersetzungen der Rastertexte sind inoffiziell. Ohne Gewähr; die Verantwortung für die Notengebung liegt bei der Lehrkraft.
+</footer>
+</main>
+</body>
+</html>
