@@ -557,8 +557,8 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .appstrip{background:#0e1230}
 /* Schrift: groß, eng, plakativ; das markierte Wort steht auf einem orangen Block */
 :root[data-style=plakat] :is(h1,h2){letter-spacing:-.045em}
-:root[data-style=plakat] h1{line-height:.98}
-:root[data-style=plakat] .hl{background:#ff4b2b;color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+:root[data-style=plakat] h1{line-height:1.04}
+:root[data-style=plakat] .hl{background:linear-gradient(transparent 17%,#ff4b2b 17%,#ff4b2b 93%,transparent 93%);color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 :root[data-style=plakat] ::selection{background:#ff4b2b;color:#0e1230}
 :root[data-style=plakat] a{text-decoration-color:rgba(245,243,238,.5)}
 /* Nummerierte Abschnitte mit kräftiger Linie */
