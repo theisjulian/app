@@ -63,7 +63,7 @@
     const S = F.S, sg = F.suggestion();
     const done = S.sessions.filter((x) => x.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(x.status)).sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
     const card = (ic, t, sub, act, extra = '') => `<button class="it" data-act="${act}" ${extra}><div class="ico">${ic}</div><div class="grow"><b>${t}</b><div class="small mute">${sub}</div></div>${arrow}</button>`;
-    return `<div class="h1" style="margin-bottom:4px">Training</div><p class="mute" style="margin-top:0">Hier startest du eine Einheit und siehst, was du schon gemacht hast.</p>
+    return `<div class="h1" style="margin-bottom:14px">Training</div>
       <div class="card list">
         ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}`, 'start')}
         ${card(F.icon.kalender, 'Anderen Tag wählen', esc((F.activeSplit() ? F.activeSplit().days.map((d) => d.name) : []).join(' · ') || 'Erst einen Split wählen'), 'pickDay')}
@@ -181,7 +181,7 @@
   const cv = document.createElement('canvas').getContext('2d');
   F.fit = (el) => { if (!el || !el.clientWidth) return; el.style.fontSize = ''; const cs = getComputedStyle(el); let size = parseFloat(cs.fontSize); const room = el.clientWidth - 6, text = el.value || el.placeholder || '';
     const w = (px) => { cv.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`; return cv.measureText(text).width; };
-    while (size > 14 && w(size) > room) size -= 1; el.style.fontSize = size + 'px'; };
+    while (size > 16 && w(size) > room) size -= 1; /* nie unter 16 px, sonst zoomt das iPhone beim Antippen */ el.style.fontSize = size + 'px'; };
   F.fitAll = () => document.querySelectorAll('.stepper input').forEach(F.fit);
   window.addEventListener('resize', () => F.fitAll && F.fitAll());
   document.addEventListener('input', (e) => { if (e.target.closest && e.target.closest('.stepper')) F.fit(e.target); });
@@ -194,10 +194,19 @@
     v = Math.max(0, v + d * step); f.st[fld] = fld === 'load_kg' ? v : Math.round(v); inp.value = F.fmt(v);
     F.fit(inp); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
   };
+  /* + und − gedrückt halten: zählt schnell weiter (erst nach 0,4 s, dann alle 0,11 s) */
+  (() => { let tm = null, rep = false;
+    const stop = () => { clearTimeout(tm); clearInterval(tm); tm = null; };
+    document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('[data-act=step]'); if (!b) return; rep = false; stop();
+      tm = setTimeout(() => { tm = setInterval(() => { rep = true; F.acts.step(b); try { navigator.vibrate && navigator.vibrate(4); } catch {} }, 110); }, 400); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => document.addEventListener(ev, stop));
+    // nach dem Halten den abschließenden Klick schlucken, sonst käme ein Schritt zu viel
+    document.addEventListener('click', (e) => { if (rep && e.target.closest && e.target.closest('[data-act=step]')) { rep = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  })();
   F.acts.rir = (t) => { const f = findSet(t.dataset.s); if (!f) return; f.st.rir = f.st.rir === Number(t.dataset.v) ? null : Number(t.dataset.v); F.render(); };
   /* Vorschlag in die leeren Felder übernehmen (nur das, was du nicht selbst geändert hast) */
   const applyTarget = (se, st, ex) => { const tg = F.setTarget(se, st); if (st.load_kg === null && !noLoad(ex)) st.load_kg = tg.load_kg; if (tg.timed) { if (st.seconds === null || st.seconds === undefined) st.seconds = tg.seconds; } else if (st.reps === null || st.reps === undefined) st.reps = tg.reps; };
-  const saveDone = async (st) => { const r = await F.update('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() }); Object.assign(st, r); };
+  const saveDone = async (st) => { const r = await F.save('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() }); Object.assign(st, r); };
   F.acts.doneSet = async (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const st = f.st, ex = F.S.exById[f.se.exercise_id] || {}, pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A;
     applyTarget(f.se, st, ex); F.sound.unlock(); try { navigator.vibrate && navigator.vibrate(12); } catch {} if (F.focusOn() && F.wake) F.wake(true);
@@ -205,7 +214,7 @@
     await saveDone(st); F.ui.tr.last = st.id;
     // nächsten offenen Satz mit dem Gewicht vorbelegen (nie erfundene Werte: nur Kopie des gerade Eingegebenen)
     const nxt = f.se.sets.find((x) => !x.done);
-    if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.update('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
+    if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.save('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
     let rest = true;
     if (F.focusOn()) {
       // Superset: erst beide Übungen im Wechsel, Pause danach. Sonst weiter in derselben Übung bzw. zur nächsten offenen.
@@ -233,8 +242,8 @@
     if (i >= 0 && s.session_exercises[i] !== se) F.ui.tr.ei = i; else F.toast('Keine andere Übung mehr offen.');
     F.render(); window.scrollTo(0, 0);
   };
-  F.acts.rate = async (t) => { const f = F.ui.tr.last && findSet(F.ui.tr.last); if (!f) return; const v = Number(t.dataset.v), nv = f.st.rir === v ? null : v; f.st.rir = nv; F.render(); await F.update('sets', f.st.id, { rir: nv }); };
-  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.update('sets', f.st.id, { done: false, done_at: null }); Object.assign(f.st, r); F.render(); };
+  F.acts.rate = async (t) => { const f = F.ui.tr.last && findSet(F.ui.tr.last); if (!f) return; const v = Number(t.dataset.v), nv = f.st.rir === v ? null : v; f.st.rir = nv; F.render(); await F.save('sets', f.st.id, { rir: nv }); };
+  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.save('sets', f.st.id, { done: false, done_at: null }); Object.assign(f.st, r); F.render(); };
   F.acts.addSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; const r = await F.insert('sets', { session_exercise_id: se.id, set_no: (last ? last.set_no : 0) + 1, load_kg: last ? last.load_kg : null, load_per_hand: last ? last.load_per_hand : false }); se.sets.push(r); F.render(); };
   F.acts.rmSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; if (last.done) return; await F.del('sets', last.id); se.sets.pop(); F.render(); };
 
@@ -296,8 +305,13 @@
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), cur = F.S.exById[se.exercise_id];
     const ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
     const used = new Set(s.session_exercises.map((x) => x.exercise_id));
-    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && E.eligible(e, ctx)).sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern)).slice(0, 12);
-    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
+    // Alle passenden Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet): gleiches Muster, dann was du oft machst
+    const cut = F.addDays(F.today(), -60), freq = {};
+    for (const q of F.S.sessions) if (q.session_date >= cut) for (const x of q.session_exercises) if (x.sets.some((y) => y.done)) freq[x.exercise_id] = (freq[x.exercise_id] || 0) + 1;
+    const ok = (e) => e.active && e.dosage_profile !== 'M' && !(F.S.userEx[e.id] || {}).hidden && !ctx.painEx.has(e.id) && E.available(e, ctx.items).ok;
+    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && ok(e))
+      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 20);
+    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}${freq[e.id] ? ' · ' + freq[e.id] + '× gemacht' : ''}${e.tier !== 'geprueft' && !(F.S.userEx[e.id] || {}).released ? ' · Entwurf' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);
@@ -341,8 +355,8 @@
       if (prev > 0 && best > prev + 0.01) prs.push(`${ex.name}: ca. ${F.fmt(Math.round(best * 10) / 10)} kg Maximalkraft (vorher ${F.fmt(Math.round(prev * 10) / 10)})`);
     }
     const wk = F.S.sessions.filter((o) => o.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(o.status) && o.session_date >= F.addDays(F.today(), -6)).length + 1;
-    await F.update('sessions', s.id, { status: 'bestaetigt', finished_at: new Date().toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null });
-    F.rest = null; F.ui.tr.skip = []; F.ui.tr.last = null; F.closeModal(); await F.load();
+    Object.assign(s, await F.save('sessions', s.id, { status: 'bestaetigt', finished_at: new Date().toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null }));
+    F.rest = null; F.ui.tr.skip = []; F.ui.tr.last = null; F.closeModal(); await F.load().catch(() => null);
     if (F.celebrate) F.celebrate({ title: s.title || 'Training', sets, minutes: mins, volume: Math.round(vol), prs, week: s.kind === 'kraft' ? wk : 0 }); else F.go('heute');
   };
   F.acts.discard = async () => { if (!confirm('Dieses Training wirklich verwerfen? Eingetragene Sätze gehen verloren.')) return; await F.del('sessions', F.openSession().id); F.rest = null; F.ui.tr.skip = []; F.closeModal(); await F.load(); F.go('heute'); };

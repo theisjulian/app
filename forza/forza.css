@@ -474,3 +474,16 @@ html[data-theme=glas] .h1{letter-spacing:-.025em}
 @media(prefers-reduced-motion:reduce){html[data-theme=glas] body:before{animation:none}}
 /* Ältere Browser ohne Glas-Effekt: deckende Flächen statt durchsichtig */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){html[data-theme=glas][data-mode=dark] :is(.card,.hero,.modal>div,.bnav,.setrow){background:#151b3a!important}html[data-theme=glas][data-mode=light] :is(.card,.hero,.modal>div,.bnav,.setrow){background:#fff!important}}
+/* Offline-Hinweis: klein oben, solange etwas aussteht */
+.netb{display:none}
+html.offline .netb{display:block;position:fixed;top:calc(var(--st) + 6px);left:50%;transform:translateX(-50%);z-index:45;padding:5px 12px 5px 26px;border-radius:99px;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--warn) 22%,var(--bg2));color:var(--text);border:1px solid color-mix(in srgb,var(--warn) 50%,transparent);box-shadow:var(--sh)}
+html.offline .netb:before{content:"";position:absolute;left:11px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--warn);animation:bootbeat 1.4s infinite}
+/* Blatt von unten */
+.modal>div{position:relative;padding-top:26px;transition:transform .22s cubic-bezier(.2,.7,.2,1);overscroll-behavior:contain}
+.grab{position:absolute;top:9px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:99px;background:var(--line)}
+@media(min-width:900px){.grab{display:none}.modal>div{padding-top:20px}}
+body:has(.modal){overflow:hidden}
+/* iPhone: kein Lupen-/Kopiermenü auf Knöpfen, kein Gummiband-Hintergrund */
+button,.chip,.btn,.it,.wu{-webkit-touch-callout:none}
+html,body{overscroll-behavior-y:none}
+input,select,textarea{font-size:max(16px,1em)}
