@@ -191,12 +191,12 @@ details.q p{color:var(--grey);max-width:70ch;padding-bottom:10px}
 
 /* App-Farben */
 .a-libretto{--app:#1d8a52;--tint:#e3f3ea}.a-voce{--app:#2b52b3;--tint:#e5ebfc}.a-foliva{--app:#6544bd;--tint:#ece7fb}
-.a-gruppo{--app:#c23452;--tint:#fbe5e9}.a-sportivo{--app:#a95a0a;--tint:#fcefd9}.a-namo{--app:#127371;--tint:#d9f2f1}
-.n-libretto{--ntint:#e3f3ea}.n-voce{--ntint:#e5ebfc}.n-foliva{--ntint:#ece7fb}.n-gruppo{--ntint:#fbe5e9}.n-sportivo{--ntint:#fcefd9}.n-namo{--ntint:#d9f2f1}
+.a-aula{--app:#c23452;--tint:#fbe5e9}.a-sportivo{--app:#a95a0a;--tint:#fcefd9}.a-namo{--app:#127371;--tint:#d9f2f1}
+.n-libretto{--ntint:#e3f3ea}.n-voce{--ntint:#e5ebfc}.n-foliva{--ntint:#ece7fb}.n-aula{--ntint:#fbe5e9}.n-sportivo{--ntint:#fcefd9}.n-namo{--ntint:#d9f2f1}
 @media(prefers-color-scheme:dark){
 .a-libretto{--app:#5fd497;--tint:#16271f}.a-voce{--app:#8fa9ff;--tint:#18203a}.a-foliva{--app:#b49cff;--tint:#211b38}
-.a-gruppo{--app:#ff8fa6;--tint:#2d1820}.a-sportivo{--app:#ffb35c;--tint:#2b2112}.a-namo{--app:#5fd6d1;--tint:#132a2a}
-.n-libretto{--ntint:#16271f}.n-voce{--ntint:#18203a}.n-foliva{--ntint:#211b38}.n-gruppo{--ntint:#2d1820}.n-sportivo{--ntint:#2b2112}.n-namo{--ntint:#132a2a}}
+.a-aula{--app:#ff8fa6;--tint:#2d1820}.a-sportivo{--app:#ffb35c;--tint:#2b2112}.a-namo{--app:#5fd6d1;--tint:#132a2a}
+.n-libretto{--ntint:#16271f}.n-voce{--ntint:#18203a}.n-foliva{--ntint:#211b38}.n-aula{--ntint:#2d1820}.n-sportivo{--ntint:#2b2112}.n-namo{--ntint:#132a2a}}
 :root[data-style=neon] [class*="a-"],:root[data-style=neon] [class*="n-"]{--tint:var(--surf);--ntint:var(--surf)}
 :root[data-style=neon] .pic,:root[data-style=neon] .stage{--tint:var(--surf)}
 
@@ -557,8 +557,8 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .appstrip{background:#0e1230}
 /* Schrift: groß, eng, plakativ; das markierte Wort steht auf einem orangen Block */
 :root[data-style=plakat] :is(h1,h2){letter-spacing:-.045em}
-:root[data-style=plakat] h1{line-height:.98}
-:root[data-style=plakat] .hl{background:#ff4b2b;color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+:root[data-style=plakat] h1{line-height:1.04}
+:root[data-style=plakat] .hl{background:linear-gradient(transparent 17%,#ff4b2b 17%,#ff4b2b 93%,transparent 93%);color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 :root[data-style=plakat] ::selection{background:#ff4b2b;color:#0e1230}
 :root[data-style=plakat] a{text-decoration-color:rgba(245,243,238,.5)}
 /* Nummerierte Abschnitte mit kräftiger Linie */
@@ -606,10 +606,33 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .cup .btn{background:#ff4b2b!important;color:#0e1230}
 /* Fußzeile und Leiste unten */
 :root[data-style=plakat] footer{background:#0e1230;border-top:0}
-:root[data-style=plakat] .appdock{background:#f5f3ee;border-radius:0;padding:8px 8px 6px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 0 0 2px #0e1230,6px 6px 0 #ff4b2b}
-:root[data-style=plakat] .appdock a{color:#0e1230;border-radius:0;font-weight:700;letter-spacing:.01em}
-:root[data-style=plakat] .appdock img{border-radius:9px}
-:root[data-style=plakat] .appdock a[aria-current]::after{width:18px;height:3px;border-radius:0;background:#ff4b2b;bottom:0}
+/* Plakat: statt Leiste ein Sticker „Programme“, der einen Programm-Index aufklappt */
+.appdock .pk-tog,.appdock em{display:none}
+@media(max-width:820px){
+:root[data-style=plakat] .appdock{left:auto;right:14px;transform:none;background:none;box-shadow:none;padding:0;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;display:block;max-width:none}
+:root[data-style=plakat] .appdock.hide{transform:translateY(calc(100% + 30px))}
+:root[data-style=plakat] .appdock>a{display:none}
+:root[data-style=plakat] .appdock .pk-tog{display:flex;align-items:center;gap:10px;margin-left:auto;padding:12px 16px 12px 13px;border:0;border-radius:0;background:#ff4b2b;color:#0e1230;font:700 15px/1 inherit;font-family:inherit;letter-spacing:.02em;text-transform:uppercase;box-shadow:4px 4px 0 #0e1230;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s,box-shadow .15s}
+:root[data-style=plakat] .appdock .pk-tog:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #0e1230}
+:root[data-style=plakat] .pk-sq{display:grid;grid-template-columns:repeat(2,7px);gap:2px}
+:root[data-style=plakat] .pk-sq i{width:7px;height:7px;background:#0e1230}
+:root[data-style=plakat] .pk-sq i:nth-child(2){background:#f5f3ee}
+:root[data-style=plakat] .appdock.open{left:12px;right:12px;padding:18px 16px 14px;background:#0e1230;box-shadow:6px 6px 0 #ff4b2b;counter-reset:pd;animation:pkin .22s cubic-bezier(.2,.7,.2,1)}
+:root[data-style=plakat] .appdock.open::before{content:"Programme";display:block;margin:0 0 8px 2px;color:#ff4b2b;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+:root[data-style=plakat] .appdock.open>a{counter-increment:pd;display:grid;grid-template-columns:30px 38px 1fr;align-items:center;gap:0 12px;width:auto;padding:9px 4px;border-radius:0;border-top:1px solid rgba(245,243,238,.14);color:#f5f3ee;font-size:19px;font-weight:700;line-height:1.15;text-align:left}
+:root[data-style=plakat] .appdock.open>a::before{content:counter(pd,decimal-leading-zero);color:rgba(245,243,238,.45);font-size:13px;font-weight:700;letter-spacing:.04em}
+:root[data-style=plakat] .appdock.open>a img{width:38px;height:38px;border-radius:9px}
+:root[data-style=plakat] .appdock.open span{overflow:visible}
+:root[data-style=plakat] .appdock.open em{display:block;grid-column:3;margin-top:-2px;font-style:normal;font-size:13px;font-weight:500;color:rgba(245,243,238,.62)}
+:root[data-style=plakat] .appdock.open>a[aria-current]{color:#ff4b2b}
+:root[data-style=plakat] .appdock.open>a[aria-current]::after{display:none}
+:root[data-style=plakat] .appdock.open>a:active{background:rgba(245,243,238,.06)}
+:root[data-style=plakat] .appdock.open .pk-tog{margin-top:12px;background:#f5f3ee;box-shadow:none}
+:root[data-style=plakat] .appdock.open .pk-sq{display:none}
+:root[data-style=plakat] .appdock.open .pk-tog::before{content:"✕";font-size:13px}
+}
+@keyframes pkin{from{opacity:0;transform:translateY(16px)}}
+@media(prefers-reduced-motion:reduce){:root[data-style=plakat] .appdock.open{animation:none}}
 /* Bewegung: Karten rücken beim Darüberfahren, mit orangem Druckversatz */
 @media(hover:hover) and (prefers-reduced-motion:no-preference){
  :root[data-style=plakat] :is(.grid>div,.next,.reads a){transition:transform .2s,box-shadow .2s}

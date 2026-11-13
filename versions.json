@@ -1,15 +1,20 @@
 {
  "libretto": {
-  "version": "1.0.3",
+  "version": "1.0.6",
   "url": "https://theisapps.de/libretto/",
-  "notes": "Alle Regeln mit GSO, KMS und ISB-Vorgaben abgeglichen: Notenschlüssel der modernen Fremdsprachen nach dem ISB-Leitfaden („ausreichend“ ab 50 %), KMK-Raster wie die amtlichen BE-Tabellen, zweigeteilte Schulaufgabe in Latein und Griechisch, Sport sowie Kunst und Musik als Leistungsfach, spät beginnende Fremdsprachen, Schreibaufgabe und Sprachmittlung als eine Aufgabe, Oberstufe nach Prüfungsteilen, neue Ausdrucke, Rückgabefrist, Nachteilsausgleich/Notenschutz, Elternsprechtag-Ansicht, Hilfe mit Quellenverzeichnis.",
+  "notes": "Alle Regeln mit GSO, KMS und ISB-Vorgaben abgeglichen: Notenschlüssel der modernen Fremdsprachen nach dem ISB-Leitfaden („ausreichend“ ab 50 %), KMK-Raster wie die amtlichen BE-Tabellen, zweigeteilte Schulaufgabe in Latein und Griechisch, Sport sowie Kunst und Musik als Leistungsfach, spät beginnende Fremdsprachen, Schreibaufgabe und Sprachmittlung als eine Aufgabe, Oberstufe nach Prüfungsteilen, neue Ausdrucke, Rückgabefrist, Nachteilsausgleich/Notenschutz, Elternsprechtag-Ansicht, Simulationen mit Klassenliste zum Ausdrucken (Notenschlüssel und Faktor je Aufgabe), Nachtermine getrennt vom Notenspiegel, flüssigere Fenster, Ausdrucke ohne Umbruch mitten in der Auswertung, Hilfe mit Quellenverzeichnis.",
   "minVersion": null,
   "message": ""
  },
  "gruppen": {
-  "version": "1.3.0",
-  "url": "https://theisapps.de/gruppen/",
-  "notes": "Neu: Liquid-Glass-Design, neue Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche (⌘K bzw. Strg+K), „Stunde starten“, Timer-Abläufe (z. B. Think–Pair–Share), Mini-Timer über allen Fenstern, Timer „Moka“ und wählbarer Ton, Tische bauen aus Lehrersicht, schönere PDFs."
+  "version": "1.4.0",
+  "url": "https://theisapps.de/aula/",
+  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
+ },
+ "aula": {
+  "version": "1.4.0",
+  "url": "https://theisapps.de/aula/",
+  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
  },
  "sportwahl": {
   "version": "1.6.0",

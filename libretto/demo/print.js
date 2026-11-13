@@ -23,7 +23,7 @@ const Print = (() => {
       const bh = Math.max(v ? 2 : 0, (h - padT - padB) * v / max), x = padL + i * bw + bw * (small ? .12 : .16), wd = bw * (small ? .76 : .68), y = h - padB - bh, cx = x + wd / 2;
       if (v) o += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${wd.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${grOf(b, i)}" fill-opacity=".88"/>`;
       o += `<text x="${cx.toFixed(1)}" y="${(y - (small ? 4 : 13)).toFixed(1)}" text-anchor="middle" font-size="${small ? 9 : 11}" font-weight="700" fill="#1b1d22">${v}</text>`;
-      if (!small && v) o += `<text x="${cx.toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#6b7280">${Math.round(v / tot * 100)} %</text>`;
+      if (!small && v) o += `<text x="${cx.toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#3f4552">${Math.round(v / tot * 100)} %</text>`;
       o += `<text x="${cx.toFixed(1)}" y="${h - 7}" text-anchor="middle" font-size="${small ? 9 : 10.5}" font-weight="600" fill="#1b1d22">${esc(b.labels[i])}</text>`;
     });
     return o + '</svg>';
@@ -33,7 +33,7 @@ const Print = (() => {
       *{box-sizing:border-box}
       body{margin:0;font:9.4pt/1.42 -apple-system,"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;color:#1b1d22;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:9px;margin-bottom:10px;border-bottom:2pt solid ${INK}}
-      .hd .eyebrow{font-size:7.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;margin-bottom:3px}
+      .hd .eyebrow{font-size:7.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#3f4552;margin-bottom:3px}
       .hd h1{margin:0;font-size:19pt;letter-spacing:-.02em;line-height:1.1;color:${INK};font-weight:750}
       .hd .sub{color:#4b5160;font-size:10pt;margin-top:4px}
       .hd .who{text-align:right;font-size:8.6pt;color:#4b5160;line-height:1.4;flex:none;max-width:42%}
@@ -44,15 +44,18 @@ const Print = (() => {
       h2{font-size:8pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${INK};margin:16px 0 6px;padding-bottom:3px;border-bottom:.75pt solid #d5d9e0;break-after:avoid}
       .split > div > h2:first-child{margin-top:0}
       p{margin:4px 0 8px;white-space:pre-wrap}
-      p.note{font-size:7.8pt;color:#5b6271;line-height:1.45}
+      p.note{font-size:7.8pt;color:#3a3f4b;line-height:1.45}
       .stats{display:flex;gap:8px;margin:0 0 14px;break-inside:avoid}
       .stats div{flex:1;border:.75pt solid #d5d9e0;border-radius:6px;padding:7px 10px 6px;min-width:0}
       .stats div.key{border:1.5pt solid ${INK};background:#f3f5fa}
-      .stats .l{display:block;font-size:7pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;white-space:nowrap}
+      .stats .l{display:block;font-size:7pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552;white-space:nowrap}
       .stats .v{display:block;font-size:17pt;font-weight:750;letter-spacing:-.02em;line-height:1.15;color:#1b1d22;font-variant-numeric:tabular-nums;white-space:nowrap}
       .stats div.key .v{font-size:22pt;color:${INK}}
-      .stats .s{display:block;font-size:7.4pt;color:#5b6271;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .split{display:grid;grid-template-columns:var(--cols,1.35fr 1fr);gap:22px;align-items:start}
+      .stats .s{display:block;font-size:7.4pt;color:#3a3f4b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .split{display:grid;grid-template-columns:var(--cols,1.35fr 1fr);gap:22px;align-items:start;break-inside:avoid;page-break-inside:avoid}
+      .split.long{break-inside:auto;page-break-inside:auto}
+      table.keep, .note, .kv{break-inside:avoid;page-break-inside:avoid}
+      h2{break-after:avoid;page-break-after:avoid}
       .split > div{min-width:0}
       table{width:100%;border-collapse:separate;border-spacing:0;font-size:9pt;font-variant-numeric:tabular-nums;margin:0 0 10px;page-break-inside:auto}
       table.small{font-size:7.8pt}
@@ -61,20 +64,22 @@ const Print = (() => {
       tr.hg th.e{border-bottom:none}
       td{border-bottom:.5pt solid #e3e6ec;padding:3.6px 5px;text-align:center;vertical-align:middle}
       table.small td{padding:2.6px 4px}
+      table.dense td{padding-top:1.9px;padding-bottom:1.9px} table.dense td.big{font-size:10.5pt}
       tbody tr:nth-child(even) td{background:#f7f8fa}
       thead{display:table-header-group} tr{page-break-inside:avoid}
       td.l,th.l{text-align:left} td.b{font-weight:700} td.big{font-size:11.5pt;font-weight:750}
-      td.mut{color:#6b7280}
+      td.mut{color:#3f4552}
       td.nw{white-space:nowrap} tr.hg th{white-space:nowrap}
       tr.grp td{background:#eef1f6!important;color:${INK};font-weight:700;text-align:left;font-size:8pt;letter-spacing:.03em;padding:4px 6px;border-bottom:.75pt solid #c3c9d4;break-after:avoid}
-      tr.sub td{background:#fafbfc!important;color:#5b6271;font-size:.92em}
+      tr.sub td{background:#fafbfc!important;color:#3a3f4b;font-size:.92em}
+      tr.up td{background:#e5f4ea!important} tr.down td{background:#fbe7e5!important}
       tr.foot td{background:#eef1f6!important;font-weight:700;color:${INK};border-top:1.25pt solid ${INK};border-bottom:none}
       tr.foot + tr.foot td{border-top:.5pt solid #c3c9d4;font-weight:600;color:#4b5160}
       td.gL{border-left:.75pt solid #c3c9d4} td.gR{border-right:.75pt solid #c3c9d4}
       .pb{page-break-after:always;height:0}
       .bars{margin:2px 0 6px;break-inside:avoid}
       table.kv th{width:27%;text-align:left;vertical-align:top;font-size:7.5pt;border-bottom:.5pt solid #e3e6ec;text-transform:none;letter-spacing:0} table.kv td{text-align:left;vertical-align:top;white-space:pre-wrap;background:none!important}
-      .sig{display:flex;gap:40px;margin-top:34px;break-inside:avoid} .sig div{flex:1;border-top:.75pt solid #1b1d22;padding-top:4px;font-size:7.6pt;color:#5b6271}`;
+      .sig{display:flex;gap:40px;margin-top:34px;break-inside:avoid} .split .sig{gap:18px;margin-top:30px} .sig div{flex:1;border-top:.75pt solid #1b1d22;padding-top:4px;font-size:7.6pt;color:#3a3f4b}`;
   /* Kopfbereich: Titel (+ kleine Zeile darüber), Untertitel, rechts Schule und Lehrkraft; darunter die Eckdaten als Marken (ohne die doppelte Lehrkraft) */
   function headHtml(mm, settings) {
     const who = [settings.school ? `<b>${esc(settings.school)}</b>` : '', settings.teacher ? esc(settings.teacher) : ''].filter(Boolean);
@@ -90,7 +95,7 @@ const Print = (() => {
     const nameCol = t.head.indexOf('Name');
     const cellCls = (i, extra) => [al(i), i === nameCol ? 'nw' : '', (t.bold || []).includes(i) ? 'b' : '', (t.big || []).includes(i) ? 'big' : '', (t.muted || []).includes(i) ? 'mut' : '', edge(i), extra || ''].filter(Boolean).join(' ');
     const hg = t.headGroups ? `<tr class="hg">${t.headGroups.map(g => `<th colspan="${g.span || 1}" class="${g.label ? '' : 'e'}">${esc(g.label || '')}</th>`).join('')}</tr>` : '';
-    return `<table class="${t.small ? 'small' : ''}"><thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
+    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense ? 'dense' : ''].join(' ')}"><thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
         : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
@@ -103,7 +108,7 @@ const Print = (() => {
       if (b.bars) return `<div class="bars">${barsSvg(b.bars, b.bars.w || (b.bars.labels.length > 8 ? 470 : 330), b.bars.h || 128)}</div>`;
       if (b.head) return headHtml(b.head, settings);
       if (b.stats) return `<div class="stats">${b.stats.map(x => `<div class="${x.key ? 'key' : ''}"><span class="l">${esc(x.l)}</span><span class="v">${esc(x.v)}</span>${x.s ? `<span class="s">${esc(x.s)}</span>` : ''}</div>`).join('')}</div>`;
-      if (b.split) return `<div class="split" style="${b.cols ? '--cols:' + b.cols : ''}">${b.split.map(col => `<div>${col.map(block).join('')}</div>`).join('')}</div>`;
+      if (b.split) return `<div class="split${b.long ? ' long' : ''}" style="${b.cols ? '--cols:' + b.cols : ''}">${b.split.map(col => `<div>${col.map(block).join('')}</div>`).join('')}</div>`;
       if (b.kv) return `<table class="kv"><tbody>${b.kv.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>`;
       if (b.sig) return `<div class="sig">${b.sig.map(s => `<div>${esc(s)}</div>`).join('')}</div>`;
       if (b.table) return tableHtml(b.table);
@@ -116,9 +121,9 @@ const Print = (() => {
   /* Fußzeile für jede PDF-Seite (Chromium-Fußzeilenvorlage) */
   function footer(settings) {
     const logo = window.THEIS_LOGO.replace('<svg ', '<svg style="height:10.5px;width:auto;vertical-align:-2.6px" ');
-    return `<div style="width:100%;font:6.5px -apple-system,Helvetica,Arial,sans-serif;color:#888;padding:0 12.7mm;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;-webkit-print-color-adjust:exact">
-      <div style="flex:1;border-top:.5px solid #ccc;padding-top:3px;line-height:1.35">Erstellt am ${today()} · ${esc(DISCLAIMER)}</div>
-      <div style="border-top:.5px solid #ccc;padding-top:3px;white-space:nowrap;text-align:right;line-height:1.35">Seite <span class="pageNumber"></span> / <span class="totalPages"></span><br>Libretto · ${logo} · theisapps.de</div></div>`;
+    return `<div style="width:100%;font:7.6px -apple-system,Helvetica,Arial,sans-serif;color:#222;padding:0 12.7mm;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;-webkit-print-color-adjust:exact">
+      <div style="flex:1;border-top:.6px solid #777;padding-top:3px;line-height:1.35">Erstellt am ${today()} · ${esc(DISCLAIMER)}</div>
+      <div style="border-top:.6px solid #777;padding-top:3px;white-space:nowrap;text-align:right;line-height:1.35">Seite <span class="pageNumber"></span> / <span class="totalPages"></span><br>Libretto · ${logo} · theisapps.de</div></div>`;
   }
 
   /* ---------- Word ---------- */
@@ -179,7 +184,7 @@ const Print = (() => {
         kids.push(p(t(''), { after: 120 }));
       }
       else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
-      else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
+      else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ keepNext: true, children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
       else if (b.sig) kids.push(p(t(''), { after: 500 }), p(b.sig.map((s, i) => t((i ? '                              ' : '') + '______________________________')), {}), p(b.sig.map((s, i) => t((i ? '                                                       ' : '') + s, { size: 15, color: '555555' }))));
       else if (b.table) {
@@ -189,16 +194,20 @@ const Print = (() => {
         const sumW = tb.widths ? tb.widths.reduce((a, x) => a + x, 0) : 0;
         const widths = tb.widths && tb.widths.length === n ? tb.widths.map(x => Math.floor(W * x / sumW)) : tb.head.map((_, i) => i === 0 ? nameW : rest);
         const sz = tb.small || n > 14 ? 14 : 17;
+        const lastRow = tb.rows.length - 1, keepT = !!tb.keep;
         const mk = (txt, i, head, rowIdx) => new TableCell({
           borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
           shading: head ? { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } : (rowIdx % 2 ? { type: ShadingType.CLEAR, color: 'auto', fill: 'FAFBFC' } : undefined),
           margins: { top: 40, bottom: 40, left: 70, right: 70 },
-          children: [p(t(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
+          children: [p(t(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0, keepNext: keepT && (head || rowIdx < lastRow) })] });
         /* Kopfgruppen (z. B. „Schreiben“ über Inhalt und Sprache) als eigene Kopfzeile */
         const hgRow = tb.headGroups ? [new TableRow({ tableHeader: true, children: (() => { let col = 0; return tb.headGroups.map(g => { const span = g.span || 1, w = widths.slice(col, col + span).reduce((x, y) => x + y, 0); col += span;
           return new TableCell({ borders: B, columnSpan: span, width: { size: w, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' }, margins: { top: 30, bottom: 30, left: 70, right: 70 }, children: [p(t(g.label || '', { size: sz - 1, bold: true, color: '1D2B4F' }), { align: AlignmentType.CENTER, after: 0 })] }); }); })() })] : [];
-        const mkRow = (r, ri) => { const cells = Array.isArray(r) ? r : r.cells, foot = !Array.isArray(r) && r.cls === 'foot';
-          return new TableRow({ cantSplit: true, children: cells.map((c, i) => { const cell = mk(c, i, false, ri); if (!foot) return cell;
+        const mkRow = (r, ri) => { const cells = Array.isArray(r) ? r : r.cells, foot = !Array.isArray(r) && r.cls === 'foot', tint = !Array.isArray(r) && ({ up: 'E5F4EA', down: 'FBE7E5' })[r.cls];
+          return new TableRow({ cantSplit: true, children: cells.map((c, i) => { const cell = mk(c, i, false, ri);
+            if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
+              children: [p(t(c, { size: sz, bold: (tb.bold || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
+            if (!foot) return cell;
             return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F6' }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: true, color: '1D2B4F' }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] }); }) }); };
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: widths, layout: TableLayoutType.FIXED, rows: [
@@ -211,7 +220,7 @@ const Print = (() => {
       }
     }
     const who = [settings.teacher, settings.school].filter(Boolean).join(' · ');
-    const footer = new Footer({ children: [p(t(`Erstellt am ${today()} · ${DISCLAIMER}`, { size: 12, color: '888888' }), { after: 40 }), p([t('Libretto · ', { size: 13, color: '888888' }), new ImageRun({ type: 'png', data: bytes, transformation: { width: 47, height: 11 } }), t(' · theisapps.de', { size: 13, color: '888888' })], { align: AlignmentType.RIGHT, after: 0 })] });
+    const footer = new Footer({ children: [p(t(`Erstellt am ${today()} · ${DISCLAIMER}`, { size: 14, color: '222222' }), { after: 40 }), p([t('Libretto · ', { size: 15, color: '222222' }), new ImageRun({ type: 'png', data: bytes, transformation: { width: 47, height: 11 } }), t(' · theisapps.de', { size: 15, color: '222222' })], { align: AlignmentType.RIGHT, after: 0 })] });
     const doc = new Document({ creator: 'Libretto (theisapps)', title: m.title, styles: { default: { document: { run: { font: FONT } } } },
       sections: [{ properties: { page: { size: land ? { orientation: PageOrientation.LANDSCAPE, width: 16838, height: 11906 } : { width: 11906, height: 16838 }, margin: { top: 850, bottom: 1000, left: 850, right: 850 } } }, footers: { default: footer }, children: kids }] });
     return new Uint8Array(await (await Packer.toBlob(doc)).arrayBuffer());

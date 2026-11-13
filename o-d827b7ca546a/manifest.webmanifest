@@ -1,6 +1,6 @@
 {
-  "name": "Orario privat",
-  "short_name": "Orario",
+  "name": "Aula privat",
+  "short_name": "Aula",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
