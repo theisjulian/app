@@ -7,9 +7,14 @@
   "message": ""
  },
  "gruppen": {
-  "version": "1.3.0",
-  "url": "https://theisapps.de/gruppen/",
-  "notes": "Neu: Liquid-Glass-Design, neue Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche (⌘K bzw. Strg+K), „Stunde starten“, Timer-Abläufe (z. B. Think–Pair–Share), Mini-Timer über allen Fenstern, Timer „Moka“ und wählbarer Ton, Tische bauen aus Lehrersicht, schönere PDFs."
+  "version": "1.4.0",
+  "url": "https://theisapps.de/aula/",
+  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
+ },
+ "aula": {
+  "version": "1.4.0",
+  "url": "https://theisapps.de/aula/",
+  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
  },
  "sportwahl": {
   "version": "1.6.0",

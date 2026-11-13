@@ -1,5 +1,5 @@
 /* Gruppo privat – nur App-Dateien im Zwischenspeicher, nie Stundenplandaten */
-const CACHE='orario-privat-v4';
+const CACHE='orario-privat-v5';
 const FILES=['./','./index.html','./gruppo.html','./orario.html','./pdf.min.js','./pdf.worker.min.js','./manifest.webmanifest','./icons/icon-192.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>(k.startsWith('gruppo-privat-')||k.startsWith('orario-privat-'))&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

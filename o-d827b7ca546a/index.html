@@ -7,10 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Orario">
+<meta name="apple-mobile-web-app-title" content="Aula">
 <meta name="theme-color" content="#f7f7fa" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#151a2c" media="(prefers-color-scheme: dark)">
-<title>Orario</title>
+<title>Aula</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -116,10 +116,10 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
   </div>
 </div>
 <div id="top" hidden></div>
-<div id="stage" hidden><iframe id="fG" title="Orario und Gruppo"></iframe></div>
+<div id="stage" hidden><iframe id="fG" title="Orario und Aula"></iframe></div>
 <nav id="tabs" hidden aria-label="Bereiche"><span class="lens" aria-hidden="true"></span>
   <button data-t="o" type="button" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8.5 3v3M15.5 3v3M8 13.5h2.5M13.5 13.5H16M8 17h2.5"/></svg>Wer ist wo?</button>
-  <button data-t="g" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Gruppo</button>
+  <button data-t="g" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Aula</button>
   <button data-t="more" type="button"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>Abgleich<i id="fabDot"></i></button>
 </nav>
 <div id="sheet" hidden>
@@ -206,7 +206,7 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
     return out;
   }
   /* Entschlüsselten Inhalt prüfen: falsches/altes Format nie übernehmen */
-  function payload(o) { if (!o || o.fmt !== FMT || !o.data) { const e = new Error('Die Daten auf GitHub stammen von einer älteren Version. Bitte am Mac Gruppo 1.2.0 öffnen und „Jetzt abgleichen“ tippen.'); e.user = true; e.fmt = true; throw e; } return clean(o.data); }
+  function payload(o) { if (!o || o.fmt !== FMT || !o.data) { const e = new Error('Die Daten auf GitHub stammen von einer älteren Version. Bitte am Mac Aula (früher Gruppo) öffnen und „Jetzt abgleichen“ tippen.'); e.user = true; e.fmt = true; throw e; } return clean(o.data); }
   const wrap = data => ({ fmt: FMT, data: clean(data) });
   /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). */
   function merge(local, remote) {
@@ -355,7 +355,7 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
         const repo = $('repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, ''), tok = $('tok').value.trim(), c = repo && tok ? { repo, token: tok } : {};
         let remote = null;
         if (c.repo) { try { remote = await Vault.ghGet(c); } catch (x) { showErr(x.user ? x.message : 'GitHub nicht erreichbar (' + x.message + ').'); return; } }
-        if (!remote && c.repo && !window._allowEmpty) { showErr('Auf GitHub liegen noch keine Daten. Am Mac: Gruppo → Einstellungen → Daten → iPhone-Abgleich → „Jetzt abgleichen“. Danach hier erneut „Einrichten“.'); $('bEmpty').hidden = false; return; }
+        if (!remote && c.repo && !window._allowEmpty) { showErr('Auf GitHub liegen noch keine Daten. Am Mac: Aula → Einstellungen → Daten → iPhone-Abgleich → „Jetzt abgleichen“. Danach hier erneut „Einrichten“.'); $('bEmpty').hidden = false; return; }
         if (remote) {
           let o; try { o = await Vault.open(remote.blob, p); } catch (x) { showErr('Falsches Passwort (muss dasselbe wie am Mac sein).'); return; }
           let d; try { d = Vault.payload(o); } catch (x) { showErr(x.message); return; }

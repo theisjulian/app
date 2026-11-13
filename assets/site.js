@@ -68,6 +68,17 @@
     var bar=document.querySelector('.bar');if(bar){var f=function(){bar.classList.toggle('on',scrollY>8)};addEventListener('scroll',f,{passive:true});f()}
     /* Leiste unten: beim Runterscrollen weg, beim Hochscrollen oder am Seitenende wieder da */
     var dk=document.querySelector('.appdock');
+    /* Plakat: Sticker „Programme“ klappt den Programm-Index auf (in den anderen Stilen per CSS ausgeblendet) */
+    if(dk){var DS={libretto:'Noten',voce:'Mündliche Prüfungen',foliva:'Arbeitsblätter',aula:'Gruppen, Timer, Sitzplan',sportwahl:'Sportwahl Oberstufe',namo:'Schülerfahrten'};
+      dk.querySelectorAll('a').forEach(function(a){var m=(a.getAttribute('href')||'').match(/([a-z]+)\/?$/);if(m&&DS[m[1]]){var em=document.createElement('em');em.textContent=DS[m[1]];a.appendChild(em)}});
+      var tg=document.createElement('button');tg.type='button';tg.className='pk-tog';tg.setAttribute('aria-expanded','false');
+      tg.innerHTML='<span class="pk-sq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Programme</b>';dk.appendChild(tg);
+      var setOpen=function(o){dk.classList.toggle('open',o);tg.setAttribute('aria-expanded',o?'true':'false');tg.querySelector('b').textContent=o?'Schließen':'Programme';if(!o)dk.classList.remove('hide')};
+      tg.addEventListener('click',function(e){e.stopPropagation();setOpen(!dk.classList.contains('open'))});
+      document.addEventListener('click',function(e){if(dk.classList.contains('open')&&!dk.contains(e.target))setOpen(false)});
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dk.classList.contains('open')){setOpen(false);tg.focus()}});
+      new MutationObserver(function(){if(dk.classList.contains('hide')&&dk.classList.contains('open'))dk.classList.remove('hide')}).observe(dk,{attributes:true,attributeFilter:['class']});
+    }
     if(dk){var ly=scrollY,tk=false,acc=0,ih=innerHeight;
       /* Erst nach einer bewussten Strecke umschalten (runter 40 px, hoch 90 px); Rucklern am Ende des Scrollens und Größenwechseln der Browserleiste wird nicht gefolgt */
       addEventListener('scroll',function(){if(tk)return;tk=true;requestAnimationFrame(function(){
