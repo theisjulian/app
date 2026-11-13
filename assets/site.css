@@ -660,12 +660,8 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .try .chrome b{background:#1d35c8;color:#f5f3ee;border-radius:0}
 @media(prefers-reduced-motion:reduce){.try .shot{transition:none}}
 
-/* Desktop: am Computer ein Schreibtisch mit Fenstern, am Handy ein Chat mit theisapps (Aufbau in desk.js/desk.css, nur in diesem Stil geladen) */
-.pick .d,#tip .d{background:linear-gradient(#fff,#fff) 50% 34%/62% 40% no-repeat,linear-gradient(#ffffffb0,#ffffffb0) 50% 84%/40% 12% no-repeat,linear-gradient(140deg,#5d7dff,#9b6bff)}
-:root[data-style=desktop]:not(.emb){overflow:hidden}
-:root[data-style=desktop]:not(.emb) body{height:100vh;height:100dvh;overflow:hidden;background:linear-gradient(165deg,#e4eaff 0%,#b9c7ff 55%,#8d9ff7 100%)}
-@media(prefers-color-scheme:dark){:root[data-style=desktop]:not(.emb) body{background:linear-gradient(165deg,#0a0e1f 0%,#0d1433 60%,#101a4a 100%)}}
-:root[data-style=desktop]:not(.emb) body>:not(.dk):not(.ct){display:none!important}
-/* Seite im Desktop-Fenster: ohne Kopfzeile, Programmleiste und Fußzeile */
-.emb .bar,.emb .appdock,.emb footer,.emb .skip,.emb #tip,.emb .crumb{display:none!important}
-.emb main{padding-top:28px}.emb body{padding-bottom:56px}
+/* Studio: eigener Aufbau aus den Inhalten der Seite (studio.js/studio.css, nur in diesem Stil geladen) */
+.pick .u,#tip .u{background:radial-gradient(circle at 30% 30%,#7d8bff 0 18%,transparent 46%),radial-gradient(circle at 75% 70%,#c86bff 0 16%,transparent 44%),#0b0c12}
+:root[data-style=studio] body{background:#f6f7f9}
+@media(prefers-color-scheme:dark){:root[data-style=studio] body{background:#08090d}}
+:root[data-style=studio] body>:not(.st){display:none!important}
