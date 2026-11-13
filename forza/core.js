@@ -69,6 +69,7 @@
 
   /* ---------- Daten laden ---------- */
   F.load = async () => {
+    await F.flush();
     const sb = F.sb, S = F.S;
     const since = F.addDays(F.today(), -400);
     const q = (t, f) => f(sb.from(t)).then((r) => { if (r.error) throw r.error; return r.data; });
@@ -90,7 +91,11 @@
     S.exById = Object.fromEntries(ex.map((e) => [e.id, e]));
     S.params = Object.fromEntries(params.map((p) => [p.key, p.value]));
     for (const s of S.sessions) { s.session_exercises = (s.session_exercises || []).sort((a, b) => a.position - b.position); s.session_exercises.forEach((se) => (se.sets = (se.sets || []).sort((a, b) => a.set_no - b.set_no))); }
+    F.applyBox();
   };
+  /* Nach längerer Pause frische Daten holen (z. B. neue Strava-Fahrten), aber nie mitten im Training oder beim Tippen */
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { hiddenAt = Date.now(); return; } F.flush(); if (F.user && hiddenAt && Date.now() - hiddenAt > 300000 && !F.openSession() && !document.getElementById('modal') && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) F.load().then(() => F.render()).catch(() => null); });
   F.refresh = async () => { await F.load(); F.render(); };
 
   F.weightNow = () => { const w = F.S.weights; return w.length ? Number(w[w.length - 1].weight_kg) : 80; };
@@ -110,6 +115,8 @@
     for (const s of F.S.sessions) if (s.session_date >= cut) for (const se of s.session_exercises) if (se.sets.some((x) => x.pain)) set.add(se.exercise_id);
     return set;
   };
+  /* Übungen, die du in den letzten 90 Tagen in mindestens zwei Einheiten gemacht hast */
+  F.tried = () => { const cut = F.addDays(F.today(), -90), n = {}; for (const s of F.S.sessions) if (s.session_date >= cut) for (const se of s.session_exercises) if (se.sets.some((x) => x.done)) n[se.exercise_id] = (n[se.exercise_id] || 0) + 1; return new Set(Object.keys(n).filter((k) => n[k] >= 2)); };
   F.suggestion = () => {
     const S = F.S, form = F.ls.get('form-' + F.today(), 'normal'), minutes = F.ls.get('minutes', null);
     const acts = S.activities.filter((a) => ['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'EBikeRide'].includes(a.sport));
@@ -121,7 +128,7 @@
     return E.suggest({ variant: F.ls.get('variant-' + F.today(), 0), avoid: F.ls.get('avoid-' + F.today(), []), exclude: F.ls.get('excl-' + F.today(), []), forceDay: F.ls.get('force-' + F.today(), null),
       studio: F.items().kind === 'studio' && !F.absMode(F.today()), superset: F.ls.get('superset', 'auto'), exercises: S.exercises, items: (() => { const u = F.absMode(F.today()); return u && u.mode !== 'studio' ? ['matte', 'band'] : F.items().items; })(), split: F.activeSplit(), sessions: S.sessions, absences: S.absences, priorities: prio,
       today: F.today(), form, minutes, params: S.params, rideHoursAgo: rideH,
-      userEx: S.userEx, painEx: F.painSet(), favorites: new Set(S.exercises.filter((x) => x.code === 'E17' || ['Pec Deck (Butterfly)', 'Leg Extension'].includes(x.name)).map((x) => x.id)), goals: (S.profile && S.profile.goals) || []
+      userEx: S.userEx, painEx: F.painSet(), tried: F.tried(), favorites: new Set(S.exercises.filter((x) => x.code === 'E17' || ['Pec Deck (Butterfly)', 'Leg Extension'].includes(x.name)).map((x) => x.id)), goals: (S.profile && S.profile.goals) || []
     });
   };
 
@@ -140,11 +147,20 @@
     const view = F.views[main] || F.views.heute;
     const body = view(rest) || '';
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><img src="assets/forza.svg" alt="">forza</div>${nav.map(([k, l]) => `<button class="nv ${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}${l}</button>`).join('')}</aside>
-      <main class="main">${body}</main><nav class="bnav">${nav.map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}<span>${l}</span></button>`).join('')}</nav></div>${F.restBar ? F.restBar() : ''}`;
+      <main class="main">${body}</main><nav class="bnav">${nav.map(([k, l]) => `<button class="${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}<span>${l}</span></button>`).join('')}</nav></div>${F.restBar ? F.restBar() : ''}<div id="netb" class="netb" role="status"></div>`;
     if (F.after) F.after(main, rest);
     if (F.fitAll) F.fitAll();
+    F.netBadge();
   };
-  F.modal = (html) => { F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div>${html}</div>`; m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m); };
+  /* Fenster als Blatt von unten: Griff oben, nach unten wischen schließt, Hintergrund scrollt nicht mit */
+  F.modal = (html) => {
+    F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
+    m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m);
+    const sh = m.firstElementChild; let y0 = null, dy = 0;
+    sh.addEventListener('touchstart', (e) => { if (sh.scrollTop > 0 || (e.target.closest && e.target.closest('input,textarea,select,[data-noswipe]'))) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; sh.style.transition = 'none'; }, { passive: true });
+    sh.addEventListener('touchmove', (e) => { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); if (dy > 0) sh.style.transform = `translateY(${dy}px)`; }, { passive: true });
+    sh.addEventListener('touchend', () => { if (y0 === null) return; y0 = null; sh.style.transition = ''; if (dy > 110) { sh.style.transform = 'translateY(110%)'; setTimeout(F.closeModal, 180); } else sh.style.transform = ''; });
+  };
   F.closeModal = () => document.getElementById('modal')?.remove();
 
   document.addEventListener('click', async (e) => {
@@ -162,5 +178,33 @@
   /* ---------- Schreibhilfen ---------- */
   F.insert = async (t, row) => { const r = await F.sb.from(t).insert(row).select().single(); if (r.error) throw r.error; return r.data; };
   F.update = async (t, id, row) => { const r = await F.sb.from(t).update(row).eq('id', id).select().single(); if (r.error) throw r.error; return r.data; };
+
+  /* ---------- Offline-fest speichern (Studio mit schlechtem Netz) ----------
+     Sätze und das Beenden gehen nie verloren: Klappt das Speichern nicht, merkt sich forza die Änderung
+     auf dem Gerät und reicht sie nach, sobald wieder Netz da ist. */
+  const isNet = (e) => !navigator.onLine || /fetch|network|load failed|timed? ?out|abort/i.test(String((e && (e.message || e.details)) || e));
+  const box = () => F.ls.get('outbox', []), boxSet = (b) => F.ls.set('outbox', b);
+  F.pending = () => box().length;
+  F.save = async (t, id, row) => {
+    if (!F.pending()) { try { return await F.update(t, id, row); } catch (e) { if (!isNet(e)) throw e; } }
+    const b = box(), hit = b.find((x) => x.t === t && x.id === id);
+    if (hit) Object.assign(hit.row, row); else b.push({ t, id, row });
+    boxSet(b); F.netBadge();
+    if (b.length === 1) F.toast('Kein Netz: gespeichert auf dem Gerät, wird automatisch nachgereicht.', 3500);
+    F.flush();
+    return Object.assign({ id }, row);
+  };
+  let flushing = false;
+  F.flush = async () => {
+    if (flushing || !F.pending() || !navigator.onLine || !F.user) return; flushing = true;
+    try { let b = box(); while (b.length) { const x = b[0]; try { await F.update(x.t, x.id, x.row); } catch (e) { if (isNet(e)) break; console.error('Nachreichen', e); } b.shift(); boxSet(b); }
+      if (!b.length) F.toast('Alles nachgetragen.'); } finally { flushing = false; F.netBadge(); }
+  };
+  // noch ausstehende Änderungen auf frisch geladene Daten legen
+  F.applyBox = () => { for (const x of box()) { if (x.t === 'sessions') { const o = F.S.sessions.find((q) => q.id === x.id); if (o) Object.assign(o, x.row); }
+    else if (x.t === 'sets') for (const q of F.S.sessions) for (const se of q.session_exercises) { const st = se.sets.find((y) => y.id === x.id); if (st) Object.assign(st, x.row); } } };
+  F.netBadge = () => { const n = F.pending(); document.documentElement.classList.toggle('offline', !navigator.onLine || n > 0); const el = document.getElementById('netb'); if (el) el.textContent = n ? n + ' ausstehend' : 'Offline'; };
+  window.addEventListener('online', () => { F.netBadge(); F.flush(); });
+  window.addEventListener('offline', () => F.netBadge());
   F.del = async (t, id) => { const r = await F.sb.from(t).delete().eq('id', id); if (r.error) throw r.error; };
 })();

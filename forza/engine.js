@@ -1,6 +1,6 @@
 /* forza · Regelwerk (regelbasiert, keine KI). Version der Parameter wird mit jedem Vorschlag gespeichert. */
 (function (root) {
-  const RULE_VERSION = 'forza-regeln-1.5';
+  const RULE_VERSION = 'forza-regeln-1.6';
   const DAY = 86400000;
   const DEFAULTS = {
     corridor_min: 6, corridor_max: 10,           // R13: Sätze je großer Muskelgruppe pro Woche
@@ -72,7 +72,8 @@
     if (!ex.active) return false;
     const st = (ctx.userEx || {})[ex.id] || {};
     if (st.hidden) return false;
-    if (ex.tier !== 'geprueft' && !st.released && ex.dosage_profile !== 'M') return false;
+    // Entwürfe nur mit Freigabe, oder wenn du die Übung schon mindestens zweimal gemacht hast (dann ist das deine Wahl)
+    if (ex.tier !== 'geprueft' && !st.released && ex.dosage_profile !== 'M' && !(ctx.tried && ctx.tried.has(ex.id))) return false;
     // Neutrale Vorgabe: keine Langhantel-Bankdrücken-Automatik (Vorliebe Kurzhantel)
     if (ex.name === 'Langhantel Bankdrücken') return false;
     if ((ctx.painEx || new Set()).has(ex.id)) return false;
