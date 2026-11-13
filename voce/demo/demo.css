@@ -1,0 +1,47 @@
+/* Voce · Online-Demo: Leiste, Hinweisfenster, Hinweis für kleine Bildschirme · © 2026 theisapps */
+:root{--demoH:40px}
+.demoBar{position:fixed;top:0;left:0;right:0;z-index:60;height:var(--demoH);display:flex;align-items:center;gap:12px;padding:0 16px;font:13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:#fff;background:#2F5BEA;white-space:nowrap}
+.demoBar .demoTag{flex:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.2)}
+.demoBar .demoTxt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;opacity:.95}
+.demoBar .demoBtns{flex:none;display:flex;align-items:center;gap:6px}
+.demoBar a,.demoBar button{font:inherit;font-weight:600;color:#fff;text-decoration:none;border:0;background:rgba(255,255,255,.16);border-radius:999px;padding:6px 12px;cursor:pointer}
+.demoBar a:hover,.demoBar button:hover{background:rgba(255,255,255,.28)}
+.demoBar a.demoGo{background:#fff;color:#1F45C4}.demoBar a.demoGo:hover{background:#eef2ff}
+.demoBar a:focus-visible,.demoBar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* App unter die Leiste schieben */
+body{padding-top:var(--demoH)}
+.side{top:var(--demoH)}
+.side .dragstrip{display:none}
+.toolbar{top:var(--demoH)}
+.rail{top:calc(16px + var(--demoH))}
+.card .cardHead{top:calc(10px + var(--demoH))}
+/* Hinweisfenster „Das gibt es in der App“ */
+dialog.demoDlg{border:0;padding:0;border-radius:20px;width:min(440px,calc(100vw - 32px));background:var(--glass-solid,#fff);color:var(--label,#1d1d1f);box-shadow:0 24px 70px rgba(10,20,50,.35)}
+dialog.demoDlg::backdrop{background:rgba(15,20,35,.38)}
+.demoDlgIn{padding:26px 26px 22px;text-align:center}
+.demoDlgIn img{border-radius:13px}
+.demoDlgIn h2{margin:12px 0 8px;font-size:20px;letter-spacing:-.01em}
+.demoDlgIn p{margin:0 0 10px;font-size:14px;line-height:1.5}
+.demoDlgIn .demoDlgSub{color:var(--label-2,#6e6e73);font-size:13px}
+.demoDlgBtns{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.demoDlgBtns a,.demoDlgBtns button{font:inherit;font-size:14px;font-weight:600;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;text-decoration:none}
+.demoDlgClose{background:var(--fill,rgba(120,125,140,.16));color:inherit}
+.demoDlgGo{background:#2F5BEA;color:#fff}
+/* Kleine Bildschirme: Voce ist für Computer und Tablet gedacht */
+.demoSmall{display:none}
+@media (max-width:899px){
+  body:not(.demoForce) .demoSmall{display:grid;position:fixed;inset:var(--demoH) 0 0 0;z-index:55;place-items:center;padding:24px 20px;background:var(--canvas,#EDEEF2);overflow:auto}
+  body:not(.demoForce) .side,body:not(.demoForce) .wrap,body:not(.demoForce) .topbar{display:none}
+  body:not(.demoForce){overflow:hidden}
+  .demoBar .demoTxt{display:none}
+  .demoBar{justify-content:space-between}
+}
+@media (max-width:560px){ .demoBar{padding:0 10px;gap:8px} .demoBar #demoReset,.demoBar a.demoSite{display:none} }
+.demoSmall .demoCard{max-width:420px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.demoSmall img{border-radius:16px}
+.demoSmall h2{margin:12px 0 8px;font-size:22px;letter-spacing:-.02em;color:var(--label,#1d1d1f)}
+.demoSmall p{margin:0 0 16px;color:var(--label-2,#555);line-height:1.5}
+.demoSmall .btns{display:flex;flex-direction:column;gap:8px}
+.demoSmall a,.demoSmall button{font:inherit;font-weight:600;border-radius:12px;padding:12px 16px;text-decoration:none;border:0;cursor:pointer}
+.demoSmall a.pri{background:#2F5BEA;color:#fff}
+.demoSmall a.sec,.demoSmall button{background:rgba(120,125,140,.16);color:var(--label,#1d1d1f)}
