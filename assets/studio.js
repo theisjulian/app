@@ -1,6 +1,6 @@
 /* theis-Website, Stil „Studio“.
    Baut aus den vorhandenen Seiten einen eigenen Aufbau: Startseite mit Suche und Kacheln, Programmseiten mit Kapiteln, Textseiten mit Inhaltsverzeichnis.
-   Navigation ohne Neuladen (die Seiten werden geholt und neu gesetzt, die Adresse bleibt echt), Übergänge per View Transitions, Suche über alles mit ⌘K bzw. Strg+K.
+   Navigation ohne Neuladen (die Seiten werden geholt und neu gesetzt, die Adresse bleibt echt), Übergänge per View Transitions.
    Wird von site.js nur in diesem Stil geladen. Speichert nichts außer der Stilwahl, die site.js ohnehin merkt. */
 (function(){
   if(window.theisStudio)return;
@@ -8,7 +8,6 @@
   var ROOT=ME?new URL('../',ME).href:new URL('/',location.href).href,RP=new URL(ROOT).pathname,IMG=ROOT+'assets/img/';
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches,narrow=matchMedia('(max-width:820px)');
   var ua=navigator.userAgent,OS=(/iPhone|iPad|Android/.test(ua)||(/Mac/.test(ua)&&navigator.maxTouchPoints>1))?'mobile':/Windows/.test(ua)?'win':/Mac/.test(ua)?'mac':null;
-  var KBD=/Mac|iPhone|iPad/.test(ua)?'⌘K':'Strg K';
   var APPS=[
     {id:'libretto',p:'libretto',n:'Libretto',h:150,i:'libretto-icon.png',k:'noten notenbuch zeugnis gso schulaufgabe notenschlüssel durchschnitt'},
     {id:'voce',p:'voce',n:'Voce',h:255,i:'viva-icon.png',k:'mündlich mündliche prüfung bewertung raster fremdsprache englisch viva'},
@@ -19,7 +18,6 @@
   var BY={};APPS.forEach(function(a){a.u=ROOT+a.id+'/';a.img=IMG+a.i;BY[a.id]=a});
   var INTENTS=[['Noten führen','libretto'],['Arbeitsblätter erstellen','foliva'],['Mündliche Prüfungen bewerten','voce'],['Gruppen bilden, Zeit stoppen','aula'],['Sportwahl planen','sportwahl'],['Klassenfahrt organisieren','namo']];
   var ICON={
-    search:'<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13.5 13.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     arrow:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     back:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     dl:'<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v9M5 8.5 9 12.5l4-4M3.5 15h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -76,7 +74,6 @@
   S.innerHTML='<div class="st-glow" aria-hidden="true"></div><div class="st-grid" aria-hidden="true"></div>'+
     '<header class="st-top"><div class="st-w"><a class="st-logo" href="'+ROOT+'" aria-label="theisapps, zur Startseite">'+logoSvg+'</a>'+
     '<nav class="st-nav" aria-label="Hauptnavigation"><a href="'+ROOT+'#programme">Programme</a><a href="'+ROOT+'#daten">Ihre Daten</a><a href="'+ROOT+'#ueber">Über mich</a></nav>'+
-    '<button type="button" class="st-k" aria-label="Suchen ('+KBD+')">'+ICON.search+'<span>Suchen …</span><kbd>'+KBD+'</kbd></button>'+
     '<button type="button" class="st-ib st-sty" aria-label="Stil der Website" aria-haspopup="true">'+ICON.style+'</button></div><div class="st-prog" aria-hidden="true"></div></header>'+
     '<main class="st-main" id="inhalt" tabindex="-1"></main>'+
     '<footer class="st-foot"><div class="st-w"><a href="'+ROOT+'" aria-label="theisapps">'+logoSvg+'</a><span>© 2026 theisapps · Software für den Schulalltag in Bayern</span><span class="sp"></span><a href="'+ROOT+'impressum">Impressum</a><a href="'+ROOT+'datenschutz">Datenschutz</a><a href="'+ROOT+'lizenz">Lizenz</a><a href="mailto:'+mailAddr+'">Kontakt</a></div></footer>';
@@ -94,13 +91,9 @@
     var el=h('div'),h1=$('.hero h1',d),lead=txt($('.hero .top .r p',d));
     var hero=h('section','st-hero st-w');
     hero.innerHTML='<span class="st-mono"><i></i>Kostenlos · ohne Konto · für Lehrkräfte in Bayern</span><h1 tabindex="-1">'+(h1?words(h1):'theisapps')+'</h1><p class="st-lead">'+esc(lead)+'</p>'+
-      '<button type="button" class="st-ask">'+ICON.search+'<span>Wonach suchen Sie? <b>Notenschlüssel</b></span><kbd>'+KBD+'</kbd></button>'+
       '<div class="st-intents">'+INTENTS.map(function(x){var a=BY[x[1]];return '<a class="st-intent" style="--ih:'+a.h+'" href="'+a.u+'"><img src="'+a.img+'" alt="">'+esc(x[0])+'</a>'}).join('')+'</div>'+
       '<div class="st-trust st-mono">'+['Daten bleiben auf Ihrem Gerät','Keine Werbung, kein Tracking','Entwickelt von einem Lehrer'].map(function(t){return '<span>'+ICON.check+t+'</span>'}).join('')+'</div>';
     el.appendChild(hero);
-    var ask=$('.st-ask b',hero),ex=['Notenschlüssel','Lösungsblatt','Sitzplan','Bewertungsraster','Klassenfahrt','Sportwahl Q12','Grundwortschatz','W-Seminar'],k=0;
-    if(!calm){var iv=setInterval(function(){if(!ask.isConnected){clearInterval(iv);return}k=(k+1)%ex.length;ask.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-6px)'}],{duration:180}).finished.then(function(){ask.textContent=ex[k];ask.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:220})})},2400)}
-    $('.st-ask',hero).addEventListener('click',function(){openPal('')});
     /* Programme */
     var ps=h('section','st-sec st-w');ps.id='programme';
     ps.innerHTML='<div class="st-head"><div><span class="st-mono">Programme · '+APPS.length+'</span><h2>'+esc(txt($('#programme h2',d))||'Programme')+'</h2></div><p>'+esc(txt($('#programme .lead',d)))+'</p></div><div class="st-bento"></div>';
@@ -229,7 +222,9 @@
       if(!canDl){var ph2=h('div','st-phone',ICON.phone+'<div><b>'+esc(a.n)+' läuft auf Mac und Windows.</b><br>Am Handy oder Tablet lässt es sich nicht installieren. Schicken Sie sich den Link an den Computer.</div>');side.appendChild(ph2);var sb=h('button','st-btn pri',ICON.share+'Link an den Computer senden');sb.type='button';sb.addEventListener('click',function(){share(a.u,a.n)});side.appendChild(sb)}
       dl.hint.forEach(function(p){var q=h('p');q.innerHTML=p.innerHTML;q.style.marginTop='18px';side.appendChild(q)});
       var panes=$('.panes',box),tabs=h('div','st-tabs');tabs.setAttribute('role','tablist');
-      var want=dl.byId[OS==='win'?'win':OS==='mac'?'mac':'']?(OS==='win'?'win':'mac'):dl.tabs[0].id;if(OS==='mobile'&&dl.byId.web)want='web';
+      /* Demos der Computerprogramme brauchen einen großen Bildschirm: am Handy kein Demo-Reiter */
+      if(narrow.matches&&id!=='namo')dl.tabs=dl.tabs.filter(function(t){return t.id!=='web'});
+      var want=dl.byId[OS==='win'?'win':OS==='mac'?'mac':'']?(OS==='win'?'win':'mac'):dl.tabs[0].id;
       if(dl.tabs.length>1)panes.appendChild(tabs);
       dl.tabs.forEach(function(t){
         var pn=h('div','st-pane');pn.dataset.p=t.id;
@@ -266,7 +261,7 @@
   }
 
   /* ---------- Wechsel der Ansicht ---------- */
-  var cur={url:null,r:null},mem={},spy=null,busy=0;
+  var cur={url:null,r:null},mem={},busy=0;
   function names(pairs){pairs.forEach(function(p){if(p[0])p[0].style.viewTransitionName=p[1]})}
   function unname(){$$('[style*="view-transition-name"]',S).forEach(function(e){e.style.viewTransitionName=''})}
   function shared(rt){
@@ -312,13 +307,30 @@
     });
   }
   function focusTop(){var h1=$('h1',main);if(h1)h1.focus({preventScroll:true})}
+  /* Fortschrittsbalken und Kapitelanzeige: ein Scroll-Handler, höchstens einmal je Bild gerechnet.
+     Das aktive Kapitel ist das letzte, dessen Anfang die Leisten oben erreicht hat; am Seitenende das letzte. */
+  var prog=$('.st-prog',S),marks=[],act=null,tick=false;
   function after(){
-    /* Kapitel und Inhaltsverzeichnis zeigen, wo man ist */
-    if(spy)spy.disconnect();
-    var links=$$('.st-sub nav a,.st-toc a',main);if(!links.length||!('IntersectionObserver' in window))return;
-    spy=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var id=e.target.id;links.forEach(function(l){l.classList.toggle('on',l.getAttribute('href')==='#'+id)})}})},{rootMargin:'-30% 0px -60% 0px'});
-    links.forEach(function(l){var t=main.querySelector('[id="'+l.getAttribute('href').slice(1)+'"]');if(t)spy.observe(t)});
+    marks=$$('.st-sub nav a,.st-toc a',main).map(function(l){return {l:l,t:main.querySelector('[id="'+l.getAttribute('href').slice(1)+'"]'),nav:l.parentNode}}).filter(function(m){return m.t});
+    act=null;frame();
   }
+  function frame(){
+    tick=false;
+    var de=D.documentElement,max=de.scrollHeight-innerHeight,y=scrollY;
+    prog.style.transform='scaleX('+(max>0?Math.min(1,Math.max(0,y/max)):0)+')';
+    if(!marks.length)return;
+    var line=(($('.st-sub',main)||{}).offsetHeight||0)+$('.st-top',S).offsetHeight+40,cur=marks[0];
+    if(y>=max-4)cur=marks[marks.length-1];
+    else marks.forEach(function(m){if(m.t.getBoundingClientRect().top<=line)cur=m});
+    if(cur===act)return;act=cur;
+    marks.forEach(function(m){m.l.classList.toggle('on',m===cur)});
+    /* Leiste am Handy: aktives Kapitel waagerecht ins Bild holen, ohne die Seite zu verschieben */
+    var nv=cur.nav;if(nv&&nv.scrollWidth>nv.clientWidth){nv.scrollTo({left:cur.l.offsetLeft-(nv.clientWidth-cur.l.offsetWidth)/2,behavior:calm?'auto':'smooth'})}
+  }
+  function onScroll(){if(!tick){tick=true;requestAnimationFrame(frame)}}
+  addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll,{passive:true});
+  /* Bilder, die später laden, verändern die Seitenhöhe */
+  main.addEventListener('load',onScroll,true);
   function fallback(){S.remove();$$('body [id^="orig-"]').forEach(function(e){e.id=e.id.slice(5)});r.setAttribute('data-style','normal')}
 
   /* Links innerhalb von Studio */
@@ -337,67 +349,6 @@
   S.addEventListener('click',function(e){var im=e.target.closest('.st-frame img,.st-feat .pic img');if(!im||!zoom.showModal)return;$('img',zoom).src=im.currentSrc||im.src;$('img',zoom).alt=im.alt;zoom.showModal()});
   zoom.addEventListener('click',function(){zoom.close()});
 
-  /* ---------- Suche über alles ---------- */
-  var pal=h('dialog','st-pal');pal.setAttribute('aria-label','Suche');
-  pal.innerHTML='<div class="in">'+ICON.search+'<input type="text" role="combobox" aria-expanded="true" aria-controls="st-res" aria-autocomplete="list" placeholder="Programm, Funktion oder Frage …" autocomplete="off" spellcheck="false"><kbd>Esc</kbd></div><ul id="st-res" role="listbox"></ul><div class="ft"><span><kbd>↑</kbd><kbd>↓</kbd> auswählen</span><span><kbd>↵</kbd> öffnen</span><span><kbd>Esc</kbd> schließen</span></div>';
-  S.appendChild(pal);
-  var pin=$('input',pal),pul=$('ul',pal),items=[],shown=[],sel=0,indexed=false;
-  var G=['Programme','Aktionen','Funktionen','Seiten','Stil'];
-  function base(){
-    var L=[];
-    APPS.forEach(function(a){L.push({g:'Programme',t:a.n,s:'',img:a.img,kw:a.k,go:a.u})});
-    [['Über mich','Wer die Programme macht',ROOT+'#ueber','mail'],['Ihre Daten','Was mit Daten passiert',ROOT+'#daten','doc'],['Unterstützen','Einen Kaffee ausgeben',ROOT+'#unterstuetzen','doc'],['Datenschutzerklärung','',ROOT+'datenschutz','doc'],['Impressum','',ROOT+'impressum','doc'],['Lizenz','',ROOT+'lizenz','doc']].forEach(function(x){L.push({g:'Seiten',t:x[0],s:x[1],ic:x[3],kw:'',go:x[2]})});
-    L.push({g:'Seiten',t:'E-Mail schreiben',s:mailAddr,ic:'mail',kw:'kontakt frage fehler',href:'mailto:'+mailAddr});
-    STYLES.forEach(function(s){if(s[0]!=='studio')L.push({g:'Stil',t:'Stil: '+s[1],s:'Die Website im Stil „'+s[1]+'“ ansehen',ic:'style',kw:'design aussehen theme',f:function(){leave(s[0])}})});
-    return L;
-  }
-  items=base();
-  function index(){
-    if(indexed)return;indexed=true;
-    var home=load(ROOT).then(function(d){APPS.forEach(function(a){var p=$('#p-'+a.p,d);var it=items.filter(function(x){return x.go===a.u})[0];if(p&&it){it.s=txt($('.meta p',p))}})}).catch(function(){});
-    var ps=APPS.map(function(a){return load(a.u).then(function(d){
-      var dl=downloads(d,a.u);
-      if(OS!=='mobile'){['mac','win'].forEach(function(o){var t=dl.byId[o];if(t&&t.first)items.push({g:'Aktionen',t:a.n+' für '+(o==='mac'?'Mac':'Windows')+' laden',s:'Download',img:a.img,kw:'herunterladen download installieren',href:t.first})})}
-      else if(dl.tabs.length)items.push({g:'Aktionen',t:a.n+': Link an den Computer senden',s:'Zum Installieren am Mac oder PC',img:a.img,kw:'herunterladen download',f:function(){share(a.u,a.n)}});
-      var demo=$$('.ah .btns a',d).filter(function(x){return /demo\/$/.test(x.getAttribute('href'))})[0];
-      if(demo&&(!narrow.matches||a.id==='namo'))items.push({g:'Aktionen',t:a.n+' im Browser ausprobieren',s:'Demo mit erfundenen Daten',img:a.img,kw:'demo testen ausprobieren',href:abs(demo.getAttribute('href'),a.u)});
-      if($('.vid',d))items.push({g:'Aktionen',t:a.n+': Video ansehen',s:'',img:a.img,kw:'video film',go:a.u+'#video'});
-      $$('.fx',d).forEach(function(f,i){items.push({g:'Funktionen',t:txt($('h2',f)),s:a.n+' · '+txt($('.tx p',f)).slice(0,90),img:a.img,kw:txt($('.ticks',f)),go:a.u+'#f-'+(i+1)})});
-      $$('details.q',d).forEach(function(q){items.push({g:'Funktionen',t:txt($('summary',q)),s:a.n+' · Frage',img:a.img,kw:txt($('p',q)).slice(0,200),go:a.u+'#fragen'})});
-    }).catch(function(){})});
-    Promise.all(ps.concat([home])).then(function(){if(pal.open)draw()});
-  }
-  function mark(t,q){var s=esc(t);if(!q)return s;var nt=norm(t),i=nt.indexOf(norm(q.split(/\s+/)[0]));if(i<0)return s;var n=q.split(/\s+/)[0].length;return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+n))+'</mark>'+esc(t.slice(i+n))}
-  function draw(){
-    var q=pin.value.trim(),nq=norm(q),ws=nq.split(/\s+/).filter(Boolean);
-    var L=items.map(function(it){
-      if(!ws.length)return (it.g==='Programme'||(it.g==='Seiten'&&/ueber|daten/.test(norm(it.go||''))))?{it:it,sc:1}:null;
-      var hay=norm(it.t+' '+it.s+' '+it.kw+' '+it.g),nt=norm(it.t),sc=0;
-      for(var i=0;i<ws.length;i++){if(hay.indexOf(ws[i])<0)return null;if(nt.indexOf(ws[i])===0)sc+=6;else if(nt.indexOf(' '+ws[i])>=0)sc+=4;else if(nt.indexOf(ws[i])>=0)sc+=3;else sc+=1}
-      if(it.g==='Programme')sc+=2;if(it.g==='Aktionen')sc+=1;return {it:it,sc:sc}}).filter(Boolean);
-    L.sort(function(x,y){return y.sc-x.sc});L=L.slice(0,40);
-    if(ws.length){var best=L.length?L[0].it.g:null;G.sort(function(x,y){return (x===best?-1:0)-(y===best?-1:0)})}
-    pul.innerHTML='';shown=[];
-    G.forEach(function(g){var grp=L.filter(function(x){return x.it.g===g});if(!grp.length)return;pul.appendChild(h('li','g',g)).setAttribute('role','presentation');
-      grp.forEach(function(x){var it=x.it,li=h('li','',(it.img?'<img src="'+it.img+'" alt="">':'<span class="ic">'+(ICON[it.ic]||ICON.arrow)+'</span>')+'<span><b>'+mark(it.t,q)+'</b>'+(it.s?'<small>'+esc(it.s)+'</small>':'')+'</span>');
-        li.setAttribute('role','option');li.id='st-o'+shown.length;var n=shown.length;li.addEventListener('pointermove',function(){if(sel!==n)select(n)});li.addEventListener('click',function(){run(it)});pul.appendChild(li);shown.push({li:li,it:it})})});
-    if(!shown.length)pul.appendChild(h('li','none',ws.length?'Nichts gefunden. Versuchen Sie „Noten“, „Arbeitsblatt“ oder „Sitzplan“.':'')).setAttribute('role','presentation');
-    select(0);
-  }
-  function select(n){if(!shown.length)return;sel=(n+shown.length)%shown.length;shown.forEach(function(x,i){x.li.setAttribute('aria-selected',i===sel?'true':'false')});pin.setAttribute('aria-activedescendant',shown[sel].li.id);shown[sel].li.scrollIntoView({block:'nearest'})}
-  function run(it){pal.close();if(it.f){it.f();return}if(it.href){location.href=it.href;return}
-    var u=new URL(it.go,location.href);if(u.href.split('#')[0]===cur.url){history.replaceState(history.state,'',u.href);scrollTo(u.hash,calm?'auto':'smooth')}else go(u.href,{push:true})}
-  function openPal(q){index();pin.value=q||'';draw();if(!pal.open)pal.showModal();pin.focus()}
-  pin.addEventListener('input',draw);
-  pin.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();select(sel+1)}else if(e.key==='ArrowUp'){e.preventDefault();select(sel-1)}else if(e.key==='Enter'){e.preventDefault();if(shown[sel])run(shown[sel].it)}});
-  pal.addEventListener('click',function(e){if(e.target===pal)pal.close()});
-  $('.st-k',S).addEventListener('click',function(){openPal('')});
-  D.addEventListener('keydown',function(e){
-    if((e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();pal.open?pal.close():openPal('')}
-    else if(e.key==='/'&&!pal.open&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))&&!e.target.isContentEditable){e.preventDefault();openPal('')}
-  });
-  if('requestIdleCallback' in window)requestIdleCallback(function(){setTimeout(index,1500)});
-
   /* ---------- Stil wählen ---------- */
   var pop=h('div','st-pop');pop.id='st-pop';pop.setAttribute('role','menu');pop.innerHTML='<p>Stil der Website</p>'+STYLES.map(function(s){return '<button type="button" role="menuitemradio" aria-checked="'+(s[0]==='studio')+'" data-s="'+s[0]+'"><i style="background:'+s[2]+'"></i>'+s[1]+'</button>'}).join('');
   var popApi=typeof pop.showPopover==='function';if(popApi)pop.setAttribute('popover','');else pop.hidden=true;S.appendChild(pop);
@@ -415,5 +366,5 @@
   $$('body [id]').forEach(function(e){e.id='orig-'+e.id});
   D.body.appendChild(S);
   go(location.href,{first:true});
-  window.theisStudio={leave:leave,open:openPal};
+  window.theisStudio={leave:leave};
 })();
