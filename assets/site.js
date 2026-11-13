@@ -24,7 +24,7 @@
     var sc=document.createElement('script');sc.id='studio-js';sc.src=base+'studio.js'+STUDIOV;
     l.onload=function(){document.body.appendChild(sc)};document.head.appendChild(l);
   }
-  var STUDIOV='?v=db1f36ad26cf';
+  var STUDIOV='?v=b3b445beb9fe';
   function apply(st){
     r.setAttribute('data-style',st);
     if(st==='studio')studio();
