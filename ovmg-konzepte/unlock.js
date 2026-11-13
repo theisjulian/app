@@ -81,3 +81,9 @@ frame.addEventListener('load', () => {
     new MutationObserver(sync).observe(body, { attributes: true, attributeFilter: ['class'] }); sync();
   } catch (e) { /* andere Herkunft: Leiste bleibt */ }
 });
+
+/* Web-App vom Home-Bildschirm: angemeldet bleiben, Leiste weglassen, Abstände für Notch und Home-Indikator an die Vorschau weitergeben */
+const isApp = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true || /[?&]app=1\b/.test(location.search);
+if (isApp) { document.documentElement.classList.add('is-app'); keep.checked = true; }
+const passInsets = () => { try { const cs = getComputedStyle(document.querySelector('#sa')), r = frame.contentDocument && frame.contentDocument.documentElement; if (r) { r.style.setProperty('--sat', cs.paddingTop); r.style.setProperty('--sab', cs.paddingBottom); } } catch (e) { } };
+frame.addEventListener('load', passInsets); addEventListener('resize', passInsets);
