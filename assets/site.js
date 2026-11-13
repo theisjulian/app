@@ -1,8 +1,9 @@
-/* theis-Website: Stil (Glas/Neon/Heft/Plakat) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
+/* theis-Website: Stil (Glas/Neon/Heft/Plakat/Studio) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
 (function(){
-  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat'];
+  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat','studio'];
+  var ME=document.currentScript&&document.currentScript.src;
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#1d35c8','#1d35c8']};
+  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#1d35c8','#1d35c8'],studio:['#f6f7f9','#08090d']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -15,12 +16,23 @@
     t.ready.then(function(){document.documentElement.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+R+'px at '+x+'px '+y+'px)']},{duration:620,easing:'cubic-bezier(.2,.7,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){});
   }
   function current(){var s=r.getAttribute('data-style');return STILE.indexOf(s)>=0?s:'normal'}
+  /* Studio: eigener Aufbau, wird nur in diesem Stil nachgeladen */
+  function studio(){
+    if(window.theisStudio||document.getElementById('studio-js'))return;
+    var base=ME?ME.replace(/site\.js.*$/,''):'/assets/';
+    var l=document.createElement('link');l.rel='stylesheet';l.href=base+'studio.css'+STUDIOV;
+    var sc=document.createElement('script');sc.id='studio-js';sc.src=base+'studio.js'+STUDIOV;
+    l.onload=function(){document.body.appendChild(sc)};document.head.appendChild(l);
+  }
+  var STUDIOV='?v=db1f36ad26cf';
   function apply(st){
     r.setAttribute('data-style',st);
+    if(st==='studio')studio();
     document.querySelectorAll('.pick button').forEach(function(b){var on=b.dataset.s===st;b.setAttribute('aria-checked',on?'true':'false');b.tabIndex=on?0:-1});
     var c=LEISTE[st];document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c[/dark/.test(m.media)?1:0]});
   }
-  function choose(st,ev){if(st===current()){put(KEY,st);return}reveal(function(){apply(st)},ev);put(KEY,st);put(SEEN,'1');var t=document.getElementById('tip');if(t)t.remove()}
+  function choose(st,ev){if(st===current()){put(KEY,st);return}
+    if(window.theisStudio){window.theisStudio.leave(st);return}reveal(function(){apply(st)},ev);put(KEY,st);put(SEEN,'1');var t=document.getElementById('tip');if(t)t.remove()}
   /* Bildschirmfotos vergrößern: das Bild wächst aus seiner Position heraus und kehrt beim Schließen dorthin zurück */
   function lightbox(){
     var imgs=[].slice.call(document.querySelectorAll('.pic img,.laptop .scr img,.app-stage.plain img')).filter(function(i){return !i.closest('a')});
@@ -129,8 +141,8 @@
       var shown=false,show=function(){
         if(shown||get(SEEN)||scrollY<innerHeight*.9)return;shown=true;removeEventListener('scroll',show);
         var t=document.createElement('div');t.id='tip';t.setAttribute('role','dialog');t.setAttribute('aria-label','Stil der Website');
-        t.innerHTML='<p><b>Vier Stile zur Wahl</b>Glas, Neon, Schulheft oder Plakat – jederzeit oben umschaltbar.</p><div class="tip-s">'+
-          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['plakat','p','Plakat']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
+        t.innerHTML='<p><b>Fünf Stile zur Wahl</b>Glas, Neon, Schulheft, Plakat oder Studio – jederzeit oben umschaltbar.</p><div class="tip-s">'+
+          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['plakat','p','Plakat'],['studio','u','Studio']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
           '</div><button type="button" class="tip-x" aria-label="Hinweis schließen"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
         t.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;put(SEEN,'1');
           if(b.dataset.s){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null)}
