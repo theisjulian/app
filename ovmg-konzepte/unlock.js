@@ -1,5 +1,8 @@
 'use strict';
-const T_PW = window.OVMG_MODE === 'schueler' ? 2 : 0, T_QR = window.OVMG_MODE === 'schueler' ? 3 : 1, DBN = window.OVMG_MODE === 'schueler' ? 'ovmg-mitreden' : 'ovmg-preview';
+const ADM = !!window.OVMG_ADMIN, STU = window.OVMG_MODE === 'schueler';
+/* Art 0 = Vorschau-Passwort, 1 = QR, 2/3 = Schüler, 4 = Admin (Benutzername + Passwort) */
+const T_PW = ADM ? 4 : STU ? 2 : 0, T_QR = ADM ? -1 : STU ? 3 : 1, DBN = ADM ? 'ovmg-adminpage' : STU ? 'ovmg-mitreden' : 'ovmg-preview';
+const user = document.querySelector('#user');
 const form = document.querySelector('form'), password = document.querySelector('#password'), keep = document.querySelector('#keep'),
   status = document.querySelector('#status'), button = form.querySelector('button'), gate = document.querySelector('#gate'),
   viewer = document.querySelector('#viewer'), frame = document.querySelector('iframe');
@@ -38,25 +41,28 @@ async function show(bytes, key) {
   const html = await new Response(stream).blob();
   objectURL = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   if (window.OVMG_MODE) frame.addEventListener('load', () => { try { frame.contentWindow.postMessage({ type: 'ovmg-mode', mode: window.OVMG_MODE }, '*'); } catch (e) { } }, { once: true });
-  if (window.OVMG_ADMIN) frame.addEventListener('load', () => { try { frame.contentWindow.postMessage({ type: 'ovmg-admin' }, '*'); } catch (e) { } }, { once: true });
+  if (ADM) { const cred = show.cred, kp = keep.checked; show.cred = null; frame.addEventListener('load', () => { try { frame.contentWindow.postMessage(cred ? { type: 'ovmg-admin-cred', cred, keep: kp } : { type: 'ovmg-admin' }, '*'); } catch (e) { } }, { once: true }); }
   frame.src = objectURL; gate.hidden = true; viewer.hidden = false; document.querySelector('#lock').focus(); status.textContent = '';
 }
 form.addEventListener('submit', async e => {
-  e.preventDefault(); button.disabled = true; status.textContent = 'Die Vorschau wird geöffnet …'; let secret = password.value; password.value = '';
+  e.preventDefault(); button.disabled = true; status.textContent = ADM ? 'Anmeldung wird geprüft …' : 'Die Vorschau wird geöffnet …'; let secret = ADM ? user.value.trim().toLowerCase() + '\n' + password.value : password.value; password.value = ''; if (ADM) show.cred = secret;
   try {
     if (!crypto.subtle || !window.DecompressionStream) throw new Error('browser');
     const bytes = await load(), key = await openKey(secret, bytes, T_PW); secret = '';
     await show(bytes, key);
     if (keep.checked) await keySave(key); else await keyDrop();
   } catch (err) {
-    status.textContent = err.message === 'password' ? (window.OVMG_MODE === 'schueler' ? 'Das Passwort stimmt nicht. Probier es noch einmal.' : 'Das Passwort ist nicht richtig. Bitte erneut versuchen.') : err.message === 'browser' ? 'Bitte die Seite über HTTPS in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.' : 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.'; password.focus();
+    show.cred = null; status.textContent = err.message === 'password' ? ADM ? 'Benutzername oder Passwort ist nicht richtig.' : (window.OVMG_MODE === 'schueler' ? 'Das Passwort stimmt nicht. Probier es noch einmal.' : 'Das Passwort ist nicht richtig. Bitte erneut versuchen.') : err.message === 'browser' ? 'Bitte die Seite über HTTPS in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.' : 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.'; password.focus();
   } finally { secret = ''; button.disabled = false }
 });
-document.querySelector('#lock').addEventListener('click', async () => {
-  await keyDrop(); frame.src = 'about:blank'; if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null; viewer.hidden = true; gate.hidden = false; password.focus();
-});
+async function lock() {
+  await keyDrop(); frame.src = 'about:blank'; if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null; viewer.hidden = true; gate.hidden = false; (ADM && !user.value ? user : password).focus();
+}
+document.querySelector('#lock').addEventListener('click', lock);
+/* Admin: „Abmelden“ im Admin-Bereich meldet hier ab, statt zur Ansichtsseite zu führen */
+addEventListener('message', e => { if (ADM && e.source === frame.contentWindow && e.data && e.data.type === 'ovmg-logout') { lock(); if (e.data.fail) status.textContent = 'Bitte erneut anmelden.'; } });
 /* QR-Zugang: Schlüssel steht hinter „#zugang=“ (wird nie an den Server geschickt) und wird sofort aus der Adresse entfernt */
-const qrToken = (() => { const m = location.hash.match(/^#zugang=([A-Za-z0-9_-]{16,})$/); if (m) history.replaceState(null, '', location.pathname + location.search); return m ? m[1] : null; })();
+const qrToken = ADM ? null : (() => { const m = location.hash.match(/^#zugang=([A-Za-z0-9_-]{16,})$/); if (m) history.replaceState(null, '', location.pathname + location.search); return m ? m[1] : null; })();
 /* gemerkte Anmeldung beim Öffnen der Seite */
 (async () => {
   if (qrToken) {
