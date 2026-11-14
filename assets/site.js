@@ -19,7 +19,7 @@
   function apply(st){
     r.setAttribute('data-style',st);
     document.querySelectorAll('.pick button').forEach(function(b){var on=b.dataset.s===st;b.setAttribute('aria-checked',on?'true':'false');b.tabIndex=on?0:-1});
-    if(st==='term')boot();
+    if(st==='term'){boot();if(boot.ready)typer()}
     var c=LEISTE[st];document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c[/dark/.test(m.media)?1:0]});
   }
   function choose(st,ev){if(st===current()){put(KEY,st);return}
@@ -61,7 +61,7 @@
 
   /* ===== Datenblatt und Terminal: Zusatzteile. Werden einmal angelegt und per CSS nur im jeweiligen Stil gezeigt ===== */
   var ROOT=ME?ME.replace(/assets\/site\.js.*$/,''):'/';
-  var APPS=[['libretto','Libretto','Noten'],['voce','Voce','Mündliche Prüfungen'],['foliva','Foliva','Arbeitsblätter'],['aula','Aula','Gruppen, Timer, Sitzplan'],['sportwahl','Sportivo','Sportwahl Oberstufe'],['namo','’namo.','Schülerfahrten']];
+  var APPS=[['libretto','Libretto','Noten','noten notenbuch zeugnis gso schulaufgabe notenschlüssel durchschnitt w-seminar kalender'],['voce','Voce','Mündliche Prüfungen','mündlich prüfung bewertung raster fremdsprache englisch italienisch'],['foliva','Foliva','Arbeitsblätter','arbeitsblatt probe lösung vorlage grundschule test'],['aula','Aula','Gruppen, Timer, Sitzplan','gruppen timer sitzplan beamer uhr stundenplan klassenzimmer zufall'],['sportwahl','Sportivo','Sportwahl Oberstufe','sport sportwahl oberstufe q12 q13 kurse mebis'],['namo','’namo.','Schülerfahrten','klassenfahrt studienfahrt reise ausflug zimmer tickets handy']];
   function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
   function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function pageName(){var t=document.title.split(' · ')[0];return t.replace(/\s+[–-]\s+.*$/,'')||'theisapps'}
@@ -84,18 +84,41 @@
     var nr=0;for(var k=0;k<location.pathname.length;k++)nr=(nr*31+location.pathname.charCodeAt(k))%9000;
     var tb=el('div','bp-tb');tb.setAttribute('aria-hidden','true');
     tb.innerHTML='<div class="c1"><small>Benennung</small><b>'+esc(pageName())+'</b></div><div><small>Zeichnungs-Nr.</small><b>TA-'+(1000+nr)+'</b></div><div><small>Maßstab</small><b>1 : 1</b></div><div><small>Blatt</small><b>1 / 1</b></div><div><small>Datum</small><b>'+dat+'</b></div><div><small>Gezeichnet</small><b>theisapps</b></div><div><small>Werkstoff</small><b>HTML, CSS, etwas JS</b></div><div><small>Daten</small><b>bleiben lokal</b></div>';
+    tb.insertAdjacentHTML('beforeend','<div class="bp-stamp"><b>Geprüft</b><small>'+dat+'</small><small>im Unterricht</small></div>');
     if(foot)foot.insertBefore(tb,foot.firstChild);
+    if('IntersectionObserver' in window){var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){tb.classList.add('in');so.disconnect()}})},{threshold:.6});so.observe(tb)}else tb.classList.add('in');
+    /* Datenblatt: Fadenkreuz mit Koordinaten in Millimetern und Feld (z. B. C4), Feld im Rahmen leuchtet mit */
+    if(!calm&&matchMedia('(hover:hover) and (pointer:fine)').matches){
+      var ch=el('div','bp-cross','<i class="h"></i><i class="v"></i><b></b>');ch.setAttribute('aria-hidden','true');document.body.appendChild(ch);
+      var chH=ch.children[0],chV=ch.children[1],chL=ch.children[2],tops=fr.querySelectorAll('.bp-top i'),sides=fr.querySelectorAll('.bp-side i'),lastT=-1,lastS=-1,raf=0,px=0,py=0;
+      var mm=function(v){return Math.round(v*.2646)};
+      var draw=function(){raf=0;
+        chH.style.transform='translateY('+py+'px)';chV.style.transform='translateX('+px+'px)';
+        var t=Math.min(7,Math.max(0,Math.floor((px-16)/(innerWidth-32)*8))),sd=Math.min(5,Math.max(0,Math.floor((py-16)/(innerHeight-32)*6)));
+        if(t!==lastT){if(tops[lastT])tops[lastT].classList.remove('on');tops[t].classList.add('on');lastT=t}
+        if(sd!==lastS){if(sides[lastS])sides[lastS].classList.remove('on');sides[sd].classList.add('on');lastS=sd}
+        chL.textContent='ABCDEF'[sd]+(t+1)+'  X '+mm(px)+'  Y '+mm(py+scrollY)+' mm';
+        var fl=px>innerWidth-220,fu=py>innerHeight-60;chL.style.transform='translate('+(fl?px-14:px+14)+'px,'+(fu?py-34:py+14)+'px)'+(fl?' translateX(-100%)':'');
+      };
+      document.addEventListener('pointermove',function(e){if(current()!=='blatt'||e.pointerType!=='mouse'){ch.classList.remove('on');return}
+        px=e.clientX;py=e.clientY;ch.classList.add('on');if(!raf)raf=requestAnimationFrame(draw)},{passive:true});
+      document.documentElement.addEventListener('mouseleave',function(){ch.classList.remove('on')});
+      addEventListener('scroll',function(){if(ch.classList.contains('on')&&!raf)raf=requestAnimationFrame(draw)},{passive:true});
+    }
     /* Terminal: Statuszeile mit Befehlseingabe */
     var sl=el('div','tm-status');
-    sl.innerHTML='<span class="m">NORMAL</span><span class="f">~/'+esc(slug()==='start'?'':slug())+'</span><form class="tm-cmd" role="search"><label><span>:</span><input type="text" name="c" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Befehl eingeben, zum Beispiel hilfe" placeholder="hilfe eingeben oder 1–6 drücken"></label></form><span class="p">0%</span><span class="t"></span>';
+    sl.innerHTML='<span class="m">NORMAL</span><span class="f">~/'+esc(slug()==='start'?'':slug())+'</span><span class="s"></span><form class="tm-cmd" role="search"><label><span>:</span><input type="text" name="c" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Befehl eingeben, zum Beispiel hilfe" placeholder="hilfe eingeben oder 1–6 drücken"></label></form><span class="p">0%</span><span class="t"></span>';
     document.body.appendChild(sl);
     var out=el('div','tm-out');out.setAttribute('role','status');out.setAttribute('aria-live','polite');document.body.appendChild(out);
+    /* Statuszeile zeigt den Abschnitt, der gerade zu lesen ist */
+    var secEl=sl.querySelector('.s'),hs=[].slice.call(document.querySelectorAll('main h2'));
+    if(hs.length&&'IntersectionObserver' in window){var ho=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)secEl.textContent='§ '+e.target.textContent.replace(/\s+/g,' ').trim()})},{rootMargin:'0px 0px -70% 0px'});hs.forEach(function(h){ho.observe(h)})}
     var inp=sl.querySelector('input'),pct=sl.querySelector('.p'),clk=sl.querySelector('.t');
     var tick=function(){var t=new Date();clk.textContent=('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)};tick();setInterval(tick,20000);
     var sc=function(){var m=document.documentElement.scrollHeight-innerHeight;pct.textContent=(m>0?Math.round(scrollY/m*100):100)+'%'};addEventListener('scroll',sc,{passive:true});sc();
     var say=function(h){out.innerHTML=h;out.classList.add('on');clearTimeout(say.t);say.t=setTimeout(function(){out.classList.remove('on')},h.length>200?14000:6000)};
     var go=function(u){location.href=u};
-    var HELP='<b>Befehle</b><br>'+APPS.map(function(a,i){return '<kbd>'+(i+1)+'</kbd> '+a[0]}).join('  ')+'<br><kbd>ls</kbd> alle Programme · <kbd>cd ..</kbd> Startseite · <kbd>kontakt</kbd> · <kbd>datenschutz</kbd> · <kbd>impressum</kbd><br><kbd>top</kbd> nach oben · <kbd>stil glas</kbd> / neon / heft / datenblatt · <kbd>clear</kbd>';
+    var HELP='<b>Befehle</b><br>'+APPS.map(function(a,i){return '<kbd>'+(i+1)+'</kbd> '+a[0]}).join('  ')+'<br><kbd>ls</kbd> alle Programme · <kbd>cd ..</kbd> Startseite · <kbd>kontakt</kbd> · <kbd>datenschutz</kbd> · <kbd>impressum</kbd><br><kbd>grep wort</kbd> Programm suchen · <kbd>neofetch</kbd> · <kbd>date</kbd> · <kbd>uptime</kbd> · <kbd>fortune</kbd><br><kbd>top</kbd> nach oben · <kbd>stil glas</kbd> / neon / heft / datenblatt · <kbd>clear</kbd> · <i>Tab ergänzt, ↑ ↓ blättert</i>';
     var run=function(c){c=c.trim().toLowerCase().replace(/^[:\/$]\s*/,'');if(!c)return;
       var a=c.split(/\s+/),w=a[0],arg=a[1]||'';
       if(w==='cd'){w=arg.replace(/\/$/,'')||'..'}
@@ -113,11 +136,29 @@
       if(w==='whoami')return say('Julian, Lehrer für Englisch und Italienisch, schreibt Programme für den Schulalltag.');
       if(w==='stil'||w==='theme'){var m={glas:'normal',normal:'normal',neon:'neon',heft:'heft',schulheft:'heft',datenblatt:'blatt',blatt:'blatt',blaupause:'blatt',terminal:'term'}[arg];
         if(m){var b=document.querySelector('.pick [data-s='+m+']');choose(m,b?{currentTarget:b}:null);return}return say('stil: glas, neon, heft, datenblatt oder terminal')}
+      if(w==='neofetch'||w==='info')return say('<pre class="nf">'+
+        '<b>   ▄▄  </b>  <b>theisapps</b>@schule\n<b>  ████ </b>  ─────────────────\n<b>  ████ </b>  <i>System</i>    Schulalltag Bayern\n<b> ▄████▄</b>  <i>Programme</i> 6 (libretto voce foliva aula sportivo namo)\n<b> ██████</b>  <i>Konto</i>     keins nötig\n<b> ██  ██</b>  <i>Server</i>    keiner (außer ’namo., EU)\n<b> ██  ██</b>  <i>Tracking</i>  aus\n<b>       </b>  <i>Stil</i>      terminal\n<b>       </b>  <i>Autor</i>     Julian, Lehrer in München\n<b>       </b>  <span class="sw"><i></i><i></i><i></i><i></i><i></i><i></i></span></pre>');
+      if(w==='grep'||w==='suche'||w==='find'){var q=a.slice(1).join(' ').replace(/['"]/g,'');if(!q)return say('grep: Suchwort fehlt – z. B. <kbd>grep zeugnis</kbd>');
+        var hit=APPS.filter(function(x){return (x[1]+' '+x[2]+' '+x[3]).toLowerCase().indexOf(q)>=0});
+        return say(hit.length?hit.map(function(x){return '<a href="'+ROOT+x[0]+'/">'+x[0]+'</a><i>:</i> '+esc(x[2])+' <i>– passt zu „'+esc(q)+'“</i>'}).join('<br>'):'grep: kein Treffer für „'+esc(q)+'“')}
+      if(w==='date'){var dt=new Date(),sj=dt.getMonth()>=7?dt.getFullYear():dt.getFullYear()-1;return say(dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · Schuljahr '+sj+'/'+String(sj+1).slice(-2))}
+      if(w==='uptime'){var n=new Date(),y=n.getMonth()>=7?n.getFullYear():n.getFullYear()-1,st=new Date(y,8,10),en=new Date(y+1,6,31),dd=Math.max(0,Math.round((n-st)/864e5)),rest=Math.max(0,Math.round((en-n)/864e5));
+        return say('Schuljahr läuft seit '+dd+' Tagen · noch etwa '+rest+' Tage bis zu den Sommerferien · Last: Korrekturen hoch')}
+      if(w==='fortune'){var F=['„Wer nachrechnen muss, hat keine Zeit zum Unterrichten.“','Tipp: In Libretto reicht Note, Enter, nächste Person.','Die Kaffeemaschine im Lehrerzimmer ist der wahre Server.','Noten gehören auf Ihr Gerät, nicht in eine Cloud.','Murphys Gesetz der Schule: Der Beamer streikt nur bei Besuch.','Aula bildet Gruppen schneller, als die Klasse „Ich will mit …“ sagen kann.'];return say(F[Math.floor(Math.random()*F.length)])}
+      if(w==='cowsay'||w==='muh'){var tx=esc(a.slice(1).join(' ')||'Muh. Keine Cookies hier.');var ln=Math.min(tx.length,46);
+        return say('<pre> '+'_'.repeat(ln+2)+'\n< '+tx+' >\n '+'-'.repeat(ln+2)+'\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||</pre>')}
+      if(w==='history')return say(hist.length?hist.map(function(h,i){return '<i>'+(i+1)+'</i>  '+esc(h)}).join('<br>'):'Noch keine Befehle.');
       if(w==='sudo')return say('Netter Versuch. Hier gibt es nichts zu verwalten – alles läuft auf Ihrem Gerät.');
       say('Befehl nicht gefunden: '+esc(w)+' – <kbd>hilfe</kbd> zeigt alle Befehle.');
     };
-    sl.querySelector('form').addEventListener('submit',function(e){e.preventDefault();run(inp.value);inp.value='';});
-    inp.addEventListener('keydown',function(e){if(e.key==='Escape'){inp.value='';inp.blur();out.classList.remove('on')}});
+    var hist=[],hi=0,CMDS=['hilfe','ls','cd','kontakt','datenschutz','impressum','lizenz','top','clear','whoami','stil','neofetch','grep','date','uptime','fortune','cowsay','history','sudo'].concat(APPS.map(function(x){return x[0]}),['sportivo']);
+    sl.querySelector('form').addEventListener('submit',function(e){e.preventDefault();var v=inp.value.trim().replace(/^[:\/]\s*/,'');if(v&&hist[hist.length-1]!==v)hist.push(v);hi=hist.length;run(v);inp.value='';});
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='ArrowUp'&&hist.length){e.preventDefault();hi=Math.max(0,hi-1);inp.value=hist[hi]||'';return}
+      if(e.key==='ArrowDown'&&hist.length){e.preventDefault();hi=Math.min(hist.length,hi+1);inp.value=hist[hi]||'';return}
+      if(e.key==='Tab'&&inp.value.trim()){var parts=inp.value.replace(/^\s+/,'').split(/\s+/),last=parts.pop().toLowerCase(),pool=parts.length?(parts[0]==='stil'?['glas','neon','heft','datenblatt','terminal']:APPS.map(function(x){return x[0]})):CMDS;
+        var m=pool.filter(function(c){return c.indexOf(last)===0});if(m.length){e.preventDefault();if(m.length===1){parts.push(m[0]);inp.value=parts.join(' ')+' '}else say(m.map(function(c){return '<kbd>'+c+'</kbd>'}).join(' '))}return}
+      if(e.key==='Escape'){inp.value='';inp.blur();out.classList.remove('on')}});
     inp.addEventListener('focus',function(){sl.querySelector('.m').textContent='BEFEHL'});inp.addEventListener('blur',function(){sl.querySelector('.m').textContent='NORMAL'});
     out.addEventListener('click',function(e){if(!e.target.closest('a'))out.classList.remove('on')});
     document.addEventListener('keydown',function(e){
@@ -125,7 +166,16 @@
       if(e.key===':'||e.key==='/'){e.preventDefault();inp.focus();return}
       if(/^[1-6]$/.test(e.key)&&innerWidth>820){go(ROOT+APPS[+e.key-1][0]+'/')}
     });
-    boot.ready=true;if(current()==='term')boot();
+    /* Terminal: Namen „entschlüsseln“ sich beim Darüberfahren */
+    if(!calm&&matchMedia('(hover:hover)').matches){
+      var GL='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*<>/';
+      document.querySelectorAll('.appstrip a span,.idx a b,.nm,.next strong,footer .w>div:not(:first-child) a').forEach(function(x){
+        var tn=[].slice.call(x.childNodes).filter(function(n){return n.nodeType===3&&n.textContent.trim()}).pop();if(!tn)return;var orig=tn.textContent,run=0;
+        (x.closest('a')||x).addEventListener('mouseenter',function(){if(current()!=='term'||run)return;var f=0,L=orig.length;
+          run=setInterval(function(){f++;tn.textContent=orig.split('').map(function(c,i){return i<f/2||c===' '?c:GL[Math.floor(Math.random()*GL.length)]}).join('');if(f/2>=L){clearInterval(run);run=0;tn.textContent=orig}},28)});
+      });
+    }
+    boot.ready=true;if(current()==='term'){boot();typer()}
   }
   /* Terminal: kurze Startsequenz, einmal je Sitzung (oder beim Wechsel in den Stil); Taste oder Klick überspringt */
   function boot(){
@@ -137,6 +187,17 @@
     addEventListener('keydown',end);addEventListener('pointerdown',end);
     (function next(){if(!b.parentNode)return;if(i>=lines.length){setTimeout(end,260);return}
       var l=lines[i++],ok=i>1&&i<lines.length;b.insertAdjacentHTML('beforeend','<p>'+(ok?'<b>[  OK  ]</b> ':'')+esc(l)+'</p>');setTimeout(next,i===1?180:95)})();
+  }
+  /* Terminal: Hauptüberschrift tippt sich Zeichen für Zeichen (Vorleseprogramme bekommen den ganzen Text) */
+  function typer(){
+    var h=document.querySelector('main h1');if(!h||calm||h.classList.contains('tw')||h.classList.contains('typed'))return;
+    var full=h.textContent.replace(/\s+/g,' ').trim(),cs=[];h.setAttribute('aria-label',full);h.style.minHeight=h.offsetHeight+'px';
+    (function walk(n){[].slice.call(n.childNodes).forEach(function(c){if(c.nodeType===3){var f=document.createDocumentFragment();c.textContent.split('').forEach(function(ch){var sp=document.createElement('span');sp.className='twc';sp.setAttribute('aria-hidden','true');sp.textContent=ch;cs.push(sp);f.appendChild(sp)});c.parentNode.replaceChild(f,c)}else if(c.nodeType===1)walk(c)})})(h);
+    h.classList.add('tw');var i=0;
+    var fin=function(){h.classList.remove('tw');h.classList.add('typed');h.style.minHeight=''};
+    var step=function(){if(current()!=='term'){cs.forEach(function(c){c.classList.add('on')});return fin()}
+      var k=Math.random()<.15?3:1;while(k--&&i<cs.length)cs[i++].classList.add('on');if(i>=cs.length)return fin();setTimeout(step,cs[i-1].textContent===' '?60:22+Math.random()*30)};
+    setTimeout(step,document.querySelector('.tm-boot')?1200:250);
   }
   function ready(){
     var g=get(KEY);if(g==='salbei'||g==='atelier'||g==='plakat'||g==='studio'){g='normal';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
