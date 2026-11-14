@@ -25,7 +25,7 @@ let lastAct = Date.now();
 
 /* ---------- Grundgerüst ---------- */
 function blankData() {
-  return { v: 1, settings: { teacher: '', school: '', year: R.schoolYearOf(), half1End: '', autoLock: 10 }, courses: [], classDates: [], events: [] };
+  return { v: 1, settings: { teacher: '', school: '', year: R.schoolYearOf(), half1End: '', autoLock: 10, dl: [] }, courses: [], classDates: [], events: [] };
 }
 let saveT = null;
 let READONLY = false, POLICY = null;
@@ -461,7 +461,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.g
 function courseView(c) {
   const sorted = c.students;
   /* Selten und wichtig bleibt als Balken (nicht unterstützte Version, Update, fehlgeschlagene Sicherung); alles andere wird zur kleinen Marke rechts über der Tabelle */
-  const notices = [betaNotice(), updateNotice(), ST.lastLocalError ? backupNotice0() : ''];
+  const notices = [betaNotice(), updateNotice(), ST.lastLocalError ? backupNotice0() : '', deadlineNotice(c)];
   const hints = [];
   const warns = R.courseWarnings(c);
   if (warns.length) hints.push({ cls: '', short: warns.length === 1 ? '1 Hinweis' : warns.length + ' Hinweise', html: warns.map(w => `<p style="margin:0 0 6px">${esc(w.text)}</p>`).join('') });
@@ -481,7 +481,7 @@ function courseView(c) {
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}${chips}</div>`;
   }
   const semT = isSemTab(c);
-  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : (upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe') + ' ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
+  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : (upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe') + ' ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}${(() => { const L = courseDeadlines(c); if (!L.length) return ''; const x = nextDeadlines(c)[0]; return ` · <button type="button" class="dlChip ${x && dlDays(x) <= 7 ? 'soon' : ''}" data-act="courseDeadlines" title="Alle Fristen dieses Kurses">${x ? 'Nächste Frist: ' + esc(dlTitle(x)) + ', ' + sdate(dlDue(x)) : 'Fristen'}</button>`; })()}</small></h2>
       <div class="headBtns">${semT ? '' : '<button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button>'}<button class="mini" data-act="editCourse">Kurs &amp; Schüler</button>${semT ? '' : '<button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button>'}<button class="mini" data-act="print">Drucken &amp; Export</button><button class="mini" data-act="rules" title="Regeln und Kürzel für diesen Kurs">Regeln</button></div></div>
     ${notices.some(Boolean) ? `<div class="notices">${notices.filter(Boolean).join('')}</div>` : ''}${scope}
     ${sorted.length && semT ? semView(c) : sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
@@ -722,6 +722,8 @@ document.addEventListener('click', async e => {
     const a = b.dataset.act;
     if (a === 'newCourse') courseSheet();
     if (a === 'klassen') klassenSheet();
+    if (a === 'deadlines') deadlineSheet();
+    if (a === 'courseDeadlines' && course()) courseDeadlineSheet(course());
     if (a === 'editCourse') courseSheet(course());
     if (a === 'newAssessment') assessmentSheet(course());
     if (a === 'transfer') transferSheet(course());
@@ -2562,13 +2564,16 @@ function calendarHTML() {
   D.courses.filter(c => !f || classesOf(c).includes(f)).forEach(c => c.assessments.filter(a => a.date && WRITTEN.includes(a.type)).forEach(a => (ev[a.date] = ev[a.date] || []).push({ c, a })));
   D.classDates.filter(x => !f || x.cls === f).forEach(x => (ev[x.date] = ev[x.date] || []).push({ other: x }));
   D.courses.filter(c => c.seminar && c.sem && c.sem.deadline && (!f || classesOf(c).includes(f))).forEach(c => (ev[c.sem.deadline] = ev[c.sem.deadline] || []).push({ semc: c }));
+  dlList().filter(x => !f || D.courses.some(c => classesOf(c).includes(f) && dlFor(x, c))).forEach(x => {
+    if (x.close) (ev[x.close] = ev[x.close] || []).push({ dl: x, ns: true });
+    if (x.date && x.date !== x.close) (ev[x.date] = ev[x.date] || []).push({ dl: x }); });
   const free = Cal.freeDays(y, m);
   const first = new Date(y, m, 1), start = Cal.add(first, -((first.getDay() + 6) % 7));
   const cells = [];
   for (let i = 0; i < 42; i++) {
     const d = Cal.add(start, i), iso = Cal.iso(d), inM = d.getMonth() === m, fr = free[iso], we = d.getDay() === 0 || d.getDay() === 6;
     if (i >= 35 && !inM) break;
-    const items = (ev[iso] || []).map(x => x.semc ? `<span class="cev" style="--hue:var(${hueOf(x.semc.subject)})" title="${esc('Abgabe der Seminararbeit · ' + x.semc.name + ' ' + x.semc.subject + (x.semc.sem.deadlineTime ? ' · ' + x.semc.sem.deadlineTime + ' Uhr' : ''))}">${esc(x.semc.name)} Abgabe</span>` : x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
+    const items = (ev[iso] || []).map(x => x.dl ? `<button type="button" class="cev dl" data-act="deadlines" title="${esc((x.ns ? 'Notenschluss ' : '') + dlLabel(x.dl) + ' · ' + DL_G[dlG(x.dl)])}">${esc((x.ns ? 'Notenschluss ' : '') + dlLabel(x.dl))}</button>` : x.semc ? `<span class="cev" style="--hue:var(${hueOf(x.semc.subject)})" title="${esc('Abgabe der Seminararbeit · ' + x.semc.name + ' ' + x.semc.subject + (x.semc.sem.deadlineTime ? ' · ' + x.semc.sem.deadlineTime + ' Uhr' : ''))}">${esc(x.semc.name)} Abgabe</span>` : x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
       : `<button class="cev" style="--hue:var(${hueOf(x.c.subject)})" data-cal="${x.c.id}|${x.a.id}" title="${esc(x.c.name + ' ' + x.c.subject + ' · ' + (x.a.title || R.TYPES[x.a.type].label))}">${esc(clsOf(x.c))} ${esc(x.a.short || R.TYPES[x.a.type].short)}</button>`).join('');
     const se = inM ? eventsOn(iso) : [];
     const sev = se.slice(0, 2).map(e => `<span class="cev sch" title="${esc((e.time ? e.time + ' · ' : '') + e.title)}">${esc(e.title)}</span>`).join('') + (se.length > 2 ? `<span class="cev more" title="${esc(se.slice(2).map(e => e.title).join('\n'))}">+${se.length - 2} weitere</span>` : '');
@@ -2591,6 +2596,124 @@ function calendarHTML() {
     <div class="cal"><div class="cwd">Mo</div><div class="cwd">Di</div><div class="cwd">Mi</div><div class="cwd">Do</div><div class="cwd">Fr</div><div class="cwd">Sa</div><div class="cwd">So</div>${cells.join('')}</div>
     ${evList}<input type="file" id="evFile" accept=".csv,.ics,.txt" hidden>
     <p class="note">Zeigt angekündigte und geplante schriftliche Leistungsnachweise (Schulaufgaben, Stegreifaufgaben, Kurzarbeiten, Tests)${(D.events || []).length ? ' und die eingelesenen Schultermine (grau)' : ''}. Ferien und Feiertage in Bayern laut Kultusministerium, ohne Gewähr; Mariä Himmelfahrt gilt nur in überwiegend katholischen Gemeinden.</p></section>`;
+}
+/* ======================================================================
+   Fristen fürs Notenmachen: Zwischenbericht/Zwischenzeugnis, Halbjahr, Q12/Q13, Jahreszeugnis
+   (je Schule verschieden – § 40 Abs. 2 GSO: Zwischenzeugnis oder mind. zwei Informationen über das Notenbild).
+   Gespeichert in D.settings.dl = [{ id, kind, date, close, title?, g?, src }]; date = Termin, close = Notenschluss (optional).
+   ====================================================================== */
+const DL_KINDS = {
+  zb1: { l: '1. Zwischenbericht (Notenbild)', g: 'u' },
+  zz: { l: 'Zwischenzeugnis', g: 'u' },
+  hj: { l: 'Klassenkonferenz zum Halbjahr', g: 'u' },
+  zb2: { l: '2. Zwischenbericht (Notenbild)', g: 'u' },
+  jz: { l: 'Jahreszeugnis (Klassenkonferenz)', g: 'u' },
+  q13: { l: 'Zeugnis 13/1', g: '13' },
+  abi: { l: 'Ende 13/2 – Zulassung zum Abitur', g: '13' },
+  q12: { l: 'Zeugnis 12/1', g: '12' },
+  q12e: { l: 'Ende 12/2', g: '12' },
+  own: { l: 'Eigene Frist', g: 'all' } };
+const DL_G = { all: 'alle Kurse', u: 'Jgst. 5–11', '12': 'Q12', '13': 'Q13' };
+const dlList = () => (D.settings.dl = Array.isArray(D.settings.dl) ? D.settings.dl : []);
+const dlG = x => x.kind === 'own' ? (x.g || 'all') : DL_KINDS[x.kind].g;
+const dlLabel = x => x.kind === 'own' ? (x.title || 'Eigene Frist') : DL_KINDS[x.kind].l;
+const dlDue = x => x.close || x.date || '';
+const dlFor = (x, c) => { const g = dlG(x); return g === 'all' || (g === 'u' ? !upper(c) : upper(c) && String(c.grade) === g); };
+/* Was steht im Schulkalender? Erkennt die üblichen Titel; Notenschluss-Termine werden der passenden Frist zugeordnet */
+function detectDeadlines(events) {
+  const out = {}, own = [];
+  const kindOf = (t, iso) => { const mo = +iso.slice(5, 7), early = mo >= 1 && mo <= 4;
+    if (/q\s*13|13\s*\/\s*1|abitur/i.test(t) && /zeugnis|notenschluss|zulassung|halbjahr/i.test(t)) return /13\s*\/\s*2|zulassung/i.test(t) || !early ? 'abi' : 'q13';
+    if (/q\s*12|12\s*\/\s*1/i.test(t) && /zeugnis|notenschluss|halbjahr/i.test(t)) return /12\s*\/\s*2/i.test(t) || !early ? 'q12e' : 'q12';
+    if (/(1\.|erste[nrs]?)\s*zwischenbericht/i.test(t)) return 'zb1';
+    if (/(2\.|zweite[nrs]?)\s*zwischenbericht/i.test(t)) return 'zb2';
+    if (/zwischenzeugnis/i.test(t)) return 'zz';
+    if (/konferenz\w*\s+(zum|zur)\s+(schul)?halbjahr|halbjahres\w*konferenz/i.test(t)) return 'hj';
+    if (/konferenz\w*\s+zum\s+jahreszeugnis|jahreszeugnis\w*\s*konferenz|notenschluss\s+(zum\s+)?jahreszeugnis/i.test(t)) return 'jz';
+    return null; };
+  (events || []).forEach(e => { const t = e.title || '', k = kindOf(t, e.from), ns = /notenschluss|noten\s*schluss|notenabgabe/i.test(t);
+    if (k) { const o = out[k] = out[k] || { kind: k, src: 'cal' }; if (ns) o.close = o.close || e.from; else o.date = o.date || e.from; }
+    else if (ns) own.push({ kind: 'own', title: t.slice(0, 80), g: 'all', close: e.from, src: 'cal' }); });
+  return Object.values(out).concat(own).map(x => ({ ...x, date: x.date || '' })).sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+/* Gefundene Fristen in die Liste übernehmen, ohne Eigenes zu überschreiben: ein eingetragener Notenschluss bleibt stehen */
+function mergeDeadlines(found) {
+  const L = dlList(); let n = 0;
+  found.forEach(f => { const ex = f.kind === 'own' ? L.find(x => x.kind === 'own' && x.title === f.title) : L.find(x => x.kind === f.kind);
+    if (!ex) { L.push({ id: uid(), ...f }); n++; return; }
+    if (f.date && ex.date !== f.date && (!ex.date || ex.src === 'cal')) { ex.date = f.date; n++; }
+    if (f.close && !ex.close) { ex.close = f.close; n++; } });
+  if (!D.settings.half1End) { const h = L.find(x => x.kind === 'zz') || L.find(x => x.kind === 'hj'); if (h && dlDue(h)) D.settings.half1End = dlDue(h); }
+  return n;
+}
+/* Nach dem Einlesen der Schultermine: gefundene Fristen zum Übernehmen anbieten */
+function offerDeadlines(events) {
+  const found = detectDeadlines(events); if (!found.length || READONLY) return;
+  sheet({ title: 'Fristen fürs Notenmachen gefunden', ok: 'Übernehmen', body: `<p class="prose">Im Schulkalender stehen diese Termine. Libretto zeigt sie dann in der Übersicht und im passenden Kurs an – und erinnert, wenn eine Frist naht.</p>
+    <div class="dlFound">${found.map((f, i) => `<label class="row"><input type="checkbox" data-dlf="${i}" checked><span><b>${esc(dlLabel(f))}</b><small>${f.date ? wdate(f.date) : ''}${f.close ? (f.date ? ' · ' : '') + 'Notenschluss ' + wdate(f.close) : ''} · ${DL_G[dlG(f)]}</small></span></label>`).join('')}</div>
+    <p class="hint">Den Notenschluss (bis wann die Noten fertig sein müssen) legt jede Schule selbst fest – du kannst ihn danach unter „Fristen“ ergänzen.</p>`,
+    onOk: d => { const pick = found.filter((f, i) => d.querySelector(`[data-dlf="${i}"]`).checked); const n = mergeDeadlines(pick); save(); render(); toast(n ? `${pick.length} Fristen übernommen` : 'Fristen waren schon eingetragen'); } });
+}
+/* Fristen bearbeiten */
+function deadlineSheet() {
+  let L = JSON.parse(JSON.stringify(dlList()));
+  const row = (x, i) => `<div class="dlRow" data-dl="${i}">
+      <div class="dlName">${x.kind === 'own' ? `<input type="text" data-dt="${i}" value="${esc(x.title || '')}" placeholder="z. B. Notenschluss Q13">
+        <select data-dg="${i}">${Object.entries(DL_G).map(([k, l]) => `<option value="${k}" ${(x.g || 'all') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : `<b>${esc(dlLabel(x))}</b><small>${DL_G[dlG(x)]}${x.src === 'cal' ? ' · aus dem Schulkalender' : ''}</small>`}</div>
+      ${field('Termin', `<input type="date" data-dd="${i}" value="${esc(x.date || '')}">`)}${field('Notenschluss', `<input type="date" data-dc="${i}" value="${esc(x.close || '')}">`)}
+      <button type="button" class="iconbtn" data-ddel="${i}" title="Frist entfernen">✕</button></div>`;
+  const avail = () => Object.keys(DL_KINDS).filter(k => k === 'own' || !L.some(x => x.kind === k));
+  const draw = d => { d.querySelector('#dlRows').innerHTML = L.length ? L.map(row).join('') : '<p class="hint">Noch keine Fristen eingetragen.</p>';
+    d.querySelector('#dlAddK').innerHTML = avail().map(k => `<option value="${k}">${esc(DL_KINDS[k].l)}${k === 'own' ? '' : ' (' + DL_G[DL_KINDS[k].g] + ')'}</option>`).join(''); bind(d); };
+  const sync = d => L.forEach((x, i) => { const g = sel => d.querySelector(sel); if (g(`[data-dd="${i}"]`)) x.date = g(`[data-dd="${i}"]`).value; if (g(`[data-dc="${i}"]`)) x.close = g(`[data-dc="${i}"]`).value;
+    if (g(`[data-dt="${i}"]`)) x.title = g(`[data-dt="${i}"]`).value.trim(); if (g(`[data-dg="${i}"]`)) x.g = g(`[data-dg="${i}"]`).value; if (x.src === 'cal') x.src = 'cal'; });
+  const bind = d => $$('[data-ddel]', d).forEach(b => b.onclick = () => { sync(d); L.splice(+b.dataset.ddel, 1); draw(d); });
+  const nEv = (D.events || []).length, nFound = nEv ? detectDeadlines(D.events).length : 0;
+  sheet({ title: 'Fristen fürs Notenmachen', wide: true, body: `
+    <p class="prose">Bis wann müssen die Noten stehen? Das legt jede Schule selbst fest – je nach Jahrgangsstufe verschieden. <b>Termin</b> ist z. B. die Ausgabe oder die Klassenkonferenz, <b>Notenschluss</b> der Tag, bis zu dem alle Noten eingetragen sein müssen (optional). Libretto zeigt die nächste Frist in der Übersicht und im passenden Kurs und hebt sie zwei Wochen vorher hervor.</p>
+    <div id="dlRows" class="dlRows"></div>
+    <div class="panelBtns"><span class="picker"><select id="dlAddK"></select></span><button type="button" class="mini" id="dlAdd">+ Frist</button>
+      ${nEv ? `<button type="button" class="mini" id="dlCal" ${nFound ? '' : 'disabled'} title="${nFound ? '' : 'In den eingelesenen Schulterminen wurde nichts Passendes gefunden'}">Aus den Schulterminen übernehmen${nFound ? ' (' + nFound + ')' : ''}</button>` : `<button type="button" class="mini" id="dlImp">Schultermine einlesen …</button>`}</div>
+    <p class="hint">Schulen mit Zwischenberichten statt Zwischenzeugnis (§ 40 Abs. 2 GSO) tragen den 1. und 2. Zwischenbericht ein. Der Stichtag für die Ansicht „Stand Zwischenzeugnis“ wird aus dem Zwischenzeugnis bzw. der Halbjahreskonferenz übernommen, falls er unter Einstellungen noch leer ist.</p>`,
+    onOpen: (d, close) => { draw(d);
+      d.querySelector('#dlAdd').onclick = () => { sync(d); const k = d.querySelector('#dlAddK').value; if (!k) return; L.push({ id: uid(), kind: k, date: '', close: '', src: 'hand', ...(k === 'own' ? { title: '', g: 'all' } : {}) }); draw(d); };
+      const cb = d.querySelector('#dlCal'); if (cb) cb.onclick = () => { sync(d); const keep = D.settings.dl; D.settings.dl = L; const n = mergeDeadlines(detectDeadlines(D.events)); L = D.settings.dl; D.settings.dl = keep; draw(d); toast(n ? 'Aus den Schulterminen ergänzt – mit „Sichern“ übernehmen' : 'Schon alles eingetragen'); };
+      const ib = d.querySelector('#dlImp'); if (ib) ib.onclick = () => { close(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); }; },
+    onOk: d => { sync(d); D.settings.dl = L.filter(x => x.date || x.close || (x.kind === 'own' && x.title));
+      if (!D.settings.half1End) { const h = D.settings.dl.find(x => x.kind === 'zz') || D.settings.dl.find(x => x.kind === 'hj'); if (h && dlDue(h)) { D.settings.half1End = dlDue(h); toast('Stichtag „Stand Zwischenzeugnis“: ' + fdate(D.settings.half1End)); } }
+      save(); render(); } });
+}
+/* Die nächsten Fristen (ab heute); für einen Kurs nur die passenden */
+/* Alle Fristen eines Kurses: die passenden der Schule und beim W-Seminar Themenwahl und Abgabe der Seminararbeit */
+function courseDeadlines(c) {
+  const L = dlList().filter(x => dlDue(x) && dlFor(x, c));
+  if (c.seminar && c.sem) { const cf = c.sem;
+    if (cf.themeDue) L.push({ id: 'semT', kind: 'own', title: 'Themenwahl Seminararbeit (§ 24 GSO)', g: 'all', date: cf.themeDue, src: 'sem' });
+    if (cf.deadline) L.push({ id: 'semA', kind: 'own', title: 'Abgabe der Seminararbeit' + (cf.deadlineTime ? ' (' + cf.deadlineTime + ' Uhr)' : ''), g: 'all', date: cf.deadline, src: 'sem' }); }
+  return L.sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+function nextDeadlines(c, days = 400) {
+  const t = todayISO(), lim = Cal.iso(Cal.add(new Date(t + 'T12:00'), days));
+  return (c ? courseDeadlines(c) : dlList()).filter(x => dlDue(x) && dlDue(x) >= t && dlDue(x) <= lim).sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+/* Fristen dieses Kurses auf einen Blick (über die kleine Marke im Kurskopf) */
+function courseDeadlineSheet(c) {
+  const t = todayISO(), L = courseDeadlines(c), nx = L.find(x => dlDue(x) >= t);
+  const rows = L.map(x => { const past = dlDue(x) < t, n = dlDays(x);
+    return `<div class="trow dlLine ${past ? 'past' : ''} ${x === nx ? 'next' : ''}"><span class="d">${sdate(dlDue(x))}<small>${past ? 'vorbei' : dlWhen(n)}</small></span><span><b>${esc(dlTitle(x))}</b>${x.close && x.date ? `<br><small>Termin ${esc(wdate(x.date))}</small>` : ''}${x.src === 'sem' ? '<br><small>W-Seminar – ändern unter „Kurs &amp; Schüler“</small>' : ''}</span></div>`; }).join('');
+  sheet({ title: 'Fristen · ' + c.name, ok: '', cancel: 'Schließen', body: `<div class="tlist">${rows || '<p class="hint">Für diesen Kurs ist noch keine Frist eingetragen.</p>'}</div>
+    <div class="panelBtns"><button type="button" class="mini" data-dlall>Fristen der Schule bearbeiten …</button></div>
+    <p class="hint">Es erscheinen nur die Fristen für ${upper(c) ? 'Q' + esc(String(c.grade)) : 'die Jahrgangsstufen 5–11'}${c.seminar ? ' und das W-Seminar' : ''}. Ob deine Schule ein Zwischenzeugnis oder Zwischenberichte hat, legst du unter „Fristen“ fest – eingetragen wird nur, was es gibt.</p>`,
+    onOpen: (d, close) => { d.querySelector('[data-dlall]').onclick = () => { close(); deadlineSheet(); }; } });
+}
+const dlDays = x => Math.round((new Date(dlDue(x) + 'T12:00') - new Date(todayISO() + 'T12:00')) / 864e5);
+const dlWhen = n => n === 0 ? 'heute' : n === 1 ? 'morgen' : n < 14 ? 'in ' + n + ' Tagen' : 'in ' + Math.round(n / 7) + ' Wochen';
+const dlTitle = x => (x.close ? 'Notenschluss ' : '') + dlLabel(x);
+/* Hinweis oben im Kurs: nächste Frist in den kommenden drei Wochen */
+function deadlineNotice(c) {
+  const x = nextDeadlines(c, 7)[0]; if (!x) return '';
+  const n = dlDays(x), open = c.assessments.reduce((k, a) => k + Object.values(a.results || {}).filter(r => r && r.status === 'ent').length, 0);
+  return `<div class="notice dlNote soon"><div class="grow"><b>${esc(dlTitle(x))}: ${esc(wdate(dlDue(x)))} (${dlWhen(n)})</b>${x.close && x.date ? ` – Termin ${esc(fdate(x.date))}` : ''}.${open ? ` Noch ${open === 1 ? '1 Nachtermin' : open + ' Nachtermine'} offen.` : ''}</div><button class="mini" data-act="deadlines">Fristen</button></div>`;
 }
 /* Schultermine einlesen: CSV-Export des Infoportals (Kalender;Titel;…;Start;Ende) oder ICS-Kalenderdatei */
 function parseEvents(text) {
@@ -2638,7 +2761,7 @@ function bindCalendar() {
     try { const list = parseEvents(await f.text());
       if (list === null) { toast('Spalten nicht erkannt – erwartet werden „Titel“ und „Start“ (CSV aus dem Infoportal) oder eine ICS-Kalenderdatei', 6000); return; }
       if (!list.length) { toast('In der Datei wurden keine Termine gefunden'); return; }
-      const had = (D.events || []).length; D.events = list; save(); UI.evOpen = true; renderDates(); toast(`${list.length} Schultermine eingelesen${had ? ' – die bisherigen wurden ersetzt' : ''}`, 4000);
+      const had = (D.events || []).length; D.events = list; save(); UI.evOpen = true; renderDates(); toast(`${list.length} Schultermine eingelesen${had ? ' – die bisherigen wurden ersetzt' : ''}`, 4000); offerDeadlines(list);
     } catch (err) { console.error(err); toast('Datei konnte nicht gelesen werden'); } };
   if ($('#evClear')) $('#evClear').onclick = async () => { if (READONLY) return; if (await ask(`Alle ${D.events.length} eingelesenen Schultermine aus dem Kalender entfernen? Deine Leistungsnachweise bleiben unverändert.`, 'Entfernen', true)) { D.events = []; save(); renderDates(); } };
 }
@@ -2722,10 +2845,16 @@ function renderStart() {
   if (d.makeup.length > 6) todo.push(`<p class="hint sMore">und ${d.makeup.length - 6} weitere Nachtermine – alle unter „Kalender &amp; Termine“</p>`);
   d.xfer.forEach(x => todo.push(`<button type="button" class="trow sRow" data-xfer="${x.c.id}"><span class="d">Übertrag</span><span><b>${cName(x.c)}</b><br><small>${x.n === 1 ? '1 Leistungsnachweis' : x.n + ' Leistungsnachweise'} noch nicht (vollständig) ins Notenprogramm der Schule übertragen</small></span><span class="pill">Öffnen</span></button>`));
   if (d.conflicts) todo.push(`<button type="button" class="trow sRow" data-tabgo="dates"><span class="d">Termine</span><span><b>Termin prüfen (§ 22 GSO)</b><br><small>${d.conflicts === 1 ? 'Ein Termin kollidiert' : d.conflicts + ' Termine kollidieren'} mit einem anderen großen Leistungsnachweis der Klasse</small></span><span class="pill part">Kalender</span></button>`);
+  /* Fristen fürs Notenmachen: zwei Wochen vorher unter „Zu erledigen“ */
+  const dls = nextDeadlines(null, 28), dlCs = x => D.courses.filter(c => dlFor(x, c));
+  const dlOpen = x => dlCs(x).reduce((k, c) => k + d.missing.filter(m => m.c.id === c.id).length + d.makeup.filter(m => m.c.id === c.id).length, 0);
+  dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).forEach(x => { const o = dlOpen(x), cs = dlCs(x);
+    todo.push(`<button type="button" class="trow sRow dlRowS" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${dlWhen(dlDays(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${esc(cs.slice(0, 4).map(c => c.name).join(', '))}${cs.length > 4 ? ' …' : ''}${o ? ` · noch offen: ${o} (fehlende Noten, Nachtermine)` : ''}</small></span><span class="pill ${dlDays(x) <= 7 ? 'late' : 'part'}">Frist</span></button>`); });
   if (bkBad) todo.push(`<button type="button" class="trow sRow" data-tabgo="backup"><span class="d">Sicherung</span><span><b>${esc(bkText)}</b><br><small>Deine Noten liegen sonst nur auf diesem Computer.</small></span><span class="pill part">Einrichten</span></button>`);
   /* Als Nächstes: Leistungsnachweise und Schultermine der kommenden Wochen */
   const horizon = Cal.iso(Cal.add(new Date(t + 'T12:00'), 28));
   const coming = d.next.filter(x => x.a.date <= horizon).map(x => ({ date: x.a.date, html: `<button type="button" class="trow sRow" data-goto="${x.c.id}"><span class="d">${sdate(x.a.date)}<small>${inDays(x.a.date)}</small></span><span><b>${lnName(x)}</b><br><small>${cName(x.c)}</small></span>${R.isBig(x.a) ? '<span class="pill big">groß</span>' : ''}</button>` }))
+    .concat(dls.filter(x => dlDays(x) > 14).map(x => ({ date: dlDue(x), html: `<button type="button" class="trow sRow" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${inDays(dlDue(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${DL_G[dlG(x)]}</small></span><span class="pill info">Frist</span></button>` })))
     .concat(d.events.filter(e => e.from <= horizon).slice(0, 8).map(e => ({ date: e.from < t ? t : e.from, html: `<div class="trow sRow ev"><span class="d">${sdate(e.from)}<small>${e.from <= t ? 'läuft' : inDays(e.from)}</small></span><span>${esc(e.title)}${e.time ? `<br><small>${esc(e.time)}</small>` : ''}</span><span class="pill">Schule</span></div>` })))
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 9);
   const later = d.next.filter(x => x.a.date > horizon).length;
@@ -2742,10 +2871,11 @@ function renderStart() {
       <div class="sHeadActs">${lastC ? `<button type="button" class="mini" data-goto="${lastC.id}" title="Zuletzt geöffneter Kurs">Weiter in ${esc(lastC.name)}</button>` : ''}<button type="button" class="mini accent" id="sNewLN">+ Leistungsnachweis</button></div></header>
     ${top ? `<div class="notices">${top}</div>` : ''}
     <div class="sCols">
-      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0)}</span></div>
+      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0) + dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).length}</span></div>
         <div class="tlist">${todo.length ? todo.join('') : '<div class="sDone"><b>Alles erledigt.</b><span>Keine fehlenden Noten, keine offenen Nachtermine, Sicherung aktuell.</span></div>'}</div></section>
       <section class="panel glass"><div class="phead"><h2 class="ptitle">Als Nächstes</h2><span class="count">${coming.length}</span></div>
         <div class="tlist">${coming.length ? coming.map(x => x.html).join('') : '<p class="hint" style="margin:6px 10px">In den nächsten vier Wochen steht nichts an. Geplante Leistungsnachweise trägst du mit Datum ein – dann erscheinen sie hier und im Kalender.</p>'}</div>
+        ${dlList().length ? '' : `<p class="note">Bis wann müssen die Noten stehen? <button type="button" class="linkbtn" data-act="deadlines">Fristen fürs Notenmachen eintragen</button> (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – oder aus den Schulterminen übernehmen.</p>`}
         ${later ? `<p class="note">${later === 1 ? 'Ein weiterer Leistungsnachweis' : later + ' weitere Leistungsnachweise'} später im Schuljahr – siehe <button type="button" class="linkbtn" data-tabgo="dates">Kalender &amp; Termine</button>.</p>` : ''}</section>
     </div>
     <div class="sHeadline">Meine Klassen und Kurse</div>
@@ -2963,6 +3093,7 @@ async function settingsSheet(tab) {
       <div class="grid2">${field('Name der Lehrkraft (für Ausdrucke)', `<input type="text" id="sT" value="${esc(s.teacher)}">`)}${field('Schule (optional)', `<input type="text" id="sS" value="${esc(s.school)}">`)}
         ${field('Schuljahr', `<input type="text" id="sY" value="${esc(s.year)}">`)}${field('Stichtag Zwischenzeugnis / Notenbild', `<input type="date" id="sH" value="${esc(s.half1End)}">`)}</div>
       <p class="hint">Name und Schule erscheinen auf deinen Ausdrucken. Der Stichtag steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO).</p>
+      <div class="setRow"><div><b>Fristen fürs Notenmachen</b><small>${dlList().length ? dlList().length + ' eingetragen – nächste: ' + (nextDeadlines(null)[0] ? esc(dlTitle(nextDeadlines(null)[0]) + ' ' + fdate(dlDue(nextDeadlines(null)[0]))) : 'keine mehr in diesem Schuljahr') : 'Zwischenbericht/Zwischenzeugnis, Halbjahr, Q12, Q13, Jahreszeugnis – je Schule verschieden'}</small></div><button type="button" class="mini" id="sDl">Fristen …</button></div>
       <div class="setHead">Beim Öffnen zeigen</div>
       <div class="seg modePick" id="sStart">${[['start', 'Übersicht'], ['grades', 'Letzter Kurs']].map(([k, l]) => `<button type="button" data-start="${k}" aria-pressed="${(ST.startTab === 'grades' ? 'grades' : 'start') === k}">${l}</button>`).join('')}</div>
       <p class="hint">Die Übersicht zeigt, wo Noten fehlen, welche Nachtermine offen sind und was als Nächstes ansteht. Gilt für dieses Gerät.</p>
@@ -2994,6 +3125,7 @@ async function settingsSheet(tab) {
     onOpen: (d, close) => {
       $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; $$('[data-stab]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); });
       d.querySelector('#licBtn').onclick = openLicenses;
+      d.querySelector('#sDl').onclick = () => { close(); deadlineSheet(); };
       d.querySelector('#abOpen').onclick = () => { close(); openAbout(); };
       d.querySelector('#sToBackup').onclick = () => { close(); UI.tab = 'backup'; render(); };
       d.querySelector('#sLockNow').onclick = () => { close(); lockNow(); };
@@ -3090,6 +3222,7 @@ function helpSheet() {
     <p><b>Reihenfolge der Namen:</b> wie auf den Klassenlisten – „von“, „Freiherr von“ usw. zählen nicht zum Sortierwort.</p>`],
   ['zeugnis', 'Zeugnis, Übertrag und Elterngespräche', 'Zeugnis und Gespräche', `
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
+    <p><b>Fristen fürs Notenmachen:</b> Unter Einstellungen → „Fristen …“ (oder in der Übersicht) trägst du ein, bis wann die Noten stehen müssen: 1. und 2. Zwischenbericht <i>oder</i> Zwischenzeugnis (das entscheidet jede Schule, § 40 Abs. 2 GSO), Klassenkonferenz zum Halbjahr, Zeugnis 12/1 und 13/1, Ende 12/2, Zulassung zum Abitur, Jahreszeugnis – jeweils mit Termin und, wenn die Schule einen festlegt, Notenschluss. Liest du die Schultermine ein (CSV aus dem Infoportal), erkennt Libretto Titel wie „Ausgabe des 1. Zwischenberichts“, „Zeugnistermin Q12“ oder „Klassenkonferenzen zum Jahreszeugnis“ und bietet sie zum Übernehmen an. Jede Frist gilt nur für die passenden Kurse (Jgst. 5–11, Q12 oder Q13): Im Kurskopf steht die nächste Frist – ein Klick zeigt alle Fristen dieses Kurses (beim W-Seminar auch Themenwahl und Abgabe der Seminararbeit); eine Woche vorher erscheint oben ein Hinweis; in der Übersicht steht sie zwei Wochen vorher unter „Zu erledigen“ – mit fehlenden Noten und offenen Nachterminen.</p>
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
     <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen.</p>`],
   ['kalender', 'Kalender, Termine und Klassen austauschen', 'Organisation', `
@@ -3300,7 +3433,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.6: Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
+const NEW_IN = 'Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();
