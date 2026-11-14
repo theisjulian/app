@@ -1,10 +1,11 @@
 'use strict';
+const T_PW = window.OVMG_MODE === 'schueler' ? 2 : 0, T_QR = window.OVMG_MODE === 'schueler' ? 3 : 1, DBN = window.OVMG_MODE === 'schueler' ? 'ovmg-mitreden' : 'ovmg-preview';
 const form = document.querySelector('form'), password = document.querySelector('#password'), keep = document.querySelector('#keep'),
   status = document.querySelector('#status'), button = form.querySelector('button'), gate = document.querySelector('#gate'),
   viewer = document.querySelector('#viewer'), frame = document.querySelector('iframe');
 let objectURL = null;
 /* „Angemeldet bleiben“: gespeichert wird nur der abgeleitete, nicht auslesbare Schlüssel (IndexedDB), nie das Passwort. */
-const idb = (mode, fn) => new Promise((res, rej) => { try { const r = indexedDB.open('ovmg-preview', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onerror = () => rej(r.error); r.onsuccess = () => { const t = r.result.transaction('k', mode), q = fn(t.objectStore('k')); t.oncomplete = () => { r.result.close(); res(q && q.result) }; t.onerror = () => rej(t.error) } } catch (e) { rej(e) } });
+const idb = (mode, fn) => new Promise((res, rej) => { try { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onerror = () => rej(r.error); r.onsuccess = () => { const t = r.result.transaction('k', mode), q = fn(t.objectStore('k')); t.oncomplete = () => { r.result.close(); res(q && q.result) }; t.onerror = () => rej(t.error) } } catch (e) { rej(e) } });
 const keySave = k => idb('readwrite', s => s.put(k, 'key')).catch(() => {});
 const keyLoad = () => idb('readonly', s => s.get('key')).catch(() => null);
 const keyDrop = () => idb('readwrite', s => s.delete('key')).catch(() => {});
@@ -36,6 +37,7 @@ async function show(bytes, key) {
   const stream = new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'));
   const html = await new Response(stream).blob();
   objectURL = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+  if (window.OVMG_MODE) frame.addEventListener('load', () => { try { frame.contentWindow.postMessage({ type: 'ovmg-mode', mode: window.OVMG_MODE }, '*'); } catch (e) { } }, { once: true });
   if (window.OVMG_ADMIN) frame.addEventListener('load', () => { try { frame.contentWindow.postMessage({ type: 'ovmg-admin' }, '*'); } catch (e) { } }, { once: true });
   frame.src = objectURL; gate.hidden = true; viewer.hidden = false; document.querySelector('#lock').focus(); status.textContent = '';
 }
@@ -43,11 +45,11 @@ form.addEventListener('submit', async e => {
   e.preventDefault(); button.disabled = true; status.textContent = 'Die Vorschau wird geöffnet …'; let secret = password.value; password.value = '';
   try {
     if (!crypto.subtle || !window.DecompressionStream) throw new Error('browser');
-    const bytes = await load(), key = await openKey(secret, bytes, 0); secret = '';
+    const bytes = await load(), key = await openKey(secret, bytes, T_PW); secret = '';
     await show(bytes, key);
     if (keep.checked) await keySave(key); else await keyDrop();
   } catch (err) {
-    status.textContent = err.message === 'password' ? 'Das Passwort ist nicht richtig. Bitte erneut versuchen.' : err.message === 'browser' ? 'Bitte die Seite über HTTPS in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.' : 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.'; password.focus();
+    status.textContent = err.message === 'password' ? (window.OVMG_MODE === 'schueler' ? 'Das Passwort stimmt nicht. Probier es noch einmal.' : 'Das Passwort ist nicht richtig. Bitte erneut versuchen.') : err.message === 'browser' ? 'Bitte die Seite über HTTPS in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.' : 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.'; password.focus();
   } finally { secret = ''; button.disabled = false }
 });
 document.querySelector('#lock').addEventListener('click', async () => {
@@ -61,9 +63,9 @@ const qrToken = (() => { const m = location.hash.match(/^#zugang=([A-Za-z0-9_-]{
     try {
       if (!crypto.subtle || !window.DecompressionStream) throw new Error('browser');
       status.textContent = 'QR-Zugang wird geprüft …'; button.disabled = true;
-      const bytes = await load(), key = await openKey(qrToken, bytes, 1);
+      const bytes = await load(), key = await openKey(qrToken, bytes, T_QR);
       await show(bytes, key); await keySave(key); return;
-    } catch (e) { status.textContent = e.message === 'password' ? 'Dieser QR-Code ist nicht mehr gültig. Bitte das Passwort verwenden.' : 'Die Vorschau konnte nicht geladen werden.'; }
+    } catch (e) { status.textContent = e.message === 'password' ? (window.OVMG_MODE === 'schueler' ? 'Dieser QR-Code ist nicht mehr gültig. Nimm das Passwort.' : 'Dieser QR-Code ist nicht mehr gültig. Bitte das Passwort verwenden.') : 'Die Vorschau konnte nicht geladen werden.'; }
     finally { button.disabled = false }
   }
   try {
