@@ -1,9 +1,9 @@
-/* theis-Website: Stil (Glas/Neon/Heft/Plakat) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
+/* theis-Website: Stil (Glas/Neon/Heft/Datenblatt/Terminal) merken, einmalige Frage, Kopfzeile, E-Mail-Links, mitlaufende Liste, Umschalter Mac/Windows, Bilder vergrößern. */
 (function(){
-  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','plakat'];
+  var KEY='theis-stil', SEEN='theis-stil-gefragt', r=document.documentElement, STILE=['normal','neon','heft','blatt','term'];
   var ME=document.currentScript&&document.currentScript.src;
   /* Farbe der Browserleiste je Stil: [hell, dunkel] */
-  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],plakat:['#1d35c8','#1d35c8']};
+  var LEISTE={normal:['#eef1f8','#0a0c15'],neon:['#f6f0ff','#0e0818'],heft:['#f7f3e8','#1d2924'],blatt:['#eef3f8','#0c2747'],term:['#0b0e0d','#0b0e0d']};
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,6 +19,7 @@
   function apply(st){
     r.setAttribute('data-style',st);
     document.querySelectorAll('.pick button').forEach(function(b){var on=b.dataset.s===st;b.setAttribute('aria-checked',on?'true':'false');b.tabIndex=on?0:-1});
+    if(st==='term')boot();
     var c=LEISTE[st];document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c[/dark/.test(m.media)?1:0]});
   }
   function choose(st,ev){if(st===current()){put(KEY,st);return}
@@ -57,8 +58,88 @@
       i.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open(i)}});
     });
   }
+
+  /* ===== Datenblatt und Terminal: Zusatzteile. Werden einmal angelegt und per CSS nur im jeweiligen Stil gezeigt ===== */
+  var ROOT=ME?ME.replace(/assets\/site\.js.*$/,''):'/';
+  var APPS=[['libretto','Libretto','Noten'],['voce','Voce','Mündliche Prüfungen'],['foliva','Foliva','Arbeitsblätter'],['aula','Aula','Gruppen, Timer, Sitzplan'],['sportwahl','Sportivo','Sportwahl Oberstufe'],['namo','’namo.','Schülerfahrten']];
+  function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+  function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function pageName(){var t=document.title.split(' · ')[0];return t.replace(/\s+[–-]\s+.*$/,'')||'theisapps'}
+  function slug(){var p=location.pathname.replace(/\/index\.html$/,'/').replace(/\.html$/,'');var m=p.match(/([^\/]+)\/?$/);return m?m[1]:'start'}
+  function extras(){
+    var main=document.querySelector('main'),foot=document.querySelector('footer');
+    if(main){var sg=slug();main.setAttribute('data-cmd',sg==='start'?'cat README.md':document.querySelector('.doc')?'less '+sg+'.txt':'man '+sg)}
+    /* Bilder: Maße und Dateiname für Bemaßung (Datenblatt) und Fenstertitel (Terminal); Abbildungsnummer */
+    var n=0;document.querySelectorAll('.pic,.app-stage,.stage,.vid').forEach(function(b){
+      var i=b.querySelector('img,video');if(!i)return;var src=(i.getAttribute('src')||i.getAttribute('poster')||'').split('?')[0].split('/').pop();
+      var w=i.getAttribute('width'),h=i.getAttribute('height');n++;
+      b.setAttribute('data-f',src||'bild');if(w&&h)b.setAttribute('data-dim',w+' × '+h);b.setAttribute('data-abb','Abb. '+(n<10?'0':'')+n);
+    });
+    /* Datenblatt: Zeichnungsrahmen mit Feldeinteilung und Schriftfeld am Seitenende */
+    var fr=el('div','bp-frame');fr.setAttribute('aria-hidden','true');
+    fr.innerHTML='<div class="bp-top">'+[1,2,3,4,5,6,7,8].map(function(x){return '<i>'+x+'</i>'}).join('')+'</div><div class="bp-side">'+'ABCDEF'.split('').map(function(x){return '<i>'+x+'</i>'}).join('')+'</div>';
+    document.body.appendChild(fr);
+    var d=new Date(document.lastModified);if(isNaN(d))d=new Date();
+    var dat=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();
+    var nr=0;for(var k=0;k<location.pathname.length;k++)nr=(nr*31+location.pathname.charCodeAt(k))%9000;
+    var tb=el('div','bp-tb');tb.setAttribute('aria-hidden','true');
+    tb.innerHTML='<div class="c1"><small>Benennung</small><b>'+esc(pageName())+'</b></div><div><small>Zeichnungs-Nr.</small><b>TA-'+(1000+nr)+'</b></div><div><small>Maßstab</small><b>1 : 1</b></div><div><small>Blatt</small><b>1 / 1</b></div><div><small>Datum</small><b>'+dat+'</b></div><div><small>Gezeichnet</small><b>theisapps</b></div><div><small>Werkstoff</small><b>HTML, CSS, etwas JS</b></div><div><small>Daten</small><b>bleiben lokal</b></div>';
+    if(foot)foot.insertBefore(tb,foot.firstChild);
+    /* Terminal: Statuszeile mit Befehlseingabe */
+    var sl=el('div','tm-status');
+    sl.innerHTML='<span class="m">NORMAL</span><span class="f">~/'+esc(slug()==='start'?'':slug())+'</span><form class="tm-cmd" role="search"><label><span>:</span><input type="text" name="c" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Befehl eingeben, zum Beispiel hilfe" placeholder="hilfe eingeben oder 1–6 drücken"></label></form><span class="p">0%</span><span class="t"></span>';
+    document.body.appendChild(sl);
+    var out=el('div','tm-out');out.setAttribute('role','status');out.setAttribute('aria-live','polite');document.body.appendChild(out);
+    var inp=sl.querySelector('input'),pct=sl.querySelector('.p'),clk=sl.querySelector('.t');
+    var tick=function(){var t=new Date();clk.textContent=('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)};tick();setInterval(tick,20000);
+    var sc=function(){var m=document.documentElement.scrollHeight-innerHeight;pct.textContent=(m>0?Math.round(scrollY/m*100):100)+'%'};addEventListener('scroll',sc,{passive:true});sc();
+    var say=function(h){out.innerHTML=h;out.classList.add('on');clearTimeout(say.t);say.t=setTimeout(function(){out.classList.remove('on')},h.length>200?14000:6000)};
+    var go=function(u){location.href=u};
+    var HELP='<b>Befehle</b><br>'+APPS.map(function(a,i){return '<kbd>'+(i+1)+'</kbd> '+a[0]}).join('  ')+'<br><kbd>ls</kbd> alle Programme · <kbd>cd ..</kbd> Startseite · <kbd>kontakt</kbd> · <kbd>datenschutz</kbd> · <kbd>impressum</kbd><br><kbd>top</kbd> nach oben · <kbd>stil glas</kbd> / neon / heft / datenblatt · <kbd>clear</kbd>';
+    var run=function(c){c=c.trim().toLowerCase().replace(/^[:\/$]\s*/,'');if(!c)return;
+      var a=c.split(/\s+/),w=a[0],arg=a[1]||'';
+      if(w==='cd'){w=arg.replace(/\/$/,'')||'..'}
+      if(w==='open'||w==='man')w=arg;
+      var app=APPS.filter(function(x){return x[0]===w||x[1].toLowerCase().replace(/[’.]/g,'')===w.replace(/[’.]/g,'')||(w==='sportivo'&&x[0]==='sportwahl')})[0];
+      if(/^[1-6]$/.test(w))app=APPS[+w-1];
+      if(app)return go(ROOT+app[0]+'/');
+      if(w==='..'||w==='~'||w==='start'||w==='home')return go(ROOT);
+      if(w==='hilfe'||w==='help'||w==='?')return say(HELP);
+      if(w==='ls'||w==='ll'||w==='dir')return say(APPS.map(function(x,i){return '<a href="'+ROOT+x[0]+'/">'+(i+1)+'  '+esc(x[1])+'</a>  <i>'+esc(x[2])+'</i>'}).join('<br>'));
+      if(w==='kontakt'||w==='mail')return go(ROOT+'#kontakt');
+      if(w==='datenschutz'||w==='impressum'||w==='lizenz')return go(ROOT+w);
+      if(w==='top'||w==='gg')return scrollTo({top:0,behavior:calm?'auto':'smooth'});
+      if(w==='clear'||w==='q'||w==='exit'){out.classList.remove('on');return}
+      if(w==='whoami')return say('Julian, Lehrer für Englisch und Italienisch, schreibt Programme für den Schulalltag.');
+      if(w==='stil'||w==='theme'){var m={glas:'normal',normal:'normal',neon:'neon',heft:'heft',schulheft:'heft',datenblatt:'blatt',blatt:'blatt',blaupause:'blatt',terminal:'term'}[arg];
+        if(m){var b=document.querySelector('.pick [data-s='+m+']');choose(m,b?{currentTarget:b}:null);return}return say('stil: glas, neon, heft, datenblatt oder terminal')}
+      if(w==='sudo')return say('Netter Versuch. Hier gibt es nichts zu verwalten – alles läuft auf Ihrem Gerät.');
+      say('Befehl nicht gefunden: '+esc(w)+' – <kbd>hilfe</kbd> zeigt alle Befehle.');
+    };
+    sl.querySelector('form').addEventListener('submit',function(e){e.preventDefault();run(inp.value);inp.value='';});
+    inp.addEventListener('keydown',function(e){if(e.key==='Escape'){inp.value='';inp.blur();out.classList.remove('on')}});
+    inp.addEventListener('focus',function(){sl.querySelector('.m').textContent='BEFEHL'});inp.addEventListener('blur',function(){sl.querySelector('.m').textContent='NORMAL'});
+    out.addEventListener('click',function(e){if(!e.target.closest('a'))out.classList.remove('on')});
+    document.addEventListener('keydown',function(e){
+      if(current()!=='term'||e.metaKey||e.ctrlKey||e.altKey)return;var t=e.target;if(t.closest&&t.closest('input,textarea,select,[contenteditable],dialog'))return;
+      if(e.key===':'||e.key==='/'){e.preventDefault();inp.focus();return}
+      if(/^[1-6]$/.test(e.key)&&innerWidth>820){go(ROOT+APPS[+e.key-1][0]+'/')}
+    });
+    boot.ready=true;if(current()==='term')boot();
+  }
+  /* Terminal: kurze Startsequenz, einmal je Sitzung (oder beim Wechsel in den Stil); Taste oder Klick überspringt */
+  function boot(){
+    if(!boot.ready||calm||document.querySelector('.tm-boot'))return;
+    try{if(sessionStorage.getItem('theis-boot'))return;sessionStorage.setItem('theis-boot','1')}catch(e){}
+    var lines=['theisapps 2026.11 – Software für den Schulalltag','Prüfe Speicher ............ nur lokal','Suche Server .............. keiner nötig','Suche Konto ............... keins nötig','Lade Programme ............ 6 gefunden','Bereit.'];
+    var b=el('div','tm-boot');b.setAttribute('aria-hidden','true');document.body.appendChild(b);
+    var i=0,end=function(){if(!b.parentNode)return;b.classList.add('out');setTimeout(function(){b.remove()},300);removeEventListener('keydown',end);removeEventListener('pointerdown',end)};
+    addEventListener('keydown',end);addEventListener('pointerdown',end);
+    (function next(){if(!b.parentNode)return;if(i>=lines.length){setTimeout(end,260);return}
+      var l=lines[i++],ok=i>1&&i<lines.length;b.insertAdjacentHTML('beforeend','<p>'+(ok?'<b>[  OK  ]</b> ':'')+esc(l)+'</p>');setTimeout(next,i===1?180:95)})();
+  }
   function ready(){
-    var g=get(KEY);if(g==='salbei'||g==='atelier'){g='plakat';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
+    var g=get(KEY);if(g==='salbei'||g==='atelier'||g==='plakat'||g==='studio'){g='normal';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
     /* Stil-Auswahl: Klick oder Pfeiltasten wie bei Optionsfeldern */
     document.querySelectorAll('.pick').forEach(function(p){
       var bs=[].slice.call(p.querySelectorAll('button'));
@@ -70,17 +151,6 @@
     var bar=document.querySelector('.bar');if(bar){var f=function(){bar.classList.toggle('on',scrollY>8)};addEventListener('scroll',f,{passive:true});f()}
     /* Leiste unten: beim Runterscrollen weg, beim Hochscrollen oder am Seitenende wieder da */
     var dk=document.querySelector('.appdock');
-    /* Plakat: Sticker „Programme“ klappt den Programm-Index auf (in den anderen Stilen per CSS ausgeblendet) */
-    if(dk){var DS={libretto:'Noten',voce:'Mündliche Prüfungen',foliva:'Arbeitsblätter',aula:'Gruppen, Timer, Sitzplan',sportwahl:'Sportwahl Oberstufe',namo:'Schülerfahrten'};
-      dk.querySelectorAll('a').forEach(function(a){var m=(a.getAttribute('href')||'').match(/([a-z]+)\/?$/);if(m&&DS[m[1]]){var em=document.createElement('em');em.textContent=DS[m[1]];a.appendChild(em)}});
-      var tg=document.createElement('button');tg.type='button';tg.className='pk-tog';tg.setAttribute('aria-expanded','false');
-      tg.innerHTML='<span class="pk-sq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Programme</b>';dk.appendChild(tg);
-      var setOpen=function(o){dk.classList.toggle('open',o);tg.setAttribute('aria-expanded',o?'true':'false');tg.querySelector('b').textContent=o?'Schließen':'Programme';if(!o)dk.classList.remove('hide')};
-      tg.addEventListener('click',function(e){e.stopPropagation();setOpen(!dk.classList.contains('open'))});
-      document.addEventListener('click',function(e){if(dk.classList.contains('open')&&!dk.contains(e.target))setOpen(false)});
-      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dk.classList.contains('open')){setOpen(false);tg.focus()}});
-      new MutationObserver(function(){if(dk.classList.contains('hide')&&dk.classList.contains('open'))dk.classList.remove('hide')}).observe(dk,{attributes:true,attributeFilter:['class']});
-    }
     if(dk){var ly=scrollY,tk=false,acc=0,ih=innerHeight;
       /* Erst nach einer bewussten Strecke umschalten (runter 40 px, hoch 90 px); Rucklern am Ende des Scrollens und Größenwechseln der Browserleiste wird nicht gefolgt */
       addEventListener('scroll',function(){if(tk)return;tk=true;requestAnimationFrame(function(){
@@ -114,6 +184,7 @@
       if(want&&seg.querySelector('[data-t='+want+']'))pick(want);
     }
     lightbox();
+    extras();
     /* Glas: Lichtreflex folgt dem Mauszeiger (nur Maus; eine Variable je Karte, kein Neuzeichnen der Seite) */
     if(matchMedia('(hover:hover) and (pointer:fine)').matches&&!calm){
       var lit=null;document.addEventListener('pointermove',function(e){var c=e.target.closest&&e.target.closest('.steps li,.grid>div,.next,.pic,.mail');if(!c){lit=null;return}
@@ -131,8 +202,8 @@
       var shown=false,show=function(){
         if(shown||get(SEEN)||scrollY<innerHeight*.9)return;shown=true;removeEventListener('scroll',show);
         var t=document.createElement('div');t.id='tip';t.setAttribute('role','dialog');t.setAttribute('aria-label','Stil der Website');
-        t.innerHTML='<p><b>Vier Stile zur Wahl</b>Glas, Neon, Schulheft oder Plakat – jederzeit oben umschaltbar.</p><div class="tip-s">'+
-          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['plakat','p','Plakat']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
+        t.innerHTML='<p><b>Fünf Stile zur Wahl</b>Glas, Neon, Schulheft, Datenblatt oder Terminal – jederzeit oben umschaltbar.</p><div class="tip-s">'+
+          [['normal','k','Glas'],['neon','n','Neon'],['heft','h','Heft'],['blatt','b','Datenblatt'],['term','t','Terminal']].map(function(x){return '<button type="button" data-s="'+x[0]+'"'+(x[0]==='normal'?' aria-pressed="true"':'')+'><i class="'+x[1]+'"></i>'+x[2]+'</button>'}).join('')+
           '</div><button type="button" class="tip-x" aria-label="Hinweis schließen"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4 4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
         t.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;put(SEEN,'1');
           if(b.dataset.s){var s=document.querySelector('.pick [data-s='+b.dataset.s+']');choose(b.dataset.s,s?{currentTarget:s}:null)}
