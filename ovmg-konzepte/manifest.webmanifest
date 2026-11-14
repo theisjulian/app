@@ -3,7 +3,7 @@
   "short_name": "OVMG Admin",
   "description": "Admin-Zentrale der Konzepte für die neue Schulwebsite",
   "lang": "de",
-  "start_url": "./?app=1",
+  "start_url": "./admin/?app=1",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
