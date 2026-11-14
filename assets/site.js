@@ -84,7 +84,6 @@
     var nr=0;for(var k=0;k<location.pathname.length;k++)nr=(nr*31+location.pathname.charCodeAt(k))%9000;
     var tb=el('div','bp-tb');tb.setAttribute('aria-hidden','true');
     tb.innerHTML='<div class="c1"><small>Benennung</small><b>'+esc(pageName())+'</b></div><div><small>Zeichnungs-Nr.</small><b>TA-'+(1000+nr)+'</b></div><div><small>Maßstab</small><b>1 : 1</b></div><div><small>Blatt</small><b>1 / 1</b></div><div><small>Datum</small><b>'+dat+'</b></div><div><small>Gezeichnet</small><b>theisapps</b></div><div><small>Werkstoff</small><b>HTML, CSS, etwas JS</b></div><div><small>Daten</small><b>bleiben lokal</b></div>';
-    tb.insertAdjacentHTML('beforeend','<div class="bp-stamp"><b>Geprüft</b><small>'+dat+'</small><small>im Unterricht</small></div>');
     if(foot)foot.insertBefore(tb,foot.firstChild);
     if('IntersectionObserver' in window){var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){tb.classList.add('in');so.disconnect()}})},{threshold:.6});so.observe(tb)}else tb.classList.add('in');
     /* Datenblatt: Fadenkreuz mit Koordinaten in Millimetern und Feld (z. B. C4), Feld im Rahmen leuchtet mit */
@@ -142,7 +141,7 @@
         var hit=APPS.filter(function(x){return (x[1]+' '+x[2]+' '+x[3]).toLowerCase().indexOf(q)>=0});
         return say(hit.length?hit.map(function(x){return '<a href="'+ROOT+x[0]+'/">'+x[0]+'</a><i>:</i> '+esc(x[2])+' <i>– passt zu „'+esc(q)+'“</i>'}).join('<br>'):'grep: kein Treffer für „'+esc(q)+'“')}
       if(w==='date'){var dt=new Date(),sj=dt.getMonth()>=7?dt.getFullYear():dt.getFullYear()-1;return say(dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · Schuljahr '+sj+'/'+String(sj+1).slice(-2))}
-      if(w==='uptime'){var n=new Date(),y=n.getMonth()>=7?n.getFullYear():n.getFullYear()-1,st=new Date(y,8,10),en=new Date(y+1,6,31),dd=Math.max(0,Math.round((n-st)/864e5)),rest=Math.max(0,Math.round((en-n)/864e5));
+      if(w==='uptime'){var n=new Date(),y=n.getMonth()>=7?n.getFullYear():n.getFullYear()-1,st=new Date(y,8,15),en=new Date(y+1,6,31),dd=Math.max(0,Math.round((n-st)/864e5)),rest=Math.max(0,Math.round((en-n)/864e5));
         return say('Schuljahr läuft seit '+dd+' Tagen · noch etwa '+rest+' Tage bis zu den Sommerferien · Last: Korrekturen hoch')}
       if(w==='fortune'){var F=['„Wer nachrechnen muss, hat keine Zeit zum Unterrichten.“','Tipp: In Libretto reicht Note, Enter, nächste Person.','Die Kaffeemaschine im Lehrerzimmer ist der wahre Server.','Noten gehören auf Ihr Gerät, nicht in eine Cloud.','Murphys Gesetz der Schule: Der Beamer streikt nur bei Besuch.','Aula bildet Gruppen schneller, als die Klasse „Ich will mit …“ sagen kann.'];return say(F[Math.floor(Math.random()*F.length)])}
       if(w==='cowsay'||w==='muh'){var tx=esc(a.slice(1).join(' ')||'Muh. Keine Cookies hier.');var ln=Math.min(tx.length,46);
