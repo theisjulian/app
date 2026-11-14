@@ -993,3 +993,29 @@ p,li,figcaption{text-wrap:pretty}
  :root[data-style=term] .tm-out .sw i:nth-child(1){background:#5af78e}:root[data-style=term] .tm-out .sw i:nth-child(2){background:#f3c969}:root[data-style=term] .tm-out .sw i:nth-child(3){background:#7cc7ff}
  :root[data-style=term] .tm-out .sw i:nth-child(4){background:#ff8ac2}:root[data-style=term] .tm-out .sw i:nth-child(5){background:#b49cff}:root[data-style=term] .tm-out .sw i:nth-child(6){background:#d6e2dc}
 }
+
+/* Libretto: „Neu in 1.0.6“ */
+.neu{margin:72px 0 24px}
+.neu-hd{margin-bottom:22px}
+.neu-tag{display:inline-block;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--app,var(--blue));margin-bottom:8px}
+.neu-hd h2{margin:0}
+.neu-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.neu-card{background:var(--tint,var(--surf));border-radius:28px;overflow:hidden;display:flex;flex-direction:column}
+.neu-card.wide{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center}
+.neu-tx{padding:28px 32px 32px}
+.neu-tx h3,.neu-card.list h3{font-size:22px;margin:0 0 10px}
+.neu-tx p{margin:0;color:var(--grey)}
+.neu-tx .ticks{margin-top:14px}
+.neu-pic{padding:28px 28px 0}
+.neu-card.wide .neu-pic{padding:32px 32px 32px 0}
+.neu-pic img{display:block;width:100%;height:auto;border-radius:12px;box-shadow:var(--shot)}
+.neu-card.wide .neu-pic img{border-radius:12px}
+.neu-card.list{display:block;padding:30px 32px}
+.neu-list{list-style:none;padding:0;margin:6px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:14px 34px}
+.neu-list li{color:var(--grey)}.neu-list b{color:var(--ink)}
+@media(max-width:820px){.neu{margin-top:48px}.neu-grid{grid-template-columns:1fr;gap:14px}.neu-card,.neu-card.wide{grid-template-columns:1fr;border-radius:22px}
+ .neu-card.wide .neu-pic{padding:0 20px 22px;order:2}.neu-pic{padding:20px 20px 0}.neu-tx{padding:22px 22px 24px}.neu-card.list{padding:24px 22px}.neu-list{grid-template-columns:1fr}}
+:root[data-style=plakat] .neu-card{border-radius:0;background:#1529a3}
+:root[data-style=plakat] .neu-pic img{border-radius:0;box-shadow:6px 6px 0 #ff4b2b}
+:root[data-style=plakat] .neu-tag{color:#ff4b2b}
+:root[data-style=plakat] .neu-tx p,:root[data-style=plakat] .neu-list li{color:rgba(245,243,238,.82)}:root[data-style=plakat] .neu-list b{color:#f5f3ee}

@@ -560,3 +560,21 @@ html:not([data-skin]) dialog::backdrop{-webkit-backdrop-filter:none;backdrop-fil
 /* Nachtermin: kleines „NT“ in der Zelle */
 td:has(> input.cell.nt){position:relative}
 td:has(> input.cell.nt)::after{content:'NT';position:absolute;top:3px;right:4px;font-size:8.5px;font-weight:700;letter-spacing:.03em;color:var(--blue);pointer-events:none}
+/* Fristen fürs Notenmachen */
+.cev.dl{background:color-mix(in srgb,var(--red) 16%,transparent);color:color-mix(in srgb,var(--red) 80%,var(--label));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 40%,transparent);cursor:pointer}
+.notice.dlNote.soon{border-color:color-mix(in srgb,var(--orange) 55%,transparent);background:color-mix(in srgb,var(--orange) 12%,var(--sheet))}
+.dlRows{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.dlRow{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(130px,.8fr) minmax(130px,.8fr) auto;gap:10px;align-items:end;padding:10px 12px;border-radius:12px;background:var(--fill)}
+.dlRow .dlName{display:flex;flex-direction:column;gap:4px;align-self:center}
+.dlRow .dlName small{color:var(--label-2);font-size:12px}
+.dlRow .field{margin:0}
+@media (max-width:720px){.dlRow{grid-template-columns:1fr 1fr}.dlRow .dlName{grid-column:1/-1}}
+.dlFound{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.dlFound .row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:var(--fill)}
+.dlFound .row span{display:flex;flex-direction:column}.dlFound small{color:var(--label-2)}
+.dlRow .dlName input,.dlRow .dlName select{font:inherit;font-size:14px;padding:7px 10px;border-radius:9px;border:1px solid var(--sep,rgba(0,0,0,.12));background:var(--sheet);color:var(--label)}
+.dlChip{font:inherit;font-size:inherit;border:0;background:color-mix(in srgb,var(--blue) 12%,transparent);color:color-mix(in srgb,var(--blue) 80%,var(--label));border-radius:999px;padding:1px 9px;cursor:pointer}
+.dlChip.soon{background:color-mix(in srgb,var(--orange) 18%,transparent);color:color-mix(in srgb,var(--orange) 75%,var(--label))}
+.dlLine.past{opacity:.5}.dlLine.next{background:color-mix(in srgb,var(--blue) 9%,transparent);border-radius:10px}
+.dlLine{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;padding:8px 10px}
+.dlLine .d{display:flex;flex-direction:column;font-weight:600}.dlLine .d small,.dlLine small{font-weight:400;color:var(--label-2);font-size:12px}
