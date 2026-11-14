@@ -659,9 +659,3 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .try .chrome{background:#0e1230;border-color:#0e1230}
 :root[data-style=plakat] .try .chrome b{background:#1d35c8;color:#f5f3ee;border-radius:0}
 @media(prefers-reduced-motion:reduce){.try .shot{transition:none}}
-
-/* Studio: eigener Aufbau aus den Inhalten der Seite (studio.js/studio.css, nur in diesem Stil geladen) */
-.pick .u,#tip .u{background:radial-gradient(circle at 30% 30%,#7d8bff 0 18%,transparent 46%),radial-gradient(circle at 75% 70%,#c86bff 0 16%,transparent 44%),#0b0c12}
-:root[data-style=studio] body{background:#f6f7f9}
-@media(prefers-color-scheme:dark){:root[data-style=studio] body{background:#08090d}}
-:root[data-style=studio] body>:not(.st){display:none!important}
