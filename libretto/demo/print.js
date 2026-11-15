@@ -79,6 +79,21 @@ const Print = (() => {
       .pb{page-break-after:always;height:0}
       .bars{margin:2px 0 6px;break-inside:avoid}
       table.kv th{width:27%;text-align:left;vertical-align:top;font-size:7.5pt;border-bottom:.5pt solid #e3e6ec;text-transform:none;letter-spacing:0} table.kv td{text-align:left;vertical-align:top;white-space:pre-wrap;background:none!important}
+      .keepT{break-inside:avoid;page-break-inside:avoid}
+      .crit{margin:0 0 10px}
+      .ci{border:.75pt solid #d5d9e0;border-radius:6px;padding:6px 10px 7px;margin:0 0 6px;break-inside:avoid;page-break-inside:avoid}
+      .cTop{display:grid;grid-template-columns:minmax(0,1fr) auto 58px;gap:14px;align-items:center}
+      .cName{min-width:0} .cName b{font-size:9.6pt;color:${INK};font-weight:700;line-height:1.25} .cName span{display:block;font-size:7.6pt;color:#3a3f4b;line-height:1.36;margin-top:1px}
+      .cName span.cW{display:inline-block;font-size:6.8pt;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#3f4552;background:#eef0f4;border-radius:3px;padding:1px 5px;margin-left:7px;vertical-align:1.5px;white-space:nowrap}
+      .cV{text-align:right;font-size:13pt;font-weight:750;color:${INK};line-height:1.05;white-space:nowrap} .cV small{display:block;font-size:7pt;font-weight:600;color:#3f4552;margin-top:2px}
+      .cScale{display:flex;gap:5px;flex-wrap:nowrap;align-items:flex-end}
+      .cG{display:flex;flex-direction:column;align-items:center;gap:1.5px} .cG i{font-style:normal;font-size:6.2pt;font-weight:700;color:#3f4552;letter-spacing:.04em;line-height:1}
+      .cG div{display:flex;gap:1.5px}
+      .cB{min-width:16px;height:15px;padding:0 3px;border:.75pt solid #aab1bd;border-radius:3px;font-size:7.2pt;font-weight:600;color:#3a3f4b;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+      .cB.on{background:${INK};border-color:${INK};color:#fff}
+      .cScale.wide{gap:4px} .cScale.wide .cB{min-width:30px;height:18px;font-size:8.6pt}
+      .cNote{margin-top:5px;padding-top:4px;border-top:.5pt dotted #c3c9d4;font-size:8.4pt;line-height:1.4;white-space:pre-wrap} .cNote em{font-style:normal;font-size:6.6pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#3f4552;margin-right:6px}
+      .cLines{margin-top:6px} .cLines div{border-bottom:.5pt solid #b9bec8;height:17px} .cLines.wr{margin:0 0 12px;break-inside:avoid} .cLines.wr div{height:22px}
       .sig{display:flex;gap:40px;margin-top:34px;break-inside:avoid} .split .sig{gap:18px;margin-top:30px} .sig div{flex:1;border-top:.75pt solid #1b1d22;padding-top:4px;font-size:7.6pt;color:#3a3f4b}`;
   /* Kopfbereich: Titel (+ kleine Zeile darüber), Untertitel, rechts Schule und Lehrkraft; darunter die Eckdaten als Marken (ohne die doppelte Lehrkraft) */
   function headHtml(mm, settings) {
@@ -99,6 +114,18 @@ const Print = (() => {
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
         : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
+  /* Bewertungsraster: je Kriterium eine Karte mit Beschreibung, Gewicht, Wert, Skala und Anmerkungen (leer: Linien zum Ausfüllen)
+     c = { scale: [{ g?:'1', v:['15','14','13'] } …] oder ['++','+','–','––'], items: [{ l, d, w, v, vs, sel, note }], lines } */
+  function critHtml(c) {
+    const grouped = c.scale.length && typeof c.scale[0] === 'object';
+    const sc = it => grouped ? `<div class="cScale">${c.scale.map(g => `<div class="cG"><i>${esc(g.g)}</i><div>${g.v.map(x => `<span class="cB ${String(it.sel) === String(x) ? 'on' : ''}">${esc(x)}</span>`).join('')}</div></div>`).join('')}</div>`
+      : `<div class="cScale wide">${c.scale.map(x => `<span class="cB ${String(it.sel) === String(x) ? 'on' : ''}">${esc(x)}</span>`).join('')}</div>`;
+    return `<div class="crit">${c.items.map(it => `<div class="ci"><div class="cTop"><div class="cName"><b>${esc(it.l)}</b>${it.w ? `<span class="cW">${esc(it.w)}</span>` : ''}${it.d ? `<span>${esc(it.d)}</span>` : ''}</div>${sc(it)}<div class="cV">${esc(it.v || '')}${it.vs ? `<small>${esc(it.vs)}</small>` : ''}</div></div>
+      ${it.note ? `<div class="cNote"><em>Anmerkungen</em>${esc(it.note)}</div>` : (c.lines ? `<div class="cNote"><em>Anmerkungen</em></div><div class="cLines">${'<div></div>'.repeat(c.lines)}</div>` : '')}</div>`).join('')}</div>`;
+  }
+  /* Unterschriftsfeld nie allein auf einer neuen Seite: mit dem Block davor zusammenhalten (auch in Spalten und Gruppen) */
+  const keepSig = list => { const out = []; list.forEach(b => { if (b.split) b = { ...b, split: b.split.map(keepSig) }; if (b.group) b = { group: keepSig(b.group) };
+    if (b.sig && out.length && !out[out.length - 1].pagebreak && !out[out.length - 1].head) out.push({ group: [out.pop(), b] }); else out.push(b); }); return out; };
   function html(m, settings) {
     const block = b => {
       if (b.h) return `<h2>${esc(b.h)}</h2>`;
@@ -112,10 +139,13 @@ const Print = (() => {
       if (b.kv) return `<table class="kv"><tbody>${b.kv.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>`;
       if (b.sig) return `<div class="sig">${b.sig.map(s => `<div>${esc(s)}</div>`).join('')}</div>`;
       if (b.table) return tableHtml(b.table);
+      if (b.crit) return critHtml(b.crit);
+      if (b.group) return `<div class="keepT">${b.group.map(block).join('')}</div>`;
+      if (b.lines) return `<div class="cLines wr">${'<div></div>'.repeat(b.lines)}</div>`;
       return '';
     };
     return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}</style></head><body>
-      ${headHtml(m, settings)}${m.blocks.map(block).join('')}</body></html>`;
+      ${headHtml(m, settings)}${keepSig(m.blocks).map(block).join('')}</body></html>`;
   }
 
   /* Fußzeile für jede PDF-Seite (Chromium-Fußzeilenvorlage) */
@@ -150,6 +180,9 @@ const Print = (() => {
     const B = { top: bd, bottom: bd, left: bd, right: bd };
     const none = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
     const NB = { top: none, bottom: none, left: none, right: none };
+    /* Linien zum Ausfüllen: eine Tabelle mit unterer Linie je Zeile (gleiche Absatzrahmen würde Word zusammenfassen) */
+    const ruled = (n, w) => new Table({ width: { size: w, type: WidthType.DXA }, columnWidths: [w], layout: TableLayoutType.FIXED, rows: Array.from({ length: n }, () => new TableRow({ cantSplit: true, height: { value: 400, rule: 'atLeast' },
+      children: [new TableCell({ borders: { ...NB, bottom: { style: BorderStyle.SINGLE, size: 4, color: 'B9BEC8' } }, width: { size: w, type: WidthType.DXA }, children: [new Paragraph({ keepNext: true, children: [t('')] })] })] })) });
     const bin = atob(window.THEIS_LOGO_PNG.split(',')[1]); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const logo = () => new ImageRun({ type: 'png', data: bytes, transformation: { width: 94, height: 22 } });
     const headBlock = mm => {
@@ -163,7 +196,7 @@ const Print = (() => {
     };
     const kids = [...headBlock(m)];
     /* split (zwei Spalten im PDF) wird in Word untereinander gesetzt */
-    const flat = list => list.flatMap(b => b.split ? b.split.flat() : [b]);
+    const flat = list => list.flatMap(b => b.split ? b.split.flat() : b.group ? b.group : [b]);
     for (const b of flat(m.blocks)) {
       if (b.stats) {   /* Kennzahlen als eine Zeile Kästchen; die erste (Durchschnitt) hervorgehoben */
         const n = b.stats.length, cw = Math.floor(W / n);
@@ -186,7 +219,37 @@ const Print = (() => {
       else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
       else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ keepNext: true, children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
-      else if (b.sig) kids.push(p(t(''), { after: 500 }), p(b.sig.map((s, i) => t((i ? '                              ' : '') + '______________________________')), {}), p(b.sig.map((s, i) => t((i ? '                                                       ' : '') + s, { size: 15, color: '555555' }))));
+      else if (b.sig) {   /* Unterschriftsfelder: Linie und Beschriftung in einer Tabellenzeile – nie getrennt */
+        const n = b.sig.length, gapW = 700, cw = Math.floor((W - gapW * (n - 1)) / n), line = { style: BorderStyle.SINGLE, size: 6, color: '1B1D22' };
+        const cells = []; b.sig.forEach((sg, i) => { if (i) cells.push(new TableCell({ borders: NB, width: { size: gapW, type: WidthType.DXA }, children: [p(t(''), { after: 0 })] }));
+          cells.push(new TableCell({ borders: { ...NB, top: line }, width: { size: cw, type: WidthType.DXA }, margins: { top: 50, left: 0, right: 0 }, children: [p(t(sg, { size: 15, color: '3A3F4B' }), { after: 0 })] })); });
+        kids.push(new Paragraph({ spacing: { before: 0, after: 0, line: 620 }, keepNext: true, children: [new TextRun({ text: '', size: 8 })] }));
+        kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: cells.map((_, i) => i % 2 ? gapW : cw), layout: TableLayoutType.FIXED, rows: [new TableRow({ cantSplit: true, children: cells })] }));
+      }
+      else if (b.lines) { kids.push(ruled(b.lines, W)); kids.push(p(t(''), { after: 120 })); }
+      else if (b.crit) {   /* Bewertungsraster: je Kriterium ein zusammenhängender Kasten, nie über einen Seitenumbruch getrennt */
+        const c = b.crit, grouped = c.scale.length && typeof c.scale[0] === 'object';
+        const w1 = Math.round(W * 0.66), w2 = Math.round(W * 0.14), w3 = W - w1 - w2;
+        const kb = { style: BorderStyle.SINGLE, size: 6, color: 'D5D9E0' };
+        const box = (x, on) => new TextRun({ text: ` ${x} `, font: FONT, size: 16, bold: on, color: on ? 'FFFFFF' : '3A3F4B', shading: on ? { type: ShadingType.CLEAR, color: 'auto', fill: '1D2B4F' } : { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } });
+        const gap = s2 => new TextRun({ text: s2, font: FONT, size: 16 });
+        c.items.forEach((it, ii) => {
+          const scaleRuns = grouped ? c.scale.flatMap((g, gi) => [gap(gi ? '   ' : ''), new TextRun({ text: 'Note ' + g.g + ' ', font: FONT, size: 13, bold: true, color: '1D2B4F' }), ...g.v.flatMap((x, xi) => [gap(xi ? ' ' : ''), box(x, String(it.sel) === String(x))])])
+            : c.scale.flatMap((x, xi) => [gap(xi ? '    ' : ''), box(x, String(it.sel) === String(x))]);
+          const cell = (children, w, span, o = {}) => new TableCell({ borders: { top: o.top ? kb : NB.top, bottom: o.bottom ? kb : NB.bottom, left: o.left ? kb : NB.left, right: o.right ? kb : NB.right }, width: { size: w, type: WidthType.DXA }, columnSpan: span, verticalAlign: VerticalAlign.TOP, margins: { top: o.mt ?? 60, bottom: o.mb ?? 30, left: 140, right: 140 }, children });
+          const last = !(it.note || c.lines);
+          const rows = [
+            new TableRow({ cantSplit: true, children: [
+              cell([p(t(it.l, { size: 20, bold: true, color: '1D2B4F' }), { after: 10, keepNext: true }), ...(it.d ? [p(t(it.d, { size: 15, color: '3A3F4B' }), { after: 0, keepNext: true })] : [])], w1, 1, { top: 1, left: 1, mt: 90 }),
+              cell([p(t(it.w ? String(it.w).toUpperCase() : '', { size: 13, bold: true, color: '3F4552' }), { after: 0, keepNext: true })], w2, 1, { top: 1, mt: 100 }),
+              cell([p(t(it.v || '', { size: 28, bold: true, color: '1D2B4F' }), { align: AlignmentType.RIGHT, after: 0, keepNext: true }), ...(it.vs ? [p(t(it.vs, { size: 14, color: '3F4552' }), { align: AlignmentType.RIGHT, after: 0, keepNext: true })] : [])], w3, 1, { top: 1, right: 1, mt: 80 })] }),
+            new TableRow({ cantSplit: true, children: [cell([p(scaleRuns, { after: 0, keepNext: !last })], W, 3, { left: 1, right: 1, bottom: last, mt: 70, mb: last ? 100 : 40 })] })];
+          if (!last) rows.push(new TableRow({ cantSplit: true, children: [cell([p([new TextRun({ text: 'ANMERKUNGEN  ', font: FONT, size: 13, bold: true, color: '3F4552' }), ...lines(it.note || '', { size: 17 })], { after: 0, keepNext: !!(!it.note && c.lines) }),
+            ...(!it.note && c.lines ? [ruled(c.lines, W - 280), p(t(''), { after: 0 })] : [])], W, 3, { left: 1, right: 1, bottom: 1, mt: 60, mb: 110 })] }));
+          kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [w1, w2, w3], layout: TableLayoutType.FIXED, rows }));
+          kids.push(new Paragraph({ spacing: { before: 0, after: 0, line: ii === c.items.length - 1 ? 200 : 110 }, children: [new TextRun({ text: '', size: 8 })] }));
+        });
+      }
       else if (b.table) {
         const tb = b.table, n = tb.head.length;
         const nameW = tb.align && tb.align[0] === 'l' ? Math.min(3200, Math.round(W * 0.3)) : Math.round(W / n);
@@ -230,8 +293,8 @@ const Print = (() => {
   function csv(m) {
     const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const lines = [];
-    const all = m.blocks.flatMap(b => b.split ? b.split.flat() : [b]);
-    all.forEach(b => { if (b.h) lines.push(q(b.h)); if (b.stats) { b.stats.forEach(x => lines.push([q(x.l), q(x.v), q(x.s || '')].join(';'))); lines.push(''); } if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : (Array.isArray(r) ? r : r.cells).map(q).join(';'))); lines.push(''); } });
+    const all = m.blocks.flatMap(b => b.split ? b.split.flat() : b.group ? b.group : [b]);
+    all.forEach(b => { if (b.crit) { b.crit.items.forEach(it => lines.push([q(it.l), q(it.w || ''), q(it.v || ''), q(it.sel ?? ''), q(it.note || '')].join(';'))); lines.push(''); } if (b.h) lines.push(q(b.h)); if (b.stats) { b.stats.forEach(x => lines.push([q(x.l), q(x.v), q(x.s || '')].join(';'))); lines.push(''); } if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : (Array.isArray(r) ? r : r.cells).map(q).join(';'))); lines.push(''); } });
     return new TextEncoder().encode('﻿' + lines.join('\r\n'));
   }
   return { html, footer, docx, csv, DISCLAIMER, barsSvg };

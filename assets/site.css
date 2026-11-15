@@ -1019,3 +1019,21 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-style=plakat] .neu-pic img{border-radius:0;box-shadow:6px 6px 0 #ff4b2b}
 :root[data-style=plakat] .neu-tag{color:#ff4b2b}
 :root[data-style=plakat] .neu-tx p,:root[data-style=plakat] .neu-list li{color:rgba(245,243,238,.82)}:root[data-style=plakat] .neu-list b{color:#f5f3ee}
+
+/* Libretto: W-Seminar-Karte im Abschnitt „Neu“ */
+.neu-pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--app,var(--blue));color:#fff;margin-bottom:12px}
+.neu-card.ws{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start}
+.neu-card.ws .neu-tx{padding:36px 32px 28px}
+.neu-card.ws h3{font-size:26px;line-height:1.2}
+.ws-main{padding:32px 32px 0 0}
+.ws-main img{display:block;width:100%;max-width:400px;height:auto;margin-left:auto;border-radius:6px;box-shadow:var(--shot)}
+.ws-strip{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:24px 32px 32px}
+.ws-strip figure{margin:0}
+.ws-strip img{display:block;width:100%;height:auto;aspect-ratio:1440/1000;object-fit:cover;object-position:left top;border-radius:10px;box-shadow:var(--shot)}
+.ws-strip img.top{object-position:center top}
+.ws-strip figcaption{font-size:13px;color:var(--grey);margin-top:8px}
+@media(max-width:820px){.neu-card.ws{grid-template-columns:1fr}.neu-card.ws .neu-tx{padding:24px 22px 8px}.neu-card.ws h3{font-size:22px}
+ .ws-main{padding:12px 20px 0}.ws-main img{margin:0 auto;max-width:340px}.ws-strip{grid-template-columns:1fr 1fr;padding:20px 20px 22px;gap:12px}}
+:root[data-style=plakat] .neu-pill{background:#ff4b2b;border-radius:0}
+:root[data-style=plakat] .ws-main img,:root[data-style=plakat] .ws-strip img{border-radius:0;box-shadow:6px 6px 0 #ff4b2b}
+:root[data-style=plakat] .ws-strip figcaption{color:rgba(245,243,238,.82)}
