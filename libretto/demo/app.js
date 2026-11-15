@@ -603,7 +603,7 @@ function upperOverview(c) {
   const terms = R.termsOf(c);
   const sem = c.seminar;
   const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="gSum sep" colspan="${terms.length}">Halbjahresleistungen (Punkte)</th>${sem ? '<th class="gBig sep" colspan="3">Seminararbeit (§ 29 GSO)</th>' : ''}</tr>
-    <tr class="cols">${terms.map((t, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 14px">${t}</th>`).join('')}${sem ? '<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Präsentation/<br>Prüfungsgespräch</th><th style="padding:6px 10px">Gesamt (max. 30)</th>' : ''}</tr></thead>`;
+    <tr class="cols">${terms.map((t, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 14px">${t}</th>`).join('')}${sem ? '<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Prüfungs-<br>gespräch</th><th style="padding:6px 10px">Gesamt (max. 30)</th>' : ''}</tr></thead>`;
   let nr = 0;
   const rows = groupsOf(c).map(g => clsRow(g, terms.length + (sem ? 3 : 0)) + g.students.map(s => {
     const sp = c.seminarPaper[s.id] || {};
@@ -714,6 +714,7 @@ function bindGrid(c) {
   const ec = work.querySelector('[data-entcfg]'); if (ec) ec.onclick = () => entryCfgSheet(c);
   work.addEventListener('click', e => { const b = e.target.closest('[data-semcard]'); if (b) semCard(c, c.students.find(s => s.id === b.dataset.semcard)); });
   const sc = work.querySelector('[data-semcfg]'); if (sc) sc.onclick = () => courseSheet(c);
+  const spg = work.querySelector('[data-sempg]'); if (spg) spg.onclick = () => semPgSheet(c);
 }
 
 /* Allgemeine Aktionen */
@@ -2018,7 +2019,7 @@ const semToday = () => todayISO();
 const semStatusOf = (c, sid) => R.semStatus(c, sid, semToday(), semMid());
 const isFreeDay = iso => { const [y, m] = iso.split('-'); return !!Cal.freeDays(+y, +m - 1)[iso]; };
 const semDeadlineSuggest = start => R.secondSchoolDayNov(+start + 1, isFreeDay);
-const SEM_KINDS = [['beratung', 'Beratungsgespräch'], ['zwischen', 'Zwischenstand / Zwischenpräsentation'], ['kurz', 'Kurze Rücksprache'], ['pruefung', 'Präsentation mit Prüfungsgespräch'], ['sonst', 'Sonstiges']];
+const SEM_KINDS = [['beratung', 'Beratungsgespräch'], ['zwischen', 'Zwischenstand / Zwischenpräsentation'], ['kurz', 'Kurze Rücksprache'], ['pruefung', 'Prüfungsgespräch'], ['sonst', 'Sonstiges']];
 const semKind = k => (SEM_KINDS.find(x => x[0] === k) || SEM_KINDS[4])[1];
 const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -2070,7 +2071,7 @@ function semView(c) {
       <div class="semCnt"><b>${nThema}<i>/${n}</i></b><small>Themen</small></div>
       <div class="semCnt"><b>${nAbg}<i>/${n}</i></b><small>abgegeben</small></div>
       <div class="semCnt"><b>${nBew}<i>/${n}</i></b><small>bewertet</small></div>
-      <button class="mini" data-semcfg="1" title="Abgabetermin, Themenfrist, Rahmenthema">Fristen …</button></div>`;
+      <div class="semBtns"><button class="mini" data-semcfg="1" title="Abgabetermin, Themenfrist, Rahmenthema">Fristen …</button><button class="mini" data-sempg="1" title="Tag und Uhrzeit je Person, Terminliste drucken">Prüfungsgespräche …</button></div></div>`;
   const terms = ['12/1', '12/2', '13/1'];
   const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="sep" rowspan="2" style="text-align:left;padding-left:12px">Thema</th><th class="gSmall sep" colspan="3">Betreuungstermine</th><th class="sep" rowspan="2">Abgabe</th><th class="gBig sep" colspan="3">Bewertung (§ 29 Abs. 6 GSO)</th><th class="sep" rowspan="2">Hinweise</th></tr>
     <tr class="cols">${terms.map((x, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 10px">${x}</th>`).join('')}<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Prüfungs-<br>gespräch</th><th style="padding:6px 10px">Gesamt<br><small>max. 30</small></th></tr></thead>`;
@@ -2119,6 +2120,9 @@ function bindAtt(box, get, set, onRemove) {
   mark();
 }
 
+const bwState = (c, s, kind) => { const b = semGet(c, s.id)[kind === 'P' ? 'bwP' : 'bwA']; const K = kind === 'P' ? kritP(c) : kritA(c);
+  const n = b ? K.filter(x => (b.p && b.p[x.k] != null && b.p[x.k] !== '') || (b.e && b.e[x.k])).length : 0;
+  return n ? `${n} von ${K.length} ${kind === 'P' ? 'Kompetenzen' : 'Bereichen'} bewertet` : `${K.length} ${kind === 'P' ? 'Kompetenzen nach ISB' : 'Bereiche nach ISB (Anlage 5a)'} – noch leer`; };
 /* ---------- Betreuungskarte (je Schüler) – speichert jede Änderung sofort ---------- */
 function semCard(c, s) {
   const cf = semCfg(c);
@@ -2136,21 +2140,25 @@ function semCard(c, s) {
   const body = `<div class="stuSum" id="smStats">${stats()}</div><div class="notices" id="smFlags">${flags()}</div>
     <div class="subhead">Thema</div>
     ${field('Thema der Seminararbeit', `<textarea id="smThema" rows="2" placeholder="Arbeitstitel – endgültig bis Ende 12/1 (§ 24 Abs. 1 GSO)">${esc(v.thema || '')}</textarea>`)}
+    <div class="grid3">${field('Kurztitel fürs Abiturzeugnis (falls nötig)', `<input type="text" id="smKurz" value="${esc(v.kurz || '')}" placeholder="begrenzte Zeichenzahl – laut Schule">`, 'span2')}<div class="field"><span>Zeichen</span><div class="semSum" id="smKurzN" style="font-size:20px">${(v.kurz || '').length}</div></div></div>
     <div class="grid3">${field('Thema festgelegt am', `<input type="date" id="smThemaAm" value="${esc(v.themaAm || '')}">`)}<div class="span2 hint" style="align-self:end;margin-bottom:12px">${esc(lh || 'Das Thema wählt die Schülerin bzw. der Schüler bis Ende 12/1 im Einvernehmen mit der Kursleitung (§ 24 Abs. 1 GSO).')}</div></div>
     <div class="subhead">Betreuungstermine <button type="button" class="mini accent" id="smTmAdd" style="float:right">+ Termin</button></div>
     <div class="tmList" id="smTm">${terminList()}</div>
+    <label class="check"><input type="checkbox" id="smExp" ${v.expose ? 'checked' : ''}> <span>Exposé bzw. Gliederungsentwurf besprochen (Meilenstein 12/2)</span></label>
     <div class="subhead">Abgabe</div>
     <div class="grid3">${field('Abgegeben am', `<input type="date" id="smAbg" value="${esc(v.abgabe || '')}">`)}${field('Uhrzeit (optional)', `<input type="time" id="smAbgZ" value="${esc(v.abgabeZeit || '')}">`)}
       <label class="check" style="margin-top:22px"><input type="checkbox" id="smErkl" ${v.erkl ? 'checked' : ''}> <span>Erklärung zur selbstständigen Anfertigung liegt vor</span></label></div>
+    <label class="check"><input type="checkbox" id="smKi" ${v.kiDoc ? 'checked' : ''}> <span>Dokumentation der KI-Nutzung abgegeben</span></label>
     <div class="grid3">${field('Frist verlängert bis', `<input type="date" id="smVerl" value="${esc(v.verl || '')}">`)}${field('Grund (Entscheidung der Schule)', `<input type="text" id="smVerlG" value="${esc(v.verlGrund || '')}" placeholder="z. B. längere Erkrankung">`, 'span2')}</div>
     <label class="check"><input type="checkbox" id="smWett" ${v.wett ? 'checked' : ''}> <span>Ersetzt durch einen gleichwertigen Wettbewerbsbeitrag (§ 24 GSO)</span></label>
     <div id="smWettBox" ${v.wett ? '' : 'hidden'}>${field('Wettbewerb / Beitrag', `<input type="text" id="smWettT" value="${esc(v.wettText || '')}">`)}</div>
     <div class="field"><span>Dateien der Arbeit (z. B. abgegebene Seminararbeit als PDF)</span><div id="smFiles">${attBoxHTML(v.files, 'Dateien')}</div></div>
     <div class="subhead">Bewertung</div>
-    <div class="grid3">${field('Seminararbeit (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smA" value="${esc(p0.arbeit ?? '')}" maxlength="2">`)}${field('Präsentation mit Prüfungsgespräch (0–15)', `<input type="text" inputmode="numeric" id="smP" value="${esc(p0.gespraech ?? '')}" maxlength="2">`)}
+    <div class="grid3">${field('Seminararbeit (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smA" value="${esc(p0.arbeit ?? '')}" maxlength="2">`)}${field('Prüfungsgespräch (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smP" value="${esc(p0.gespraech ?? '')}" maxlength="2">`)}
       <div class="field"><span>Gesamtleistung (max. 30)</span><div class="semSum" id="smG">${R.seminarPaper(p0.arbeit, p0.gespraech) ?? '–'}</div></div></div>
-    <div class="grid3">${field('Prüfungsgespräch am', `<input type="date" id="smPgAm" value="${esc(v.pgAm || '')}">`)}${field('Bemerkung zur Bewertung (nur für dich)', `<input type="text" id="smBem" value="${esc(v.bem || '')}">`, 'span2')}</div>
-    <p class="hint">§ 29 Abs. 6 GSO: Die Punkte der Arbeit zählen doppelt, dazu die Punkte von Präsentation und Prüfungsgespräch; die Summe wird mit 2/3 multipliziert und gerundet. Für die Zulassung zur Abiturprüfung sind mindestens 9 Punkte nötig, und weder Arbeit noch Prüfungsgespräch dürfen mit 0 Punkten bewertet sein (§ 44 GSO). ${lh ? esc(lh) : ''}</p>
+    <div class="bwBtns"><button type="button" class="bwBtn" id="smBwA"><b>Bewertungsbogen Seminararbeit</b><small id="smBwAS">${bwState(c, s, 'A')}</small></button><button type="button" class="bwBtn" id="smBwP"><b>Bewertungsbogen Prüfungsgespräch</b><small id="smBwPS">${bwState(c, s, 'P')}</small></button></div>
+    <div class="grid3">${field('Prüfungsgespräch am', `<input type="date" id="smPgAm" value="${esc(v.pgAm || '')}">`)}${field('Uhrzeit', `<input type="time" id="smPgZ" value="${esc(v.pgZeit || '')}">`)}${field('Bemerkung zur Bewertung (nur für dich)', `<input type="text" id="smBem" value="${esc(v.bem || '')}">`)}</div>
+    <p class="hint">§ 29 Abs. 6 GSO: Die Punkte der Arbeit zählen doppelt, dazu die Punkte des Prüfungsgesprächs (§ 24 Abs. 2 GSO, höchstens 25 Minuten, auf Wunsch der Lehrkraft mit freiem Kurzvortrag); die Summe wird mit 2/3 multipliziert und gerundet. Für die Zulassung zur Abiturprüfung sind mindestens 9 Punkte nötig, und weder Arbeit noch Prüfungsgespräch dürfen mit 0 Punkten bewertet sein (§ 44 GSO). ${lh ? esc(lh) : ''}</p>
     ${field('Notizen (nur für dich)', `<textarea id="smNote" rows="2">${esc(c.notes[s.id] || '')}</textarea>`)}
     <div class="panelBtns"><button type="button" class="mini" id="smDocPdf">Betreuungsdokumentation (PDF)</button><button type="button" class="mini" id="smDocWord">als Word</button><button type="button" class="mini" id="smGrades">Noten 12/1 und 12/2 …</button></div>
     <p class="hint">Alles wird sofort gespeichert. Libretto dokumentiert nur – über Zulassung, Fristverlängerung und Folgen entscheidet die Schule.</p>`;
@@ -2159,10 +2167,17 @@ function semCard(c, s) {
   const q = id => dlg.querySelector(id);
   const refresh = () => { q('#smStats').innerHTML = stats(); q('#smFlags').innerHTML = flags(); };
   const put = (k, val) => { if (READONLY) return; const o = st(); if (val === '' || val === false || val == null) delete o[k]; else o[k] = val; save(); refresh(); };
-  [['#smThema', 'thema'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
+  [['#smThema', 'thema'], ['#smKurz', 'kurz'], ['#smPgZ', 'pgZeit'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
     .forEach(([sel, k]) => { const el = q(sel); el.addEventListener('change', () => put(k, el.value.trim())); });
   q('#smThema').addEventListener('input', () => { if (!READONLY) { const o = st(); const x = q('#smThema').value.trim(); if (x) o.thema = x; else delete o.thema; save(); } });
   q('#smErkl').onchange = () => put('erkl', q('#smErkl').checked);
+  q('#smKi').onchange = () => put('kiDoc', q('#smKi').checked);
+  q('#smExp').onchange = () => put('expose', q('#smExp').checked);
+  q('#smKurz').addEventListener('input', () => { q('#smKurzN').textContent = q('#smKurz').value.trim().length; });
+  const bwDone = () => { const x = c.seminarPaper[s.id] || {}; q('#smA').value = x.arbeit ?? ''; q('#smP').value = x.gespraech ?? ''; q('#smG').textContent = R.seminarPaper(x.arbeit, x.gespraech) ?? '–';
+    const y = semGet(c, s.id); q('#smPgAm').value = y.pgAm || ''; q('#smPgZ').value = y.pgZeit || ''; q('#smBwAS').textContent = bwState(c, s, 'A'); q('#smBwPS').textContent = bwState(c, s, 'P'); refresh(); };
+  q('#smBwA').onclick = () => semBwSheet(c, s, 'A', bwDone);
+  q('#smBwP').onclick = () => semBwSheet(c, s, 'P', bwDone);
   q('#smWett').onchange = () => { put('wett', q('#smWett').checked); q('#smWettBox').hidden = !q('#smWett').checked; };
   q('#smNote').addEventListener('change', () => { if (READONLY) return; const x = q('#smNote').value.trim(); if (x) c.notes[s.id] = x; else delete c.notes[s.id]; save(); });
   const pts = (sel, k) => { const el = q(sel); el.addEventListener('change', () => {
@@ -2181,6 +2196,172 @@ function semCard(c, s) {
   if (!(v.thema || '').trim()) q('#smThema').focus();
 }
 
+/* ---------- W-Seminar: Bewertungsbögen (ISB-Material 2026, an die Schule anpassbar) ---------- */
+const KRIT_P = [
+  { k: 'fach', l: 'Fachkompetenz', d: 'Inhalte korrekt, differenziert und fachlich fundiert darstellen', f: 1 },
+  { k: 'arg', l: 'Argumentationskompetenz', d: 'schlüssig, strukturiert und überzeugend argumentieren', f: 1 },
+  { k: 'meth', l: 'Methoden- und Wissenschaftskompetenz', d: 'geeignete wissenschaftliche Methoden anwenden und begründen', f: 1 },
+  { k: 'dar', l: 'Darstellungskompetenz', d: 'Inhalte klar strukturiert und sprachlich präzise präsentieren', f: 1 },
+  { k: 'refl', l: 'Reflexions- und Transferkompetenz', d: 'Wissen und Erkenntnisse kritisch hinterfragen, bewerten und auf neue Problemstellungen übertragen', f: 1 }];
+const KRIT_A = [
+  { k: 'form', l: 'Form', d: 'formale Vorgaben, übersichtliche Gestaltung, Kriterien einer wissenschaftlichen Arbeit (Seitenzählung, Schriftsatz …)', w: 10 },
+  { k: 'spr', l: 'Sprache', d: 'orthografisch, sprachlich und stilistisch korrekt; gut lesbarer, sachlicher Stil; Fach- und Fremdwörter richtig verwendet', w: 20 },
+  { k: 'meth', l: 'Methode', d: 'Behauptungen belegt und begründet, überzeugende Untersuchungsstrategie, fachspezifische Methoden korrekt, maßgebliche Quellen ausgewertet und korrekt angegeben', w: 30 },
+  { k: 'inh', l: 'Inhalt', d: 'klare Frage- bzw. Problemstellung, schlüssiger Aufbau, fundierte Ergebnisse, eigenständige Leistung und Bezug zum Rahmenthema', w: 40 }];
+const EINSCH = ['++', '+', '–', '––'];
+const kritP = c => (semCfg(c).kritP && semCfg(c).kritP.length ? semCfg(c).kritP : KRIT_P);
+const kritA = c => (semCfg(c).kritA && semCfg(c).kritA.length ? semCfg(c).kritA : KRIT_A);
+const rnd = x => Math.floor(x + 0.5 + 1e-9);
+const noteOf = n => (R.POINT_LABEL ? R.POINT_LABEL(+n).replace('-', '–') : String(R.POINT_GRADE(+n)));
+const ptsLabel = v => v === '' || v == null ? '' : `${v} P.`;
+const ptsNote = v => v === '' || v == null ? '' : ['ungenügend', 'mangelhaft', 'ausreichend', 'befriedigend', 'gut', 'sehr gut'][Math.min(5, Math.floor((+v + 2) / 3))];
+/* Vorschläge: gewichteter Durchschnitt der Teilpunkte, gerundet – nur, wenn alle Kriterien bewertet sind */
+function bwPVorschlag(c, b) { const K = kritP(c); if (!b || !K.every(x => b.p && b.p[x.k] !== '' && b.p[x.k] != null)) return null; const sf = K.reduce((a, x) => a + (+x.f || 1), 0); return rnd(K.reduce((a, x) => a + (+b.p[x.k]) * (+x.f || 1), 0) / sf); }
+function bwAVorschlag(c, b) { const K = kritA(c); if (!b || !K.every(x => b.p && b.p[x.k] !== '' && b.p[x.k] != null)) return null; const sw = K.reduce((a, x) => a + (+x.w || 0), 0) || 1; return rnd(K.reduce((a, x) => a + (+b.p[x.k]) * (+x.w || 0), 0) / sw); }
+const PSCALE = [{ g: '1', v: ['15', '14', '13'] }, { g: '2', v: ['12', '11', '10'] }, { g: '3', v: ['9', '8', '7'] }, { g: '4', v: ['6', '5', '4'] }, { g: '5', v: ['3', '2', '1'] }, { g: '6', v: ['0'] }];
+const ptsSelect = (attr, v) => `<select ${attr}><option value="">–</option>${Array.from({ length: 16 }, (_, i) => 15 - i).map(n => `<option value="${n}" ${String(v) === String(n) ? 'selected' : ''}>${n} P. · Note ${noteOf(n)}</option>`).join('')}</select>`;
+
+function modelSemBwP(c, s, blank) {
+  const st = blank ? {} : semGet(c, s.id), b = blank ? {} : (st.bwP || {}), sp = blank ? {} : (c.seminarPaper[s.id] || {}), v = bwPVorschlag(c, b);
+  const zeit = st.pgZeit ? st.pgZeit + (st.pgBis ? '–' + st.pgBis : '') + ' Uhr' : '';
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Bewertung des Prüfungsgesprächs', subtitle: blank ? 'Bewertungsbogen' : s.name, file: fileSafe(`${st.pgAm || todayISO()} Bewertung Prüfungsgespräch ${blank ? 'Vorlage' : s.name} ${c.name}`), meta: semMeta(c),
+    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ['Datum, Uhrzeit', [st.pgAm ? wdate(st.pgAm) : '', zeit].filter(Boolean).join(', ')], ['Form', blank ? '☐ mit freiem Kurzvortrag (höchstens 5 Minuten)     ☐ nur Prüfungsgespräch' : b.vortrag ? 'freier Kurzvortrag (höchstens 5 Minuten) und Prüfungsgespräch' : 'Prüfungsgespräch']] },
+      { h: 'Bewertung nach Kompetenzen' },
+      { crit: { scale: PSCALE, lines: blank ? 2 : 0, items: kritP(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.d, w: (+x.f || 1) !== 1 ? 'Faktor ' + String(x.f).replace('.', ',') : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: pv, note: (b.n || {})[x.k] || '' }; }) } },
+      { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Kompetenzen', v: v + ' P.', s: 'gewichteter Durchschnitt, gerundet' }] : []), { l: 'Prüfungsgespräch', v: sp.gespraech === '' || sp.gespraech == null ? (blank ? '____ Punkte' : '–') : sp.gespraech + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
+      { note: 'Prüfungsgespräch nach § 24 Abs. 2 GSO, höchstens 25 Minuten (KMS vom 02.02.2026). Kompetenzen nach dem Bewertungsbogen des ISB, von der Schule anpassbar. Die Punkte je Kompetenz sind eine Ersteinschätzung; die Bewertung setzt die Lehrkraft fest.' },
+      { sig: ['Datum, Unterschrift Kursleitung'] }] }] };
+}
+function modelSemBwA(c, s, blank) {
+  const st = blank ? {} : semGet(c, s.id), b = blank ? {} : (st.bwA || {}), sp = blank ? {} : (c.seminarPaper[s.id] || {}), v = bwAVorschlag(c, b), cf = semCfg(c);
+  const due = st.verl || cf.deadline, inTime = st.abgabe ? (due ? st.abgabe <= due : null) : null;
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Bewertung der Seminararbeit', subtitle: blank ? 'Bewertungsbogen' : s.name, file: fileSafe(`${todayISO()} Bewertung Seminararbeit ${blank ? 'Vorlage' : s.name} ${c.name}`), meta: semMeta(c),
+    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ...(st.kurz || blank ? [['Kurztitel (Abiturzeugnis)', blank ? ' ' : st.kurz]] : []),
+        ['Abgabe', blank ? ' ' : st.abgabe ? `${wdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}${inTime === true ? ' – termingerecht' : inTime === false ? ' – nach der Frist' : ''}` : 'noch nicht abgegeben'],
+        ['Selbstständig verfasst', blank ? '☐ ja – nur mithilfe der angegebenen Quellen     ☐ nein' : b.selbst ? 'ja' + (st.erkl ? ' (Erklärung liegt vor)' : '') : st.erkl ? 'Erklärung liegt vor' : '–'],
+        ...(st.kiDoc ? [['Dokumentation der KI-Nutzung', 'abgegeben']] : [])] },
+      { h: 'Bewertung nach Bereichen' },
+      { crit: { scale: EINSCH, lines: blank ? 2 : 0, items: kritA(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.d, w: x.w ? x.w + ' %' : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: (b.e || {})[x.k], note: (b.n || {})[x.k] || '' }; }) } },
+      { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Bereichen', v: v + ' P.', s: 'nach Gewichtung, gerundet' }] : []), { l: 'Seminararbeit', v: sp.arbeit === '' || sp.arbeit == null ? (blank ? '____ Punkte' : '–') : sp.arbeit + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
+      { note: 'Bereiche und Gewichtung nach dem ISB-Bewertungsbogen (Anlage 5a), von der Schule anpassbar. ++ voll · + überwiegend · – teilweise · –– nicht erfüllt. Termingerechte Abgabe ist Zulassungsvoraussetzung (§ 44 Abs. 2 GSO); Gesamtleistung (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO).' },
+      { sig: ['Datum, Unterschrift Kursleitung'] }] }] };
+}
+/* Mehrere Bögen in einer Datei (je Person eine neue Seite mit eigenem Kopf) */
+function modelMany(c, mk, title, file) {
+  const list = c.students; if (!list.length) return mk(c, { id: '', name: '' }, true);
+  const first = mk(c, list[0]);
+  list.slice(1).forEach(s => { const m = mk(c, s); first.blocks.push({ pagebreak: true }, { head: { eyebrow: m.eyebrow, title: m.title, subtitle: m.subtitle, meta: m.meta } }, ...m.blocks); });
+  first.file = fileName(file, c); return first;
+}
+const modelSemBwAAll = c => modelMany(c, modelSemBwA, 'Bewertung der Seminararbeit', 'Bewertungsbögen Seminararbeit');
+const modelSemBwPAll = c => modelMany(c, modelSemBwP, 'Bewertung des Prüfungsgesprächs', 'Bewertungsbögen Prüfungsgespräch');
+
+/* Bewertungsbogen bearbeiten (kind 'A' = Arbeit, 'P' = Prüfungsgespräch) – speichert sofort */
+function semBwSheet(c, s, kind, done) {
+  const isP = kind === 'P', key = isP ? 'bwP' : 'bwA', spk = isP ? 'gespraech' : 'arbeit';
+  const b0 = () => { const o = semSt(c, s.id); o[key] = o[key] || { p: {}, n: {}, e: {} }; ['p', 'n', 'e'].forEach(k => o[key][k] = o[key][k] || {}); return o[key]; };
+  const v0 = semGet(c, s.id)[key] || {}, st0 = semGet(c, s.id), sp0 = c.seminarPaper[s.id] || {};
+  const K = isP ? kritP(c) : kritA(c);
+  const row = x => `<div class="bwRow" data-k="${esc(x.k)}">
+      <div class="bwHead"><div><b>${esc(x.l)}</b><small>${esc(x.d || '')}</small></div><span class="bwW">${isP ? ((+x.f || 1) !== 1 ? 'Faktor ' + String(x.f).replace('.', ',') : '') : (x.w ? x.w + ' %' : '')}</span></div>
+      <div class="bwCtl">${isP ? '' : `<span class="seg bwSeg">${EINSCH.map(e => `<button type="button" class="${((v0.e || {})[x.k]) === e ? 'on' : ''}" data-be="${e}">${e}</button>`).join('')}</span>`}
+        <label class="bwPts"><span>${isP ? 'Punkte' : 'Punkte (optional)'}</span>${ptsSelect(`data-bp="${esc(x.k)}"`, (v0.p || {})[x.k] ?? '')}</label></div>
+      <textarea rows="2" data-bn="${esc(x.k)}" placeholder="Anmerkungen">${esc((v0.n || {})[x.k] || '')}</textarea></div>`;
+  const body = `${isP ? `<div class="grid3">${field('Datum', `<input type="date" id="bwD" value="${esc(st0.pgAm || '')}">`)}${field('von', `<input type="time" id="bwV" value="${esc(st0.pgZeit || '')}">`)}${field('bis', `<input type="time" id="bwB" value="${esc(st0.pgBis || '')}">`)}</div>
+      <label class="check"><input type="checkbox" id="bwVt" ${v0.vortrag ? 'checked' : ''}> <span>mit freiem Kurzvortrag zum Einstieg (höchstens 5 Minuten, ohne Medien)</span></label>`
+    : `<label class="check"><input type="checkbox" id="bwSelbst" ${v0.selbst ? 'checked' : ''}> <span>Die Arbeit wurde eindeutig selbstständig und nur mithilfe der angegebenen Quellen verfasst</span></label>
+      <p class="hint">Abgabe: ${st0.abgabe ? esc(wdate(st0.abgabe)) : 'noch nicht eingetragen'} – termingerechte Abgabe ist Zulassungsvoraussetzung (§ 44 Abs. 2 GSO).</p>`}
+    <div class="bwList">${K.map(row).join('')}</div>
+    ${field('Gesamturteil', `<textarea id="bwU" rows="3" placeholder="Kurzes Gutachten">${esc(v0.urteil || '')}</textarea>`)}
+    <div class="bwRes"><div><small>Vorschlag aus den ${isP ? 'Kompetenzen' : 'Bereichen'}</small><b id="bwVor">–</b></div><button type="button" class="mini" id="bwTake" disabled>Vorschlag übernehmen</button>
+      <label class="bwFinal"><small>${isP ? 'Prüfungsgespräch' : 'Seminararbeit'} (festgesetzt)</small><input type="text" inputmode="numeric" maxlength="2" id="bwP" value="${esc(sp0[spk] ?? '')}"></label></div>
+    <div class="panelBtns"><button type="button" class="mini accent" id="bwPdf">Bewertungsbogen drucken (PDF)</button><button type="button" class="mini" id="bwWord">als Word</button><button type="button" class="mini" id="bwKrit">Kriterien für diesen Kurs …</button></div>
+    <p class="hint">${isP ? 'Kompetenzen nach dem Bewertungsbogen des ISB. Die Punkte je Kompetenz sind eine Ersteinschätzung; der Vorschlag ist ihr (gewichteter) Durchschnitt, gerundet.' : 'Bereiche und Gewichtung nach dem ISB-Bewertungsbogen (Anlage 5a). Wenn du je Bereich Punkte vergibst, rechnet Libretto einen gewichteten Vorschlag.'} Die Punkte setzt du fest. Alles wird sofort gespeichert.</p>`;
+  const { dlg } = sheet({ title: (isP ? 'Prüfungsgespräch · ' : 'Seminararbeit · ') + s.name, wide: true, ok: '', cancel: 'Fertig', body });
+  dlg.addEventListener('close', () => done && done(), { once: true });
+  const q = id => dlg.querySelector(id);
+  const upd = () => { const v = isP ? bwPVorschlag(c, semGet(c, s.id).bwP) : bwAVorschlag(c, semGet(c, s.id).bwA); q('#bwVor').textContent = v == null ? '–' : v + ' P. (Note ' + noteOf(v) + ')'; q('#bwTake').disabled = v == null || READONLY; q('#bwTake').dataset.v = v ?? ''; };
+  const rw = fn => { if (READONLY) return; fn(b0()); save(); upd(); };
+  $$('[data-bp]', dlg).forEach(el => el.onchange = () => rw(b => { if (el.value === '') delete b.p[el.dataset.bp]; else b.p[el.dataset.bp] = +el.value; }));
+  $$('[data-bn]', dlg).forEach(el => el.onchange = () => rw(b => { const x = el.value.trim(); if (x) b.n[el.dataset.bn] = x; else delete b.n[el.dataset.bn]; }));
+  $$('.bwSeg', dlg).forEach(sg => sg.onclick = e => { const bt = e.target.closest('[data-be]'); if (!bt) return; const k = sg.closest('.bwRow').dataset.k, on = bt.classList.contains('on');
+    $$('button', sg).forEach(x => x.classList.remove('on')); if (!on) bt.classList.add('on'); rw(b => { if (on) delete b.e[k]; else b.e[k] = bt.dataset.be; }); });
+  q('#bwU').onchange = () => rw(b => { const x = q('#bwU').value.trim(); if (x) b.urteil = x; else delete b.urteil; });
+  if (isP) { [['#bwD', 'pgAm'], ['#bwV', 'pgZeit'], ['#bwB', 'pgBis']].forEach(([sel, k]) => q(sel).onchange = () => { if (READONLY) return; const o = semSt(c, s.id); if (q(sel).value) o[k] = q(sel).value; else delete o[k]; save(); });
+    q('#bwVt').onchange = () => rw(b => { if (q('#bwVt').checked) b.vortrag = true; else delete b.vortrag; }); }
+  else q('#bwSelbst').onchange = () => rw(b => { if (q('#bwSelbst').checked) b.selbst = true; else delete b.selbst; });
+  const setPts = x => { if (READONLY) return; if (x !== '' && (!/^\d{1,2}$/.test(String(x)) || +x > 15)) { toast('Punkte 0–15'); q('#bwP').select(); return; }
+    const o = (c.seminarPaper[s.id] = c.seminarPaper[s.id] || {}); o[spk] = x === '' ? '' : +x; q('#bwP').value = o[spk]; save(); };
+  q('#bwP').onchange = () => setPts(q('#bwP').value.trim());
+  q('#bwTake').onclick = () => { setPts(q('#bwTake').dataset.v); toast('Vorschlag übernommen'); };
+  q('#bwPdf').onclick = () => exportModel(isP ? modelSemBwP(c, s) : modelSemBwA(c, s), 'pdf');
+  q('#bwWord').onclick = () => exportModel(isP ? modelSemBwP(c, s) : modelSemBwA(c, s), 'docx');
+  q('#bwKrit').onclick = () => semKritSheet(c, kind, () => { dlg.close(); semBwSheet(c, s, kind, done); });
+  upd();
+}
+/* Kriterien eines Kurses anpassen (die Schule darf das ISB-Raster anpassen) */
+function semKritSheet(c, kind, done) {
+  const isP = kind === 'P'; let L = JSON.parse(JSON.stringify(isP ? kritP(c) : kritA(c)));
+  const draw = d => { d.querySelector('#krRows').innerHTML = L.map((x, i) => `<div class="krRow"><input type="text" data-kl="${i}" value="${esc(x.l)}" placeholder="Kriterium"><input type="text" data-kd="${i}" value="${esc(x.d || '')}" placeholder="Beschreibung"><label><span>${isP ? 'Faktor' : 'Gewicht %'}</span><input type="number" min="0" step="${isP ? '0.5' : '5'}" data-kw="${i}" value="${esc(isP ? (x.f ?? 1) : (x.w ?? 0))}"></label><button type="button" class="iconbtn" data-kx="${i}" title="Entfernen">✕</button></div>`).join('');
+    const sum = L.reduce((a, x) => a + (+x.w || 0), 0); d.querySelector('#krSum').textContent = isP ? '' : `Summe der Gewichte: ${sum} %${sum !== 100 ? ' – wird anteilig gerechnet' : ''}`;
+    $$('[data-kx]', d).forEach(b => b.onclick = () => { sync(d); L.splice(+b.dataset.kx, 1); draw(d); }); };
+  const sync = d => L.forEach((x, i) => { x.l = d.querySelector(`[data-kl="${i}"]`).value.trim(); x.d = d.querySelector(`[data-kd="${i}"]`).value.trim(); const w = +d.querySelector(`[data-kw="${i}"]`).value; if (isP) x.f = w > 0 ? w : 1; else x.w = w >= 0 ? w : 0; });
+  sheet({ title: (isP ? 'Kompetenzen Prüfungsgespräch' : 'Bereiche Seminararbeit') + ' · ' + c.name, wide: true, body: `<p class="prose">Vorgabe ist der Bewertungsbogen des ISB. Die Schule bzw. du kannst die Kriterien anpassen – sie gelten für alle in diesem Kurs. Bereits vergebene Teilpunkte bleiben erhalten.</p>
+    <div id="krRows" class="krRows"></div><p class="hint" id="krSum"></p>
+    <div class="panelBtns"><button type="button" class="mini" id="krAdd">+ Kriterium</button><button type="button" class="mini" id="krDef">ISB-Vorschlag wiederherstellen</button></div>`,
+    onOpen: d => { draw(d); d.querySelector('#krAdd').onclick = () => { sync(d); L.push(isP ? { k: uid(), l: '', d: '', f: 1 } : { k: uid(), l: '', d: '', w: 0 }); draw(d); };
+      d.querySelector('#krDef').onclick = () => { L = JSON.parse(JSON.stringify(isP ? KRIT_P : KRIT_A)); draw(d); }; },
+    onOk: d => { sync(d); L = L.filter(x => x.l); if (!L.length) { toast('Mindestens ein Kriterium'); return false; }
+      const cf = semCfg(c); if (JSON.stringify(L) === JSON.stringify(isP ? KRIT_P : KRIT_A)) delete cf[isP ? 'kritP' : 'kritA']; else cf[isP ? 'kritP' : 'kritA'] = L; save(); done && done(); } });
+}
+/* Terminliste der Prüfungsgespräche: je Person Tag und Uhrzeit, automatisch verteilen, ausdrucken */
+const addMin = (hm, m) => { const [h, mi] = hm.split(':').map(Number), t = h * 60 + mi + m; return String(Math.floor(t / 60) % 24).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+function semPgSheet(c) {
+  const cf = semCfg(c);
+  const rowsHTML = () => c.students.map(s => { const st = semGet(c, s.id); return `<tr><td class="l">${esc(s.name)}</td><td><input type="date" data-pd="${s.id}" value="${esc(st.pgAm || '')}"></td><td><input type="time" data-pz="${s.id}" value="${esc(st.pgZeit || '')}"></td><td><input type="time" data-pb="${s.id}" value="${esc(st.pgBis || '')}"></td><td class="l pgTh">${esc(st.kurz || st.thema || '')}</td></tr>`; }).join('');
+  const { dlg } = sheet({ title: 'Prüfungsgespräche · ' + c.name, wide: true, ok: '', cancel: 'Fertig', body: `
+    <p class="prose">Tag und Uhrzeit je Person. Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO, KMS vom 02.02.2026).</p>
+    <div class="pgAuto"><b>Automatisch verteilen</b>${field('ab', `<input type="date" id="pgD" value="${esc(cf.pgStart || todayISO())}">`)}${field('Beginn', `<input type="time" id="pgZ" value="${esc(cf.pgTime || '08:00')}">`)}${field('Dauer (Min.)', `<input type="number" id="pgL" min="10" max="25" value="${esc(cf.pgLen || 25)}">`)}${field('Pause (Min.)', `<input type="number" id="pgP" min="0" max="60" value="${esc(cf.pgPause ?? 5)}">`)}${field('je Tag höchstens', `<input type="number" id="pgN" min="1" max="20" value="${esc(cf.pgPerDay || 4)}">`)}<button type="button" class="mini" id="pgGo">Freie Plätze füllen</button></div>
+    <div class="gridWrap"><table class="grid pgTbl"><thead><tr><th class="l">Name</th><th>Tag</th><th>von</th><th>bis</th><th class="l">Thema</th></tr></thead><tbody id="pgRows">${rowsHTML()}</tbody></table></div>
+    <label class="check"><input type="checkbox" id="pgTh" checked> <span>Themen mitdrucken (für einen Aushang ggf. weglassen)</span></label>
+    <div class="panelBtns"><button type="button" class="mini accent" id="pgPdf">Terminliste drucken (PDF)</button><button type="button" class="mini" id="pgWord">als Word</button></div>
+    <p class="hint">„Freie Plätze füllen“ vergibt Termine nur an Personen ohne Termin – in der Reihenfolge der Liste, nur an Schultagen. Alles wird sofort gespeichert.</p>` });
+  const q = id => dlg.querySelector(id);
+  const bindRows = () => { [['pd', 'pgAm'], ['pz', 'pgZeit'], ['pb', 'pgBis']].forEach(([a, k]) => $$(`[data-${a}]`, dlg).forEach(el => el.onchange = () => { if (READONLY) return; const o = semSt(c, el.dataset[a]); if (el.value) o[k] = el.value; else delete o[k];
+    if (k === 'pgZeit' && el.value && !o.pgBis) { o.pgBis = addMin(el.value, +q('#pgL').value || 25); dlg.querySelector(`[data-pb="${el.dataset[a]}"]`).value = o.pgBis; } save(); })); };
+  bindRows();
+  q('#pgGo').onclick = () => { if (READONLY) return; const len = Math.min(25, Math.max(10, +q('#pgL').value || 25)), pause = Math.max(0, +q('#pgP').value || 0), per = Math.max(1, +q('#pgN').value || 4), z0 = q('#pgZ').value || '08:00';
+    Object.assign(cf, { pgStart: q('#pgD').value, pgTime: z0, pgLen: len, pgPause: pause, pgPerDay: per });
+    let d = new Date((q('#pgD').value || todayISO()) + 'T12:00'); const free = iso => { const wd = new Date(iso + 'T12:00').getDay(); return wd === 0 || wd === 6 || isFreeDay(iso); };
+    const used = iso => c.students.filter(s => semGet(c, s.id).pgAm === iso).length;
+    let n = 0;
+    c.students.filter(s => !semGet(c, s.id).pgAm).forEach(s => { let iso = Cal.iso(d); let guard = 0; while ((free(iso) || used(iso) >= per) && guard++ < 400) { d = Cal.add(d, 1); iso = Cal.iso(d); }
+      const k = used(iso), from = addMin(z0, k * (len + pause)); const o = semSt(c, s.id); o.pgAm = iso; o.pgZeit = from; o.pgBis = addMin(from, len); n++; });
+    save(); q('#pgRows').innerHTML = rowsHTML(); bindRows(); toast(n ? `${n} Termine vergeben` : 'Alle haben schon einen Termin'); };
+  q('#pgPdf').onclick = () => exportModel(modelSemPgPlan(c, q('#pgTh').checked), 'pdf');
+  q('#pgWord').onclick = () => exportModel(modelSemPgPlan(c, q('#pgTh').checked), 'docx');
+}
+function modelSemPgPlan(c, withTheme = true) {
+  const list = c.students.map(s => ({ s, st: semGet(c, s.id) })).sort((a, b) => ((a.st.pgAm || '9') + (a.st.pgZeit || '')).localeCompare((b.st.pgAm || '9') + (b.st.pgZeit || '')));
+  const rows = []; let day = null;
+  list.forEach(({ s, st }) => { const d = st.pgAm || ''; if (d !== day) { day = d; rows.push({ group: d ? wdate(d).replace(/^(\w\w), /, (m0, w) => ({ Mo: 'Montag', Di: 'Dienstag', Mi: 'Mittwoch', Do: 'Donnerstag', Fr: 'Freitag', Sa: 'Samstag', So: 'Sonntag' })[w] + ', ') : 'noch ohne Termin' }); }
+    const z = st.pgZeit ? st.pgZeit + (st.pgBis ? '–' + st.pgBis : '') : '';
+    rows.push(withTheme ? [z, s.name, st.kurz || st.thema || ''] : [z, s.name]); });
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Prüfungsgespräche', subtitle: 'Terminliste · ' + c.name, file: fileName('Terminliste Prüfungsgespräche', c), meta: semMeta(c),
+    blocks: [{ table: { head: withTheme ? ['Uhrzeit', 'Name', 'Thema der Seminararbeit'] : ['Uhrzeit', 'Name'], rows, align: withTheme ? ['c', 'l', 'l'] : ['c', 'l'], widths: withTheme ? [13, 27, 60] : [20, 80] } },
+      { note: 'Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO; KMS vom 02.02.2026). Ein freier Kurzvortrag zum Einstieg (höchstens 5 Minuten, ohne Medien) ist möglich, aber nicht verpflichtend.' }] };
+}
+/* Leitfragen fürs Beratungsgespräch (Auswahl nach der ISB-Übersicht „Beratungsgespräche“) */
+const BERAT_Q = {
+  '12/1': ['Bezug des Themas zum Rahmenthema? Umfang realistisch, ggf. eingrenzen', 'Echte Forschungsfrage mit eigenständiger Untersuchung?', 'Wo recherchieren, Forschungsstand?', 'Nächste Schritte und verbindliche Zwischenziele', 'Kleine Leistungsnachweise: Selbsteinschätzung und Rückmeldung', 'KI: welche Anwendungen wofür – und warum?'],
+  '12/2': ['Zwischenergebnisse, z. B. Exposé: Ziele erreicht?', 'Gliederung schlüssig, formale Vorgaben beachtet?', 'Literatur- und Materialstand, Methode passend zur Fragestellung?', 'Zeitplan realistisch? Was ist schon geschafft?', 'KI: Nutzung transparent dokumentiert?'],
+  '13/1': ['Formale Vorgaben, welche Teile müssen noch überarbeitet werden?', 'Aufbau stimmig, Bewertungskriterien bekannt?', 'Zeitpuffer für Ausdruck, Unterschriften, Technik', 'Anforderungen an das Prüfungsgespräch bekannt?', 'KI-Nutzung reflektiert darstellbar?'] };
+
+/* Zielvereinbarung des letzten früheren Gesprächs (Ziel, sonst „vereinbart“) */
+function semPrevGoal(c, s, id, date) {
+  const ts = (semGet(c, s.id).termine || []).filter(x => x.id !== id && (x.ziel || x.vereinbart) && (!date || (x.date || '') <= date)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return ts[0] ? { date: ts[0].date, text: ts[0].ziel || ts[0].vereinbart } : null;
+}
 /* ---------- Betreuungstermin ---------- */
 function semTerminSheet(c, s, t0, done) {
   const isNew = !t0, cf = semCfg(c);
@@ -2190,13 +2371,23 @@ function semTerminSheet(c, s, t0, done) {
   const added = [];   /* in diesem Fenster angehängt – bei „Abbrechen“ wieder weg */
   let saved = false, termTouched = !isNew;
   const body = `<div class="grid3">${field('Datum', `<input type="date" id="tmD" value="${esc(t.date || '')}">`)}${field('Halbjahr', `<select id="tmT">${['12/1', '12/2', '13/1'].map(x => `<option ${t.term === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`)}${field('Art', `<select id="tmK">${SEM_KINDS.map(([k, l]) => `<option value="${k}" ${t.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
-    ${field('Besprochen (Stand der Arbeit, Fragen, Rückmeldung)', `<textarea id="tmI" rows="5">${esc(t.inhalt || '')}</textarea>`)}
-    ${field('Vereinbart / nächste Schritte', `<textarea id="tmV" rows="3">${esc(t.vereinbart || '')}</textarea>`)}
+    <div id="tmBer" ${t.kind === 'beratung' ? '' : 'hidden'}>
+      <div class="tmPrev" id="tmPrev"></div>
+      <details class="tmQ"><summary>Leitfragen fürs Gespräch (ISB, Auswahl)</summary><div id="tmQ"></div></details>
+      ${field('Bisher begonnene / abgeschlossene Arbeiten (Schülerin / Schüler)', `<textarea id="tmE" rows="3">${esc(t.erledigt || '')}</textarea>`)}
+      ${field('Aufgetretene Schwierigkeiten / Fragen', `<textarea id="tmF2" rows="2">${esc(t.fragen || '')}</textarea>`)}</div>
+    ${field(t.kind === 'beratung' ? 'Rückmeldung und Vorschläge der Lehrkraft' : 'Besprochen (Stand der Arbeit, Fragen, Rückmeldung)', `<textarea id="tmI" rows="4">${esc(t.inhalt || '')}</textarea>`)}
+    ${field(t.kind === 'beratung' ? 'Nächste Schritte mit Zeitrahmen' : 'Vereinbart / nächste Schritte', `<textarea id="tmV" rows="3">${esc(t.vereinbart || '')}</textarea>`)}
+    <div id="tmBer2" ${t.kind === 'beratung' ? '' : 'hidden'}>
+      ${field('Zielvereinbarung inkl. zeitlichem Rahmen', `<textarea id="tmZ" rows="2">${esc(t.ziel || '')}</textarea>`)}
+      ${field('Einsatz von KI (Anwendungen, Zweck, Reflexion)', `<textarea id="tmKI" rows="2">${esc(t.ki || '')}</textarea>`)}</div>
     <div class="grid3">${field('Nächster Termin', `<input type="date" id="tmN" value="${esc(t.next || '')}">`)}<label class="check span2" style="margin-top:22px"><input type="checkbox" id="tmS" ${t.signed ? 'checked' : ''}> <span>Protokoll ist von der Schülerin / dem Schüler unterschrieben</span></label></div>
     <div class="field"><span>Dateien zu diesem Termin (z. B. Exposé, Gliederung, Literaturliste, Entwurf)</span><div id="tmF">${attBoxHTML(t.files, 'Dateien')}</div></div>
     <div class="panelBtns"><button type="button" class="mini" id="tmPdf">Protokoll drucken (PDF)</button><button type="button" class="mini" id="tmWord">als Word</button></div>
     ${isNew ? '' : '<button type="button" class="danger" id="tmDel">Termin löschen</button>'}`;
-  const read = d => { t.date = d.querySelector('#tmD').value; t.term = d.querySelector('#tmT').value; t.kind = d.querySelector('#tmK').value; t.inhalt = d.querySelector('#tmI').value.trim(); t.vereinbart = d.querySelector('#tmV').value.trim(); t.next = d.querySelector('#tmN').value; t.signed = d.querySelector('#tmS').checked; ['inhalt', 'vereinbart', 'next'].forEach(k => { if (!t[k]) delete t[k]; }); if (!t.signed) delete t.signed; };
+  const read = d => { t.date = d.querySelector('#tmD').value; t.term = d.querySelector('#tmT').value; t.kind = d.querySelector('#tmK').value; t.inhalt = d.querySelector('#tmI').value.trim(); t.vereinbart = d.querySelector('#tmV').value.trim(); t.next = d.querySelector('#tmN').value; t.signed = d.querySelector('#tmS').checked;
+    t.erledigt = d.querySelector('#tmE').value.trim(); t.fragen = d.querySelector('#tmF2').value.trim(); t.ziel = d.querySelector('#tmZ').value.trim(); t.ki = d.querySelector('#tmKI').value.trim();
+    ['inhalt', 'vereinbart', 'next', 'erledigt', 'fragen', 'ziel', 'ki'].forEach(k => { if (!t[k]) delete t[k]; }); if (!t.signed) delete t.signed; };
   const { dlg, close } = sheet({ title: (isNew ? 'Neuer Betreuungstermin' : 'Betreuungstermin') + ' · ' + s.name, wide: true, body, onOk: d => {
     read(d); if (!t.date) { toast('Bitte ein Datum eintragen'); return false; }
     const o = semSt(c, s.id); o.termine = (o.termine || []).filter(x => x.id !== t.id).concat([t]).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -2206,7 +2397,14 @@ function semTerminSheet(c, s, t0, done) {
   dlg.addEventListener('close', () => { if (!saved && added.length) { trashAtt(added); save(); } }, { once: true });
   const q = id => dlg.querySelector(id);
   q('#tmD').addEventListener('change', () => { if (!termTouched) { const x = R.semTermAt(cf.start, q('#tmD').value, semMid()); q('#tmT').value = ['12/1', '12/2', '13/1'].includes(x) ? x : '13/1'; } });
-  q('#tmT').addEventListener('change', () => { termTouched = true; });
+  q('#tmT').addEventListener('change', () => { termTouched = true; berQ(); });
+  /* Beratungsgespräch: Zielvereinbarung des letzten Gesprächs zeigen, Leitfragen zum Halbjahr */
+  const berQ = () => { q('#tmQ').innerHTML = `<ul>${(BERAT_Q[q('#tmT').value] || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    const pv = semPrevGoal(c, s, t.id, q('#tmD').value); q('#tmPrev').innerHTML = pv ? `<small>Zielvereinbarung aus dem Gespräch vom ${esc(fdate(pv.date))}</small><div>${esc(pv.text)}</div>` : ''; q('#tmPrev').hidden = !pv; };
+  const kindUi = () => { const ber = q('#tmK').value === 'beratung'; q('#tmBer').hidden = !ber; q('#tmBer2').hidden = !ber;
+    q('#tmI').closest('.field').querySelector('span').textContent = ber ? 'Rückmeldung und Vorschläge der Lehrkraft' : 'Besprochen (Stand der Arbeit, Fragen, Rückmeldung)';
+    q('#tmV').closest('.field').querySelector('span').textContent = ber ? 'Nächste Schritte mit Zeitrahmen' : 'Vereinbart / nächste Schritte'; };
+  q('#tmK').addEventListener('change', kindUi); q('#tmD').addEventListener('change', berQ); berQ();
   bindAtt(q('#tmF'), () => t.files, list => { list.filter(f => !t.files.some(x => x.id === f.id)).forEach(f => added.push(f)); t.files = list; });
   q('#tmPdf').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'pdf'); };
   q('#tmWord').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'docx'); };
@@ -2223,7 +2421,14 @@ function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.s
 const filesTxt = list => (list || []).map(f => f.name).join('\n');
 function modelSemProtocol(c, s, t) {
   const st = semGet(c, s.id);
-  return { title: 'Betreuungsprotokoll W-Seminar', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Betreuungsprotokoll ${s.name} ${c.name}`), meta: semMeta(c),
+  if (t.kind === 'beratung') { const pv = semPrevGoal(c, s, t.id, t.date);
+    return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Beratungsgespräch', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Beratungsgespräch ${s.name} ${c.name}`), meta: semMeta(c),
+      blocks: [{ kv: [['Schülerin / Schüler', s.name + (isMixed(c.students) && s.cls ? ' (' + s.cls + ')' : '')], ['Thema der Seminararbeit', st.thema || '–'], ['Datum · Ausbildungsabschnitt', `${wdate(t.date)} · ${t.term || ''}`]] },
+        ...(pv ? [{ h: 'Zielvereinbarung aus dem letzten Gespräch (' + fdate(pv.date) + ')' }, { p: pv.text }] : []),
+        { h: 'Stand der Arbeit' }, { kv: [['Bisher begonnene / abgeschlossene Arbeiten', t.erledigt || ''], ['Schwierigkeiten / Fragen', t.fragen || ''], ['Rückmeldung und Vorschläge der Lehrkraft', t.inhalt || '']] },
+        { h: 'Vereinbarungen' }, { kv: [['Nächste Schritte mit Zeitrahmen', t.vereinbart || ''], ['Zielvereinbarung', t.ziel || ''], ...(t.ki ? [['Einsatz von KI', t.ki]] : []), ['Nächster Termin', t.next ? wdate(t.next) : ''], ['Vorgelegte Unterlagen', filesTxt(t.files) || '–']] },
+        { sig: ['Datum, Unterschrift Schülerin / Schüler', 'Datum, Unterschrift Kursleitung'] }] }; }
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Betreuungsprotokoll W-Seminar', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Betreuungsprotokoll ${s.name} ${c.name}`), meta: semMeta(c),
     blocks: [{ kv: [['Schülerin / Schüler', s.name + (isMixed(c.students) && s.cls ? ' (' + s.cls + ')' : '')], ['Thema der Seminararbeit', st.thema || '–'], ['Datum', wdate(t.date)], ['Ausbildungsabschnitt', t.term || ''], ['Art', semKind(t.kind)],
       ['Besprochen', t.inhalt || ''], ['Vereinbart / nächste Schritte', t.vereinbart || ''], ['Nächster Termin', t.next ? wdate(t.next) : ''], ['Vorgelegte Unterlagen', filesTxt(t.files) || '–']] },
       { sig: ['Datum, Unterschrift Schülerin / Schüler', 'Datum, Unterschrift Kursleitung'] }] };
@@ -2236,17 +2441,17 @@ function modelSemDossier(c, list) {
     const due = st.verl || semCfg(c).deadline;
     blocks.push({ kv: [['Thema der Seminararbeit', st.thema || '–'], ['Thema festgelegt am', st.themaAm ? fdate(st.themaAm) : '–'],
       ['Abgabe', (st.abgabe ? `abgegeben am ${fdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}` : 'noch nicht abgegeben') + (due ? ` · Frist ${fdate(due)}${st.verl ? ' (verlängert' + (st.verlGrund ? ': ' + st.verlGrund : '') + ')' : ''}` : '')],
-      ['Erklärung zur selbstständigen Anfertigung', st.erkl ? 'liegt vor' : '–'], ...(st.wett ? [['Ersatz durch Wettbewerbsbeitrag', st.wettText || 'ja']] : []), ...((st.files || []).length ? [['Dateien der Arbeit', filesTxt(st.files)]] : [])] });
+      ...(st.kurz ? [['Kurztitel (Abiturzeugnis)', st.kurz]] : []), ['Erklärung zur selbstständigen Anfertigung', st.erkl ? 'liegt vor' : '–'], ...(st.expose ? [['Exposé / Gliederung', 'besprochen']] : []), ...(st.kiDoc ? [['Dokumentation der KI-Nutzung', 'abgegeben']] : []), ...(st.wett ? [['Ersatz durch Wettbewerbsbeitrag', st.wettText || 'ja']] : []), ...((st.files || []).length ? [['Dateien der Arbeit', filesTxt(st.files)]] : [])] });
     const ts = (st.termine || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     blocks.push({ h: `Betreuungstermine (${ts.length})` });
     if (!ts.length) blocks.push({ p: 'Noch keine Termine dokumentiert.' });
-    ts.forEach(t => blocks.push({ kv: [[`${fdate(t.date)} · ${t.term || ''}`, semKind(t.kind) + (t.signed ? ' · Protokoll unterschrieben' : '')], ...(t.inhalt ? [['Besprochen', t.inhalt]] : []), ...(t.vereinbart ? [['Vereinbart', t.vereinbart]] : []), ...(t.next ? [['Nächster Termin', fdate(t.next)]] : []), ...((t.files || []).length ? [['Unterlagen', filesTxt(t.files)]] : [])] }));
-    blocks.push({ h: 'Leistungen' });
+    ts.forEach(t => blocks.push({ kv: [[`${fdate(t.date)} · ${t.term || ''}`, semKind(t.kind) + (t.signed ? ' · Protokoll unterschrieben' : '')], ...(t.erledigt ? [['Bisher erledigt', t.erledigt]] : []), ...(t.fragen ? [['Schwierigkeiten / Fragen', t.fragen]] : []), ...(t.inhalt ? [[t.kind === 'beratung' ? 'Rückmeldung' : 'Besprochen', t.inhalt]] : []), ...(t.vereinbart ? [['Vereinbart', t.vereinbart]] : []), ...(t.ziel ? [['Zielvereinbarung', t.ziel]] : []), ...(t.ki ? [['Einsatz von KI', t.ki]] : []), ...(t.next ? [['Nächster Termin', fdate(t.next)]] : []), ...((t.files || []).length ? [['Unterlagen', filesTxt(t.files)]] : [])] }));
+    const tail = []; tail.push({ h: 'Leistungen' });
     const hj = x => { const q = R.computeTerm(c, s.id, x).points; return q == null ? '–' : String(q); };
-    blocks.push({ table: { head: ['Halbjahr 12/1', 'Halbjahr 12/2', 'Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt)]], big: [4] } });
-    if (st.pgAm) blocks.push({ p: `Präsentation mit Prüfungsgespräch am ${fdate(st.pgAm)}.` });
-    if (r.flags.length) blocks.push({ p: 'Hinweise: ' + r.flags.map(f => f.text).join(' ') });
-    blocks.push({ sig: ['Datum, Unterschrift Kursleitung'] });
+    tail.push({ table: { head: ['Halbjahr 12/1', 'Halbjahr 12/2', 'Seminararbeit', 'Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt)]], big: [4] } });
+    if (st.pgAm) tail.push({ p: `Prüfungsgespräch am ${fdate(st.pgAm)}${st.pgZeit ? ', ' + st.pgZeit + ' Uhr' : ''}.` });
+    if (r.flags.length) tail.push({ p: 'Hinweise: ' + r.flags.map(f => f.text).join(' ') });
+    tail.push({ sig: ['Datum, Unterschrift Kursleitung'] }); blocks.push({ group: tail });
   });
   const one = list.length === 1 ? list[0] : null;
   return { title: one ? one.name : `Betreuungsdokumentation ${c.name}`, subtitle: one ? `Betreuungsdokumentation W-Seminar · ${c.name}` : 'W-Seminar', file: one ? fileSafe(`${todayISO()} Betreuungsdokumentation ${one.name} ${c.name}`) : fileName('Betreuungsdokumentation', c), meta: semMeta(c),
@@ -2267,7 +2472,7 @@ function modelSemResults(c) {
     return [String(i + 1), s.name, hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt), note]; });
   return { title: `Ergebnisse W-Seminar ${c.name}`, subtitle: `Halbjahresleistungen und Seminararbeit · Abitur ${semAbi(c)}`, file: fileName('Ergebnisse W-Seminar', c), meta: semMeta(c),
     blocks: [{ table: { head: ['Nr.', 'Name', '12/1', '12/2', 'Arbeit', 'Prüfungs­gespräch', 'Gesamtleistung (max. 30)', 'Hinweis'], rows, align: ['c', 'l', 'c', 'c', 'c', 'c', 'c', 'l'], big: [6], widths: [4, 24, 7, 7, 7, 10, 12, 20] } },
-      { p: 'Halbjahresleistung 12/1 und 12/2: Durchschnitt der kleinen Leistungsnachweise, gerundet, keine Aufrundung auf 1 Punkt (§ 29 Abs. 2 GSO). Gesamtleistung der Seminararbeit: (2 × Arbeit + Präsentation mit Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO). Zulassung zur Abiturprüfung u. a. nur, wenn die Arbeit abgegeben ist, weder Arbeit noch Prüfungsgespräch 0 Punkte haben und die Gesamtleistung mindestens 9 Punkte beträgt (§ 44 Abs. 2 GSO).' },
+      { p: 'Halbjahresleistung 12/1 und 12/2: Durchschnitt der kleinen Leistungsnachweise, gerundet, keine Aufrundung auf 1 Punkt (§ 29 Abs. 2 GSO). Gesamtleistung der Seminararbeit: (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO). Zulassung zur Abiturprüfung u. a. nur, wenn die Arbeit abgegeben ist, weder Arbeit noch Prüfungsgespräch 0 Punkte haben und die Gesamtleistung mindestens 9 Punkte beträgt (§ 44 Abs. 2 GSO).' },
       { sig: ['Datum, Unterschrift Kursleitung'] }] };
 }
 
@@ -2517,7 +2722,7 @@ function modelStudents(c, list) {
     if (awayOf(c, s.id)) blocks.push({ p: 'Hinweis: ' + awayText(awayOf(c, s.id)) + '.' });
     if (supOf(c, s.id)) blocks.push({ p: supText(c, s.id) + '.' });
     blocks.push({ h: 'Leistungsnachweise' }, { table: { head: ['Leistungsnachweis', 'Art', 'Datum', ...(up ? ['Halbjahr'] : []), 'Punkte', up ? 'Notenpunkte' : 'Note'], rows: rows.length ? rows : [['Noch keine Einträge', '', '', ...(up ? [''] : []), '', '']], align: ['l'], bold: [up ? 5 : 4] } });
-    if (c.seminar) { blocks.push({ h: 'Ergebnis' }); const sp = c.seminarPaper[s.id] || {}, g = R.seminarPaper(sp.arbeit, sp.gespraech); const pv = x => x === '' || x == null ? '–' : String(x); blocks.push({ table: { head: ['Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[pv(sp.arbeit), pv(sp.gespraech), g == null ? '–' : String(g)]], big: [2] } }); }
+    if (c.seminar) { blocks.push({ h: 'Ergebnis' }); const sp = c.seminarPaper[s.id] || {}, g = R.seminarPaper(sp.arbeit, sp.gespraech); const pv = x => x === '' || x == null ? '–' : String(x); blocks.push({ table: { head: ['Seminararbeit', 'Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[pv(sp.arbeit), pv(sp.gespraech), g == null ? '–' : String(g)]], big: [2] } }); }
   });
   return { eyebrow: 'Schülerblatt', title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, file: list.length === 1 ? fileSafe(`${todayISO()} Schülerblatt ${list[0].name} ${c.name} ${c.subject}`) : fileName('Schülerblätter', c), subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: list.length && list[0] ? studMeta(c, list[0]) : baseMeta(c), blocks };
 }
@@ -2542,9 +2747,9 @@ function printSheet(c) {
   const opt = (id, title, sub, xl) => `<div class="row"><span><b>${title}</b><br><small class="hint">${sub}</small></span><button type="button" class="mini accent" data-p="${id}:pdf">PDF</button><button type="button" class="mini" data-p="${id}:docx">Word</button>${id === 'course' || xl ? `<button type="button" class="mini" data-p="${id}:csv">Excel</button>` : ''}</div>`;
   const { dlg, close } = sheet({ title: 'Drucken & Export', ok: '', cancel: 'Fertig', body: `<p class="hint" style="margin-top:0">Gilt für die aktuelle Ansicht: <b>${esc(scopeLabel(c))}</b>. Alle Ausdrucke tragen das theis-Logo und den Hinweis, dass Libretto die Dokumentation der Schule nicht ersetzt.</p>
     <div class="rows">${opt('course', 'Kursübersicht', 'Alle Schüler mit allen Noten, Durchschnitten und Vorschlag')}${opt('transfer', 'Übertragsliste fürs Infoportal', isSemTab(c) ? 'Ergebnisse der Seminararbeit – zum Abtippen und Abhaken' : 'Nur Name und Endnote – zum Abtippen und Abhaken')}${opt('students', 'Schülerblätter', 'Eine Seite pro Schüler, z. B. für Elterngespräche')}</div>
-    ${c.seminar ? `<div class="subhead">W-Seminar</div><div class="rows">${opt('semOverview', 'Übersicht der Seminararbeiten', 'Themen, Betreuungstermine je Halbjahr, Abgabe – ohne Noten, z. B. für die Oberstufenkoordination', true)}${opt('semResults', 'Ergebnisse W-Seminar', '12/1, 12/2, Arbeit, Prüfungsgespräch, Gesamtleistung mit Hinweisen (§ 44 GSO)', true)}${opt('semDossier', 'Betreuungsdokumentation', 'Je Schüler: Thema, alle Termine mit Protokoll, Abgabe, Bewertung – eine Seite pro Person')}</div>` : ''}
+    ${c.seminar ? `<div class="subhead">W-Seminar</div><div class="rows">${opt('semOverview', 'Übersicht der Seminararbeiten', 'Themen, Betreuungstermine je Halbjahr, Abgabe – ohne Noten, z. B. für die Oberstufenkoordination', true)}${opt('semResults', 'Ergebnisse W-Seminar', '12/1, 12/2, Arbeit, Prüfungsgespräch, Gesamtleistung mit Hinweisen (§ 44 GSO)', true)}${opt('semDossier', 'Betreuungsdokumentation', 'Je Schüler: Thema, alle Termine mit Protokoll, Abgabe, Bewertung – eine Seite pro Person')}${opt('semBwA', 'Bewertungsbögen Seminararbeit', 'Je Person: Bereiche nach ISB (Anlage 5a) mit Einschätzung, Anmerkungen, Punkten')}${opt('semBwP', 'Bewertungsbögen Prüfungsgespräch', 'Je Person: fünf Kompetenzen nach ISB mit Punkten und Anmerkungen')}${opt('semPg', 'Terminliste Prüfungsgespräche', 'Tag, Uhrzeit, Name und Thema – nach Tagen geordnet')}${opt('semBlankA', 'Leerer Bewertungsbogen Seminararbeit', 'Zum Ausfüllen von Hand')}${opt('semBlankP', 'Leerer Bewertungsbogen Prüfungsgespräch', 'Zum Ausfüllen von Hand')}</div>` : ''}
     <p class="hint">Einzelne Leistungsnachweise druckst du über den Spaltenkopf in der Tabelle, einzelne Schüler über ihren Namen.</p>` });
-  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(({ course: modelCourse, transfer: modelTransfer, students: modelStudentsAll, semOverview: modelSemOverview, semResults: modelSemResults, semDossier: modelSemDossierAll }[what])(c), kind); });
+  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(({ course: modelCourse, transfer: modelTransfer, students: modelStudentsAll, semOverview: modelSemOverview, semResults: modelSemResults, semDossier: modelSemDossierAll, semBwA: modelSemBwAAll, semBwP: modelSemBwPAll, semPg: modelSemPgPlan, semBlankA: x => modelSemBwA(x, { id: '', name: '' }, true), semBlankP: x => modelSemBwP(x, { id: '', name: '' }, true) }[what])(c), kind); });
 }
 
 /* ======================================================================
@@ -3213,6 +3418,9 @@ function helpSheet() {
     <p><b>Sport in Q12/13</b> (§ 29 Abs. 5 GSO): Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3. Praktische Leistungen trägst du als „Praktische Leistung“ ein – Libretto zählt sie doppelt. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an (Schulaufgabe + kleine LN); beide Punktzahlen zählen 1 : 1.</p>
     <p><b>Kunst und Musik als Leistungsfach</b> (§ 29 Abs. 3 und 4 GSO): Halbjahresleistung = Durchschnitt aus Schulaufgabe, <b>künstlerischem Projekt</b> bzw. <b>praktischer Prüfung</b> und dem Durchschnitt der kleinen LN. Dafür gibt es in diesen Kursen die eigenen Arten „Künstlerisches Projekt“ und „Praktische Prüfung“.</p>
     <p><b>W-Seminar:</b> Kurs der Jgst. 12 oder 13, „Art des Kurses“ W-Seminar (oder Fach „W-Seminar“). Reiter 12/1, 12/2, Seminararbeit und Übersicht; Klick auf einen Namen öffnet die <b>Betreuungskarte</b> mit Thema, Terminen und Protokoll (Besprochen, Vereinbart, nächster Termin, unterschrieben), Abgabe mit Fristverlängerung und Bewertung. Dateien (Exposé, Gliederung, Arbeit) hängst du an den Termin – verschlüsselt gespeichert und mitgesichert. Ausdrucke: Betreuungsprotokoll, Betreuungsdokumentation, Übersicht der Seminararbeiten, Ergebnisliste. Über Zulassung, Fristverlängerung und Rücktritt entscheidet die Schule.</p>
+    <p><b>Bewertungsbögen (W-Seminar):</b> In der Betreuungskarte öffnen „Bewertungsbogen Seminararbeit“ und „Bewertungsbogen Prüfungsgespräch“ die Raster nach dem ISB-Material: die Arbeit nach Form, Sprache, Methode und Inhalt (Gewichtung 10/20/30/40 %, Einschätzung ++ bis ––, auf Wunsch Punkte je Bereich), das Prüfungsgespräch nach fünf Kompetenzen (Fach-, Argumentations-, Methoden- und Wissenschafts-, Darstellungs-, Reflexions- und Transferkompetenz) mit Punkten je Kompetenz. Libretto rechnet daraus einen <b>Vorschlag</b> (gewichteter Durchschnitt, gerundet) – die Punkte setzt du fest. Kriterien und Gewichte lassen sich je Kurs anpassen. Ausdruck als PDF oder Word, auch als leerer Bogen zum Ausfüllen von Hand. Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO; KMS vom 02.02.2026), ein freier Kurzvortrag zum Einstieg ist möglich.</p>
+    <p><b>Beratungsgespräch:</b> Als Art „Beratungsgespräch“ gibt es die Felder des ISB-Feedbackbogens: bisher erledigt, Schwierigkeiten und Fragen, Rückmeldung, nächste Schritte, Zielvereinbarung, KI-Einsatz. Die Zielvereinbarung des letzten Gesprächs steht oben, die Leitfragen zum Halbjahr sind aufklappbar. Ausdruck mit zwei Unterschriften.</p>
+    <p><b>Prüfungsgespräche planen:</b> Im Reiter „Seminararbeit“ → „Prüfungsgespräche …“ trägst du Tag und Uhrzeit ein oder lässt freie Plätze automatisch füllen (Dauer, Pause, Gespräche je Tag, nur Schultage). Die Terminliste lässt sich mit oder ohne Themen drucken.</p>
     <p><b>P-Seminar</b> (Jgst. 11): ohne Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge. <b>Profilfächer</b> in 12/13 als normaler Kurs; bei fremdsprachiger Konversation heißt die „Schulaufgabe“ Konversationsübung (§ 22 Abs. 3 GSO).</p>`],
   ['sonder', 'Nachtermin, Krankheit, Abwesenheit, Nachteilsausgleich', 'Sonderfälle', `
     <p><b>Nachtermin:</b> ${kbd('E')} eintragen; die Übersicht und der Kalender listen offene Nachtermine. Die Note des Nachtermins trägst du später in dieselbe Zelle ein.</p>
@@ -3433,7 +3641,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
+const NEW_IN = 'Neu in 1.0.7: W-Seminar mit Bewertungsbögen nach ISB (Seminararbeit und Prüfungsgespräch, auch als leerer Bogen), Beratungsgespräch mit Zielvereinbarung, Terminliste der Prüfungsgespräche, Kurztitel fürs Abiturzeugnis · „Prüfungsgespräch“ wie in der GSO 2026 · Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite · Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();
