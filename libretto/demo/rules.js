@@ -42,7 +42,7 @@
 
   /* ---------- Fächer ---------- */
   const LANGS = ['Englisch', 'Französisch', 'Italienisch', 'Latein', 'Spanisch', 'Griechisch', 'Russisch', 'Chinesisch', 'Tschechisch', 'Türkisch', 'Japanisch', 'Polnisch', 'Portugiesisch', 'Arabisch'];
-  const SUBJECTS = ['Deutsch', 'Mathematik', ...LANGS.slice(0, 7), 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Natur und Technik', 'Geschichte', 'Geographie', 'Politik und Gesellschaft', 'Wirtschaft und Recht', 'Religionslehre (ev.)', 'Religionslehre (kath.)', 'Ethik', 'Kunst', 'Musik', 'Sport', 'Wirtschaftsinformatik', 'Sozialkunde', 'W-Seminar', 'P-Seminar'];
+  const SUBJECTS = ['Deutsch', 'Mathematik', ...LANGS.slice(0, 7), 'Biologie', 'Chemie', 'Physik', 'Informatik', 'Natur und Technik', 'Geschichte', 'Geographie', 'Politik und Gesellschaft', 'Wirtschaft und Recht', 'Religionslehre (ev.)', 'Religionslehre (kath.)', 'Ethik', 'Kunst', 'Musik', 'Sport', 'Wirtschaftsinformatik', 'Sozialkunde'];
   const isLang = s => LANGS.some(l => (s || '').toLowerCase().startsWith(l.toLowerCase()));
   /* moderne Fremdsprachen (ohne Latein und Griechisch): nur dort gibt es Schreibaufgabe/Sprachmittlung mit Inhalt und Sprache und die Prüfungsteile der Oberstufe */
   const isModernLang = s => isLang(s) && !/^(latein|griechisch)/i.test((s || '').trim());

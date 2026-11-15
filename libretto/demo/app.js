@@ -366,6 +366,12 @@ function courseFill(x) {
   });
   return { have, all };
 }
+/* Gruppen der Kursliste: Oberstufe = Jgst. 11–13 (G9); Seminare (W und P) eigens */
+const COURSE_GROUPS = [['u', 'Unter- und Mittelstufe'], ['o', 'Oberstufe'], ['s', 'Seminare']];
+const courseGroup = x => (x.seminar || isPSem(x) ? 's' : +x.grade >= 11 ? 'o' : 'u');
+const courseBadge = x => (x.seminar ? 'WS' : isPSem(x) ? 'PS' : upper(x) ? 'Q' + x.grade : String(x.grade));
+const courseSub = x => { const f = (x.seminar ? semLeit(x) : x.subject || '').trim() || 'Ohne Fach';
+  return x.seminar ? `${f} · Abitur ${semAbi(x)}` : `${f} · ${x.students.length} Schüler`; };
 function courseListHtml(cv) {
   const warnDot = x => R.courseWarnings(x).length > 0 ? '<span class="warnDot" title="Hinweis"></span>' : '';
   const hint = 'Doppelklick: Kurs bearbeiten · Rechtsklick: Menü';
@@ -385,10 +391,8 @@ function courseListHtml(cv) {
       return `<button class="citem card" ${attrs(x)}><span class="t">${esc(x.name)}${warnDot(x)}<small>${esc(subj(x))} · ${x.students.length} Schüler</small></span><span class="fill" title="${tip}"><i style="width:${p}%"></i></span></button>`;
     }).join('') + `</div>`;
   }
-  const grp = [['Unter- und Mittelstufe', x => !upper(x)], ['Oberstufe', x => upper(x) && !x.seminar], ['Seminare', x => !!x.seminar]];
-  return grp.map(([g, f]) => { const cs = D.courses.filter(f).sort(courseCmp); return cs.length ? `<div class="cgroup">${g}</div>` + cs.map(x => {
-    const b = x.seminar ? 'WS' : upper(x) ? 'Q' + x.grade : String(x.grade);
-    return `<button class="citem stripe" ${attrs(x)}><span class="badge neu">${esc(b)}</span><span class="t">${esc(x.name)}<small>${esc(subj(x))}${x.seminar ? ' · Abitur ' + semAbi(x) : ''} · ${x.students.length} Schüler</small></span>${warnDot(x)}</button>`;
+  return COURSE_GROUPS.map(([k, g]) => { const cs = D.courses.filter(x => courseGroup(x) === k).sort(courseCmp); return cs.length ? `<div class="cgroup">${g}</div>` + cs.map(x => {
+    return `<button class="citem stripe" ${attrs(x)}><span class="badge neu">${esc(courseBadge(x))}</span><span class="t">${esc(x.name)}<small>${esc(courseSub(x))}</small></span>${warnDot(x)}</button>`;
   }).join('') : ''; }).join('');
 }
 function renderGrades() {
@@ -481,7 +485,7 @@ function courseView(c) {
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}${chips}</div>`;
   }
   const semT = isSemTab(c);
-  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : (upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe') + ' ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}${(() => { const L = courseDeadlines(c); if (!L.length) return ''; const x = nextDeadlines(c)[0]; return ` · <button type="button" class="dlChip ${x && dlDays(x) <= 7 ? 'soon' : ''}" data-act="courseDeadlines" title="Alle Fristen dieses Kurses">${x ? 'Nächste Frist: ' + esc(dlTitle(x)) + ', ' + sdate(dlDue(x)) : 'Fristen'}</button>`; })()}</small></h2>
+  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : c.psem ? 'P-Seminar · Oberstufe, Jahrgangsstufe ' + c.grade : upper(c) ? 'Qualifikationsphase ' + c.grade : +c.grade === 11 ? 'Oberstufe · Jahrgangsstufe 11' : 'Jahrgangsstufe ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}${(() => { const L = courseDeadlines(c); if (!L.length) return ''; const x = nextDeadlines(c)[0]; return ` · <button type="button" class="dlChip ${x && dlDays(x) <= 7 ? 'soon' : ''}" data-act="courseDeadlines" title="Alle Fristen dieses Kurses">${x ? 'Nächste Frist: ' + esc(dlTitle(x)) + ', ' + sdate(dlDue(x)) : 'Fristen'}</button>`; })()}</small></h2>
       <div class="headBtns">${semT ? '' : '<button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button>'}<button class="mini" data-act="editCourse">Kurs &amp; Schüler</button>${semT ? '' : '<button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button>'}<button class="mini" data-act="print">Drucken &amp; Export</button><button class="mini" data-act="rules" title="Regeln und Kürzel für diesen Kurs">Regeln</button></div></div>
     ${notices.some(Boolean) ? `<div class="notices">${notices.filter(Boolean).join('')}</div>` : ''}${scope}
     ${sorted.length && semT ? semView(c) : sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
@@ -776,7 +780,7 @@ function courseSheet(c, pre) {
   const body = `
     <div class="grid3">
       ${field('Klasse / Kurs', `<input type="text" id="cName" value="${esc(c.name)}" placeholder="z. B. 9F oder Q13 E1" required>`)}
-      ${field('Fach', `<input type="text" id="cSubj" list="subjList" value="${esc(c.subject)}" placeholder="z. B. Englisch" required><datalist id="subjList">${R.SUBJECTS.map(s => `<option>${esc(s)}</option>`).join('')}</datalist>`)}
+      ${field(c.seminar || isPSem(c) ? 'Leitfach' : 'Fach', `<input type="text" id="cSubj" value="${esc(isWSemName(c.subject) ? ((c.sem && c.sem.leit) || '') : /^p[\s-]?seminar$/i.test(String(c.subject || '').trim()) ? '' : c.subject)}" placeholder="z. B. Englisch" autocomplete="off" required>`)}
       ${field('Jahrgangsstufe', `<select id="cGrade">${[5, 6, 7, 8, 9, 10, 11, 12, 13].map(g => `<option ${+c.grade === g ? 'selected' : ''}>${g}</option>`).join('')}</select>`)}
     </div>
     <div class="field"><span>Farbe des Fachs</span><div class="swatches" id="cHue"><button type="button" class="swAuto" data-hue="" aria-pressed="${!hueSel}">automatisch</button>${HUES.map(h => `<button type="button" class="swatch" data-hue="${h}" style="--hue:var(${h})" title="${HUE_NAMES[h]}" aria-label="${HUE_NAMES[h]}" aria-pressed="${hueSel === h}"></button>`).join('')}</div></div>
@@ -786,7 +790,7 @@ function courseSheet(c, pre) {
         ${field('Geplante Schulaufgaben', `<input type="number" min="0" max="8" id="cPlanned" value="${esc(c.saPlanned)}" placeholder="z. B. 3">`)}
         ${field('Verhältnis groß : klein', `<select id="cRatio"><option value="auto">automatisch (§ 28 GSO)</option><option value="1:1" ${c.ratio === '1:1' ? 'selected' : ''}>1 : 1</option><option value="2:1" ${c.ratio === '2:1' ? 'selected' : ''}>2 : 1</option></select>`)}
       </div>
-      <div class="rows">${sw('cHasSA', c.hasSA, 'Fach mit Schulaufgaben')}</div>
+      <div class="rows">${sw('cHasSA', c.hasSA, 'Fach mit Schulaufgaben')}<div id="psemRow">${sw('cPsem', isPSem(c), 'P-Seminar (Projektseminar) – oben das Leitfach eintragen')}</div></div>
       <p class="hint" id="pHint" hidden><b>P-Seminar (Jahrgangsstufe 11):</b> keine Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge (§ 21 Abs. 2 GSO). Die Note gilt als Jahresfortgangsnote (§ 20 GSO) – Libretto rechnet sie wie ein Fach ohne Schulaufgaben.</p>
       <p class="hint">§ 28 GSO: bei zwei Schulaufgaben zählen große und kleine Leistungsnachweise 1:1, bei mehr als zwei 2:1. Mindestzahlen nach § 22 Abs. 1 GSO: Deutsch 3, Mathematik 4 (Jgst. 5–7) bzw. 3, Fremdsprachen 3 bzw. 4 ab vier Wochenstunden, übrige Fächer mit Schulaufgaben 2.</p>
     </div>
@@ -798,7 +802,6 @@ function courseSheet(c, pre) {
       <div id="semOpts">
         <div class="grid3">
           ${field('Beginn der Jahrgangsstufe 12', `<select id="cSemStart">${[-2, -1, 0, 1].map(k => yearStart() + k).map(y => `<option value="${y}" ${+semStart0 === y ? 'selected' : ''}>Schuljahr ${y}/${String((y + 1) % 100).padStart(2, '0')} · Abitur ${y + 2}</option>`).join('')}</select>`)}
-          ${field('Leitfach (optional)', `<input type="text" id="cSemLeit" list="subjList" value="${esc(semC.leit || '')}" placeholder="z. B. Englisch">`)}
           ${field('Rahmenthema (optional)', `<input type="text" id="cSemRahmen" value="${esc(semC.rahmen || '')}">`)}
         </div>
         <div class="grid3">
@@ -829,17 +832,18 @@ function courseSheet(c, pre) {
   const { dlg, close } = sheet({ title: isNew ? 'Neuer Kurs' : 'Kurs bearbeiten', wide: true, body, onOk: d => {
     const g = +d.querySelector('#cGrade').value;
     c.name = d.querySelector('#cName').value.trim(); c.subject = d.querySelector('#cSubj').value.trim(); c.grade = g;
-    if (!c.name || !c.subject) { toast('Bitte Klasse/Kurs und Fach angeben'); return false; }
+    if (!c.name || !c.subject) { toast(d.querySelector('#cKind').value === 'w' && g >= 12 || d.querySelector('#cPsem').checked ? 'Bitte Kurs und Leitfach angeben' : 'Bitte Klasse/Kurs und Fach angeben'); return false; }
     c.hours = d.querySelector('#cHours').value; c.saPlanned = d.querySelector('#cPlanned').value; c.ratio = d.querySelector('#cRatio').value;
     const kind = d.querySelector('#cKind').value;
     if (g >= 12) { c.lf = kind === 'lf'; c.seminar = kind === 'w'; } else c.seminar = false;
-    c.hasSA = g >= 12 ? !c.seminar : d.querySelector('#cHasSA').checked;
-    if (R.isModernLang(c.subject) && g >= 11 && d.querySelector('#cLate').checked) c.late = true; else delete c.late;
+    if (g === 11 && d.querySelector('#cPsem').checked) c.psem = true; else delete c.psem;
+    c.hasSA = g >= 12 ? !c.seminar : (c.psem || isPSem(c)) ? false : d.querySelector('#cHasSA').checked;
+    if (R.isModernLang(c.subject) && g >= 11 && !c.seminar && !c.psem && d.querySelector('#cLate').checked) c.late = true; else delete c.late;
     if (c.seminar) {   /* W-Seminar: Fristen und Angaben; vorhandene Betreuungsdaten (c.sem.st) bleiben unberührt */
       c.sem = c.sem || {}; c.sem.st = c.sem.st || {};
       c.sem.start = +d.querySelector('#cSemStart').value;
       const setS = (k, sel) => { const v = d.querySelector(sel).value.trim(); if (v) c.sem[k] = v; else delete c.sem[k]; };
-      setS('leit', '#cSemLeit'); setS('rahmen', '#cSemRahmen'); setS('themeDue', '#cSemThema'); setS('deadline', '#cSemDue'); setS('deadlineTime', '#cSemTime');
+      c.sem.leit = c.subject; setS('rahmen', '#cSemRahmen'); setS('themeDue', '#cSemThema'); setS('deadline', '#cSemDue'); setS('deadlineTime', '#cSemTime');
     }
     c.smallMode = d.querySelector('#cSmall').value;
     D.settings.hues = D.settings.hues || {}; if (hueSel) D.settings.hues[subjKey(c.subject)] = hueSel; else delete D.settings.hues[subjKey(c.subject)];
@@ -868,20 +872,23 @@ function courseSheet(c, pre) {
   if (pre && pre.next) dlg.addEventListener('close', pre.next, { once: true });
   const upd = () => { const g = +dlg.querySelector('#cGrade').value; dlg.querySelector('#lowerOpts').hidden = g >= 12; dlg.querySelector('#upperOpts').hidden = g < 12; dlg.querySelector('#areaW').hidden = dlg.querySelector('#cSmall').value !== 'areas';
     const w = dlg.querySelector('#cKind').value === 'w'; dlg.querySelector('#semOpts').hidden = !w; dlg.querySelector('#kindHintN').hidden = w;
-    dlg.querySelector('#pHint').hidden = !isPSem({ subject: dlg.querySelector('#cSubj').value });
+    const ps = g === 11 && dlg.querySelector('#cPsem').checked; dlg.querySelector('#psemRow').hidden = g !== 11;
+    dlg.querySelector('#pHint').hidden = !ps; if (ps) dlg.querySelector('#cHasSA').checked = false;
+    dlg.querySelector('#cSubj').closest('.field').querySelector('span').textContent = (w && g >= 12) || ps ? 'Leitfach' : 'Fach';
     const sj = dlg.querySelector('#cSubj').value.trim();
-    dlg.querySelector('#lateRow').hidden = !(R.isModernLang(sj) && g >= 11);
+    dlg.querySelector('#lateRow').hidden = !(R.isModernLang(sj) && g >= 11) || (w && g >= 12) || ps;
     const fm = g >= 12 && !w ? R.upperFormula({ subject: sj, lf: dlg.querySelector('#cKind').value === 'lf' }) : null, fh = dlg.querySelector('#fmHint');
     fh.hidden = !fm;
     fh.innerHTML = fm === 'sport' ? '<b>Sport (§ 29 Abs. 5 GSO):</b> Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3, gerundet. Praktische Leistungen trägst du als Art „Praktische Leistung“ ein. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an; beide Punktzahlen zählen dann 1 : 1.'
       : fm === 'kunst' ? '<b>Leistungsfach Kunst (§ 29 Abs. 3 GSO):</b> Halbjahresleistung = Durchschnitt aus Schulaufgabe, künstlerischem Projekt (eigene Art) und Durchschnitt der kleinen LN, gerundet.'
       : fm === 'musik' ? '<b>Leistungsfach Musik (§ 29 Abs. 4 GSO):</b> Halbjahresleistung = Durchschnitt aus Schulaufgabe, praktischer Prüfung (eigene Art) und Durchschnitt der kleinen LN, gerundet.' : ''; };
-  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; dlg.querySelector('#cKind').onchange = upd; dlg.querySelector('#cSubj').addEventListener('input', upd); upd();
+  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; dlg.querySelector('#cKind').onchange = upd; dlg.querySelector('#cPsem').onchange = upd; dlg.querySelector('#cSubj').addEventListener('input', upd);
+  combo(dlg.querySelector('#cSubj'), () => R.SUBJECTS); upd();
   /* Fach „W-Seminar“ / „P-Seminar“: passende Einstellungen vorschlagen */
   dlg.querySelector('#cSubj').addEventListener('change', () => {
     const v = dlg.querySelector('#cSubj').value, gs = dlg.querySelector('#cGrade');
-    if (isWSemName(v)) { if (+gs.value < 12) gs.value = '12'; dlg.querySelector('#cKind').value = 'w'; }
-    if (isPSem({ subject: v })) { if (isNew && +gs.value !== 11) gs.value = '11'; dlg.querySelector('#cHasSA').checked = false; }
+    if (isWSemName(v)) { if (+gs.value < 12) gs.value = '12'; dlg.querySelector('#cKind').value = 'w'; dlg.querySelector('#cSubj').value = ''; toast('W-Seminar ist als „Art des Kurses“ eingestellt – bitte noch das Leitfach eintragen'); }
+    if (/^p[\s-]?seminar$/i.test(v.trim())) { gs.value = '11'; dlg.querySelector('#cPsem').checked = true; dlg.querySelector('#cSubj').value = ''; toast('P-Seminar ist eingestellt – bitte noch das Leitfach eintragen'); }
     upd();
   });
   const sugTxt = () => { const x = semDeadlineSuggest(+dlg.querySelector('#cSemStart').value); dlg.querySelector('#cSemSugTxt').textContent = x ? 'laut Ferienkalender Bayern: ' + wdate(x) : ''; return x; };
@@ -997,7 +1004,7 @@ function assessmentSheet(c, a) {
   D.settings.keyPresets = D.settings.keyPresets || {};
   /* Moderne Fremdsprachen: ISB-Leitfaden „Leistungsnachweise in der Profil- und Leistungsstufe“ (April 2025): bei BE-Bewertung Schwellenwert
      „ausreichend“ 50 %, „mangelhaft“ 33 % (spät beginnende FS und Jgst. 5–11: ausreichend zwischen 50 und 60 %, mangelhaft 33 %) */
-  const mfs = R.isModernLang(c.subject);
+  const mfs = R.isModernLang(ruleSubj(c));
   const defPre = up ? (mfs ? { q4: 50, p1: 33, step: 0.5, preset: 'custom' } : { q4: 40, p1: 20, step: 0.5 }) : { p4: 50, p5: mfs ? 33 : 25, step: 0.5 };
   let pre = (a.key && a.key.anchors) || D.settings.keyPresets[pKey] || defPre;
   /* fehlende Anker (z. B. bei KMK-Schlüsseln) mit den Vorschlägen auffüllen – nie eine vorhandene Angabe ersetzen */
@@ -1013,8 +1020,8 @@ function assessmentSheet(c, a) {
   let tasks = (a.tasks || []).map(t => ({ ...t })), manualKey = false;
   /* Oberstufe: Bewertung nach Prüfungsteilen (ISB-Rechentabelle) – Vorlage je Fach gemerkt */
   D.settings.partDefaults = D.settings.partDefaults || {};
-  const ptDef = !!(up && isNew && R.isModernLang(c.subject) && !c.late && D.settings.partDefaults[pKey]);
-  const altR = R.altRule(c.subject, c.grade);
+  const ptDef = !!(up && isNew && R.isModernLang(ruleSubj(c)) && !c.late && D.settings.partDefaults[pKey]);
+  const altR = R.altRule(ruleSubj(c), c.grade);
   const altOn = !!altR && (R.byParts(a) ? !!a.alt : isNew && a.type === 'sa');
   let parts = (a.parts && a.parts.length ? a.parts : (D.settings.partDefaults[pKey] || R.PARTS_ABI())).map(p => ({ ...p, id: p.id || uid() }));
   let pctArr = up ? (a.key && a.key.pct15) || (pre.q4 == null && pre.p5 != null ? R.pct15Old(+pre.p5, +pre.p1 || 0) : R.pct15FromAnchors(R.anchor4(pre), pre.p1)) : (a.key && a.key.pct) || R.pctFromAnchors(pre.p4, pre.p5);
@@ -1039,7 +1046,7 @@ function assessmentSheet(c, a) {
     ${altR ? `<div class="rows">${sw('aAlt', altOn, `Zweigeteilte Schulaufgabe: Übersetzung und Aufgabenteil (Gewichtung ${altR.w[0]} : ${altR.w[1]})`)}</div>
       <p class="hint" id="altHint" style="margin:4px 0 8px">Nach den Richtlinien des Kultusministeriums (KMS vom 31.07.2023, Anlagen 3 und 4): Beide Teile werden getrennt ${up ? 'in Notenpunkten' : 'mit ganzen Noten'} bewertet, die Gesamtnote ist der gewichtete Durchschnitt – bei n,5 die bessere Note.${altR.ue5 ? ' „Ausreichend“ gibt es nur, wenn die Übersetzung mindestens „mangelhaft“ ist.' : ''}${altR.g11 ? ' „Befriedigend“ gibt es nur, wenn kein Teil „ungenügend“ ist.' : ''}${altR.up ? ' Hat ein Teil 0 Punkte, gibt es höchstens 6 Punkte (Tabelle der Anlage 2).' : ''} Für eine Interpretationsschulaufgabe oder Ersatzform schaltest du das aus.</p>
       <div class="panelBtns" id="altBtns"><button type="button" class="mini accent" id="altEnter">Sichern und Teilnoten eintragen …</button></div>` : ''}
-    ${up && ((R.isModernLang(c.subject) && !c.late) || (R.byParts(a) && !a.alt)) ? `<div class="rows">${sw('aParts', R.byParts(a) || ptDef, 'Nach Prüfungsteilen bewerten (Oberstufe, moderne Fremdsprachen: Hörverstehen in BE, Schreiben und Sprachmittlung mit Inhalt und Sprache)')}</div>
+    ${up && ((R.isModernLang(ruleSubj(c)) && !c.late) || (R.byParts(a) && !a.alt)) ? `<div class="rows">${sw('aParts', R.byParts(a) || ptDef, 'Nach Prüfungsteilen bewerten (Q12/Q13, moderne Fremdsprachen: Hörverstehen in BE, Schreiben und Sprachmittlung mit Inhalt und Sprache)')}</div>
     <div id="partBox" hidden><p class="hint" style="margin:6px 0 8px">Wie in der Rechentabelle des ISB: Teile mit <b>BE</b> (z. B. Hörverstehen) werden über den Lösungsgrad in Notenpunkte umgerechnet (95 % = 15 … 20 % = 1). Bei <b>Inhalt + Sprache</b> trägst du je 0–15 Notenpunkte nach den Bewertungsrastern ein; gerechnet wird 40 % Inhalt + 60 % Sprache, und ist eins davon 0 Punkte, gibt es höchstens 3 Punkte (Sperrklausel). Das Ergebnis ist der nach den Anteilen gewichtete Durchschnitt, gerundet.</p>
       <div class="prowH"><span>Prüfungsteil</span><span>Bewertung</span><span>max. BE</span><span>Anteil</span><span></span></div><div id="partRows"></div>
       <div class="panelBtns"><button type="button" class="mini" id="pAdd">+ Prüfungsteil</button><button type="button" class="mini" id="pAbi" title="Abitur: Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %">Wie im Abitur (20 / 55 / 25 %)</button><button type="button" class="mini accent" id="pEnter">Sichern und Teilnoten eintragen …</button></div>
@@ -1152,6 +1159,8 @@ function assessmentSheet(c, a) {
     return true;
   };
   const { dlg, close } = sheet({ title: isNew ? 'Neuer Leistungsnachweis' : (a.title || R.TYPES[a.type].label), wide: true, body, onOk: d => commit(d) });
+  /* Seminare: übliche Formen kleiner Leistungsnachweise als Vorschläge (ISB-Leitfaden W-Seminar) */
+  if (c.seminar || isPSem(c)) combo(dlg.querySelector('#aTitle'), () => c.seminar ? LN_W : LN_P, { openOnFocus: false });
   const upd = () => {
     const t = dlg.querySelector('#aType').value; const big = t === 'sa' || (t === 'jst' && dlg.querySelector('#aCount').value === 'big');
     dlg.querySelector('#jstOpt').hidden = t !== 'jst'; dlg.querySelector('#bigOpt').hidden = !big; dlg.querySelector('#smallOpt').hidden = big;
@@ -2005,7 +2014,42 @@ function studentSheet(c, s) {
      D.attTrash = { Datei-Kennung: Datum der Entfernung }   (aufgeräumt wird erst nach 120 Tagen)
    ====================================================================== */
 const SEM_TAB = 'W';
-const isPSem = c => /^(p[\s-]?seminar|projekt-?seminar)/i.test(String(c.subject || '').trim());
+const isPSem = c => !!(c && c.psem) || /^(p[\s-]?seminar|projekt-?seminar)/i.test(String((c && c.subject) || '').trim());
+/* Auswahlfeld mit eigener Liste (statt der Browser-Vorschlagsliste): tippen filtert, Pfeiltasten + Enter wählen, Esc schließt */
+function combo(input, itemsFn, opts = {}) {
+  const wrap = document.createElement('div'); wrap.className = 'combo'; input.parentNode.insertBefore(wrap, input); wrap.appendChild(input);
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'comboBtn'; btn.tabIndex = -1; btn.setAttribute('aria-label', 'Liste öffnen');
+  btn.innerHTML = '<svg viewBox="0 0 12 8" width="12" height="8" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  wrap.appendChild(btn);
+  const list = document.createElement('div'); list.className = 'comboList'; list.setAttribute('role', 'listbox'); list.hidden = true; wrap.appendChild(list);
+  input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.autocomplete = 'off';
+  let act = -1, shown = [];
+  const draw = all => { const q = input.value.trim().toLowerCase(), items = itemsFn();
+    shown = all || !q || items.some(x => x.toLowerCase() === q) ? items : items.filter(x => x.toLowerCase().includes(q));
+    if (!shown.length) { close(); return; }
+    act = Math.max(0, shown.findIndex(x => x.toLowerCase() === q));
+    list.innerHTML = shown.map((x, i) => `<div class="comboItem ${i === act ? 'act' : ''} ${x.toLowerCase() === q ? 'sel' : ''}" role="option" data-i="${i}">${esc(x)}</div>`).join('');
+    list.hidden = false; wrap.classList.add('open'); const a = list.querySelector('.act'); if (a) a.scrollIntoView({ block: 'nearest' }); };
+  const close = () => { list.hidden = true; wrap.classList.remove('open'); act = -1; };
+  const pick = i => { if (shown[i] == null) return; input.value = shown[i]; close(); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); };
+  const mark = () => $$('.comboItem', list).forEach((el, i) => { el.classList.toggle('act', i === act); if (i === act) el.scrollIntoView({ block: 'nearest' }); });
+  if (opts.openOnFocus !== false) input.addEventListener('focus', () => draw(true));
+  input.addEventListener('click', () => { if (list.hidden) draw(true); });
+  input.addEventListener('input', e => { if (e.isTrusted !== false && document.activeElement === input) draw(false); });
+  input.addEventListener('blur', () => setTimeout(close, 120));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (list.hidden) { draw(true); return; } act = (act + (e.key === 'ArrowDown' ? 1 : -1) + shown.length) % shown.length; mark(); }
+    else if (e.key === 'Enter' && !list.hidden && act >= 0) { e.preventDefault(); e.stopPropagation(); pick(act); }
+    else if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'Tab') close(); });
+  list.addEventListener('mousedown', e => { e.preventDefault(); const it = e.target.closest('.comboItem'); if (it) pick(+it.dataset.i); });
+  btn.addEventListener('mousedown', e => { e.preventDefault(); if (list.hidden) { input.focus(); draw(true); } else close(); });
+  return { close };
+}
+const LN_W = ['Exposé', 'Gliederungsentwurf', 'Zwischenbericht', 'Arbeitsplan zur Seminararbeit', 'Exzerpt', 'Recherche-Protokoll', 'Protokoll einer Seminarsitzung', 'Analyse einer Quelle', 'Zwischenpräsentation', 'Kurzreferat', 'Glossar', 'Interview', 'Materialmappe', 'Experiment', 'Organisation einer Exkursion'];
+const LN_P = ['Projektbeitrag', 'Präsentation', 'Projektdokumentation', 'Portfolio', 'Organisation und Planung', 'Kurzreferat', 'Protokoll'];
+/* Fachregeln (moderne Fremdsprachen, Latein …) gelten nicht für Seminare – das Leitfach ist dort nur Angabe */
+const ruleSubj = c => (c.seminar || isPSem(c) ? '' : c.subject);
 const isWSemName = x => /^(w[\s-]?seminar|wissenschaftsprop)/i.test(String(x || '').trim());
 const isSemTab = c => !!(c && c.seminar && UI.term === SEM_TAB);
 const yearStart = () => { const m = /^(\d{4})/.exec(String(D.settings.year || '')); return m ? +m[1] : +R.schoolYearOf().slice(0, 4); };
@@ -2025,8 +2069,9 @@ const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') +
 const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const wdate = d => d ? WD[new Date(d + 'T12:00').getDay()] + ', ' + fdate(d) : '';
 /* Sprache der Arbeit (§ 24 Abs. 1 GSO) nach dem Leitfach */
+const semLeit = c => String((isWSemName(c.subject) ? (c.sem && c.sem.leit) : c.subject) || (c.sem && c.sem.leit) || '').trim();
 function semLangHint(c) {
-  const f = String(semCfg(c).leit || c.subject || '').trim();
+  const f = semLeit(c);
   if (/^englisch/i.test(f)) return 'Leitfach Englisch: Die Seminararbeit wird auf Englisch verfasst, das Prüfungsgespräch auf Englisch geführt (§ 24 GSO).';
   if (R.isLang(f) && !/^(latein|griechisch)/i.test(f)) return `Leitfach ${f}: Die Arbeit wird auf ${f} oder auf Deutsch verfasst; das Prüfungsgespräch wird auf ${f} geführt (§ 24 GSO).`;
   return '';
@@ -2141,6 +2186,9 @@ function semCard(c, s) {
     <div class="subhead">Thema</div>
     ${field('Thema der Seminararbeit', `<textarea id="smThema" rows="2" placeholder="Arbeitstitel – endgültig bis Ende 12/1 (§ 24 Abs. 1 GSO)">${esc(v.thema || '')}</textarea>`)}
     <div class="grid3">${field('Kurztitel fürs Abiturzeugnis (falls nötig)', `<input type="text" id="smKurz" value="${esc(v.kurz || '')}" placeholder="begrenzte Zeichenzahl – laut Schule">`, 'span2')}<div class="field"><span>Zeichen</span><div class="semSum" id="smKurzN" style="font-size:20px">${(v.kurz || '').length}</div></div></div>
+    ${R.isModernLang(semLeit(c)) && !/^englisch/i.test(semLeit(c)) ? `<div class="grid3">${field('Sprache der Arbeit (§ 24 Abs. 1 GSO)', `<select id="smSpr"><option value="">${esc(semLeit(c))}</option><option value="de" ${v.sprache === 'de' ? 'selected' : ''}>Deutsch</option></select>`)}</div>` : ''}
+    <label class="check"><input type="checkbox" id="smWb" ${v.wb ? 'checked' : ''}> <span>Wettbewerbsbeitrag ersetzt die Seminararbeit (§ 24 Abs. 3 GSO)</span></label>
+    <div id="smWbRow" ${v.wb ? '' : 'hidden'}>${field('Wettbewerb', `<input type="text" id="smWbN" value="${esc(v.wbName || '')}" placeholder="vom Staatsministerium als geeignet anerkannt, z. B. Jugend forscht">`)}</div>
     <div class="grid3">${field('Thema festgelegt am', `<input type="date" id="smThemaAm" value="${esc(v.themaAm || '')}">`)}<div class="span2 hint" style="align-self:end;margin-bottom:12px">${esc(lh || 'Das Thema wählt die Schülerin bzw. der Schüler bis Ende 12/1 im Einvernehmen mit der Kursleitung (§ 24 Abs. 1 GSO).')}</div></div>
     <div class="subhead">Betreuungstermine <button type="button" class="mini accent" id="smTmAdd" style="float:right">+ Termin</button></div>
     <div class="tmList" id="smTm">${terminList()}</div>
@@ -2167,11 +2215,13 @@ function semCard(c, s) {
   const q = id => dlg.querySelector(id);
   const refresh = () => { q('#smStats').innerHTML = stats(); q('#smFlags').innerHTML = flags(); };
   const put = (k, val) => { if (READONLY) return; const o = st(); if (val === '' || val === false || val == null) delete o[k]; else o[k] = val; save(); refresh(); };
-  [['#smThema', 'thema'], ['#smKurz', 'kurz'], ['#smPgZ', 'pgZeit'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
+  [['#smThema', 'thema'], ['#smKurz', 'kurz'], ['#smWbN', 'wbName'], ['#smPgZ', 'pgZeit'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
     .forEach(([sel, k]) => { const el = q(sel); el.addEventListener('change', () => put(k, el.value.trim())); });
   q('#smThema').addEventListener('input', () => { if (!READONLY) { const o = st(); const x = q('#smThema').value.trim(); if (x) o.thema = x; else delete o.thema; save(); } });
   q('#smErkl').onchange = () => put('erkl', q('#smErkl').checked);
   q('#smKi').onchange = () => put('kiDoc', q('#smKi').checked);
+  q('#smWb').onchange = () => { put('wb', q('#smWb').checked); q('#smWbRow').hidden = !q('#smWb').checked; };
+  if (q('#smSpr')) q('#smSpr').onchange = () => put('sprache', q('#smSpr').value);
   q('#smExp').onchange = () => put('expose', q('#smExp').checked);
   q('#smKurz').addEventListener('input', () => { q('#smKurzN').textContent = q('#smKurz').value.trim().length; });
   const bwDone = () => { const x = c.seminarPaper[s.id] || {}; q('#smA').value = x.arbeit ?? ''; q('#smP').value = x.gespraech ?? ''; q('#smG').textContent = R.seminarPaper(x.arbeit, x.gespraech) ?? '–';
@@ -2225,7 +2275,7 @@ function modelSemBwP(c, s, blank) {
   const st = blank ? {} : semGet(c, s.id), b = blank ? {} : (st.bwP || {}), sp = blank ? {} : (c.seminarPaper[s.id] || {}), v = bwPVorschlag(c, b);
   const zeit = st.pgZeit ? st.pgZeit + (st.pgBis ? '–' + st.pgBis : '') + ' Uhr' : '';
   return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Bewertung des Prüfungsgesprächs', subtitle: blank ? 'Bewertungsbogen' : s.name, file: fileSafe(`${st.pgAm || todayISO()} Bewertung Prüfungsgespräch ${blank ? 'Vorlage' : s.name} ${c.name}`), meta: semMeta(c),
-    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ['Datum, Uhrzeit', [st.pgAm ? wdate(st.pgAm) : '', zeit].filter(Boolean).join(', ')], ['Form', blank ? '☐ mit freiem Kurzvortrag (höchstens 5 Minuten)     ☐ nur Prüfungsgespräch' : b.vortrag ? 'freier Kurzvortrag (höchstens 5 Minuten) und Prüfungsgespräch' : 'Prüfungsgespräch']] },
+    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ['Datum, Uhrzeit', [st.pgAm ? wdate(st.pgAm) : '', zeit].filter(Boolean).join(', ')], ['Form', (blank ? '☐ mit freiem Kurzvortrag (höchstens 5 Minuten)     ☐ nur Prüfungsgespräch' : b.vortrag ? 'freier Kurzvortrag (höchstens 5 Minuten) und Prüfungsgespräch' : 'Prüfungsgespräch') + (R.isModernLang(semLeit(c)) ? ' – in der Fremdsprache (§ 24 Abs. 2 GSO)' : '')]] },
       { h: 'Bewertung nach Kompetenzen' },
       { crit: { scale: PSCALE, lines: blank ? 2 : 0, items: kritP(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.d, w: (+x.f || 1) !== 1 ? 'Faktor ' + String(x.f).replace('.', ',') : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: pv, note: (b.n || {})[x.k] || '' }; }) } },
       { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Kompetenzen', v: v + ' P.', s: 'gewichteter Durchschnitt, gerundet' }] : []), { l: 'Prüfungsgespräch', v: sp.gespraech === '' || sp.gespraech == null ? (blank ? '____ Punkte' : '–') : sp.gespraech + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
@@ -2239,7 +2289,9 @@ function modelSemBwA(c, s, blank) {
     blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ...(st.kurz || blank ? [['Kurztitel (Abiturzeugnis)', blank ? ' ' : st.kurz]] : []),
         ['Abgabe', blank ? ' ' : st.abgabe ? `${wdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}${inTime === true ? ' – termingerecht' : inTime === false ? ' – nach der Frist' : ''}` : 'noch nicht abgegeben'],
         ['Selbstständig verfasst', blank ? '☐ ja – nur mithilfe der angegebenen Quellen     ☐ nein' : b.selbst ? 'ja' + (st.erkl ? ' (Erklärung liegt vor)' : '') : st.erkl ? 'Erklärung liegt vor' : '–'],
-        ...(st.kiDoc ? [['Dokumentation der KI-Nutzung', 'abgegeben']] : [])] },
+        ...(st.kiDoc ? [['Dokumentation der KI-Nutzung', 'abgegeben']] : []),
+        ...(R.isModernLang(semLeit(c)) && !blank ? [['Sprache der Arbeit', st.sprache === 'de' ? 'Deutsch' : semLeit(c)]] : []),
+        ...(st.wb ? [['Wettbewerbsbeitrag (§ 24 Abs. 3 GSO)', st.wbName || 'ja']] : [])] },
       { h: 'Bewertung nach Bereichen' },
       { crit: { scale: EINSCH, lines: blank ? 2 : 0, items: kritA(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.d, w: x.w ? x.w + ' %' : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: (b.e || {})[x.k], note: (b.n || {})[x.k] || '' }; }) } },
       { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Bereichen', v: v + ' P.', s: 'nach Gewichtung, gerundet' }] : []), { l: 'Seminararbeit', v: sp.arbeit === '' || sp.arbeit == null ? (blank ? '____ Punkte' : '–') : sp.arbeit + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
@@ -2417,7 +2469,7 @@ function semTerminSheet(c, s, t0, done) {
 }
 
 /* ---------- Ausdrucke W-Seminar ---------- */
-function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.subject}`], ...(cf.leit && cf.leit !== c.subject ? [['Leitfach', cf.leit]] : []), ...(cf.rahmen ? [['Rahmenthema', cf.rahmen]] : []), ['Abiturjahrgang', String(semAbi(c))], ...(D.settings.teacher ? [['Kursleitung', D.settings.teacher]] : [])]; }
+function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.subject}`], ...(isWSemName(c.subject) && cf.leit ? [['Leitfach', cf.leit]] : []), ...(cf.rahmen ? [['Rahmenthema', cf.rahmen]] : []), ['Abiturjahrgang', String(semAbi(c))], ...(D.settings.teacher ? [['Kursleitung', D.settings.teacher]] : [])]; }
 const filesTxt = list => (list || []).map(f => f.name).join('\n');
 function modelSemProtocol(c, s, t) {
   const st = semGet(c, s.id);
@@ -2530,7 +2582,7 @@ function transferSheet(c) {
 }
 
 function scopeLabel(c) { if (isSemTab(c)) return 'W-Seminar · Seminararbeit'; if (upper(c)) { const t = scopeOf(c).term; return t ? 'Halbjahr ' + t : c.seminar ? 'W-Seminar · Übersicht' : 'Qualifikationsphase ' + c.grade; } return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
-function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', c.seminar ? `W-Seminar, Abitur ${semAbi(c)}` : String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
+function baseMeta(c) { return [['Kurs', `${c.name} · ${c.seminar || c.psem ? (c.seminar ? 'W-Seminar' : 'P-Seminar') + ', Leitfach ' : ''}${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', c.seminar ? `W-Seminar, Abitur ${semAbi(c)}` : String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
 /* Kopfdaten eines Schülerblatts: bei gemischten Kursen (8A+8B) steht die tatsächliche Klasse der Person extra */
 function studMeta(c, s) { const m = baseMeta(c); if (isMixed(c.students) && s.cls) m.splice(1, 0, ['Klasse', s.cls]); return m; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
@@ -3064,11 +3116,13 @@ function renderStart() {
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 9);
   const later = d.next.filter(x => x.a.date > horizon).length;
   /* Kurse */
-  const cards = D.courses.slice().sort(courseCmp).map(c => { const st = courseStats(c), nMk = d.makeup.filter(x => x.c.id === c.id).length, nMi = d.missing.filter(x => x.c.id === c.id).length;
-    return `<button type="button" class="sCard" data-goto="${c.id}" style="--hue:var(${hueOf(c.subject)})"><span class="sCardTop"><b>${esc(c.name)}</b><span>${esc(c.subject || '')}</span></span>
+  const card = c => { const st = courseStats(c), nMk = d.makeup.filter(x => x.c.id === c.id).length, nMi = d.missing.filter(x => x.c.id === c.id).length;
+    return `<button type="button" class="sCard" data-goto="${c.id}" style="--hue:var(${hueOf(c.subject)})"><span class="sCardTop"><b>${esc(c.name)}<em class="sBadge">${esc(courseBadge(c))}</em></b><span>${esc(c.seminar ? 'W-Seminar · ' + semLeit(c) : isPSem(c) ? 'P-Seminar · ' + c.subject : c.subject || '')}</span></span>
       <span class="sAvg">${st.avg == null ? '–' : fmt(st.avg, 2)}<small>${st.avg == null ? 'noch keine Noten' : 'Ø ' + (st.term ? st.term : 'Klasse')}${st.unit ? ' · Punkte' : ''}</small></span>
       <span class="sMeta">${c.students.length} Schüler · ${c.assessments.length} LN</span>
-      <span class="sTags">${st.risk ? `<i class="warn">${st.risk} gefährdet</i>` : ''}${nMi ? `<i>${nMi === 1 ? '1 LN offen' : nMi + ' LN offen'}</i>` : ''}${nMk ? `<i class="info">${nMk === 1 ? '1 Nachtermin' : nMk + ' Nachtermine'}</i>` : ''}</span></button>`; }).join('');
+      <span class="sTags">${st.risk ? `<i class="warn">${st.risk} gefährdet</i>` : ''}${nMi ? `<i>${nMi === 1 ? '1 LN offen' : nMi + ' LN offen'}</i>` : ''}${nMk ? `<i class="info">${nMk === 1 ? '1 Nachtermin' : nMk + ' Nachtermine'}</i>` : ''}</span></button>`; };
+  const grpsUsed = COURSE_GROUPS.filter(([k]) => D.courses.some(c => courseGroup(c) === k));
+  const cards = grpsUsed.map(([k, g]) => `${grpsUsed.length > 1 ? `<div class="sGrp">${g}</div>` : ''}<div class="sCards">${D.courses.filter(c => courseGroup(c) === k).sort(courseCmp).map(card).join('')}</div>`).join('');
   const lastC = course();
   const top = [betaNotice(), updateNotice()].filter(Boolean).join('');
   main.innerHTML = `<div class="startPage">
@@ -3084,7 +3138,7 @@ function renderStart() {
         ${later ? `<p class="note">${later === 1 ? 'Ein weiterer Leistungsnachweis' : later + ' weitere Leistungsnachweise'} später im Schuljahr – siehe <button type="button" class="linkbtn" data-tabgo="dates">Kalender &amp; Termine</button>.</p>` : ''}</section>
     </div>
     <div class="sHeadline">Meine Klassen und Kurse</div>
-    <div class="sCards">${cards}</div>
+    ${cards}
     <p class="note sFoot">${bkBad ? '' : esc(bkText) + ' · '}Die Übersicht zeigt nur an – geändert wird hier nichts. Was beim Öffnen erscheint, stellst du unter Einstellungen → Allgemein ein.</p></div>`;
   $$('[data-goto]', main).forEach(b => b.onclick = () => pickCourse(b.dataset.goto));
   $$('[data-xfer]', main).forEach(b => b.onclick = () => { pickCourse(b.dataset.xfer); transferSheet(course()); });
@@ -3380,9 +3434,9 @@ function helpSheet() {
     <p>„+ Leistungsnachweis“: Art, Datum und ggf. Gewicht (z. B. Jahrgangsstufentest als ½ Schulaufgabe, eine Stegreifaufgabe doppelt). Spaltenkopf anklicken: bearbeiten, Notenspiegel, drucken.</p>
     <p>Mit <b>„Rohpunkte eingeben“</b> tippst du Punkte ein, Libretto rechnet über den Notenschlüssel in Noten bzw. Notenpunkte um. Den Schlüssel berechnet Libretto aus den Vorgaben eurer Fachschaft – etwa <b>Note 4 ab 50 %, Note 5 ab 33 %</b>; die Noten 1–3 werden gleichmäßig verteilt, jede Grenze bleibt änderbar. Libretto merkt sich die Vorgabe je Fach.</p>${fig('schluessel', 'Notenschlüssel')}
     <p><b>Oberstufe (Notenpunkte):</b> Bei „Eigene Grenzen“ legst du fest, ab wie viel Prozent es <b>4 Punkte (Note 4–)</b> – also die unterste 4 – und <b>1 Punkt (Note 5–)</b> gibt; dazwischen und darüber verteilt Libretto gleichmäßig. Nach dem KMK-Raster (Abitur-Tabelle) beginnt die 4 bei 40 % (4 Punkte), 5 Punkte gibt es ab 45 %, 6 Punkte (4+) ab 50 %. <b>Moderne Fremdsprachen:</b> Wo in Q12/13 mit BE bewertet wird – etwa Wortschatz- und Grammatikaufgaben –, gilt nach dem ISB-Leitfaden (April 2025) „ausreichend“ ab 50 % und „mangelhaft“ ab 33 %; Libretto schlägt deshalb 4 Punkte ab 50 % und 1 Punkt ab 33 % vor. Das Hörverstehen in Klausuren rechnet dagegen – wie die Excel-Tabelle des ISB – mit der Abitur-Tabelle (4 Punkte ab 40 %). Zur Erinnerung: 15/14/13 Punkte = 1+/1/1–, 12/11/10 = 2+/2/2–, 9/8/7 = 3+/3/3–, 6/5/4 = 4+/4/4–, 3/2/1 = 5+/5/5–, 0 = 6. Halbjahresleistungen unter 5 Punkten gelten als unterpunktet.</p>
-    <p><b>Amtliche BE-Tabelle / KMK-Raster</b> (Abiturprüfung ab 2026 nach dem ISB-Kontaktbrief Oberstufe 2025, S. 4, und der KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 5 ab 45 %, 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Für die modernen Fremdsprachen in Jgst. 5–11 und die spät beginnenden Fremdsprachen nennt das ISB als Schwellenwert für „ausreichend“ 50–60 % und für „mangelhaft“ 33 % – Libretto schlägt dort Note 4 ab 50 % und Note 5 ab 33 % vor. In der Unter- und Mittelstufe ergibt das KMK-Raster die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen. Vorgewählt in Mathematik und in der Oberstufe (außer moderne Fremdsprachen). In der Oberstufe setzt Libretto die Grenzen immer in ganzen BE kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). In der Unter- und Mittelstufe wird bei halben Punkten – wie in den üblichen Excel-Notenlisten – aufgerundet. Wichtig: Verbindlich ist die Tabelle für BE-bewertete Abiturprüfungen und Prüfungsteile sowie – nach dem Altsprachen-KMS vom 31.07.2023 – für BE-Bewertungen in Latein und Griechisch in der Qualifikationsphase (dort empfohlen schon ab Jgst. 11). Für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht (BayEUG Art. 52). Deutsch-Aufsätze werden nicht über Rohpunkte, sondern ganzheitlich bewertet (KMS vom 28.09.2026).</p>
-    <p><b>Was ist verbindlich, was entscheidet die Fachschaft?</b> Für die meisten Fächer in Jgst. 5–11 gibt es <b>keinen</b> landesweiten Prozentschlüssel – den legen Lehrkraft und Fachschaft fest (BayEUG Art. 52, § 26 GSO). Verbindlich sind dagegen die Tabellen der Abiturprüfung und die Raster, deren Verwendung ein KMS vorschreibt (z. B. Oberstufe moderne Fremdsprachen, zweigeteilte Schulaufgabe in Latein und Griechisch).</p>
-    <p><b>Simulation des Notenschlüssels:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ verschiedene Schlüssel nebeneinander – z. B. Note 4 ab 60 / 55 / 50 / 45 / 40 % (Oberstufe: 4 Punkte ab …) und das KMK-Raster bzw. die amtliche BE-Tabelle – mit Durchschnitt, Verteilung und Anteil der 5er und 6er bzw. der Ergebnisse unter 5 Punkten. <b>„Klasse“</b> klappt die ganze Klassenliste auf: Wer mit diesem Schlüssel eine andere Note bekäme, ist grün (besser) oder rot (schlechter) markiert, mit „jetzt → neu“. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>
+    <p><b>Amtliche BE-Tabelle / KMK-Raster</b> (Abiturprüfung ab 2026 nach dem ISB-Kontaktbrief Oberstufe 2025, S. 4, und der KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 5 ab 45 %, 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Für die modernen Fremdsprachen in Jgst. 5–11 und die spät beginnenden Fremdsprachen nennt das ISB als Schwellenwert für „ausreichend“ 50–60 % und für „mangelhaft“ 33 % – Libretto schlägt dort Note 4 ab 50 % und Note 5 ab 33 % vor. In der Unter- und Mittelstufe ergibt das KMK-Raster die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen. Vorgewählt in Mathematik und in Q12/Q13 (außer moderne Fremdsprachen). In der Oberstufe setzt Libretto die Grenzen immer in ganzen BE kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). In der Unter- und Mittelstufe wird bei halben Punkten – wie in den üblichen Excel-Notenlisten – aufgerundet. Wichtig: Verbindlich ist die Tabelle für BE-bewertete Abiturprüfungen und Prüfungsteile sowie – nach dem Altsprachen-KMS vom 31.07.2023 – für BE-Bewertungen in Latein und Griechisch in der Qualifikationsphase (dort empfohlen schon ab Jgst. 11). Für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht (BayEUG Art. 52). Deutsch-Aufsätze werden nicht über Rohpunkte, sondern ganzheitlich bewertet (KMS vom 28.09.2026).</p>
+    <p><b>Was ist verbindlich, was entscheidet die Fachschaft?</b> Für die meisten Fächer in Jgst. 5–11 gibt es <b>keinen</b> landesweiten Prozentschlüssel – den legen Lehrkraft und Fachschaft fest (BayEUG Art. 52, § 26 GSO). Verbindlich sind dagegen die Tabellen der Abiturprüfung und die Raster, deren Verwendung ein KMS vorschreibt (z. B. Q12/Q13 moderne Fremdsprachen, zweigeteilte Schulaufgabe in Latein und Griechisch).</p>
+    <p><b>Simulation des Notenschlüssels:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ verschiedene Schlüssel nebeneinander – z. B. Note 4 ab 60 / 55 / 50 / 45 / 40 % (Q12/Q13: 4 Punkte ab …) und das KMK-Raster bzw. die amtliche BE-Tabelle – mit Durchschnitt, Verteilung und Anteil der 5er und 6er bzw. der Ergebnisse unter 5 Punkten. <b>„Klasse“</b> klappt die ganze Klassenliste auf: Wer mit diesem Schlüssel eine andere Note bekäme, ist grün (besser) oder rot (schlechter) markiert, mit „jetzt → neu“. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>
     <p><b>Simulation des Faktors:</b> Im Fenster „Leistungsnachweis bearbeiten“ direkt unter den Aufgaben (sobald Punkte eingetragen sind) und im Eingabeblatt „Punkte je Aufgabe“ unten steht „Was passiert, wenn eine Aufgabe anders zählt?“. Aufgabe wählen (eine Schreibaufgabe zählt als eine Aufgabe), Faktor antippen (× 0,5 … × 3) – Libretto zeigt erreichbare Punkte, Durchschnitt und die Klassenliste mit allen, deren Note sich ändern würde. Gerechnet wird an einer Kopie; erst der Knopf „… ab jetzt × … zählen“ ändert die Arbeit. Mit „Simulation drucken“ (PDF oder Word) bekommst du die Klassenliste jetzt → simuliert mit Notenspiegel auf Papier, z. B. für die Fachbetreuung – das gibt es auch bei der Schlüssel-Simulation, sobald du dort „Klasse“ antippst.</p>`],
   ['aufgaben', 'Punkte je Aufgabe, Faktor und nachträgliche Gewichtung', 'Leistungsnachweise', `
     <p>Unter „Rohpunkte“ gibt es „Punkte je Aufgabe eingeben“. Im Eingabeblatt stehen oben die <b>erreichbaren Punkte</b> je Aufgabe: eintippen und ${kbd('Tab')} – bei „+“ entsteht die nächste Aufgabe. Darunter trägst du je Person die Punkte ein; sobald alle Aufgaben eingetragen sind (auch 0), rechnet Libretto Summe und Note. Leere Felder zählen nicht als 0. Unten: Ø Punkte und Lösungsquote je Aufgabe, darunter immer der <b>Notenschlüssel</b> mit Punktbereichen und der <b>Durchschnitt</b> groß.</p>
@@ -3410,14 +3464,15 @@ function helpSheet() {
     <p>Die Teilnote der Übersetzung bildest du selbst aus der Fehlerzahl – einen landesweiten Fehlerschlüssel für Jgst. 5–11 gibt es nicht; die Korrekturmatrix und ein Bonus von höchstens zwei Fehlern für besonders treffende Formulierungen gelten nach KMS. Für eine Interpretationsschulaufgabe (Jgst. 11, Q 13/1) oder eine Ersatzform wie die Dialogschulaufgabe schaltest du „Zweigeteilt“ aus und benotest direkt.</p>
     <p class="hint">Quelle: KMS vom 31.07.2023, V.3-BS5402.7/135/1 („Altsprachlicher Unterricht im neunjährigen Gymnasium“), Anlagen 2–4.</p>`],
   ['mint', 'Mathematik und Naturwissenschaften', 'Szenarien nach Fächern', `
-    <p>Rohpunkte mit <b>Punkten je Aufgabe</b>; das KMK-Raster ist vorgewählt. Die Lösungsquote je Aufgabe zeigt, welche Aufgabe schwierig war – nachträglich halb werten geht über den Faktor × 0,5. In der Oberstufe entspricht das KMK-Raster der Tabelle der Abiturprüfung. Mathematik hat in Jgst. 5–7 vier Schulaufgaben (§ 22 GSO) – Libretto prüft die Mindestzahl.</p>`],
+    <p>Rohpunkte mit <b>Punkten je Aufgabe</b>; das KMK-Raster ist vorgewählt. Die Lösungsquote je Aufgabe zeigt, welche Aufgabe schwierig war – nachträglich halb werten geht über den Faktor × 0,5. In Q12/Q13 entspricht das KMK-Raster der Tabelle der Abiturprüfung. Mathematik hat in Jgst. 5–7 vier Schulaufgaben (§ 22 GSO) – Libretto prüft die Mindestzahl.</p>`],
   ['de', 'Deutsch und Fächer mit direkter Notengebung', 'Szenarien nach Fächern', `
-    <p>Aufsätze werden meist direkt benotet: Leistungsnachweis ohne Rohpunkte anlegen und Noten (Oberstufe: Notenpunkte) eintippen. Rückgabefrist für Schulaufgaben in Deutsch ab Jgst. 10: drei Wochen. Das KMS „Unterricht im Fach Deutsch – Lernbereich Schreiben“ vom 28.09.2026 verlangt eine ganzheitliche Bewertung der Schreibleistung – eine bloße Addition von Teilpunkten wird dem nicht gerecht; direkt benoten ist deshalb der richtige Weg. In Jgst. 5–8 sind drei Aufsatz-Schulaufgaben verbindlich (KMS vom 18.06.2026).</p>`],
+    <p>Aufsätze werden meist direkt benotet: Leistungsnachweis ohne Rohpunkte anlegen und Noten (Q12/Q13: Notenpunkte) eintippen. Rückgabefrist für Schulaufgaben in Deutsch ab Jgst. 10: drei Wochen. Das KMS „Unterricht im Fach Deutsch – Lernbereich Schreiben“ vom 28.09.2026 verlangt eine ganzheitliche Bewertung der Schreibleistung – eine bloße Addition von Teilpunkten wird dem nicht gerecht; direkt benoten ist deshalb der richtige Weg. In Jgst. 5–8 sind drei Aufsatz-Schulaufgaben verbindlich (KMS vom 18.06.2026).</p>`],
   ['ohne', 'Fächer ohne Schulaufgaben, Seminare', 'Szenarien nach Fächern', `
     <p>Sport, Musik, Kunst & Co.: beim Kurs „Fach mit Schulaufgaben“ ausschalten – die Note entsteht nur aus kleinen Leistungsnachweisen. Praktische Leistungen als Art „Praktische Leistung“.</p>
     <p><b>Sport in Q12/13</b> (§ 29 Abs. 5 GSO): Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3. Praktische Leistungen trägst du als „Praktische Leistung“ ein – Libretto zählt sie doppelt. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an (Schulaufgabe + kleine LN); beide Punktzahlen zählen 1 : 1.</p>
     <p><b>Kunst und Musik als Leistungsfach</b> (§ 29 Abs. 3 und 4 GSO): Halbjahresleistung = Durchschnitt aus Schulaufgabe, <b>künstlerischem Projekt</b> bzw. <b>praktischer Prüfung</b> und dem Durchschnitt der kleinen LN. Dafür gibt es in diesen Kursen die eigenen Arten „Künstlerisches Projekt“ und „Praktische Prüfung“.</p>
     <p><b>W-Seminar:</b> Kurs der Jgst. 12 oder 13, „Art des Kurses“ W-Seminar (oder Fach „W-Seminar“). Reiter 12/1, 12/2, Seminararbeit und Übersicht; Klick auf einen Namen öffnet die <b>Betreuungskarte</b> mit Thema, Terminen und Protokoll (Besprochen, Vereinbart, nächster Termin, unterschrieben), Abgabe mit Fristverlängerung und Bewertung. Dateien (Exposé, Gliederung, Arbeit) hängst du an den Termin – verschlüsselt gespeichert und mitgesichert. Ausdrucke: Betreuungsprotokoll, Betreuungsdokumentation, Übersicht der Seminararbeiten, Ergebnisliste. Über Zulassung, Fristverlängerung und Rücktritt entscheidet die Schule.</p>
+    <p><b>Seminare und Leitfach:</b> W- und P-Seminar sind keine Fächer, sondern eine Kursart: Beim W-Seminar „Art des Kurses: W-Seminar“ wählen, beim P-Seminar (Jgst. 11) den Schalter „P-Seminar“ – und oben jeweils das <b>Leitfach</b> eintragen. Fachregeln (z. B. Notenschlüssel der modernen Fremdsprachen) gelten für Seminare nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Exposé, Exzerpt, Gliederungsentwurf, Recherche-Protokoll …). Im W-Seminar mit einer modernen Fremdsprache als Leitfach: Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch) und Prüfungsgespräch in der Fremdsprache (§ 24 Abs. 1 und 2 GSO); ein anerkannter Wettbewerbsbeitrag kann die Seminararbeit ersetzen (§ 24 Abs. 3).</p>
     <p><b>Bewertungsbögen (W-Seminar):</b> In der Betreuungskarte öffnen „Bewertungsbogen Seminararbeit“ und „Bewertungsbogen Prüfungsgespräch“ die Raster nach dem ISB-Material: die Arbeit nach Form, Sprache, Methode und Inhalt (Gewichtung 10/20/30/40 %, Einschätzung ++ bis ––, auf Wunsch Punkte je Bereich), das Prüfungsgespräch nach fünf Kompetenzen (Fach-, Argumentations-, Methoden- und Wissenschafts-, Darstellungs-, Reflexions- und Transferkompetenz) mit Punkten je Kompetenz. Libretto rechnet daraus einen <b>Vorschlag</b> (gewichteter Durchschnitt, gerundet) – die Punkte setzt du fest. Kriterien und Gewichte lassen sich je Kurs anpassen. Ausdruck als PDF oder Word, auch als leerer Bogen zum Ausfüllen von Hand. Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO; KMS vom 02.02.2026), ein freier Kurzvortrag zum Einstieg ist möglich.</p>
     <p><b>Beratungsgespräch:</b> Als Art „Beratungsgespräch“ gibt es die Felder des ISB-Feedbackbogens: bisher erledigt, Schwierigkeiten und Fragen, Rückmeldung, nächste Schritte, Zielvereinbarung, KI-Einsatz. Die Zielvereinbarung des letzten Gesprächs steht oben, die Leitfragen zum Halbjahr sind aufklappbar. Ausdruck mit zwei Unterschriften.</p>
     <p><b>Prüfungsgespräche planen:</b> Im Reiter „Seminararbeit“ → „Prüfungsgespräche …“ trägst du Tag und Uhrzeit ein oder lässt freie Plätze automatisch füllen (Dauer, Pause, Gespräche je Tag, nur Schultage). Die Terminliste lässt sich mit oder ohne Themen drucken.</p>
@@ -3463,7 +3518,7 @@ function helpSheet() {
     <ul><li><b>Lehrerkonferenz</b> (§ 21 Abs. 2, § 22 GSO): Grundsätze für Zahl, Art und Termine der Leistungsnachweise; Ersatz einer Schulaufgabe durch ein gleichwertiges Format; welche kleinen LN am Tag einer Schulaufgabe erlaubt sind; Ersatz des Zwischenzeugnisses durch Informationen (§ 40).</li>
       <li><b>Fachschaft</b>: Notenschlüssel (z. B. „Note 4 ab 50 %“) – in Libretto „als Standard für das Fach merken“; Schreibprogramm in Deutsch; Abstimmung von Prüfungsformen.</li>
       <li><b>Lehrkraft</b> (BayEUG Art. 52, § 28 Abs. 1 GSO): Zahl und Art der kleinen LN, Gewichtung schriftlich/mündlich/praktisch (in Libretto: Gewichte je Art oder nach Bereichen), Aufgaben und Erwartungshorizont, pädagogische Festsetzung der Zeugnisnote – genau x,5 zeigt Libretto als Grenzfall.</li>
-      <li><b>Nicht frei wählbar</b>: das Verhältnis groß : klein nach § 28 (1 : 1 bzw. 2 : 1 – Abweichungen nur begründet im Einzelfall, weil die GSO „grundsätzlich“ sagt), die Rechnung in Q12/13 (§ 29), Seminararbeit 2 : 1, die Raster der Oberstufe in den modernen Fremdsprachen, die zweigeteilte Schulaufgabe in Latein/Griechisch, die Abiturtabellen.</li></ul>`],
+      <li><b>Nicht frei wählbar</b>: das Verhältnis groß : klein nach § 28 (1 : 1 bzw. 2 : 1 – Abweichungen nur begründet im Einzelfall, weil die GSO „grundsätzlich“ sagt), die Rechnung in Q12/13 (§ 29), Seminararbeit 2 : 1, die Raster in Q12/Q13 in den modernen Fremdsprachen, die zweigeteilte Schulaufgabe in Latein/Griechisch, die Abiturtabellen.</li></ul>`],
   ['quellen', 'Quellen und Rechtsgrundlagen', 'Regeln und Fragen', `
     <p>Libretto rechnet nach diesen Vorschriften und Vorgaben (Stand November 2026). Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen deiner Schule.</p>
     <div class="srcList">
@@ -3641,7 +3696,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.7: W-Seminar mit Bewertungsbögen nach ISB (Seminararbeit und Prüfungsgespräch, auch als leerer Bogen), Beratungsgespräch mit Zielvereinbarung, Terminliste der Prüfungsgespräche, Kurztitel fürs Abiturzeugnis · „Prüfungsgespräch“ wie in der GSO 2026 · Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite · Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
+const NEW_IN = 'Neu in 1.0.8: W- und P-Seminar mit Leitfach statt als „Fach“ · Fach-Auswahl mit eigener, aufgeräumter Liste · Kursliste und Übersicht nach Stufen: Oberstufe ab Jahrgangsstufe 11 (G9), Seminare eigens · Neu in 1.0.7: W-Seminar mit Bewertungsbögen nach ISB (Seminararbeit und Prüfungsgespräch, auch als leerer Bogen), Beratungsgespräch mit Zielvereinbarung, Terminliste der Prüfungsgespräche, Kurztitel fürs Abiturzeugnis · „Prüfungsgespräch“ wie in der GSO 2026 · Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite · Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();
