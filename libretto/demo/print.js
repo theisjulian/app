@@ -110,7 +110,8 @@ const Print = (() => {
     const nameCol = t.head.indexOf('Name');
     const cellCls = (i, extra) => [al(i), i === nameCol ? 'nw' : '', (t.bold || []).includes(i) ? 'b' : '', (t.big || []).includes(i) ? 'big' : '', (t.muted || []).includes(i) ? 'mut' : '', edge(i), extra || ''].filter(Boolean).join(' ');
     const hg = t.headGroups ? `<tr class="hg">${t.headGroups.map(g => `<th colspan="${g.span || 1}" class="${g.label ? '' : 'e'}">${esc(g.label || '')}</th>`).join('')}</tr>` : '';
-    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense ? 'dense' : ''].join(' ')}"><thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
+    const cg = t.pct && t.widths ? `<colgroup>${t.widths.map(x => `<col style="width:${x}%">`).join('')}</colgroup>` : '';
+    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense ? 'dense' : ''].join(' ')}"${cg ? ' style="table-layout:fixed"' : ''}>${cg}<thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
         : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
