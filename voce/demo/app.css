@@ -667,3 +667,88 @@ dialog.setDlg .setWrap{max-height:calc(100vh - 2 * max(24px,calc((100vh - 780px)
 .prMain{display:flex;gap:8px}.prMain .go{flex:1 1 0;margin-top:0;min-width:0;padding-left:8px;padding-right:8px}
 .prMain .go[hidden]{display:none}
 .prBtns #prDocx{margin-top:8px}
+/* 1.10 Referate: Liste mit Datum, Name, Thema */
+.rlist .dayHead{margin:10px 4px 0;font:600 13px/1.3 var(--ui);color:var(--label-2);letter-spacing:.01em}
+.rlist .dayHead:first-child{margin-top:0}
+.rslot{--hue:var(--g1);display:grid;grid-template-columns:40px 150px minmax(0,1fr) auto;gap:12px;align-items:center;border-radius:var(--r-lg);padding:10px 12px;background:var(--glass-solid);box-shadow:0 0 0 1px var(--hairline) inset;border-left:4px solid var(--hue)}
+.rslot .num{font:700 20px/1 var(--display);color:color-mix(in srgb, var(--hue) 80%, var(--label));text-align:center;font-variant-numeric:tabular-nums}
+.rslot .when{display:flex;flex-direction:column;gap:3px}
+.rslot .when input{font:inherit;font-size:13px;padding:4px 6px;border-radius:8px;border:0;background:var(--fill);color:var(--label);width:100%}
+.rslot .when small{font-size:12px;color:var(--label-2);font-variant-numeric:tabular-nums;padding-left:2px}
+.rslot .rbody{display:flex;flex-direction:column;gap:5px;min-width:0}
+.rslot .rname{display:flex;align-items:center;gap:8px;font-size:15px}
+.rslot .rname .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--label-3)}
+.rslot .rname .dot.w{background:var(--g5)}.rslot .rname .dot.m{background:var(--g1)}
+.rslot .rname .pill{margin-left:auto}
+.rslot .rtopic{font:inherit;font-size:14px;padding:7px 10px;border-radius:10px;border:0;background:var(--fill);color:var(--label);width:100%}
+.rslot .rtopic::placeholder{color:var(--label-3)}
+.rslot .ctl{display:flex;gap:4px}
+.rlist .pgrip{display:none}
+#rpool{margin:2px 0 10px;max-height:340px;overflow:auto}
+@media (max-width:900px){.rslot{grid-template-columns:34px minmax(0,1fr) auto}.rslot .when{grid-column:2;grid-row:2}.rslot .rbody{grid-column:2;grid-row:1}.rslot .ctl{grid-row:1 / span 2;grid-column:3;flex-direction:column}}
+/* 1.10 Einstellungen: Kopf je Bereich, farbige Symbole, Karten (wie Systemeinstellungen) */
+dialog.setDlg .setWrap{height:min(640px,calc(100vh - 150px));min-height:0;max-height:none}
+.setMain{background:color-mix(in srgb,var(--fill) 45%,transparent);padding:0 28px 28px}
+.setNav .navIco{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;flex:none;background:var(--ico,var(--blue));box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.setNav .navIco svg{width:16px!important;height:16px!important;color:#fff!important;stroke:#fff}
+.setNav .navIco svg [fill="currentColor"]{fill:#fff}
+.setNav button{padding:7px 10px;gap:11px}
+.setNav button[aria-selected="true"]{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--label);font-weight:600}
+.setNav button[aria-selected="true"]:hover{background:color-mix(in srgb,var(--blue) 18%,transparent)}
+.i-look{--ico:linear-gradient(135deg,#7B61FF,#4A5BF2)}.i-school{--ico:linear-gradient(135deg,#34C759,#22A447)}.i-new{--ico:linear-gradient(135deg,#FF9F0A,#F2760A)}
+.i-ki{--ico:linear-gradient(135deg,#BF5AF2,#8E44D9)}.i-backup{--ico:linear-gradient(135deg,#0A84FF,#0062D6)}.i-info{--ico:linear-gradient(135deg,#8E8E93,#636366)}
+.setHead{display:flex;align-items:center;gap:14px;padding:24px 0 6px}
+.setHead .setIco{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;flex:none;background:var(--ico);box-shadow:0 2px 6px rgba(0,0,0,.14)}
+.setHead .setIco svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.setHead .setIco svg [fill="currentColor"]{fill:#fff}
+.setHead h2{margin:0;font:600 21px/1.2 var(--display);letter-spacing:-.02em}
+.setHead p{margin:3px 0 0;font-size:13px;color:var(--label-2);line-height:1.4}
+.setSec>.subhead{border-top:0;padding-top:0;margin:20px 2px 8px}
+.setSec>.setHead+.subhead,.setSec>.setHead+.setCard,.setSec>.setHead+.rows{margin-top:16px}
+.setCard{background:var(--glass-solid);border-radius:14px;box-shadow:0 0 0 .5px var(--hairline),0 1px 2px rgba(0,0,0,.04);padding:14px 16px}
+.setCard>.hint:first-child{margin-top:0}
+.setCard .grid2,.setCard .grid3{margin:0}
+.setCard .logoRow{margin:14px 0 0;padding-top:14px;border-top:.5px solid var(--hairline)}
+.setSec .rows{background:var(--glass-solid);box-shadow:0 0 0 .5px var(--hairline),0 1px 2px rgba(0,0,0,.04);border-radius:14px}
+.setSec .rows .row+.row{border-top:.5px solid var(--hairline)}
+.setSec .lookBox.setCard{border:0;margin:16px 0 0}
+.setFoot{margin:10px 2px 0}
+.mapCard{padding:8px 10px}
+.kiInfo{margin-top:16px}
+.ticks{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.ticks li{position:relative;padding-left:26px;font-size:13.5px;line-height:1.45;color:var(--label-2)}
+.ticks li b{color:var(--label);font-weight:600}
+.ticks li::before{content:"";position:absolute;left:0;top:2px;width:17px;height:17px;border-radius:50%;background:color-mix(in srgb,#34C759 18%,transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.3l2.6 2.5L12 5.5' fill='none' stroke='%2322A447' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat}
+.bkStat{margin:8px 0 0;font-size:13.5px;line-height:1.45;color:var(--label)}
+.setSec .bkBox{margin-top:12px}
+.setSec .about{margin-top:6px}
+html[data-skin="neon"] .setMain{background:transparent}
+
+/* ===== 1.10 Feinschliff: Tiefe, Kennzahlen, Startseite, Referate ===== */
+/* Klar (Standard): weiterhin flach, aber mit einem Hauch Tiefe, damit Karten sich vom Grund lösen */
+html[data-skin="klar"]:not([data-theme="dark"]) .glass{box-shadow:0 1px 2px rgba(16,24,40,.05),0 1px 1px rgba(16,24,40,.02)}
+html[data-skin="klar"]:not([data-theme="dark"]) .slot{box-shadow:0 1px 2px rgba(16,24,40,.05)}
+html[data-skin="klar"] .scale button{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--label) 14%,transparent)}
+html[data-skin="klar"] .scale button:hover{background:var(--fill)}
+html[data-skin="klar"] .scale button[aria-pressed="true"]{box-shadow:0 2px 6px -2px color-mix(in srgb,var(--blue) 60%,transparent)}
+/* Kennzahlen bei den Ergebnissen: Beschriftung oben, Wert darunter, Fortschrittsbalken */
+.stat{justify-content:flex-start;gap:4px}
+.stat .l{margin-top:0;font-size:12.5px;font-weight:500}
+.stat .l.sub{font-weight:400;color:var(--label-3)}
+.stat .v{margin-top:2px}
+.stat .v .of{font-size:17px;font-weight:500;color:var(--label-2);letter-spacing:0}
+.stat .prog{height:6px;border-radius:99px;background:var(--fill-2);overflow:hidden;margin-top:6px}
+.stat .prog i{display:block;height:100%;border-radius:inherit;background:var(--green);transition:width .4s}
+.stat .spiegel{margin-top:2px}
+/* Startseite: Klassen-Kachel neben dem Titel der nächsten Prüfung */
+.hnTitle{display:flex;align-items:center;gap:12px;min-width:0}
+.hnTitle h3{min-width:0}
+.hnTitle .cl{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:var(--hue,var(--blue));box-shadow:0 4px 12px -4px var(--hue,var(--blue))}
+html[data-skin="neon"] .hnTitle .cl{border-radius:50%}
+html[data-skin="heft"] .hnTitle .cl{border-radius:6px;box-shadow:2px 2px 0 color-mix(in srgb,var(--label) 25%,transparent)}
+/* Referate: Thema als eigene Zeile in der Liste links */
+.gitem .who small.topic{color:var(--label-3);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Einstellungen → Hilfe & Info: Inhalte in Karten wie in den anderen Bereichen */
+.setSec .subhead{border-top:0;padding-top:0}
+.setSec .aboutCard{display:grid;gap:14px}
+.setSec .aboutCard .maker{margin:0;background:transparent;padding:14px 0 0;border-radius:0;border-top:.5px solid var(--hairline)}

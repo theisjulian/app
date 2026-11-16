@@ -4,9 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
-<title>Voce – Anleitung</title>
+<title>Voce – Handbuch</title>
 <script src="help.js"></script>
 <style>
+.cover{display:none}
+.src li{margin:5px 0}.src .u{word-break:break-all;font-size:.88em;color:#5a6170}
+.faq dt{font-weight:700;margin-top:12px}.faq dd{margin:3px 0 0}
+
 html[data-os="mac"] .os-win,html[data-os="win"] .os-mac,html[data-os] .os-both{display:none}
 
 :root{--ink:#16181D;--muted:#5C6270;--line:#E3E6EC;--accent:#0A64E0;--accent-soft:#EAF2FE;--soft:#F4F6F9;--warn-bg:#FFF5E6;--warn-ink:#5A3A08;--ok:#1E8E4E;
@@ -73,6 +77,13 @@ footer .brand .dot{fill:#3d5cff}
 /* Druck / PDF: A4, ruhiges Satzbild, nichts wird zwischen Seiten zerschnitten */
 @page{size:A4;margin:16mm 16mm 18mm}
 @media print{
+  .cover{display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:250mm;break-after:page}
+  .cover img{width:42mm;height:42mm}
+  .cover .cvT{font-size:40pt;font-weight:700;letter-spacing:-.02em;margin-top:8mm}
+  .cover .cvS{font-size:14pt;color:#4a5160;margin-top:3mm;line-height:1.35}
+  .cover .cvH{margin-top:16mm;font-size:12pt;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#1F4FE0;border-top:1.2pt solid #1F4FE0;border-bottom:1.2pt solid #1F4FE0;padding:2.4mm 9mm}
+  .cover .cvV{margin-top:6mm;font-size:10pt;color:#6b7180}
+  .cover .cvF{margin-top:auto;font-size:9pt;color:#6b7180;line-height:1.5}.cover .cvF span{font-size:8pt}
   body{font-size:10.2pt;line-height:1.5}
   main{padding:0;max-width:none}
   .top img{width:58px;height:58px}
@@ -95,11 +106,19 @@ footer .brand .dot{fill:#3d5cff}
 </head>
 <body>
 <main>
+<div class="cover" aria-hidden="true">
+  <img src="icon.png" alt="">
+  <div class="cvT">Voce</div>
+  <div class="cvS">Mündliche Prüfungen und Referate<br>Gymnasium Bayern</div>
+  <div class="cvH">Handbuch</div>
+  <div class="cvV" id="cvVer"></div>
+  <div class="cvF">theisapps · theisapps.de<br><span>Bewertungsraster, Rastertexte und Notenschlüssel: ISB München (mit Genehmigung)</span></div>
+</div>
 <header class="top">
   <img src="icon.png" alt="">
-  <h1>Voce<small>Mündliche Prüfungen · Gymnasium Bayern · Anleitung</small></h1>
+  <h1>Voce<small>Mündliche Prüfungen · Gymnasium Bayern · Handbuch</small></h1>
 </header>
-<p class="lead">Voce begleitet große mündliche Leistungsnachweise in den modernen Fremdsprachen von der Klassenliste bis zum fertigen Bewertungsbogen: Gruppen und Zeitplan, Prüfungskarten, Bewerten nach den ISB-Rastern während der Prüfung, Worturteil, Bewertungsbögen in Word und eine Übersicht für die Fachschaft.</p>
+<p class="lead">Voce begleitet große mündliche Leistungsnachweise und Referate in den modernen Fremdsprachen von der Klassenliste bis zum fertigen Bewertungsbogen: Gruppen und Zeitplan, Prüfungskarten, Bewerten nach den ISB-Rastern während der Prüfung, Worturteil, Bewertungsbögen in Word und eine Übersicht für die Fachschaft.</p>
 
 <ol class="quick">
   <li><b>Klasse anlegen</b>Liste als PDF, Excel oder Text einlesen.</li>
@@ -119,12 +138,15 @@ footer .brand .dot{fill:#3d5cff}
     <li><a href="#aufgaben">Aufgaben &amp; Prüfungskarten</a></li>
     <li><a href="#bewerten">Bewerten</a></li>
     <li><a href="#boegen">Ergebnisse, Worturteile &amp; Bögen</a></li>
+    <li><a href="#referate">Referate</a></li>
     <li><a href="#drucken">Drucken und Designs</a></li>
     <li><a href="#einstellungen">Einstellungen</a></li>
     <li><a href="#sicherung">Sicherung &amp; Datenschutz</a></li>
     <li><a href="#raster">Raster und Notenschlüssel</a></li>
     <li><a href="#tag">Checkliste für den Prüfungstag</a></li>
     <li><a href="#tasten">Tastenkürzel</a></li>
+    <li><a href="#faq">Häufige Fragen</a></li>
+    <li><a href="#quellen">Quellenverzeichnis</a></li>
   </ol>
 </nav>
 
@@ -228,8 +250,23 @@ footer .brand .dot{fill:#3d5cff}
 <figure class="half"><img src="help/6-bogen.jpg" alt="Beispiel eines Bewertungsbogens"><figcaption>Bewertungsbogen im Aufbau des ISB (Beispiel Englisch, B1+).</figcaption></figure>
 </section>
 
+<section id="referate">
+<h2><span class="n">8</span>Referate</h2>
+<p>Referate bewertest du mit den ISB-Rastern <b>„Sprechen (monologisch)“</b> (A1 bis B1+). Sie stehen neben den Prüfungen; an deren Rastern, Notenschlüsseln und der GER-Zuordnung ändert sich nichts.</p>
+<figure><img src="help/8b-referate.jpg" alt="Referatsliste"><figcaption>Referatsliste: Namen links antippen, Thema und Datum je Person eintragen.</figcaption></figure>
+<ul>
+  <li><b>Anlegen:</b> auf „Start“ <b class="ui">Neues Referat</b> – oder <b class="ui">Neue Prüfung</b> und oben bei <b>Art</b> <b class="ui">Referat</b> wählen. Voce schlägt das monologische Raster passend zu Jahrgangsstufe und Sprachenfolge vor. Die Art lässt sich nach dem Anlegen nicht mehr ändern.</li>
+  <li><b>Wer hält ein Referat?</b> Unter <b class="ui">Referate</b> tippst du links die Namen an – einzelne Schülerinnen und Schüler oder mit <b class="ui">Alle eintragen</b> die ganze Klasse. Nur wer in der Liste steht, wird bewertet.</li>
+  <li><b>Thema und Termin:</b> In der Liste trägst du je Person das Thema ein. Das Datum gilt zunächst für alle; einzelne Termine änderst du direkt in der Zeile – die Liste ordnet sich dann nach Datum, die Uhrzeiten ergeben sich aus Beginn und Dauer. Mit ↑ ↓ änderst du die Reihenfolge.</li>
+  <li><b>Bewerten:</b> drei Bereiche – <i>Aussprache / Intonation / Flüssigkeit</i> (×1), <i>Sprachliche Mittel / Sprachrichtigkeit</i> (×2) und <i>Aufgabenerfüllung / Inhalt</i> (×2, ab B1 ×3). Am Referatstag zeigt Voce, wer gerade dran ist.</li>
+  <li><b>Bögen:</b> wie bei Prüfungen, mit Thema und dem Datum des jeweiligen Referats; Überschrift „Referat – kleiner mündlicher Leistungsnachweis“.</li>
+  <li><b>Referatsliste:</b> <b class="ui">Liste drucken …</b> in den vier Designs oder <b class="ui">Als Word</b> – mit Datum, Uhrzeit, Name und Thema.</li>
+  <li><b>Oberstufe:</b> Das ISB bietet monologische Raster nur bis B1+ an. Für B2 und die Oberstufe schlägt Voce daher B1+ (monologisch) vor; stimme das ggf. mit der Fachschaft ab und übertrage die Note selbst in Notenpunkte.</li>
+</ul>
+</section>
+
 <section id="drucken">
-<h2><span class="n">8</span>Drucken und Designs</h2>
+<h2><span class="n">9</span>Drucken und Designs</h2>
 <p>Prüfungsplan, Türaushang, Prüfungskarten, Prüferblätter und die Übersicht für die Fachschaft öffnen eine Druckvorschau. Links wählst du Design und Optionen, rechts siehst du sofort das Ergebnis. Unten stehen immer <b class="ui">Drucken …</b> (öffnet den Druckdialog deines Systems, Drucker und Anzahl wählst du dort) und <b class="ui">PDF speichern</b>. Voce merkt sich deine Wahl.</p>
 <div class="designs">
   <div><b>Nüchtern</b>Schwarz-weiß, mit Tabellen und Kästen wie der ISB-Bogen. Die Grundeinstellung.</div>
@@ -250,7 +287,7 @@ footer .brand .dot{fill:#3d5cff}
 </section>
 
 <section id="einstellungen">
-<h2><span class="n">9</span>Einstellungen</h2>
+<h2><span class="n">10</span>Einstellungen</h2>
 <p>Die Einstellungen sind in Bereiche gegliedert; links wählst du den Bereich.</p>
 <table>
   <tr><th style="width:24%">Bereich</th><th>Was du dort einstellst</th></tr>
@@ -259,13 +296,13 @@ footer .brand .dot{fill:#3d5cff}
   <tr><td><b>Neue Prüfungen</b></td><td>Vorgaben für neue Prüfungen: Fach, Beginn, Gruppengröße, Minuten je Gruppe, Wechselzeit und Pause. Darunter, welches ISB-Raster Voce je Sprachenfolge und Jahrgangsstufe vorschlägt, vorbelegt nach der GER-Übersicht des ISB.</td></tr>
   <tr><td><b>Worturteil mit KI</b></td><td>Freiwillig: Worturteile mit Claude, ChatGPT, Gemini oder lokal mit Ollama umformulieren lassen. Für Cloud-Anbieter ist ein API-Schlüssel nötig; ein normales Abo reicht nicht.</td></tr>
   <tr><td><b>Sicherung &amp; Updates</b></td><td>Sicherungsstand, zweiter Sicherungsordner, frühere Stände wiederherstellen, Abfrage neuer Versionen, alle Daten als Datei speichern oder einlesen.</td></tr>
-  <tr><td><b>Hilfe &amp; Info</b></td><td>Diese Anleitung (auch als PDF), Version, Quellen und Lizenzen.</td></tr>
+  <tr><td><b>Hilfe &amp; Info</b></td><td>Dieses Handbuch (auch als PDF), Quellenverzeichnis, Version und Lizenzen.</td></tr>
 </table>
 <figure class="mid"><img src="help/8-einstellungen.jpg" alt="Einstellungen"><figcaption>Einstellungen, Bereich „Aussehen“.</figcaption></figure>
 </section>
 
 <section id="sicherung">
-<h2><span class="n">10</span>Sicherung &amp; Datenschutz</h2>
+<h2><span class="n">11</span>Sicherung &amp; Datenschutz</h2>
 <ul>
   <li>Alle Daten liegen nur auf diesem <span class="os-mac">Mac</span><span class="os-both">/</span><span class="os-win">PC</span> und werden bei jeder Änderung gespeichert.</li>
   <li>Zusätzlich sichert Voce bei Änderungen etwa alle 15 Minuten und beim Beenden: die letzten 30 Stände und je einen Stand pro Tag.</li>
@@ -278,7 +315,7 @@ footer .brand .dot{fill:#3d5cff}
 </section>
 
 <section id="raster">
-<h2><span class="n">11</span>Raster und Notenschlüssel</h2>
+<h2><span class="n">12</span>Raster und Notenschlüssel</h2>
 <p>Bewertet wird in vier Bereichen mit je 6 BE (Inhalt 4 BE). Je nach Niveaustufe werden die Bereiche unterschiedlich gewichtet:</p>
 <table>
   <tr><th>Stufe</th><th>Aussprache</th><th>Sprachliche Mittel</th><th>Gespräch</th><th>Inhalt</th><th>Summe</th></tr>
@@ -287,12 +324,18 @@ footer .brand .dot{fill:#3d5cff}
   <tr><td>B1 / B1+</td><td>1×</td><td>4×</td><td>2×</td><td>5×</td><td>62 BE</td></tr>
   <tr><td>B1+/B2</td><td>1×</td><td>4×</td><td>2×</td><td>6×</td><td>66 BE</td></tr>
 </table>
+<p><b>Referate</b> (Sprechen monologisch, drei Bereiche):</p>
+<table>
+  <tr><th>Stufe</th><th>Aussprache / Flüssigkeit</th><th>Sprachliche Mittel</th><th>Inhalt</th><th>Summe</th><th>Notenschlüssel 1 · 2 · 3 · 4 · 5 · 6</th></tr>
+  <tr><td>A1 bis A2+</td><td>1×</td><td>2×</td><td>2×</td><td>26 BE</td><td>26–23 · 22,5–19,5 · 19–16 · 15,5–13 · 12,5–8,5 · 8–0</td></tr>
+  <tr><td>B1 / B1+</td><td>1×</td><td>2×</td><td>3×</td><td>30 BE</td><td>30–26,5 · 26–22,5 · 22–18,5 · 18–15 · 14,5–10 · 9,5–0</td></tr>
+</table>
 <p>Die Notenschlüssel entsprechen den Rechentabellen des ISB. In der Oberstufe (12/13) zählen sprachliche Leistung 40 %, Gesprächsfähigkeit 20 % und Inhalt 40 %. Wird ein Bereich mit 0 Notenpunkten bewertet, sind insgesamt höchstens 03 Notenpunkte möglich.</p>
 <p>Das Worturteil folgt den Beschreibungen des ISB für die gewählte Punktzahl. Seine Gesamteinschätzung entspricht immer der berechneten Note, auch bei einer eigenen Grenze 4/5.</p>
 </section>
 
 <section id="tag">
-<h2><span class="n">12</span>Checkliste für den Prüfungstag</h2>
+<h2><span class="n">13</span>Checkliste für den Prüfungstag</h2>
 <ul class="check">
   <li>Am Vortag einen Bewertungsbogen als Probe speichern: Logo, Schulname und Sprache prüfen.</li>
   <li>Prüfungsplan (Fassung Prüflinge) und Türaushang drucken, Lehrkraft-Fassung und Prüferblätter mitnehmen.</li>
@@ -304,18 +347,79 @@ footer .brand .dot{fill:#3d5cff}
 </section>
 
 <section id="tasten">
-<h2><span class="n">13</span>Tastenkürzel</h2>
+<h2><span class="n">14</span>Tastenkürzel</h2>
 <table class="keys">
   <tr><th>Aktion</th><th class="os-mac">Mac</th><th class="os-win">Windows</th></tr>
   <tr><td>Neue Prüfung</td><td class="os-mac"><kbd>⌘</kbd> <kbd>N</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>N</kbd></td></tr>
   <tr><td>Klassen</td><td class="os-mac"><kbd>⌘</kbd> <kbd>K</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>K</kbd></td></tr>
   <tr><td>Einstellungen</td><td class="os-mac"><kbd>⌘</kbd> <kbd>,</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>,</kbd></td></tr>
-  <tr><td>Anleitung</td><td class="os-mac"><kbd>⌘</kbd> <kbd>?</kbd></td><td class="os-win"><kbd>F1</kbd></td></tr>
+  <tr><td>Handbuch</td><td class="os-mac"><kbd>⌘</kbd> <kbd>?</kbd></td><td class="os-win"><kbd>F1</kbd></td></tr>
   <tr><td>Alle Daten als Datei sichern</td><td class="os-mac"><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>S</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>Umschalt</kbd> <kbd>S</kbd></td></tr>
   <tr><td>Größer / kleiner</td><td class="os-mac"><kbd>⌘</kbd> <kbd>+</kbd> / <kbd>⌘</kbd> <kbd>−</kbd></td><td class="os-win"><kbd>Strg</kbd> <kbd>+</kbd> / <kbd>Strg</kbd> <kbd>−</kbd></td></tr>
   <tr><td>Vorherige / nächste Gruppe (Bewerten)</td><td class="os-mac"><kbd>←</kbd> <kbd>→</kbd></td><td class="os-win"><kbd>←</kbd> <kbd>→</kbd></td></tr>
   <tr><td>Dialog schließen</td><td class="os-mac"><kbd>Esc</kbd></td><td class="os-win"><kbd>Esc</kbd></td></tr>
 </table>
+</section>
+
+<section id="faq" class="newpage">
+<h2><span class="n">15</span>Häufige Fragen</h2>
+<dl class="faq">
+  <dt>Können Note und Worturteil auseinanderfallen?</dt>
+  <dd>Nein. Note, Bogen, automatisches Worturteil und KI-Auftrag verwenden immer dasselbe Ergebnis – auch mit eigener Grenze 4/5. Hast du ein Worturteil von Hand geändert und danach Punkte geändert, markiert Voce es mit <b>„bitte prüfen“</b> und fragt vor dem Speichern nach.</dd>
+  <dt>Wie vergebe ich halbe Punkte?</dt>
+  <dd>Ganze Punktzahl antippen, dann <b class="ui">+½</b>. Für die Beschreibung auf dem Bogen gilt die ganze Punktzahl (bei 4,5 also die Stufe 4). Ein zweites Tippen auf die gewählte Zahl löscht sie.</dd>
+  <dt>Jemand hat gefehlt – was nun?</dt>
+  <dd>Beim Bewerten <b>„fehlt“</b> einschalten. Unter <b class="ui">Ergebnisse &amp; Bögen</b> legt <b class="ui">Nachtermin anlegen</b> eine neue Prüfung nur mit diesen Personen an – mit denselben Einstellungen und Aufgaben (bei Referaten mit demselben Thema).</dd>
+  <dt>Kann ich eine strengere Grenze als 50 % nehmen?</dt>
+  <dd>Ja, unter <b class="ui">Prüfung bearbeiten → Grenze 4/5</b> (50 bis 60 %). Voce rechnet den Notenschlüssel nach der ISB-Systematik um; Bogen und Worturteil passen sich an.</dd>
+  <dt>Kann ich den Bogen auf Englisch, Italienisch, Französisch oder Spanisch ausgeben?</dt>
+  <dd>Ja, mit <b>„Sprache der Bögen“</b> neben <b class="ui">Alle Bewertungsbögen als Word</b>. Standard ist Deutsch. Die Übersetzungen der ISB-Beschreibungen sind inoffiziell.</dd>
+  <dt>Gibt es Referat-Raster für die Oberstufe?</dt>
+  <dd>Das ISB bietet monologische Raster nur von A1 bis B1+ an. Voce schlägt für B2 und die Oberstufe B1+ (monologisch) vor; bitte mit der Fachschaft abstimmen und die Note selbst in Notenpunkte übertragen.</dd>
+  <dt>Wie ziehe ich auf einen neuen <span class="os-mac">Mac</span><span class="os-both">/</span><span class="os-win">PC</span> um?</dt>
+  <dd><b class="ui">Einstellungen → Sicherung &amp; Updates → Sicherung speichern …</b>, die Datei auf das neue Gerät bringen und dort <b class="ui">Sicherung einlesen …</b> wählen.</dd>
+  <dt>Übernimmt Voce Klassen aus anderen Apps?</dt>
+  <dd>Ja: Klassendateien im gemeinsamen Austauschformat der theisapps-Apps (z. B. aus Aula) sowie Sicherungen aus Aula (früher Gruppo) liest <b class="ui">Klassen → Klassen einlesen</b>; Voce zeigt vorher, was sich ändert.</dd>
+  <dt>Braucht Voce Internet?</dt>
+  <dd>Nein. Nur die optionale KI-Formulierungshilfe und die Abfrage neuer Versionen gehen ins Internet; beides lässt sich abschalten.</dd>
+  <dt>Darf ich Voce an meiner Schule einsetzen?</dt>
+  <dd>Vor dem Einsatz bitte die Freigabe der Schulleitung einholen (§ 10 Abs. 4 S. 1 AGO), ggf. mit der/dem Datenschutzbeauftragten der Schule.</dd>
+</dl>
+</section>
+
+<section id="quellen" class="newpage">
+<h2><span class="n">16</span>Quellenverzeichnis</h2>
+<p>Alle Bewertungsraster, Rastertexte (Deskriptoren) und Notenschlüssel stammen vom Staatsinstitut für Schulqualität und Bildungsforschung München (ISB). Voce gibt sie wörtlich wieder; das ISB hat die Verwendung mit Quellenangabe und Link zur Fundstelle genehmigt (Oktober 2026).</p>
+<h3>A · Bewertungsraster und Notenschlüssel (ISB)</h3>
+<ol class="src">
+  <li><b>Leistungserhebungen und Bewertungsraster – Moderne Fremdsprachen, Gymnasium.</b> ISB München. Fundstelle aller verwendeten Raster:<br><a class="u" href="https://www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/" target="_blank" rel="noopener">https://www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/</a></li>
+  <li><b>Bewertungsraster „Sprechen“ (dialogisch) für den großen mündlichen Leistungsnachweis</b> – Stufen A1, A1+, A2, A2+, B1, B1+, B1+/B2; Rastertexte, Gewichtung und Notenschlüssel (Rechentabellen). Verwendet für Prüfungen.</li>
+  <li><b>Bewertungsraster „Sprechen (monologisch)“</b> – Stufen A1, A1+, A2, A2+, B1, B1+, je Bewertungsraster und Bewertungsbogen mit Notenschlüssel (Dateien „a1…b1+_sprechen_monologisch“, Stand 2026). Verwendet für Referate.</li>
+  <li><b>Bewertung in der Oberstufe (Notenpunkte)</b> – Raster und Rechentabellen für 12/13 sowie B1 spät beginnend (Bewertungseinheiten, umgerechnet in Notenpunkte). <a class="u" href="https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/Leistungserhebungen_und_Bewertungsraster/oberstufe_schriftliche_und_muendliche_leistungsnachweise_leitfaden_2020.pdf" target="_blank" rel="noopener">Leitfaden Oberstufe (2020)</a></li>
+  <li><b>Niveaustufen des GeR am Gymnasium in Bayern (mit Profilkursen 12/13)</b> – Grundlage der Raster-Vorschläge je Sprachenfolge und Jahrgangsstufe (geprüft mit Stand 12/2025). <a class="u" href="https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/Leistungserhebungen_und_Bewertungsraster/Niveaustufen_GeR_Gymnasium_Bayern_mit_Profilkursen_mit_12_13.pdf" target="_blank" rel="noopener">PDF beim ISB</a></li>
+  <li><b>Hinweise zu mündlichen Leistungsnachweisen, Jahrgangsstufen 5 bis 11</b> (Stand 01/2025) – Bewertungskategorien, Gewichtung, Schwelle 4/5 zwischen 50 und 60 %. <a class="u" href="https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/Leistungserhebungen_und_Bewertungsraster/Hinweise/5-11_mod_fs_muendliche_leistungsnachweise_hinweise_01_25.pdf" target="_blank" rel="noopener">PDF beim ISB</a></li>
+</ol>
+<h3>B · Rechtliche Hinweise</h3>
+<ol class="src" start="7">
+  <li><b>Genehmigung des ISB</b> (Oktober 2026): Rastertexte und Notenschlüssel dürfen mit Quellenangabe und Link auf die genaue Fundstelle verwendet werden. Der Einsatz der App ist vorab von der Schulleitung zu genehmigen (§ 10 Abs. 4 S. 1 AGO), ggf. unter Einbindung der/des Datenschutzbeauftragten.</li>
+  <li><b>Gewähr:</b> Voce rechnet nach den ISB-Vorgaben, ohne Gewähr. Die Verantwortung für die Notengebung liegt bei der Lehrkraft.</li>
+</ol>
+<h3>C · Eigene Inhalte von theisapps</h3>
+<ol class="src" start="9">
+  <li><b>Worturteil-Bausteine</b> (Deutsch, Englisch, Italienisch, Französisch, Spanisch): eigene Formulierungen, je Bereich und Stufe eng an den ISB-Beschreibungen ausgerichtet.</li>
+  <li><b>Übersetzungen der Rastertexte</b> ins Englische, Italienische, Französische und Spanische: inoffiziell, von theisapps.</li>
+  <li><b>Aussprache-Hinweise</b> (typische Laute und häufige Fehler) und <b>Beispielaufgaben</b>: eigene Zusammenstellung.</li>
+  <li><b>Beispieldaten und Abbildungen</b> in App und Handbuch: frei erfunden; alle Namen sind erfunden.</li>
+</ol>
+<h3>D · Software und Schriften</h3>
+<ol class="src" start="13">
+  <li><b>Electron</b> (MIT-Lizenz) mit <b>Chromium</b> (BSD und weitere Lizenzen)</li>
+  <li><b>docx.js</b> 9.8 (MIT) – Word-Dateien</li>
+  <li><b>PDF.js</b> 3.11 (Apache License 2.0) – Klassenlisten aus PDF</li>
+  <li><b>SheetJS Community Edition</b> 0.18.5 (Apache License 2.0) – Klassenlisten aus Excel</li>
+  <li><b>Schriften</b> Atkinson Hyperlegible (Braille Institute of America), Jost, Lora, Nunito, Space Grotesk – SIL Open Font License 1.1</li>
+</ol>
+<p class="note">Die vollständigen Lizenztexte stehen in der App unter <b class="ui">Einstellungen → Hilfe &amp; Info → Lizenzen</b>.</p>
 </section>
 
 <footer>

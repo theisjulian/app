@@ -1,6 +1,6 @@
 /* Voce · Online-Demo: Hinweise und Sperren von Datei-Funktionen · © 2026 theisapps
    Wird nach app.js geladen. Die App-Dateien bleiben unverändert – die Demo hängt sich nur an wenige Stellen:
-   Word-Export, Dateiauswahl, Ziehen von Dateien, Hinweistext zur Speicherung. */
+   Word-Export (auch Referatsliste), Dateiauswahl, Ziehen von Dateien, Hinweistext zur Speicherung. */
 (function () {
   'use strict';
   const X = window.__voceDemo, LADEN = '../#laden';
@@ -21,7 +21,7 @@
 
   /* Word-Ausgaben (Bewertungsbögen, Plan, Karten) */
   /* Export ist eine globale Konstante aus export.js (kein window-Eigenschaft) */
-  ['sheets', 'plan', 'tasks'].forEach(k => { if (typeof Export !== 'undefined' && typeof Export[k] === 'function') Export[k] = () => { X.locked('Der Word-Export'); return Promise.resolve(); }; });
+  ['sheets', 'plan', 'tasks', 'refList'].forEach(k => { if (typeof Export !== 'undefined' && typeof Export[k] === 'function') Export[k] = () => { X.locked('Der Word-Export'); return Promise.resolve(); }; });
 
   /* Dateien auswählen (Klassenlisten, Logo, Bilder, Sicherungen): gesperrt – auch für Eingaben, die nicht im Dokument hängen */
   const clickApp = HTMLInputElement.prototype.click;
