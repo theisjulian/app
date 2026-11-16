@@ -110,7 +110,8 @@ const sw = (id, on, label) => `<div class="row"><span>${label}</span><input type
    Einrichtung & Sperre
    ====================================================================== */
 const ICON = '<img class="appIcon" src="icon.png" alt="">';
-function gate(html) { $('#appRoot').hidden = true; $('#gate').hidden = false; $('#gateCard').innerHTML = html;
+let APPV = ''; try { N.version().then(v => { APPV = v || ''; }).catch(() => {}); } catch (e) {}
+function gate(html) { $('#appRoot').hidden = true; $('#gate').hidden = false; $('#gateCard').classList.remove('lockCard'); $('#gateCard').innerHTML = html;
   if (!$('#gateBrand') && window.THEISAPPS_LOGO) { const b = document.createElement('div'); b.id = 'gateBrand'; b.className = 'gateBrand'; b.innerHTML = window.THEISAPPS_LOGO; $('#gate').appendChild(b); } }
 
 let SETUP = {};
@@ -179,19 +180,42 @@ async function saveCodePdf(code) {
   await N.savePdf('Libretto-Notfallschluessel.pdf', Print.html(m, {}), false);
 }
 
+const SVG_LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const SVG_KEY = '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>';
+const SVG_EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const SVG_EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const SVG_SHIELD = '<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.6-3.4 8.4-8 9-4.6-.6-8-4.4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>';
+/* Passwortfeld mit Schloss, „anzeigen“ und Hinweis bei Feststelltaste */
+function pwWire(input) {
+  const wrap = input.closest('.pwField'); if (!wrap) return;
+  const eye = wrap.querySelector('.pwEye'), caps = wrap.parentNode.querySelector('.capsHint');
+  if (eye) eye.onclick = () => { const show = input.type === 'password'; input.type = show ? 'text' : 'password'; eye.innerHTML = show ? SVG_EYE_OFF : SVG_EYE; eye.setAttribute('aria-label', show ? 'Passwort verbergen' : 'Passwort anzeigen'); eye.title = eye.getAttribute('aria-label'); input.focus(); };
+  const cap = e => { if (caps && e.getModifierState) caps.hidden = !e.getModifierState('CapsLock'); };
+  input.addEventListener('keydown', cap); input.addEventListener('keyup', cap);
+}
 function renderLock(mode = 'pw', info = '') {
   const code = mode === 'code';
-  gate(`${ICON}<h2>${code ? 'Mit Notfallschlüssel öffnen' : 'Libretto ist gesperrt'}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : 'Deine Noten sind verschlüsselt. Gib dein Passwort ein.'}</p>
-    <input class="pwInput" id="pw" type="${code ? 'text' : 'password'}" placeholder="${code ? 'XXXXXX-XXXXXX-XXXXXX-XXXXXX' : 'Passwort'}" autocomplete="${code ? 'off' : 'current-password'}">
-    <p class="gateErr" id="err">${esc(info)}</p><button class="go" id="open">Öffnen</button>
-    <div class="gateLinks">${code ? '<button id="back">Zurück zum Passwort</button>' : '<button id="useCode">Passwort vergessen?</button>'}<button id="restore">Sicherung wiederherstellen …</button></div>`);
+  const now = new Date(), h = now.getHours();
+  const hello = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
+  gate(`<div class="lockTop"><span>${esc(now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }))}</span></div>
+    <div class="lockIcon">${ICON}</div>
+    <h2>${code ? 'Mit Notfallschlüssel öffnen' : esc(hello)}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : 'Libretto ist gesperrt. Gib dein Passwort ein, um deine Noten zu öffnen.'}</p>
+    <div class="pwField${code ? ' code' : ''}"><i class="pwIc">${code ? SVG_KEY : SVG_LOCK}</i>
+      <input class="pwInput" id="pw" type="${code ? 'text' : 'password'}" placeholder="${code ? 'XXXXXX-XXXXXX-XXXXXX-XXXXXX' : 'Passwort'}" autocomplete="${code ? 'off' : 'current-password'}" spellcheck="false" aria-label="${code ? 'Notfallschlüssel' : 'Passwort'}">
+      ${code ? '' : `<button type="button" class="pwEye" aria-label="Passwort anzeigen" title="Passwort anzeigen">${SVG_EYE}</button>`}</div>
+    <div class="capsHint" hidden>⇪ Feststelltaste ist an</div>
+    <p class="gateErr" id="err" role="alert">${esc(info)}</p><button class="go" id="open"><span>${code ? 'Öffnen' : 'Entsperren'}</span></button>
+    <div class="gateLinks">${code ? '<button id="back">Zurück zum Passwort</button>' : '<button id="useCode">Passwort vergessen?</button>'}<i></i><button id="restore">Sicherung wiederherstellen …</button></div>
+    <div class="lockSafe">${SVG_SHIELD}<span>Verschlüsselt mit AES-256 · Daten nur auf diesem Computer</span></div>`);
+  $('#gateCard').classList.add('lockCard');
+  pwWire($('#pw'));
   $('#gateCard').classList.remove('wide');
   $('#pw').focus();
   const go = async () => {
     const v = $('#pw').value; if (!v) return;
     $('#open').disabled = true; $('#open').textContent = 'Wird entschlüsselt …';
     const r = await N.unlock(v, code);
-    if (!r.ok) { $('#err').textContent = r.error; $('#open').disabled = false; $('#open').textContent = 'Öffnen'; $('#pw').select(); return; }
+    if (!r.ok) { $('#err').textContent = r.error; $('#open').disabled = false; $('#open').innerHTML = `<span>${code ? 'Öffnen' : 'Entsperren'}</span>`; $('#pw').select(); const f = $('.pwField'); if (f) { f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); } return; }
     D = r.data; migrate();
     if (r.recovered) setTimeout(() => sheet({ title: 'Letzter Stand geöffnet', small: true, ok: '', cancel: 'Verstanden', body: `<p class="prose" style="margin:0">Die Datei mit deinen Daten war beim letzten Speichern beschädigt worden (z. B. durch einen Absturz oder Stromausfall). Libretto hat deshalb den <b>vorherigen gespeicherten Stand</b>${typeof r.recovered === 'string' ? ' vom ' + esc(new Date(r.recovered).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })) : ''} geöffnet. Die beschädigte Datei liegt bei den Sicherungen. Bitte prüfe die zuletzt eingetragenen Noten.</p>` }), 400);
     if (code) return newPasswordAfterCode();
@@ -1071,7 +1095,7 @@ function assessmentSheet(c, a) {
         <label class="check" style="margin-top:22px"><input type="checkbox" id="aRemember" ${isNew ? 'checked' : ''}> <span>Schlüssel und Eingabeart als Standard für ${esc(c.subject || 'dieses Fach')} merken</span></label></div>
       ${keyInputs()}<div class="keyPct" id="keyPct"></div>
       ${mfs ? `<p class="hint" id="mfsSrc">${up && !c.late ? 'ISB-Leitfaden (April 2025): Wo in Q12/13 mit BE bewertet wird (z. B. Wortschatz- und Grammatikaufgaben), beginnt „ausreichend“ bei 50 % (4 Punkte), „mangelhaft“ bei 33 % (1 Punkt). Eine vollständige Tabelle aller Notenpunktgrenzen legt der Leitfaden für dieses Aufgabenformat nicht fest – Libretto verteilt die übrigen Punkte gleichmäßig (15 Punkte dann ab rund 96 %); jede Grenze kannst du ändern. Das Verfahren richtet sich nach dem Aufgabenformat, nicht danach, ob es eine Klausur oder ein kleiner Test ist: <b>Hörverstehen</b> → amtliche BE-Tabelle (4 Punkte ab 40 %), in einer kombinierten Arbeit als eigener Prüfungsteil; <b>Schreiben und Sprachmittlung im Abiturformat</b> → nie über einen Prozentschlüssel, sondern mit dem Bewertungsraster (Inhalt und Sprache in Notenpunkten, 40 : 60) – also „Nach Prüfungsteilen bewerten“, auch wenn es die einzige Aufgabe ist; <b>Wortschatz- und Grammatiktest</b> ohne Abiturformat → eigener BE-Schlüssel mit diesen Schwellen. <button type="button" class="linkbtn" id="mfsUse">4 P. ab 50 % und 1 P. ab 33 % eintragen</button>' : 'ISB: Die Grenze zu „ausreichend“ liegt aufgabenbezogen zwischen 50 % und 60 %, die Grenze zu „mangelhaft“ bei 33 %. Den genauen Wert legt die Fachschaft fest.'}</p>` : ''}
-      <p class="hint" id="kmkSrc" hidden>${up ? 'Amtliche BE-Tabelle der Abiturprüfung ab 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4; KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 P. ab 95 %, 6 P. ab 50 %, 5 P. ab 45 %, 4 P. ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Die Grenzen sind ganze BE, kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). ' + (R.isAncient(c.subject) ? 'In Latein und Griechisch ist dieser KMK-Bewertungsschlüssel für BE-Bewertungen in der Qualifikationsphase verbindlich (KMS vom 31.07.2023, Anlage 3 Nr. 8 bzw. Anlage 4 Nr. 9); die Übersetzung wird getrennt nach Fehlern bewertet.' : 'Verbindlich für BE-bewertete Abiturprüfungen bzw. Prüfungsteile; für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht.') : 'KMK-Raster: die Prozentgrenzen der Abitur-Tabelle als Noten (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %). Bei ganzen Punkten kaufmännisch gerundet, bei halben Punkten aufgerundet. Eine Vorlage – keine Pflicht für die Unter- und Mittelstufe.'}</p>
+      <p class="hint" id="kmkSrc" hidden>${up ? 'Amtliche BE-Tabelle der Abiturprüfung ab 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4; KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 P. ab 95 %, 6 P. ab 50 %, 5 P. ab 45 %, 4 P. ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Die Grenzen sind ganze BE, kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). Halbe BE bei den erreichten Punkten sind trotzdem möglich (nicht im Hörverstehen; in spät beginnenden Fremdsprachen ausdrücklich erwünscht, ISB-Leitfaden 04/2025) – die Grenze bleibt ganzzahlig, z. B. reichen 33,5 BE nicht für eine Grenze von 34. ' + (R.isAncient(c.subject) ? 'In Latein und Griechisch ist dieser KMK-Bewertungsschlüssel für BE-Bewertungen in der Qualifikationsphase verbindlich (KMS vom 31.07.2023, Anlage 3 Nr. 8 bzw. Anlage 4 Nr. 9); die Übersetzung wird getrennt nach Fehlern bewertet.' : 'Verbindlich für BE-bewertete Abiturprüfungen bzw. Prüfungsteile; für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht.') : 'KMK-Raster: die Prozentgrenzen der Abitur-Tabelle als Noten (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %). Bei ganzen Punkten kaufmännisch gerundet, bei halben Punkten aufgerundet. Eine Vorlage – keine Pflicht für die Unter- und Mittelstufe.'}</p>
       <p class="hint" id="ownHint">${up ? 'Die Punkte 5–15 werden gleichmäßig zwischen der Grenze für 4 Punkte (unterste 4) und 100 % verteilt, 2 und 3 Punkte zwischen 1 und 4 Punkten.' : 'Die Noten 1–3 werden gleichmäßig zwischen der Grenze für die 4 und 100 % verteilt.'} Jede Grenze kannst du danach noch einzeln ändern.</p>
     </div>
     ${dist && dist.n ? `<div class="subhead">Notenspiegel <small class="hint" style="font-weight:400">– ändert sich live mit den Grenzen</small></div><div id="distLive">${distHTML(dist, null, up, countSpan(c, a, up))}</div>
@@ -1130,7 +1154,7 @@ function assessmentSheet(c, a) {
     const ks = $$('[data-k]', d).map(i => i.value === '' ? null : +i.value);
     if (a.usePoints) {
       if (!max || ks.some(x => x == null)) { toast('Bitte erreichbare Punkte und Notenschlüssel ausfüllen'); return false; }
-      const preset = d.querySelector('#aPreset').value, tend = !up && preset === 'kmk' && d.querySelector('#aTend').checked, step = +d.querySelector('#aStep').value;
+      const preset = d.querySelector('#aPreset').value, tend = !up && preset === 'kmk' && d.querySelector('#aTend').checked, step = d.querySelector('#aStep').value === 'tab' ? (+d.querySelector('#aStep').dataset.prev || 0.5) : +d.querySelector('#aStep').value;
       /* alte Vorgabe („5 P. ab …“) unverändert gelassen → in der alten Form speichern, damit der Fachstandard exakt gleich bleibt */
       const keepOld = up && pre.q4 == null && pre.p5 != null && +d.querySelector('#aA1').value === R.anchor4(pre) && +d.querySelector('#aA2').value === +pre.p1;
       const anchors = keepOld ? { p5: +pre.p5, p1: +pre.p1, step, preset } : up ? { q4: +d.querySelector('#aA1').value, p1: +d.querySelector('#aA2').value, step, preset } : { p4: +d.querySelector('#aA1').value, p5: +d.querySelector('#aA2').value, step, preset, tend: !up && d.querySelector('#aTend').checked };
@@ -1176,6 +1200,10 @@ function assessmentSheet(c, a) {
     const kmk = dlg.querySelector('#aPreset').value === 'kmk', tk = dlg.querySelector('#aTasks').checked;
     dlg.querySelector('#anchorBox').hidden = kmk; dlg.querySelector('#kmkSrc').hidden = !kmk; if (dlg.querySelector('#mfsSrc')) dlg.querySelector('#mfsSrc').hidden = kmk; dlg.querySelector('#ownHint').hidden = kmk;
     const tb = dlg.querySelector('#tendBox'); if (tb) tb.hidden = !kmk;
+    /* Q12/Q13 mit amtlicher BE-Tabelle: Grenzen sind immer ganze BE (wie die Tabelle) – Auswahl sperren; halbe BE bei den erreichten Punkten bleiben möglich */
+    { const st = dlg.querySelector('#aStep'), lock = up && kmk;
+      if (lock && !st.disabled) { st.dataset.prev = st.value; if (![...st.options].some(o => o.value === 'tab')) st.insertAdjacentHTML('beforeend', '<option value="tab">ganze BE – wie die amtliche Tabelle</option>'); st.value = 'tab'; st.disabled = true; }
+      else if (!lock && st.disabled) { st.disabled = false; st.value = st.dataset.prev || '0.5'; const o = st.querySelector('option[value="tab"]'); if (o) o.remove(); } }
     dlg.querySelector('#taskBox').hidden = !tk; dlg.querySelector('#impSec').hidden = tk || !!pt;
     const mx = dlg.querySelector('#aMax'); mx.readOnly = tk; mx.title = tk ? 'Summe der Aufgaben' : '';
   };
@@ -1217,7 +1245,7 @@ function assessmentSheet(c, a) {
   let simShow = null;   /* Index der Variante, deren Klassenliste aufgeklappt ist */
   function simRender() {
     const box = dlg.querySelector('#simBody'), det = dlg.querySelector('#simBox'); if (!box || !det || !det.open) return;
-    const max = +dlg.querySelector('#aMax').value, step = +dlg.querySelector('#aStep').value || 0.5;
+    const max = +dlg.querySelector('#aMax').value, step = (dlg.querySelector('#aStep').value === 'tab' ? 1 : +dlg.querySelector('#aStep').value) || 0.5;
     const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && !r.status && !r.nt && r.raw != null).map(r => +r.raw);
     if (!dlg.querySelector('#aPts').checked || !max || !raws.length) { box.innerHTML = '<p class="hint">Die Simulation rechnet mit den eingetragenen Rohpunkten. Sobald Punkte da sind, siehst du hier, wie sich Durchschnitt und Notenspiegel mit anderen Grenzen ändern.</p>'; return; }
     const a1 = +dlg.querySelector('#aA1').value, a2 = +dlg.querySelector('#aA2').value, kn = up ? 'pointThresholds' : 'thresholds';
@@ -1252,7 +1280,7 @@ function assessmentSheet(c, a) {
     el.innerHTML = ''; liveDist(); simRender(); };
   const suggest = quiet => {
     const max = +dlg.querySelector('#aMax').value; if (!max) { if (!quiet) toast('Erst erreichbare Punkte eingeben'); return; }
-    const step = +dlg.querySelector('#aStep').value;
+    const step = dlg.querySelector('#aStep').value === 'tab' ? 1 : +dlg.querySelector('#aStep').value;
     if (dlg.querySelector('#aPreset').value === 'kmk') {
       const kk = R.suggestKeyKmk(max, up, step, true); pctArr = up ? kk.pct15 : kk.pct;
       $$('[data-k]', dlg).forEach((inp, i) => inp.value = (up ? kk.pointThresholds : kk.thresholds)[i]); showPct(); return;
@@ -2789,8 +2817,9 @@ const fileName = (kind, c, date) => fileSafe(`${date || todayISO()} ${kind} ${c.
 async function exportModel(m, kind) {
   const base = m.file ? fileSafe(m.file) : fileSafe(m.title);
   try {
-    if (kind === 'pdf') await N.savePdf(base + '.pdf', Print.html(m, D.settings), m.landscape, Print.footer(D.settings));
-    if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, D.settings), 'docx');
+    const st = (D && D.settings) || {};
+    if (kind === 'pdf') await N.savePdf(base + '.pdf', Print.html(m, st), m.landscape, Print.footer(st));
+    if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, st), 'docx');
     if (kind === 'csv') await N.saveFile(base + '.csv', Print.csv(m), 'csv');
   } catch (e) { toast('Export fehlgeschlagen: ' + e.message); }
 }
@@ -3340,64 +3369,137 @@ async function openLicenses() {
   sheet({ title: 'Lizenzen', wide: true, ok: '', cancel: 'Fertig', body: `<pre class="lic">${esc(txt)}</pre><div class="linkrow"><button type="button" class="mini" id="licChromium">Lizenzen der Chromium-Komponenten öffnen</button></div>`,
     onOpen: d => { d.querySelector('#licChromium').onclick = () => { if (N && N.openDoc) N.openDoc('chromium'); }; } });
 }
+/* Effekte reduzieren und Textgröße (nur dieses Gerät) */
+function applyFx(fx) { document.documentElement.classList.toggle('lowfx', fx === 'low'); }
+function applyZoom(z) { try { N.zoom(z || 1).catch(() => {}); } catch (e) {} }
 async function settingsSheet(tab) {
   const s = D.settings, v = await N.version();
   const skin = ST.skin && SKINS.some(x => x[0] === ST.skin) ? ST.skin : 'standard', mode = ST.mode || 'auto', font = ST.font || 'standard';
-  const TABS = [['gen', 'Allgemein'], ['look', 'Aussehen'], ['sec', 'Sicherheit'], ['about', 'Über']];
+  const IC = {
+    gen: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>',
+    grade: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>',
+    look: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.8-1.8 0-1.3-1-1.6-1-2.7 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.2" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>',
+    sec: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    about: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>' };
+  const TABS = [['gen', 'Allgemein', 'Name, Schule, Start'], ['grade', 'Notenmachen', 'Stichtag und Fristen'], ['look', 'Aussehen', 'Farben, Schrift, Größe'], ['sec', 'Sicherheit', 'Sperre, Updates, Sicherung'], ['about', 'Über', 'Version, Hilfe, Quellen']];
   const cur = TABS.some(t => t[0] === tab) ? tab : (settingsSheet.last || 'gen');
   const row = (title, sub, ctl) => `<div class="setRow"><div><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${ctl}</div>`;
-  sheet({ title: 'Einstellungen', body: `
-    <div class="seg setTabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-stab="${k}" aria-pressed="${k === cur}">${l}</button>`).join('')}</div>
+  const card = (title, inner, hint) => `<section class="setCard">${title ? `<h4>${title}</h4>` : ''}${inner}${hint ? `<p class="setHint">${hint}</p>` : ''}</section>`;
+  const seg = (id, attr, items, on) => `<div class="seg modePick" id="${id}">${items.map(([k, l]) => `<button type="button" data-${attr}="${k}" aria-pressed="${String(on) === String(k)}">${l}</button>`).join('')}</div>`;
+  const nd = nextDeadlines(null)[0];
+  const zoom = ST.zoom || 1, cv = courseViewMode();
+  const { dlg } = sheet({ title: 'Einstellungen', wide: true, body: `<div class="setTwo">
+    <nav class="setNav" role="tablist">${TABS.map(([k, l, sub]) => `<button type="button" role="tab" data-stab="${k}" aria-pressed="${k === cur}"><i>${IC[k]}</i><span><b>${l}</b><small>${sub}</small></span></button>`).join('')}
+      <div class="setNavFoot"><img src="icon.png" alt=""><span>Libretto ${esc(v)}</span></div></nav>
+    <div class="setMain">
     <div class="setPane" data-pane="gen" ${cur === 'gen' ? '' : 'hidden'}>
-      <div class="grid2">${field('Name der Lehrkraft (für Ausdrucke)', `<input type="text" id="sT" value="${esc(s.teacher)}">`)}${field('Schule (optional)', `<input type="text" id="sS" value="${esc(s.school)}">`)}
-        ${field('Schuljahr', `<input type="text" id="sY" value="${esc(s.year)}">`)}${field('Stichtag Zwischenzeugnis / Notenbild', `<input type="date" id="sH" value="${esc(s.half1End)}">`)}</div>
-      <p class="hint">Name und Schule erscheinen auf deinen Ausdrucken. Der Stichtag steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO).</p>
-      <div class="setRow"><div><b>Fristen fürs Notenmachen</b><small>${dlList().length ? dlList().length + ' eingetragen – nächste: ' + (nextDeadlines(null)[0] ? esc(dlTitle(nextDeadlines(null)[0]) + ' ' + fdate(dlDue(nextDeadlines(null)[0]))) : 'keine mehr in diesem Schuljahr') : 'Zwischenbericht/Zwischenzeugnis, Halbjahr, Q12, Q13, Jahreszeugnis – je Schule verschieden'}</small></div><button type="button" class="mini" id="sDl">Fristen …</button></div>
-      <div class="setHead">Beim Öffnen zeigen</div>
-      <div class="seg modePick" id="sStart">${[['start', 'Übersicht'], ['grades', 'Letzter Kurs']].map(([k, l]) => `<button type="button" data-start="${k}" aria-pressed="${(ST.startTab === 'grades' ? 'grades' : 'start') === k}">${l}</button>`).join('')}</div>
-      <p class="hint">Die Übersicht zeigt, wo Noten fehlen, welche Nachtermine offen sind und was als Nächstes ansteht. Gilt für dieses Gerät.</p>
+      ${card('Für deine Ausdrucke', `<div class="grid2">${field('Name der Lehrkraft', `<input type="text" id="sT" value="${esc(s.teacher)}" placeholder="z. B. J. Muster">`)}${field('Schule (optional)', `<input type="text" id="sS" value="${esc(s.school)}" placeholder="z. B. Gymnasium Musterstadt">`)}</div>`, 'Name und Schule stehen oben rechts auf jedem Ausdruck.')}
+      ${card('Schuljahr', `<div class="grid2">${field('Schuljahr', `<input type="text" id="sY" value="${esc(s.year)}">`)}<div></div></div>`)}
+      ${card('Beim Öffnen zeigen', seg('sStart', 'start', [['start', 'Übersicht'], ['grades', 'Letzter Kurs']], ST.startTab === 'grades' ? 'grades' : 'start'), 'Die Übersicht zeigt, wo Noten fehlen, welche Nachtermine offen sind und was als Nächstes ansteht. Gilt für diesen Computer.')}
+    </div>
+    <div class="setPane" data-pane="grade" ${cur === 'grade' ? '' : 'hidden'}>
+      ${card('Stichtag', `<div class="grid2">${field('Stichtag Zwischenzeugnis / Notenbild', `<input type="date" id="sH" value="${esc(s.half1End)}">`)}<div></div></div>`, 'Steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO): Es zählen nur Noten bis zu diesem Tag.')}
+      ${card('Fristen fürs Notenmachen', row(dlList().length ? dlList().length + ' Fristen eingetragen' : 'Noch keine Fristen', dlList().length ? (nd ? 'Nächste: ' + esc(dlTitle(nd) + ' – ' + fdate(dlDue(nd))) : 'keine mehr in diesem Schuljahr') : 'Zwischenbericht oder Zwischenzeugnis, Halbjahr, Q12, Q13, Jahreszeugnis – je Schule verschieden', '<button type="button" class="mini accent" id="sDl">Fristen …</button>'), 'Libretto erinnert eine Woche vorher in der Übersicht und im Kurs.')}
     </div>
     <div class="setPane" data-pane="look" ${cur === 'look' ? '' : 'hidden'}>
-      <div class="setHead">Farbwelt</div>
-      <div class="skinPick">${SKINS.map(([k, l]) => `<button type="button" class="skinBtn${skin === k ? ' on' : ''}" data-sk="${k}" aria-pressed="${skin === k}"><span class="skinSw">${(SKIN_SW[k] || []).map(col => `<i style="background:${col}"></i>`).join('')}</span>${esc(l)}</button>`).join('')}</div>
-      <div class="setHead">Helligkeit</div>
-      <div class="seg modePick" id="sMode">${[['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button type="button" data-mode="${k}" aria-pressed="${mode === k}">${l}</button>`).join('')}</div>
-      <div class="setHead">Schrift</div>
-      <div class="fontPick">${FONTS.map(([k, n, st, d]) => `<button type="button" class="fontBtn" data-font="${k}" aria-pressed="${font === k}" style="font-family:${esc(st)}">${esc(n)}<small>${esc(d)}</small></button>`).join('')}</div>
-      <div class="setHead">Notentabelle</div>
-      ${row('Kompakte Zeilen', 'Mehr Schülerinnen und Schüler auf einen Blick – praktisch auf dem Laptop.', `<input type="checkbox" class="sw" id="sDense" ${ST.dense ? 'checked' : ''}>`)}
-      <p class="hint">Das Aussehen gilt nur für dieses Gerät und wird sofort übernommen. Noten und Ausdrucke ändern sich dadurch nicht.</p>
+      ${card('Farbwelt', `<div class="pillPick">${SKINS.map(([k, l]) => `<button type="button" class="pill${skin === k ? ' on' : ''}" data-sk="${k}" aria-pressed="${skin === k}"><span class="pillSw">${(() => { const [b0, c1, c2] = SKIN_SW[k] || ['#eee', '#888', '#888']; return `<i style="background:conic-gradient(${c1} 0 50%, ${c2 === c1 ? b0 : c2} 0 100%)"></i>`; })()}</span>${esc(l)}</button>`).join('')}</div>`)}
+      ${card('Helligkeit', seg('sMode', 'mode', [['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']], mode), 'Automatisch folgt dem Computer – tagsüber hell, abends dunkel.')}
+      ${card('Schrift', `<div class="pillPick">${FONTS.map(([k, n, st, d]) => `<button type="button" class="pill fpill${font === k ? ' on' : ''}" data-font="${k}" aria-pressed="${font === k}" title="${esc(d)}" style="font-family:${esc(st)}">${esc(n)}<small>${esc(d)}</small></button>`).join('')}</div>`)}
+      ${card('Textgröße', `<div class="seg modePick zoomPick" id="sZoom">${[[0.9, 'Klein', 13], [1, 'Normal', 15], [1.1, 'Groß', 17], [1.2, 'Sehr groß', 19]].map(([k, l, px]) => `<button type="button" data-zoom="${k}" aria-pressed="${zoom === k}"><span style="font-size:${px}px">Aa</span> ${l}</button>`).join('')}</div>`, 'Vergrößert die ganze Oberfläche – angenehm auf großen Bildschirmen oder am Beamer.')}
+      ${card('Darstellung', `${row('Kursliste in der Leiste', 'Wie die Kurse links geordnet sind.', seg('sCv', 'cv', [['b', 'Stufen'], ['c', 'Fächer'], ['e', 'Karten']], cv))}
+        ${row('Kompakte Zeilen', 'Mehr Schülerinnen und Schüler auf einen Blick – praktisch auf dem Laptop.', `<input type="checkbox" class="sw" id="sDense" ${ST.dense ? 'checked' : ''}>`)}
+        ${row('Effekte reduzieren', 'Ohne Glas- und Bewegungseffekte – ruhiger und spürbar schneller auf älteren Computern.', `<input type="checkbox" class="sw" id="sFx" ${ST.fx === 'low' ? 'checked' : ''}>`)}`, 'Das Aussehen gilt nur für diesen Computer und wird sofort übernommen. Noten und Ausdrucke ändern sich dadurch nicht.')}
     </div>
     <div class="setPane" data-pane="sec" ${cur === 'sec' ? '' : 'hidden'}>
-      <div class="grid2">${field('Automatisch sperren nach', `<select id="sL">${[[5, '5 Minuten'], [10, '10 Minuten'], [15, '15 Minuten']].map(([m, l]) => `<option value="${m}" ${+s.autoLock === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
-        ${field('Nach Updates suchen', `<select id="sU"><option value="1" ${ST.updateCheck !== false ? 'selected' : ''}>Beim Start (nur Versionsnummer abfragen)</option><option value="0" ${ST.updateCheck === false ? 'selected' : ''}>Nie</option></select>`)}</div>
-      <p class="hint">Die automatische Sperre gehört zu den Sicherheitsstandards für dienstliche Daten auf privaten Geräten. Bei der Suche nach Updates wird nur die Versionsnummer abgefragt – keine Noten, keine Namen.</p>
-      ${row('Sicherung, Passwort und Notfallschlüssel', 'Sicherungsordner wählen, jetzt sichern, Passwort ändern, wiederherstellen.', '<button type="button" class="mini" id="sToBackup">Zur Sicherung</button>')}
-      ${row('Jetzt sperren', 'Libretto sperrt sich auch selbst, wenn du eine Weile nichts eingibst.', '<button type="button" class="mini" id="sLockNow">Sperren</button>')}
+      ${card('Sperre und Updates', `<div class="grid2">${field('Automatisch sperren nach', `<select id="sL">${[[5, '5 Minuten'], [10, '10 Minuten'], [15, '15 Minuten']].map(([m, l]) => `<option value="${m}" ${+s.autoLock === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
+        ${field('Nach Updates suchen', `<select id="sU"><option value="1" ${ST.updateCheck !== false ? 'selected' : ''}>Beim Start (nur Versionsnummer)</option><option value="0" ${ST.updateCheck === false ? 'selected' : ''}>Nie</option></select>`)}</div>`, 'Die automatische Sperre gehört zu den Mindestsicherheitsstandards für dienstliche Daten auf privaten Geräten. Bei der Update-Suche wird nur die Versionsnummer abgefragt – keine Noten, keine Namen.')}
+      ${card('Daten', `${row('Sicherung, Passwort und Notfallschlüssel', 'Sicherungsordner wählen, jetzt sichern, Passwort ändern, wiederherstellen.', '<button type="button" class="mini" id="sToBackup">Zur Sicherung</button>')}
+        ${row('Jetzt sperren', 'Libretto sperrt sich auch selbst, wenn du eine Weile nichts eingibst.', '<button type="button" class="mini" id="sLockNow">Sperren</button>')}`, 'Alle Noten liegen verschlüsselt (AES-256-GCM) nur auf diesem Computer und in deinem Sicherungsordner.')}
     </div>
     <div class="setPane" data-pane="about" ${cur === 'about' ? '' : 'hidden'}>
-      <div class="about"><img src="icon.png" alt="" width="64" height="64"><div><b>Libretto</b> · Notenverwaltung · Gymnasium Bayern<br><span class="sel">Version ${esc(v)}</span></div></div>
-      <div class="maker"><span class="by">Eine App von</span>${window.THEISAPPS_LOGO}<div class="mk-meta">Apps für die Schule · <a href="${SITE_URL}" target="_blank" rel="noopener">theisapps.de</a><br>© 2026 theisapps. Alle Rechte vorbehalten.<br><a href="${SUPPORT_URL}" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div></div>
-      <p class="hint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>
-      <div class="linkrow"><button type="button" class="mini" id="abOpen">Über Libretto</button><button type="button" class="mini" id="licBtn">Lizenzen der verwendeten Open-Source-Software</button></div>
-    </div>`,
+      <section class="setCard aboutCard"><img src="icon.png" alt=""><div><b>Libretto</b><span>Notenverwaltung für das bayerische Gymnasium (G9)</span><span class="sel">Version ${esc(v)} · kostenlos</span></div><button type="button" class="mini" id="abOpen">Was ist neu?</button></section>
+      ${card('Nachschlagen', `<div class="setLinks">
+        <button type="button" data-ab="help"><b>Hilfe</b><small>alle Themen mit Suche</small></button>
+        <button type="button" data-ab="hb"><b>Handbuch als PDF</b><small>vollständig, zum Ausdrucken</small></button>
+        <button type="button" data-ab="src"><b>Quellenverzeichnis</b><small>Rechtsgrundlagen und Vorgaben</small></button>
+        <button type="button" id="licBtn"><b>Lizenzen</b><small>Open-Source-Software</small></button></div>`)}
+      <section class="setCard maker"><span class="by">Eine App von</span>${window.THEISAPPS_LOGO}<div class="mk-meta">Apps für die Schule · <a href="${SITE_URL}" target="_blank" rel="noopener">theisapps.de</a><br>© 2026 theisapps. Alle Rechte vorbehalten.<br><a href="${SUPPORT_URL}" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div></section>
+      <p class="setHint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>
+    </div></div></div>`,
     onOpen: (d, close) => {
-      $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; $$('[data-stab]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); });
+      d.classList.add('setDlg');
+      const pick = (attr, b) => $$(`[data-${attr}]`, d).forEach(x => { x.setAttribute('aria-pressed', String(x === b)); x.classList.toggle('on', x === b); });
+      $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; pick('stab', b); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); d.querySelector('.setMain').scrollTop = 0; });
       d.querySelector('#licBtn').onclick = openLicenses;
       d.querySelector('#sDl').onclick = () => { close(); deadlineSheet(); };
       d.querySelector('#abOpen').onclick = () => { close(); openAbout(); };
+      $$('[data-ab]', d).forEach(b => b.onclick = async () => { const k = b.dataset.ab;
+        if (k === 'help') { close(); helpSheet(); } else if (k === 'src') { close(); sourcesSheet(); }
+        else { b.disabled = true; try { await helpSheet({ pdf: true }); } catch (e) { toast('PDF konnte nicht erstellt werden'); } finally { b.disabled = false; } } });
       d.querySelector('#sToBackup').onclick = () => { close(); UI.tab = 'backup'; render(); };
       d.querySelector('#sLockNow').onclick = () => { close(); lockNow(); };
-      $$('[data-sk]', d).forEach(b => b.onclick = () => { ST.skin = b.dataset.sk; applyLook(ST.skin, ST.mode, ST.font); $$('[data-sk]', d).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); }); N.setCfg({ skin: ST.skin }).catch(() => {}); });
-      $$('[data-start]', d).forEach(b => b.onclick = () => { ST.startTab = b.dataset.start; $$('[data-start]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ startTab: ST.startTab }).catch(() => {}); });
-      $$('[data-mode]', d).forEach(b => b.onclick = () => { ST.mode = b.dataset.mode; applyLook(ST.skin, ST.mode, ST.font); $$('[data-mode]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ mode: ST.mode }).catch(() => {}); });
-      $$('[data-font]', d).forEach(b => b.onclick = () => { ST.font = b.dataset.font; applyLook(ST.skin, ST.mode, ST.font); $$('[data-font]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ font: ST.font }).catch(() => {}); });
+      $$('[data-sk]', d).forEach(b => b.onclick = () => { ST.skin = b.dataset.sk; applyLook(ST.skin, ST.mode, ST.font); pick('sk', b); N.setCfg({ skin: ST.skin }).catch(() => {}); });
+      $$('[data-start]', d).forEach(b => b.onclick = () => { ST.startTab = b.dataset.start; pick('start', b); N.setCfg({ startTab: ST.startTab }).catch(() => {}); });
+      $$('[data-mode]', d).forEach(b => b.onclick = () => { ST.mode = b.dataset.mode; applyLook(ST.skin, ST.mode, ST.font); pick('mode', b); N.setCfg({ mode: ST.mode }).catch(() => {}); });
+      $$('[data-font]', d).forEach(b => b.onclick = () => { ST.font = b.dataset.font; applyLook(ST.skin, ST.mode, ST.font); pick('font', b); N.setCfg({ font: ST.font }).catch(() => {}); });
+      $$('[data-zoom]', d).forEach(b => b.onclick = () => { ST.zoom = +b.dataset.zoom; applyZoom(ST.zoom); pick('zoom', b); N.setCfg({ zoom: ST.zoom }).catch(() => {}); });
+      $$('[data-cv]', d).forEach(b => b.onclick = () => { D.settings.courseView = b.dataset.cv; pick('cv', b); save(); renderSide(); });
       d.querySelector('#sDense').onchange = e => { ST.dense = e.target.checked; document.body.classList.toggle('dense', !!ST.dense); N.setCfg({ dense: !!ST.dense }).catch(() => {}); };
+      d.querySelector('#sFx').onchange = e => { ST.fx = e.target.checked ? 'low' : 'full'; applyFx(ST.fx); N.setCfg({ fx: ST.fx }).catch(() => {}); };
     },
     onOk: d => { s.teacher = d.querySelector('#sT').value.trim(); s.school = d.querySelector('#sS').value.trim(); s.year = d.querySelector('#sY').value.trim() || s.year; s.half1End = d.querySelector('#sH').value; s.autoLock = +d.querySelector('#sL').value; N.setCfg({ updateCheck: d.querySelector('#sU').value === '1' }).then(x => { ST = x; }); save(); brandLine(); render(); } });
+  return dlg;
 }
-function helpSheet() {
-  const fig = (img, alt) => `<figure class="helpFig"><img src="help/${img}.jpg" alt="${esc(alt)}" loading="lazy"></figure>`;
+/* ======================================================================
+   Quellenverzeichnis: alle Vorschriften und Vorgaben, auf die sich Libretto stützt (Stand November 2026).
+   Eine Liste für Hilfe, eigenes Fenster und PDF. w = wofür in Libretto.
+   ====================================================================== */
+const SOURCES_STAND = 'November 2026';
+const SOURCES = [
+  ['Gesetze und Verordnungen', [
+    ['BayEUG', 'Bayerisches Gesetz über das Erziehungs- und Unterrichtswesen, Art. 52', 'Leistungsnachweise; pädagogische Verantwortung der Lehrkraft bei der Bewertung', 'gesetze-bayern.de'],
+    ['GSO', 'Schulordnung für die Gymnasien in Bayern (Gymnasialschulordnung) vom 23.01.2007, Fassung ab 01.08.2026', '§ 16 Vorrückungsfächer · § 20 Seminare · § 21 Leistungsnachweise · § 22 Schulaufgaben (Zahl, Ankündigung, höchstens eine am Tag) · § 23 kleine Leistungsnachweise · § 24 Seminararbeit und Prüfungsgespräch · § 25 Rückgabe binnen zwei bzw. drei Wochen · § 26 Bewertung, Versäumnis (Note 6), Unterschleif · § 27 Nachtermin · § 28 Jahresfortgangsnote · § 29 Punkte und Halbjahresleistungen (Abs. 3–5 Kunst, Musik, Sport; Abs. 6 Seminararbeit) · § 30 Vorrücken · § 39 Zeugnisse · § 40 Zwischenzeugnis bzw. Zwischenberichte, Gefährdung · § 44 Zulassung zur Abiturprüfung', 'gesetze-bayern.de'],
+    ['BaySchO', 'Bayerische Schulordnung', '§ 20 Entschuldigung bei Krankheit · §§ 31 ff. Nachteilsausgleich und Notenschutz, Zeugnisbemerkung', 'gesetze-bayern.de']]],
+  ['Bekanntmachungen und Schreiben des Kultusministeriums', [
+    ['W-Seminar', 'Wissenschaftspropädeutisches Seminar – Bekanntmachung vom 06.04.2023 (BayMBl. 2023 Nr. 185)', 'Ablauf, Seminararbeit, Betreuung', 'gesetze-bayern.de'],
+    ['KMS 02.02.2026', 'KMS zum Prüfungsgespräch im W-Seminar, VI.5-BS5640.0/422/4', 'Prüfungsgespräch höchstens 25 Minuten, freier Kurzvortrag bis 5 Minuten möglich', 'oberstufe.bayern.de'],
+    ['P-Seminar', 'P-Seminar zur beruflichen Orientierung – Bekanntmachung des Kultusministeriums', 'P-Seminar (Jgst. 11)', 'gesetze-bayern.de'],
+    ['KMS 18.06.2026', '„Weiterentwicklung der Prüfungskultur an den bayerischen Gymnasien“, VI.3-BS5200.0/88/5', 'Mindestzahl der Schulaufgaben ab 2026/27 (Deutsch 5–8, Mathematik 9); mündliche große Leistungsnachweise in modernen Fremdsprachen', 'km.bayern.de'],
+    ['Moderne Fremdsprachen Q12/Q13', 'KMS „Schriftliche Prüfungsformen in der Profil- und Leistungsstufe und im Abitur“ und KMS zu den mündlichen Prüfungsformen', 'Gewichte 20/55/25 %, Inhalt : Sprache 40 : 60, Sperrklausel, Prozenttabelle', 'km.bayern.de'],
+    ['KMS 31.07.2023', 'Latein und Griechisch: „Altsprachlicher Unterricht im neunjährigen Gymnasium“, V.3-BS5402.7/135/1, Anlagen 2–4', 'Bewertungsschlüssel, Gewichtung der Teile, KMK-Schlüssel für BE in der Qualifikationsphase (Anlage 3 Nr. 8, Anlage 4 Nr. 9)', 'km.bayern.de'],
+    ['KMS 28.09.2026', 'Deutsch: „Unterricht im Fach Deutsch – Lernbereich Schreiben“, VI.4-BS5402.5/105/7', 'ganzheitliche Bewertung der Schreibleistungen (direkte Notengebung)', 'km.bayern.de'],
+    ['Sport, Kunst, Musik', 'Bekanntmachungen des Kultusministeriums zur Qualifikationsphase', 'Halbjahresleistung nach § 29 Abs. 3–5 GSO', 'gesetze-bayern.de'],
+    ['Mindestsicherheitsstandards', '„Mindestsicherheitsstandards“ für private Endgeräte von Lehrkräften, Stand 20.09.2023', 'verschlüsselte Speicherung und Sicherung, automatische Sperre spätestens nach 15 Minuten', 'km.bayern.de']]],
+  ['ISB – Staatsinstitut für Schulqualität und Bildungsforschung', [
+    ['Moderne Fremdsprachen 5–11', 'Hinweise zu schriftlichen Leistungsnachweisen mit Bewertungsrastern Schreiben/Sprachmittlung', 'Inhalt : Sprache 4 : 6 (Anfangsunterricht A1 auch 3 : 7)', 'isb.bayern.de'],
+    ['PuLSt Q12/Q13', 'Bewertungsraster und Rechentabelle Hörverstehen, Schreiben, Sprachmittlung (Stand 12/2025)', 'Hörverstehen über die Abitur-Tabelle; Schreiben/Sprachmittlung 40 : 60 mit Sperrklausel', 'isb.bayern.de'],
+    ['Leitfaden 04/2025', '„Leistungsnachweise in der Profil- und Leistungsstufe – Moderne Fremdsprachen“, Leitfaden (Stand April 2025)', '„ausreichend“ ab 50 %, „mangelhaft“ ab 33 %; spät beginnende Fremdsprachen mit BE (50–60 %), halbe BE erwünscht, im Hörverstehen keine halben BE', 'isb.bayern.de'],
+    ['Kontaktbrief 2025', 'Kontaktbrief Oberstufe 2025, S. 4: Umsetzung der Bewertungseinheiten in Notenpunkte ab Abitur 2026', 'amtliche BE-Tabelle (ganze BE, kaufmännisch gerundet)', 'isb.bayern.de'],
+    ['W-Seminar-Material', 'Bewertungsbögen Seminararbeit (Anlage 5a) und Prüfungsgespräch, Bewertungsraster, Übersicht der Beratungsgespräche, Feedbackbogen (Anlage 3)', 'Bewertungsbögen, Beratungsgespräch mit Zielvereinbarung, Leitfragen', 'oberstufe.bayern.de']]],
+  ['Kultusministerkonferenz', [
+    ['KMK-Vereinbarung', 'Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung, Beschluss vom 07.07.1972 i. d. F. vom 06.06.2024', 'Prozentgrenzen für 15 bis 1 Notenpunkte', 'kmk.org']]],
+  ['Kalender', [
+    ['Ferien', 'Ferientermine und Feiertage in Bayern nach den Bekanntmachungen des Kultusministeriums', 'Kalender, Fristen, Terminliste der Prüfungsgespräche', 'km.bayern.de']]]];
+function sourcesHTML() {
+  let n = 0;
+  return `<p>Libretto rechnet nach diesen Vorschriften und Vorgaben (Stand ${SOURCES_STAND}). Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen deiner Schule bzw. Fachschaft.</p>
+    <div class="srcDir">${SOURCES.map(([g, items]) => `<section class="srcGrp"><h4>${esc(g)}</h4>${items.map(([k, t, w, f]) => `<div class="srcItem"><span class="srcNo">${++n}</span><div><b>${esc(k)}</b><span class="srcT">${esc(t)}</span><span class="srcW"><em>In Libretto:</em> ${esc(w)}</span></div><span class="srcF">${esc(f)}</span></div>`).join('')}</section>`).join('')}</div>
+    <p class="hint">Fundstellen: gesetze-bayern.de, km.bayern.de, isb.bayern.de, oberstufe.bayern.de, kmk.org. Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.</p>`;
+}
+function modelSources() {
+  let n = 0;
+  const blocks = [{ p: `Libretto rechnet nach diesen Vorschriften und Vorgaben (Stand ${SOURCES_STAND}). Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule bzw. Fachschaft.` }];
+  SOURCES.forEach(([g, items]) => blocks.push({ group: [{ h: g }, { table: { head: ['Nr.', 'Quelle', 'In Libretto verwendet für', 'Fundstelle'], rows: items.map(([k, t, w, f]) => [String(++n), k + ' – ' + t, w, f]), align: ['c', 'l', 'l', 'l'], widths: [6, 38, 40, 16], pct: true, small: true } }] }));
+  blocks.push({ note: 'Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.' });
+  return { eyebrow: 'Libretto · Notenverwaltung Gymnasium Bayern', title: 'Quellenverzeichnis', subtitle: 'Rechtsgrundlagen und Vorgaben, Stand ' + SOURCES_STAND, file: 'Libretto Quellenverzeichnis', meta: [['Stand', SOURCES_STAND]], blocks };
+}
+function sourcesSheet() {
+  sheet({ title: 'Quellenverzeichnis', wide: true, ok: '', cancel: 'Schließen', body: `<div class="prose helpDoc">${sourcesHTML()}</div>
+    <div class="panelBtns"><button type="button" class="mini accent" id="srcPdf">Als PDF speichern</button></div>`,
+    onOpen: d => { d.querySelector('#srcPdf').onclick = () => exportModel(modelSources(), 'pdf'); } });
+}
+function helpSheet(opts) {
+  const fig = (img, alt) => `<figure class="helpFig"><img src="help/${img}.jpg" alt="${esc(alt)}"></figure>`;
   const K = document.body.classList.contains('mac') ? '⌘' : 'Strg+';
   const kbd = x => `<span class="kbd">${x}</span>`;
   /* Abschnitte: [id, Titel, Gruppe, Inhalt] – die Gruppe ordnet das Inhaltsverzeichnis */
@@ -3444,6 +3546,11 @@ function helpSheet() {
     <p><b>Faktor je Aufgabe:</b> Unter jeder Höchstpunktzahl steht „× 1“. Dort stellst du ein, dass eine Aufgabe <b>doppelt</b> (× 2), <b>halb</b> (× 0,5) oder z. B. × 2,5 zählt. Das geht auch <b>nachträglich</b> – etwa wenn eine Aufgabe sehr schlecht ausgefallen ist: Faktor ändern, Libretto rechnet erreichbare Punkte, Summen und Noten neu (bei Prozent-Grenzen passt sich der Schlüssel an). Eine Aufgabe ganz streichen: × in der Überschrift – die Eingaben bleiben gespeichert. Auf dem Ausdruck steht der Faktor in der Zeile „erreichbar“.</p>
     <p><b>Aus Excel:</b> Eine Tabelle (Zeile „erreichbar“ und Namen mit Punkten) im Blatt mit ${kbd(K + 'V')} einfügen; Libretto zeigt vorher, was übernommen wird. Mit „Als Standard für das Fach merken“ startet jede neue Arbeit dieses Fachs gleich so.</p>
     <p><b>Status-Spalte:</b> nur für Personen ohne Punkte: E entschuldigt (Nachtermin offen) · B befreit · 6* bzw. 0* versäumt/verweigert · U Unterschleif. Beim Aufklappen steht der volle Text.</p>`],
+  ['sim', 'Simulationen: erst ausprobieren, dann entscheiden', 'Leistungsnachweise', `
+    <p><b>Notenschlüssel:</b> Im Fenster „Leistungsnachweis bearbeiten“ zeigt „Simulation“ Varianten der Grenzen (z. B. die 4 ab 50, 55 oder 60 %) mit Durchschnitt und Notenspiegel. „Klasse“ öffnet die ganze Klassenliste: Wer besser würde, ist grün, wer schlechter würde, rot. „Übernehmen“ setzt die Grenzen.</p>
+    <p><b>Faktor einer Aufgabe:</b> Unter den Aufgaben (im Bearbeiten-Fenster und im Blatt „Punkte je Aufgabe“): Was passiert, wenn Aufgabe 2 halb oder doppelt zählt? Wieder mit Klassenliste; „… ab jetzt × 2 zählen“ stellt den Faktor um, gespeichert wird mit „Sichern“.</p>
+    <p><b>Drucken:</b> Jede Simulation mit Klassenliste lässt sich als PDF oder Word ausgeben – Liste jetzt → simuliert, Notenspiegel, Kennzahlen, mit dem Hinweis, dass an den Noten nichts geändert wurde. Praktisch fürs Gespräch mit der Fachbetreuung.</p>
+    <p class="hint">Gerechnet wird immer an einer Kopie. Es ändert sich erst etwas, wenn du übernimmst.</p>`],
   ['fs', 'Moderne Fremdsprachen, Jgst. 5–11', 'Szenarien nach Fächern', `
     <p><b>Schreibaufgabe und Sprachmittlung:</b> Im Eingabeblatt legt „+ Schreiben / SM“ eine Aufgabe mit den Teilen <b>Inhalt</b> und <b>Sprache</b> an – 4 + 6 Punkte (Regelfall) oder 3 + 7 (Anfangsunterricht, Niveau A1), wie in den Bewertungsrastern des ISB. Sie steht unter einer gemeinsamen Überschrift und hat <b>einen</b> Faktor (z. B. × 2 oder × 2,5) für beide Teile; Name und Faktor änderst du direkt in der Überschrift. Libretto merkt sich je Kurs die zuletzt gewählte Verteilung und den Faktor.</p>
     <p><b>Typischer Ablauf einer Schulaufgabe:</b> Hörverstehen und Leseverstehen als normale Aufgaben (Punkte), dazu „+ Schreiben / SM“; Notenschlüssel nach Fachschaftsbeschluss (z. B. Note 4 ab 50 %). Mündliche Schulaufgaben bewertest du mit <b>Viva</b> und übernimmst die Noten (siehe „Viva“).</p>
@@ -3467,15 +3574,24 @@ function helpSheet() {
     <p>Rohpunkte mit <b>Punkten je Aufgabe</b>; das KMK-Raster ist vorgewählt. Die Lösungsquote je Aufgabe zeigt, welche Aufgabe schwierig war – nachträglich halb werten geht über den Faktor × 0,5. In Q12/Q13 entspricht das KMK-Raster der Tabelle der Abiturprüfung. Mathematik hat in Jgst. 5–7 vier Schulaufgaben (§ 22 GSO) – Libretto prüft die Mindestzahl.</p>`],
   ['de', 'Deutsch und Fächer mit direkter Notengebung', 'Szenarien nach Fächern', `
     <p>Aufsätze werden meist direkt benotet: Leistungsnachweis ohne Rohpunkte anlegen und Noten (Q12/Q13: Notenpunkte) eintippen. Rückgabefrist für Schulaufgaben in Deutsch ab Jgst. 10: drei Wochen. Das KMS „Unterricht im Fach Deutsch – Lernbereich Schreiben“ vom 28.09.2026 verlangt eine ganzheitliche Bewertung der Schreibleistung – eine bloße Addition von Teilpunkten wird dem nicht gerecht; direkt benoten ist deshalb der richtige Weg. In Jgst. 5–8 sind drei Aufsatz-Schulaufgaben verbindlich (KMS vom 18.06.2026).</p>`],
-  ['ohne', 'Fächer ohne Schulaufgaben, Seminare', 'Szenarien nach Fächern', `
+  ['ohne', 'Fächer ohne Schulaufgaben, Sport, Kunst und Musik', 'Szenarien nach Fächern', `
     <p>Sport, Musik, Kunst & Co.: beim Kurs „Fach mit Schulaufgaben“ ausschalten – die Note entsteht nur aus kleinen Leistungsnachweisen. Praktische Leistungen als Art „Praktische Leistung“.</p>
     <p><b>Sport in Q12/13</b> (§ 29 Abs. 5 GSO): Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3. Praktische Leistungen trägst du als „Praktische Leistung“ ein – Libretto zählt sie doppelt. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an (Schulaufgabe + kleine LN); beide Punktzahlen zählen 1 : 1.</p>
     <p><b>Kunst und Musik als Leistungsfach</b> (§ 29 Abs. 3 und 4 GSO): Halbjahresleistung = Durchschnitt aus Schulaufgabe, <b>künstlerischem Projekt</b> bzw. <b>praktischer Prüfung</b> und dem Durchschnitt der kleinen LN. Dafür gibt es in diesen Kursen die eigenen Arten „Künstlerisches Projekt“ und „Praktische Prüfung“.</p>
+    `],
+  ['wsem', 'W-Seminar: Kurs und Betreuung', 'Seminare', `
+    <p><b>Kurs anlegen:</b> „Neuer Kurs“ → Jahrgangsstufe 12, „Art des Kurses: W-Seminar“ und oben das <b>Leitfach</b> eintragen (z. B. Italienisch). Über „Fristen …“ im Reiter „Seminararbeit“ trägst du Rahmenthema, Themenfrist und Abgabetermin ein.</p>
     <p><b>W-Seminar:</b> Kurs der Jgst. 12 oder 13, „Art des Kurses“ W-Seminar (oder Fach „W-Seminar“). Reiter 12/1, 12/2, Seminararbeit und Übersicht; Klick auf einen Namen öffnet die <b>Betreuungskarte</b> mit Thema, Terminen und Protokoll (Besprochen, Vereinbart, nächster Termin, unterschrieben), Abgabe mit Fristverlängerung und Bewertung. Dateien (Exposé, Gliederung, Arbeit) hängst du an den Termin – verschlüsselt gespeichert und mitgesichert. Ausdrucke: Betreuungsprotokoll, Betreuungsdokumentation, Übersicht der Seminararbeiten, Ergebnisliste. Über Zulassung, Fristverlängerung und Rücktritt entscheidet die Schule.</p>
-    <p><b>Seminare und Leitfach:</b> W- und P-Seminar sind keine Fächer, sondern eine Kursart: Beim W-Seminar „Art des Kurses: W-Seminar“ wählen, beim P-Seminar (Jgst. 11) den Schalter „P-Seminar“ – und oben jeweils das <b>Leitfach</b> eintragen. Fachregeln (z. B. Notenschlüssel der modernen Fremdsprachen) gelten für Seminare nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Exposé, Exzerpt, Gliederungsentwurf, Recherche-Protokoll …). Im W-Seminar mit einer modernen Fremdsprache als Leitfach: Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch) und Prüfungsgespräch in der Fremdsprache (§ 24 Abs. 1 und 2 GSO); ein anerkannter Wettbewerbsbeitrag kann die Seminararbeit ersetzen (§ 24 Abs. 3).</p>
-    <p><b>Bewertungsbögen (W-Seminar):</b> In der Betreuungskarte öffnen „Bewertungsbogen Seminararbeit“ und „Bewertungsbogen Prüfungsgespräch“ die Raster nach dem ISB-Material: die Arbeit nach Form, Sprache, Methode und Inhalt (Gewichtung 10/20/30/40 %, Einschätzung ++ bis ––, auf Wunsch Punkte je Bereich), das Prüfungsgespräch nach fünf Kompetenzen (Fach-, Argumentations-, Methoden- und Wissenschafts-, Darstellungs-, Reflexions- und Transferkompetenz) mit Punkten je Kompetenz. Libretto rechnet daraus einen <b>Vorschlag</b> (gewichteter Durchschnitt, gerundet) – die Punkte setzt du fest. Kriterien und Gewichte lassen sich je Kurs anpassen. Ausdruck als PDF oder Word, auch als leerer Bogen zum Ausfüllen von Hand. Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO; KMS vom 02.02.2026), ein freier Kurzvortrag zum Einstieg ist möglich.</p>
+    <p><b>Betreuungskarte:</b> Thema, Kurztitel fürs Abiturzeugnis (mit Zeichenzähler), bei modernen Fremdsprachen die Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch, § 24 Abs. 1 GSO), Wettbewerbsbeitrag statt Seminararbeit (§ 24 Abs. 3), Haken für Exposé bzw. Gliederung (12/2) und die Dokumentation der KI-Nutzung, Abgabe mit Uhrzeit und Fristverlängerung, Erklärung zur selbstständigen Anfertigung – alles wird sofort gespeichert.</p>
     <p><b>Beratungsgespräch:</b> Als Art „Beratungsgespräch“ gibt es die Felder des ISB-Feedbackbogens: bisher erledigt, Schwierigkeiten und Fragen, Rückmeldung, nächste Schritte, Zielvereinbarung, KI-Einsatz. Die Zielvereinbarung des letzten Gesprächs steht oben, die Leitfragen zum Halbjahr sind aufklappbar. Ausdruck mit zwei Unterschriften.</p>
+    <p><b>Seminare und Leitfach:</b> W- und P-Seminar sind keine Fächer, sondern eine Kursart: Beim W-Seminar „Art des Kurses: W-Seminar“ wählen, beim P-Seminar (Jgst. 11) den Schalter „P-Seminar“ – und oben jeweils das <b>Leitfach</b> eintragen. Fachregeln (z. B. Notenschlüssel der modernen Fremdsprachen) gelten für Seminare nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Exposé, Exzerpt, Gliederungsentwurf, Recherche-Protokoll …). Im W-Seminar mit einer modernen Fremdsprache als Leitfach: Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch) und Prüfungsgespräch in der Fremdsprache (§ 24 Abs. 1 und 2 GSO); ein anerkannter Wettbewerbsbeitrag kann die Seminararbeit ersetzen (§ 24 Abs. 3).</p>`],
+  ['wbew', 'W-Seminar: Bewertung und Prüfungsgespräch', 'Seminare', `
+    <p><b>Bewertungsbögen (W-Seminar):</b> In der Betreuungskarte öffnen „Bewertungsbogen Seminararbeit“ und „Bewertungsbogen Prüfungsgespräch“ die Raster nach dem ISB-Material: die Arbeit nach Form, Sprache, Methode und Inhalt (Gewichtung 10/20/30/40 %, Einschätzung ++ bis ––, auf Wunsch Punkte je Bereich), das Prüfungsgespräch nach fünf Kompetenzen (Fach-, Argumentations-, Methoden- und Wissenschafts-, Darstellungs-, Reflexions- und Transferkompetenz) mit Punkten je Kompetenz. Libretto rechnet daraus einen <b>Vorschlag</b> (gewichteter Durchschnitt, gerundet) – die Punkte setzt du fest. Kriterien und Gewichte lassen sich je Kurs anpassen. Ausdruck als PDF oder Word, auch als leerer Bogen zum Ausfüllen von Hand. Das Prüfungsgespräch dauert höchstens 25 Minuten (§ 24 Abs. 2 GSO; KMS vom 02.02.2026), ein freier Kurzvortrag zum Einstieg ist möglich.</p>
     <p><b>Prüfungsgespräche planen:</b> Im Reiter „Seminararbeit“ → „Prüfungsgespräche …“ trägst du Tag und Uhrzeit ein oder lässt freie Plätze automatisch füllen (Dauer, Pause, Gespräche je Tag, nur Schultage). Die Terminliste lässt sich mit oder ohne Themen drucken.</p>
+    <p><b>Rechnung:</b> Gesamtleistung = (2 × Seminararbeit + Prüfungsgespräch) × 2/3, gerundet, höchstens 30 Punkte (§ 29 Abs. 6 GSO). Libretto zeigt je Person den Stand der Zulassung nach § 44 GSO (termingerechte Abgabe, Bewertung) – die Entscheidung trifft die Schule.</p>
+    <p><b>Ausdrucke</b> (Drucken &amp; Export im W-Seminar): Bewertungsbögen für alle oder leer zum Ausfüllen, Terminliste der Prüfungsgespräche (mit oder ohne Themen), Betreuungsdokumentation je Person, Protokolle der Beratungsgespräche, Übertragsliste der Ergebnisse.</p>`],
+  ['psem', 'P-Seminar', 'Seminare', `
+    <p><b>Kurs anlegen:</b> Jahrgangsstufe 11, Schalter „P-Seminar“ einschalten und oben das Leitfach eintragen. Fachregeln des Leitfachs (z. B. Notenschlüssel der modernen Fremdsprachen) gelten im Seminar nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Projektbeitrag, Präsentation, Projektdokumentation …).</p>
     <p><b>P-Seminar</b> (Jgst. 11): ohne Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge. <b>Profilfächer</b> in 12/13 als normaler Kurs; bei fremdsprachiger Konversation heißt die „Schulaufgabe“ Konversationsübung (§ 22 Abs. 3 GSO).</p>`],
   ['sonder', 'Nachtermin, Krankheit, Abwesenheit, Nachteilsausgleich', 'Sonderfälle', `
     <p><b>Nachtermin:</b> ${kbd('E')} eintragen; die Übersicht und der Kalender listen offene Nachtermine. Die Note des Nachtermins trägst du später in dieselbe Zelle ein.</p>
@@ -3485,24 +3601,33 @@ function helpSheet() {
     <p><b>Reihenfolge der Namen:</b> wie auf den Klassenlisten – „von“, „Freiherr von“ usw. zählen nicht zum Sortierwort.</p>`],
   ['zeugnis', 'Zeugnis, Übertrag und Elterngespräche', 'Zeugnis und Gespräche', `
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
-    <p><b>Fristen fürs Notenmachen:</b> Unter Einstellungen → „Fristen …“ (oder in der Übersicht) trägst du ein, bis wann die Noten stehen müssen: 1. und 2. Zwischenbericht <i>oder</i> Zwischenzeugnis (das entscheidet jede Schule, § 40 Abs. 2 GSO), Klassenkonferenz zum Halbjahr, Zeugnis 12/1 und 13/1, Ende 12/2, Zulassung zum Abitur, Jahreszeugnis – jeweils mit Termin und, wenn die Schule einen festlegt, Notenschluss. Liest du die Schultermine ein (CSV aus dem Infoportal), erkennt Libretto Titel wie „Ausgabe des 1. Zwischenberichts“, „Zeugnistermin Q12“ oder „Klassenkonferenzen zum Jahreszeugnis“ und bietet sie zum Übernehmen an. Jede Frist gilt nur für die passenden Kurse (Jgst. 5–11, Q12 oder Q13): Im Kurskopf steht die nächste Frist – ein Klick zeigt alle Fristen dieses Kurses (beim W-Seminar auch Themenwahl und Abgabe der Seminararbeit); eine Woche vorher erscheint oben ein Hinweis; in der Übersicht steht sie zwei Wochen vorher unter „Zu erledigen“ – mit fehlenden Noten und offenen Nachterminen.</p>
+    
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
     <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen.</p>`],
   ['kalender', 'Kalender, Termine und Klassen austauschen', 'Organisation', `
     <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. <b>Schultermine einlesen:</b> im Infoportal unter Termine „als CSV exportieren“ und hier auswählen (auch ICS-Dateien). Dazu: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen („Termin anderer Fächer“).</p>${fig('kalender', 'Kalender')}
     <p><b>Klassen austauschen:</b> exportiert deine Kurse (nur Namen und Klassen, keine Noten) als theis-Klassen-Datei – etwa für Voce – oder liest eine solche Datei ein. Libretto zeigt vorher, was neu, geändert oder entfallen ist; übernommen wird nur, was du anhakst, und vorher wird gesichert.</p>
     <p><b>Viva:</b> Nach einer mündlichen Schulaufgabe in Viva unter „Ergebnisse &amp; Bögen“ die „Notenliste (CSV)“ speichern; in Libretto im Leistungsnachweis unter „Noten aus Datei übernehmen“ wählen – die Noten werden über die Namen zugeordnet.</p>`],
+  ['fristen', 'Fristen fürs Notenmachen', 'Organisation', `
+    <p><b>Fristen fürs Notenmachen:</b> Unter Einstellungen → „Fristen …“ (oder in der Übersicht) trägst du ein, bis wann die Noten stehen müssen: 1. und 2. Zwischenbericht <i>oder</i> Zwischenzeugnis (das entscheidet jede Schule, § 40 Abs. 2 GSO), Klassenkonferenz zum Halbjahr, Zeugnis 12/1 und 13/1, Ende 12/2, Zulassung zum Abitur, Jahreszeugnis – jeweils mit Termin und, wenn die Schule einen festlegt, Notenschluss. Liest du die Schultermine ein (CSV aus dem Infoportal), erkennt Libretto Titel wie „Ausgabe des 1. Zwischenberichts“, „Zeugnistermin Q12“ oder „Klassenkonferenzen zum Jahreszeugnis“ und bietet sie zum Übernehmen an. Jede Frist gilt nur für die passenden Kurse (Jgst. 5–11, Q12 oder Q13): Im Kurskopf steht die nächste Frist – ein Klick zeigt alle Fristen dieses Kurses (beim W-Seminar auch Themenwahl und Abgabe der Seminararbeit); eine Woche vorher erscheint oben ein Hinweis; in der Übersicht steht sie zwei Wochen vorher unter „Zu erledigen“ – mit fehlenden Noten und offenen Nachterminen.</p>
+    <p class="hint">Ob deine Schule ein Zwischenzeugnis oder Zwischenberichte hat und wann Notenschluss ist, legt die Schule fest (§ 40 Abs. 2 GSO) – eingetragen wird nur, was es gibt.</p>`],
   ['druck', 'Ausdrucke und Export', 'Organisation', `
     <p>Jede Notenliste beginnt mit den Kennzahlen – der <b>Durchschnitt</b> steht groß und umrahmt oben links –, darunter die Liste mit der Zeile „Ø Klasse“, daneben Notenspiegel und Notenschlüssel mit Punktbereichen. „Detailliert“ zeigt zusätzlich die Punkte je Aufgabe bzw. je Prüfungsteil, Ø und Lösungsquote; bei Schulaufgaben heißt das Blatt „Auswertung für die Fachbetreuung“ und hat zwei Unterschriftsfelder. Außerdem: Notenübersicht des Kurses, Übertragsliste, Schülerblätter – als PDF, Word oder Excel.</p>`],
-  ['sicher', 'Sicherung, Sperre, Updates und Datenschutz', 'Sicherheit', `
+  ['sicher', 'Sicherung, Sperre, Updates und Datenschutz', 'Einstellungen und Sicherheit', `
     <ul><li>Alle Daten liegen nur auf diesem Computer, verschlüsselt (AES-256-GCM). Kein Server, kein Konto, keine Übertragung von Noten oder Namen. Einzige Verbindung: die abschaltbare Abfrage der aktuellen Versionsnummer bei theisapps.de.</li>
       <li><b>Sicherung:</b> automatisch und verschlüsselt in deinen Sicherungsordner (USB-Stick, Cloud-Ordner), mit Versionen. Zusätzlich sichert Libretto auf diesem Computer. „Jetzt sichern“ in der Leiste.</li>
       <li><b>Notfallschlüssel:</b> Beim Einrichten erhältst du einen Notfallschlüssel – ausdrucken und gut aufbewahren. Ohne Passwort und Notfallschlüssel lassen sich die Daten nicht öffnen, auch nicht von theis.</li><li><b>Gelöscht?</b> Gelöschte Kurse, Leistungsnachweise und Termine lassen sich 60 Tage lang unter „Sicherung“ wiederherstellen.</li>
       <li><b>Sperre:</b> nach 5, 10 oder spätestens 15 Minuten ohne Eingabe (Mindestsicherheitsstandards des Kultusministeriums; einstellbar unter Einstellungen); „Jetzt sperren“ ebenda.</li>
       <li><b>Updates:</b> neue Version einfach über die alte installieren. Die Daten liegen getrennt von der App und bleiben erhalten; beim ersten Start einer neuen Version legt Libretto zusätzlich eine Sicherung an.</li>
       <li>Für Noten auf privaten Geräten ist in Bayern die Genehmigung der Schulleitung nötig (Mindestsicherheitsstandards des Kultusministeriums).</li></ul>${fig('sicherung', 'Sicherung')}`],
-  ['aussehen', 'Aussehen', 'Sicherheit', `
-    <p>Unter <b>Einstellungen → Aussehen</b>: elf Farbwelten (z. B. Liquid Glass, Neon, Heft, Graphit mit hohem Kontrast), sechs Schriften, hell/dunkel/wie das Gerät und „Kompakte Zeilen“. Gilt nur für diesen Computer und ändert weder Noten noch Ausdrucke.</p>`],
+  ['einstellungen', 'Einstellungen und Aussehen', 'Einstellungen und Sicherheit', `
+    <p>Die Einstellungen (unten links) sind nach Bereichen geordnet:</p>
+    <ul><li><b>Allgemein:</b> Name und Schule für die Ausdrucke, Schuljahr und was beim Öffnen erscheint (Übersicht oder letzter Kurs).</li>
+      <li><b>Notenmachen:</b> Stichtag für die Ansicht „Stand Zwischenzeugnis“ und die Fristen fürs Notenmachen.</li>
+      <li><b>Aussehen:</b> elf Farbwelten, hell/dunkel/automatisch, sechs Schriften, Textgröße, Ansicht der Kursliste, kompakte Zeilen und „Effekte reduzieren“ (ohne Glas- und Bewegungseffekte – spürbar schneller auf älteren Computern).</li>
+      <li><b>Sicherheit:</b> automatische Sperre (5, 10 oder 15 Minuten), Suche nach Updates, Sicherung, Passwort und Notfallschlüssel.</li>
+      <li><b>Über:</b> Version, Neuerungen, Hilfe als PDF, Quellenverzeichnis, Lizenzen.</li></ul>
+    <p class="hint">Aussehen, Textgröße und Effekte gelten nur für diesen Computer und ändern weder Noten noch Ausdrucke.</p>`],
   ['gso', 'Regeln, die Libretto anwendet (GSO)', 'Regeln und Fragen', `
     <ul>
       <li><b>§ 28</b> Jahresfortgangsnote 5–11: Gesamtnote große LN und Gesamtnote kleine LN – bei zwei Schulaufgaben 1:1, bei mehr als zwei 2:1 (abweichend einstellbar). Fächer ohne Schulaufgaben: nur kleine LN. Rundung kaufmännisch; genau x,5 ist ein Grenzfall für deine Entscheidung.</li>
@@ -3519,34 +3644,7 @@ function helpSheet() {
       <li><b>Fachschaft</b>: Notenschlüssel (z. B. „Note 4 ab 50 %“) – in Libretto „als Standard für das Fach merken“; Schreibprogramm in Deutsch; Abstimmung von Prüfungsformen.</li>
       <li><b>Lehrkraft</b> (BayEUG Art. 52, § 28 Abs. 1 GSO): Zahl und Art der kleinen LN, Gewichtung schriftlich/mündlich/praktisch (in Libretto: Gewichte je Art oder nach Bereichen), Aufgaben und Erwartungshorizont, pädagogische Festsetzung der Zeugnisnote – genau x,5 zeigt Libretto als Grenzfall.</li>
       <li><b>Nicht frei wählbar</b>: das Verhältnis groß : klein nach § 28 (1 : 1 bzw. 2 : 1 – Abweichungen nur begründet im Einzelfall, weil die GSO „grundsätzlich“ sagt), die Rechnung in Q12/13 (§ 29), Seminararbeit 2 : 1, die Raster in Q12/Q13 in den modernen Fremdsprachen, die zweigeteilte Schulaufgabe in Latein/Griechisch, die Abiturtabellen.</li></ul>`],
-  ['quellen', 'Quellen und Rechtsgrundlagen', 'Regeln und Fragen', `
-    <p>Libretto rechnet nach diesen Vorschriften und Vorgaben (Stand November 2026). Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen deiner Schule.</p>
-    <div class="srcList">
-      <p><b>Gesetze und Verordnungen</b></p>
-      <ul><li><b>Bayerisches Gesetz über das Erziehungs- und Unterrichtswesen (BayEUG)</b>, Art. 52 – Leistungsnachweise, pädagogische Verantwortung bei der Bewertung.</li>
-        <li><b>Schulordnung für die Gymnasien in Bayern (Gymnasialschulordnung – GSO)</b> vom 23.01.2007 in der ab 01.08.2026 geltenden Fassung: § 16 Vorrückungsfächer · § 20 Seminare · § 21 Leistungsnachweise · § 22 Schulaufgaben (Mindestzahl, Termine, Q12/13) · § 23 kleine Leistungsnachweise · § 24 Seminararbeit · § 25 Rückgabe und Einsicht · § 26 Bewertung, Versäumnis, Unterschleif · § 27 Nachtermin, Ersatzprüfung · § 28 Jahresfortgangsnote · § 29 Punktesystem und Halbjahresleistungen · § 30 Vorrücken · § 39 Zeugnisse (Abs. 6 ohne Note) · § 40 Zwischenzeugnis, Gefährdung · § 44 Zulassung zur Abiturprüfung.</li>
-        <li><b>Bayerische Schulordnung (BaySchO)</b>: § 20 Entschuldigung bei Krankheit · §§ 31 ff. Nachteilsausgleich und Notenschutz, Zeugnisbemerkung.</li></ul>
-      <p><b>Bekanntmachungen und Schreiben des Kultusministeriums (KMS)</b></p>
-      <ul><li>Wissenschaftspropädeutisches Seminar – Bekanntmachung vom 06.04.2023 (BayMBl. 2023 Nr. 185).</li>
-        <li>P-Seminar zur beruflichen Orientierung – Bekanntmachung des Kultusministeriums.</li>
-        <li>„Weiterentwicklung der Prüfungskultur an den bayerischen Gymnasien“ – KMS vom 18.06.2026, VI.3-BS5200.0/88/5 (ab 2026/27: Deutsch 5–8 mindestens drei Aufsatz-Schulaufgaben, Mathematik 9 drei Schulaufgaben, moderne Fremdsprachen in mindestens zwei Jahrgangsstufen ein großer Leistungsnachweis ganz oder teilweise mündlich).</li>
-        <li>Moderne Fremdsprachen, Qualifikationsphase und Abitur: KMS „Schriftliche Prüfungsformen in der Profil- und Leistungsstufe und im Abitur“ (Gewichte 20/55/25 %, Inhalt : Sprache 40 : 60, Sperrklausel, Prozenttabelle 95 % = 15 … 20 % = 1 Punkt) sowie das KMS zu den mündlichen Prüfungsformen.</li>
-        <li>Latein und Griechisch: KMS vom 31.07.2023, V.3-BS5402.7/135/1 („Altsprachlicher Unterricht im neunjährigen Gymnasium“), Anlage 2 (Bewertungsschlüssel, Tabelle zur Gesamtpunktzahl), Anlagen 3 und 4 (Richtlinien für die Schulaufgaben Latein Jg. 5–13, Griechisch Jg. 8–13; KMK-Bewertungsschlüssel für BE in der Qualifikationsphase verbindlich, Anlage 3 Nr. 8, Anlage 4 Nr. 9).</li>
-        <li>Deutsch: „Unterricht im Fach Deutsch – Lernbereich Schreiben“, KMS vom 28.09.2026, VI.4-BS5402.5/105/7 (ganzheitliche Bewertung der Schreibleistungen, Ersatz von Schulaufgaben; ersetzt das KMS vom 29.06.2023).</li>
-        <li>Sport, Kunst und Musik in der Qualifikationsphase: die jeweiligen Bekanntmachungen des Kultusministeriums; die Rechnung der Halbjahresleistung steht in § 29 Abs. 3–5 GSO.</li>
-        <li>„Mindestsicherheitsstandards“ für private Endgeräte von Lehrkräften, Stand 20.09.2023 – u. a. verschlüsselte Speicherung, verschlüsselte Sicherungen, automatische Sperre spätestens nach 15 Minuten.</li></ul>
-      <p><b>ISB – Staatsinstitut für Schulqualität und Bildungsforschung</b></p>
-      <ul><li>Hinweise zu schriftlichen Leistungsnachweisen in den modernen Fremdsprachen, Jgst. 5–11, mit Bewertungsrastern Schreiben/Sprachmittlung (Inhalt : Sprache 4 : 6, im Anfangsunterricht A1 auch 3 : 7).</li>
-        <li>PuLSt – Bewertungsraster und Rechentabelle Hörverstehen, Schreiben, Sprachmittlung für die Qualifikationsphase (Stand 12/2025): Hörverstehen über den Lösungsgrad nach der Abitur-Tabelle (20 % = 1 … 95 % = 15 Punkte), Schreiben und Sprachmittlung 40 : 60 mit Sperrklausel.</li>
-        <li>„Leistungsnachweise in der Profil- und Leistungsstufe – Moderne Fremdsprachen, Leitfaden“ (Stand April 2025): Excel-Tabelle verpflichtend; bei BE-Bewertung „ausreichend“ ab 50 %, „mangelhaft“ ab 33 %; spät beginnende Fremdsprachen mit BE wie in der Unter- und Mittelstufe (Inhalt : Sprache 4 : 6, ohne Sperrklausel, „ausreichend“ zwischen 50 % und 60 %).</li>
-        <li>Kontaktbrief Oberstufe 2025 (September 2025), S. 4: „Umsetzung der erreichten Bewertungseinheiten in Notenpunkte“ ab Abitur 2026 – Tabelle für 120, 100, 90 und 60 BE.</li>
-        <li>Materialien zum W-Seminar: Bewertungsbögen Seminararbeit und Prüfungsgespräch, Übersicht der Beratungsgespräche.</li></ul>
-      <p><b>Kultusministerkonferenz</b></p>
-      <ul><li>Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung, KMK-Beschluss vom 07.07.1972 i. d. F. vom 06.06.2024 – Prozentgrenzen für 15 bis 1 Notenpunkte.</li></ul>
-      <p><b>Kalender</b></p>
-      <ul><li>Ferientermine und Feiertage in Bayern nach den Bekanntmachungen des Kultusministeriums.</li></ul>
-    </div>
-    <p class="hint">Fundstellen: gesetze-bayern.de (BayEUG, GSO, BaySchO, Bekanntmachungen), km.bayern.de, isb.bayern.de, gymnasiale-oberstufe.bayern.de, kmk.org. Hast du eine neuere Fassung oder einen Fehler entdeckt? Bitte an hallo@theisapps.de.</p>`],
+  ['quellen', 'Quellenverzeichnis', 'Regeln und Fragen', sourcesHTML() + `<div class="panelBtns"><button type="button" class="mini" data-srcpdf="1">Quellenverzeichnis als PDF</button></div>`],
   ['faq', 'Häufige Fragen', 'Regeln und Fragen', `
     <p><b>Ich habe mich vertippt.</b> Direkt danach „Rückgängig“ unten anklicken – oder die Zelle einfach neu füllen.</p>
     <p><b>Die Zeugnisnote ist ein Grenzfall.</b> Im Schülerblatt die Note festlegen und kurz begründen; auf der Übertragsliste steht dann „von der Lehrkraft festgelegt“.</p>
@@ -3556,19 +3654,90 @@ function helpSheet() {
     <p><b>Neuer Computer.</b> Libretto installieren, beim Start „Sicherung wiederherstellen …“ wählen und die .vault-Datei aus deinem Sicherungsordner öffnen.</p>
     <p><b>Fehler oder Wünsche?</b> Schreib an <b>hallo@theisapps.de</b>.</p>`]
   ];
+  /* Einstellungen vor Sicherung (Reihenfolge innerhalb der Gruppe) */
+  { const i = S.findIndex(x => x[0] === 'einstellungen'), j = S.findIndex(x => x[0] === 'sicher'); if (i > j && j >= 0) S.splice(j, 0, S.splice(i, 1)[0]); }
   const groups = [...new Set(S.map(x => x[2]))];
-  const toc = groups.map(g => `<div class="hTocG"><b>${esc(g)}</b>${S.filter(x => x[2] === g).map(x => `<button type="button" class="linkbtn" data-hgo="${x[0]}">${esc(x[1])}</button>`).join('')}</div>`).join('');
-  const { dlg } = sheet({ title: 'Libretto – Hilfe', wide: true, ok: '', cancel: 'Schließen', body: `<div class="prose helpDoc">
-    <div class="notice"><div class="grow"><b>Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere zusätzlich selbst. Fehler oder Wünsche? Schreib an <b>hallo@theisapps.de</b>.</div></div>
-    <input type="search" id="hQ" class="hSearch" placeholder="Hilfe durchsuchen – z. B. Sperrklausel, Nachtermin, Faktor" aria-label="Hilfe durchsuchen">
-    <nav class="hToc" id="hToc">${toc}</nav>
-    ${groups.map(g => `<div class="hGroup" data-hg="${esc(g)}"><div class="hGroupT">${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<section class="hSec" id="h-${x[0]}"><h3>${esc(x[1])}</h3>${x[3]}</section>`).join('')}</div>`).join('')}
-    <p class="hint" id="hNone" hidden>Nichts gefunden – versuch ein anderes Wort oder schreib an hallo@theisapps.de.</p></div>` });
-  dlg.addEventListener('click', e => { const b = e.target.closest('[data-hgo]'); if (b) { const t = dlg.querySelector('#h-' + b.dataset.hgo); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+  const GI = { 'Erste Schritte': '①', 'Im Alltag': '✎', 'Leistungsnachweise': '▤', 'Szenarien nach Fächern': '◎', 'Seminare': '◆', 'Sonderfälle': '◐', 'Zeugnis und Gespräche': '✉', 'Organisation': '◷', 'Einstellungen und Sicherheit': '⚙', 'Regeln und Fragen': '§' };
+  if (opts && opts.pdf) return helpPdf(S, groups, GI);
+  const nav = groups.map(g => `<div class="hNavG"><div class="hNavGT"><i>${GI[g] || '•'}</i>${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<button type="button" class="hNavI" data-hgo="${x[0]}">${esc(x[1])}</button>`).join('')}</div>`).join('');
+  const { dlg } = sheet({ title: 'Libretto – Hilfe', wide: true, ok: '', cancel: 'Schließen', body: `<div class="helpDoc hTwo">
+    <aside class="hNav"><input type="search" id="hQ" class="hSearch" placeholder="Hilfe durchsuchen …" aria-label="Hilfe durchsuchen">
+      <nav id="hToc">${nav}</nav>
+      <button type="button" class="hPdf" id="hPdf"><b>Handbuch als PDF</b><small>vollständig, zum Ausdrucken</small></button></aside>
+    <div class="hMain prose" id="hMain">
+      <div class="hHero"><img src="icon.png" alt=""><div><div class="hHeroT">Libretto – Handbuch</div><div class="hHeroS">Version ${esc(APPV || '')} · ${S.length} Themen in ${groups.length} Bereichen · Bayerisches Gymnasium (G9)</div></div></div>
+      <div class="notice"><div class="grow"><b>Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere zusätzlich selbst. Fehler oder Wünsche? Schreib an <b>hallo@theisapps.de</b>.</div></div>
+      ${groups.map(g => `<div class="hGroup" data-hg="${esc(g)}"><div class="hGroupT"><i>${GI[g] || '•'}</i>${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<section class="hSec" id="h-${x[0]}"><h3>${esc(x[1])}</h3>${x[3]}</section>`).join('')}</div>`).join('')}
+      <p class="hint" id="hNone" hidden>Nichts gefunden – versuch ein anderes Wort oder schreib an hallo@theisapps.de.</p></div></div>` });
+  dlg.classList.add('helpDlg');
+  const main = dlg.querySelector('#hMain');
+  const mark = id => $$('.hNavI', dlg).forEach(b => b.classList.toggle('on', b.dataset.hgo === id));
+  dlg.addEventListener('click', e => {
+    const b = e.target.closest('[data-hgo]'); if (b) { const t = dlg.querySelector('#h-' + b.dataset.hgo); if (t) { main.scrollTo({ top: t.offsetTop - main.offsetTop - 8, behavior: 'smooth' }); mark(b.dataset.hgo); } }
+    if (e.target.closest('[data-srcpdf]')) exportModel(modelSources(), 'pdf');
+  });
+  /* aktueller Abschnitt in der Leiste markiert */
+  let raf = 0; main.addEventListener('scroll', () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const y = main.scrollTop + 40; let cur = null;
+    for (const sx of $$('.hSec', main)) { if (sx.hidden) continue; if (sx.offsetTop - main.offsetTop <= y) cur = sx; else break; }
+    if (cur) mark(cur.id.slice(2)); }); }, { passive: true });
+  mark(S[0][0]);
   dlg.querySelector('#hQ').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); let n = 0;
-    $$('.hSec', dlg).forEach(sx => { const hit = !q || sx.textContent.toLowerCase().includes(q); sx.hidden = !hit; if (hit) n++; });
+    $$('.hSec', dlg).forEach(sx => { const hit = !q || sx.textContent.toLowerCase().includes(q); sx.hidden = !hit; if (hit) n++; const nb = dlg.querySelector(`.hNavI[data-hgo="${sx.id.slice(2)}"]`); if (nb) nb.hidden = !hit; });
     $$('.hGroup', dlg).forEach(g => g.hidden = !$$('.hSec', g).some(sx => !sx.hidden));
-    dlg.querySelector('#hToc').hidden = !!q; dlg.querySelector('#hNone').hidden = n > 0; });
+    $$('.hNavG', dlg).forEach(g => g.hidden = !$$('.hNavI', g).some(x => !x.hidden));
+    dlg.querySelector('#hNone').hidden = n > 0; });
+  dlg.querySelector('#hPdf').onclick = async ev => { const btn = ev.currentTarget; btn.disabled = true;
+    try { await helpPdf(S, groups, GI); } catch (err) { toast('PDF konnte nicht erstellt werden'); } finally { btn.disabled = false; } };
+}
+
+/* Handbuch als PDF: Titelseite, Inhaltsverzeichnis, je Bereich eine neue Seite; Bilder eingebettet */
+async function helpPdf(S, groups, GI) {
+  const st = (D && D.settings) || {};
+  const box = document.createElement('div');
+  box.innerHTML = S.map(x => `<section data-id="${x[0]}">${x[3]}</section>`).join('');
+  box.querySelectorAll('button,input,.panelBtns').forEach(n => n.remove());
+  for (const img of box.querySelectorAll('img')) {
+    try { const bl = await (await fetch(img.getAttribute('src'))).blob(); img.src = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch (e) { img.closest('figure') ? img.closest('figure').remove() : img.remove(); }
+  }
+  const body = {}; box.querySelectorAll('section[data-id]').forEach(n => body[n.dataset.id] = n.innerHTML);
+  let icon = ''; try { const bl = await (await fetch('icon.png')).blob(); icon = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch (e) {}
+  const num = {}; let k = 0; groups.forEach((g, gi) => S.filter(x => x[2] === g).forEach((x, si) => num[x[0]] = (gi + 1) + '.' + (si + 1)));
+  const css = `*{box-sizing:border-box}body{margin:0;font:10.2pt/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#1b1d22;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cover{height:252mm;display:flex;flex-direction:column;justify-content:space-between;padding:26mm 6mm 8mm;page-break-after:always}
+  .cover img.ic{width:30mm;height:30mm;border-radius:7mm;box-shadow:0 2mm 6mm rgba(29,43,79,.18)}
+  .cover .ey{font-size:9pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;margin-top:18mm}
+  .cover h1{font-size:38pt;line-height:1.05;margin:3mm 0 4mm;color:#1d2b4f;letter-spacing:-.02em}
+  .cover .sub{font-size:14pt;color:#444;max-width:130mm}
+  .cover .bar{height:2.2mm;width:42mm;background:#1d2b4f;border-radius:1mm;margin:9mm 0}
+  .cover .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:6mm}
+  .cover .facts div{border:.3mm solid #d5d9e0;border-radius:3mm;padding:3.5mm 4mm}.cover .facts b{display:block;font-size:15pt;color:#1d2b4f}.cover .facts span{font-size:8.4pt;color:#5b6271;text-transform:uppercase;letter-spacing:.06em}
+  .cover .foot{font-size:8.6pt;color:#5b6271;border-top:.3mm solid #d5d9e0;padding-top:3mm}
+  .toc{page-break-after:always}.toc h2,.grp h2{font-size:20pt;color:#1d2b4f;margin:0 0 6mm;letter-spacing:-.01em}
+  .toc .g{margin:0 0 4mm;break-inside:avoid}.toc .g b{display:block;font-size:9pt;text-transform:uppercase;letter-spacing:.08em;color:#1d2b4f;border-bottom:.3mm solid #1d2b4f;padding-bottom:1mm;margin-bottom:1.5mm}
+  .toc .it{display:flex;gap:3mm;font-size:10pt;padding:.6mm 0}.toc .it i{font-style:normal;color:#6b7280;width:9mm;flex:none;font-variant-numeric:tabular-nums}
+  .toc .cols{columns:2;column-gap:10mm}
+  .grp{page-break-before:always}.grp:first-of-type{page-break-before:auto}
+  .gh{display:flex;align-items:center;gap:4mm;border-bottom:.6mm solid #1d2b4f;padding-bottom:2.5mm;margin-bottom:5mm}
+  .gh .n{font-size:9pt;font-weight:700;color:#fff;background:#1d2b4f;border-radius:1.6mm;padding:1mm 2.4mm}.gh h2{margin:0}
+  section{margin:0 0 6mm}section h3{font-size:12.5pt;color:#1d2b4f;margin:0 0 2mm;break-after:avoid;page-break-after:avoid}
+  section h3 i{font-style:normal;color:#8a93a6;font-weight:600;margin-right:2mm;font-variant-numeric:tabular-nums}
+  p{margin:0 0 2.2mm;orphans:3;widows:3}ul,ol{margin:0 0 2.5mm;padding-left:5.5mm}li{margin:.6mm 0}
+  .hint,.note{color:#4b5263;font-size:9.4pt;background:#f3f5fa;border-left:.8mm solid #9aa6c2;padding:2mm 3mm;border-radius:0 1.5mm 1.5mm 0;break-inside:avoid}
+  .kbd{display:inline-block;border:.3mm solid #b9bec8;border-bottom-width:.6mm;border-radius:1.2mm;padding:0 1.4mm;font-size:8.6pt;font-family:inherit;background:#fff}
+  figure{margin:2mm 0 4mm;break-inside:avoid;text-align:center}figure img{max-width:125mm;max-height:72mm;margin:0 auto;border:.3mm solid #d5d9e0;border-radius:2mm;display:block}
+  table{border-collapse:collapse;width:100%;font-size:9pt;margin:1mm 0 3mm;break-inside:auto}th,td{border:.3mm solid #c9ced8;padding:1.2mm 2mm;text-align:left;vertical-align:top}th{background:#eef0f4}tr{break-inside:avoid}
+  .hCards{display:grid;grid-template-columns:1fr 1fr;gap:3mm}.hCards>div{border:.3mm solid #d5d9e0;border-radius:2.5mm;padding:2.5mm 3mm;break-inside:avoid}.hCards p{margin:1mm 0 0;font-size:9.4pt}
+  .srcDir{display:block}.srcGrp{margin:0 0 4mm}.srcGrp h4{font-size:9pt;text-transform:uppercase;letter-spacing:.07em;color:#1d2b4f;margin:4mm 0 1.5mm;break-after:avoid}
+  .srcItem{display:grid;grid-template-columns:7mm 1fr 40mm;gap:0 3mm;padding:1.8mm 0;border-top:.2mm solid #e2e5eb;break-inside:avoid}.srcItem b,.srcItem span{display:block}.srcNo{color:#6b7280;font-weight:700;font-size:8.6pt}.srcT{font-weight:400}.srcW{color:#444;font-size:9pt;margin-top:.6mm}.srcW em{font-style:normal;color:#6b7280}.srcF{color:#5b6271;font-size:8.2pt;text-align:right}
+  a{color:#1d2b4f;text-decoration:none}`;
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${css}</style></head><body>
+  <div class="cover"><div>${icon ? `<img class="ic" src="${icon}" alt="">` : ''}<div class="ey">Handbuch · Version ${esc(APPV || '')}</div><h1>Libretto</h1><div class="sub">Notenverwaltung für Lehrkräfte am bayerischen Gymnasium (G9) – alles, was du zum Arbeiten brauchst.</div><div class="bar"></div>
+    <div class="facts"><div><b>${S.length}</b><span>Themen</span></div><div><b>${groups.length}</b><span>Bereiche</span></div><div><b>${esc(new Date().toLocaleDateString('de-DE'))}</b><span>Stand</span></div></div></div>
+    <div class="foot">${st.school ? esc(st.school) + ' · ' : ''}${st.teacher ? esc(st.teacher) + ' · ' : ''}Libretto ist kostenlos · theisapps.de · hallo@theisapps.de</div></div>
+  <div class="toc"><h2>Inhalt</h2><div class="cols">${groups.map((g, gi) => `<div class="g"><b>${gi + 1} · ${esc(g)}</b>${S.filter(x => x[2] === g).map(x => `<div class="it"><i>${num[x[0]]}</i><span>${esc(x[1])}</span></div>`).join('')}</div>`).join('')}</div></div>
+  ${groups.map((g, gi) => `<div class="grp"><div class="gh"><span class="n">${gi + 1}</span><h2>${esc(g)}</h2></div>${S.filter(x => x[2] === g).map(x => `<section><h3><i>${num[x[0]]}</i>${esc(x[1])}</h3>${body[x[0]]}</section>`).join('')}</div>`).join('')}
+  </body></html>`;
+  await N.savePdf('Libretto-Handbuch.pdf', html, false, Print.footer(st));
 }
 
 /* ======================================================================
@@ -3696,7 +3865,16 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.8: W- und P-Seminar mit Leitfach statt als „Fach“ · Fach-Auswahl mit eigener, aufgeräumter Liste · Kursliste und Übersicht nach Stufen: Oberstufe ab Jahrgangsstufe 11 (G9), Seminare eigens · Neu in 1.0.7: W-Seminar mit Bewertungsbögen nach ISB (Seminararbeit und Prüfungsgespräch, auch als leerer Bogen), Beratungsgespräch mit Zielvereinbarung, Terminliste der Prüfungsgespräche, Kurztitel fürs Abiturzeugnis · „Prüfungsgespräch“ wie in der GSO 2026 · Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite · Neu in 1.0.6: Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen · Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
+/* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
+const CHANGES = [
+  ['1.0.9', ['Einstellungen neu geordnet: Farbwelten und Schriften als Auswahl, Textgröße, „Effekte reduzieren“ für ältere Computer, Ansicht der Kursliste', 'Neues Anmeldefenster mit „Passwort anzeigen“ und Hinweis bei Feststelltaste', 'Hilfe überarbeitet und vollständig – auch als PDF zum Ausdrucken', 'Strukturiertes Quellenverzeichnis aller Rechtsgrundlagen, auch als PDF', 'Q12/Q13 mit amtlicher BE-Tabelle: Grenzen immer ganze BE']],
+  ['1.0.8', ['W- und P-Seminar mit Leitfach statt als „Fach“', 'Fach-Auswahl mit eigener, aufgeräumter Liste', 'Kursliste und Übersicht nach Stufen: Oberstufe ab Jahrgangsstufe 11, Seminare eigens']],
+  ['1.0.7', ['W-Seminar: Bewertungsbögen nach ISB-Vorlage für Seminararbeit und Prüfungsgespräch (auch leer zum Ausfüllen)', 'Beratungsgespräch mit Zielvereinbarung und Leitfragen', 'Terminliste der Prüfungsgespräche', 'Kurztitel fürs Abiturzeugnis', '„Prüfungsgespräch“ wie in der GSO 2026', 'Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite']],
+  ['1.0.6', ['Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen', 'Simulationen lassen sich drucken', 'Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit', '„Gewertet: x von y“ zeigt, wer mitzählt', 'Fußzeile im Ausdruck gut lesbar, Fenster rollen flüssiger']],
+  ['1.0.5', ['Faktor-Simulation direkt im Fenster „Leistungsnachweis bearbeiten“']],
+  ['1.0.4', ['Simulationen mit ganzer Klassenliste – wer sich ändert, ist farbig markiert', 'Simulation: Was passiert, wenn eine Aufgabe halb oder doppelt zählt?', 'Ausdrucke ohne Umbruch mitten in der Auswertung']],
+  ['1.0.3', ['Amtliche BE-Tabelle für Q12/Q13', '„Eigene Grenzen“ in Q12/Q13 ab der untersten 4 (4 Punkte)', 'Hilfe mit Quellenverzeichnis']]];
+const NEW_IN = 'Neu in ' + CHANGES[0][0] + ': ' + CHANGES[0][1].join(' · ');
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();
@@ -3705,9 +3883,10 @@ async function openAbout() {
     <div class="abtop"><div class="abicon"><img src="icon.png" alt="" width="104" height="104"></div><h2 class="abname">Libretto</h2><div class="abver">Version ${esc(v)}</div>
       <p class="abline">Notenverwaltung für das bayerische Gymnasium – rechnet nach der GSO, verschlüsselt auf deinem Computer.</p></div>
     <div class="abacts"><a class="abbtn" href="${SITE_URL}" target="_blank" rel="noopener">Website</a><a class="abbtn pri" href="${SUPPORT_URL}" target="_blank" rel="noopener">☕ Einen Kaffee ausgeben</a></div>
-    <div class="abnew"><h3>Neu in ${esc(v.split('.').slice(0, 2).join('.'))}</h3><p>${esc(NEW_IN)}</p></div>
+    <div class="abnew"><h3>Neu in Version ${esc(CHANGES[0][0])}</h3><ul>${CHANGES[0][1].map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+      <details class="abold"><summary>Frühere Versionen</summary>${CHANGES.slice(1).map(([vv, it]) => `<h4>${esc(vv)}</h4><ul>${it.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</details></div>
     <p class="abnote">Alle Daten bleiben auf diesem Gerät. · Berechnungen nach der GSO ohne Gewähr – die Verantwortung für die Notengebung liegt bei der Lehrkraft.</p>
-    <div class="ablinks"><button type="button" id="abLic">Lizenzen</button><button type="button" id="abHelp">Hilfe</button></div>
+    <div class="ablinks"><button type="button" id="abHelp">Hilfe</button><button type="button" id="abSrc">Quellenverzeichnis</button><button type="button" id="abLic">Lizenzen</button></div>
     <div class="abfoot"><span>© 2026</span>${window.THEISAPPS_LOGO}</div>`;
   document.body.appendChild(d);
   const close = () => { d.close(); d.remove(); };
@@ -3716,6 +3895,7 @@ async function openAbout() {
   d.addEventListener('cancel', e => { e.preventDefault(); close(); });
   d.querySelector('#abLic').onclick = () => { close(); openLicenses(); };
   d.querySelector('#abHelp').onclick = () => { close(); if (D) helpSheet(); };
+  d.querySelector('#abSrc').onclick = () => { close(); sourcesSheet(); };
   d.showModal();
 }
 $('#aboutBtn').innerHTML = window.THEISAPPS_LOGO;
@@ -3747,7 +3927,7 @@ N.onMenu(cmd => { if (cmd === 'about') openAbout(); });
 (async () => {
   const pf = await N.platform(); if (pf === 'darwin') document.body.classList.add('mac');
   ST = await N.status();
-  applyLook(ST.skin, ST.mode, ST.font); setSideC(!!ST.sideC, false); applySideG(ST.sideG); document.body.classList.toggle('dense', !!ST.dense);
+  applyLook(ST.skin, ST.mode, ST.font); applyFx(ST.fx); applyZoom(ST.zoom); setSideC(!!ST.sideC, false); applySideG(ST.sideG); document.body.classList.toggle('dense', !!ST.dense);
   $('#sideKbd').textContent = pf === 'darwin' ? '⌘K' : 'Strg+K';
   if (!ST.exists) setupStep(1); else renderLock();
 })();
