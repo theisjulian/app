@@ -135,14 +135,26 @@
     const { R, uid } = deps; const up = R.isUpper(c);
     const rep = { newStudents: [], matched: 0, assessments: [], entries: 0, skipped: [], unknown: [], warnings: p.warnings.slice() };
     if (up) { rep.error = 'Notenblätter der Oberstufe (Q12/Q13, Punkte) kann Libretto noch nicht einlesen.'; return { rep }; }
-    const byKey = new Map(), byLast = new Map();
-    c.students.forEach(s => { byKey.set(nameKey(s.last, s.first), s); const k = deburr(s.last); byLast.set(k, byLast.has(k) ? null : s); });
+    /* Zuordnung über den Namen – gibt es ihn mehrfach, entscheidet die Klasse. Bleibt es mehrdeutig, wird nichts übernommen (lieber nachfragen als vertauschen). */
+    const byKey = new Map(), byLast = new Map(), used = new Set();
+    const normC = x => String(x || '').replace(/\s+/g, '').toUpperCase();
+    c.students.forEach(s => { const k = nameKey(s.last, s.first); (byKey.get(k) || byKey.set(k, []).get(k)).push(s); const l = deburr(s.last); byLast.set(l, byLast.has(l) ? null : s); });
     const sidOf = new Map(); const students = [];
+    const pick = ps => {
+      let l = (byKey.get(nameKey(ps.last, ps.first)) || []).filter(s => !used.has(s.id));
+      if (!l.length && !ps.first && byLast.get(deburr(ps.last))) l = [byLast.get(deburr(ps.last))].filter(s => !used.has(s.id));
+      if (l.length > 1 && ps.cls) { const m = l.filter(s => normC(s.cls) === normC(ps.cls)); if (m.length) l = m; }
+      /* auch ein einziger Namensfund zählt nicht, wenn beide eine Klasse haben und sie sich widersprechen (9A ≠ 9B) */
+      if (l.length === 1 && ps.cls && l[0].cls && normC(l[0].cls) !== normC(ps.cls)) return 'cls';
+      return l.length > 1 ? 'ambig' : l[0] || null;
+    };
     p.students.forEach(ps => {
-      let s = byKey.get(nameKey(ps.last, ps.first)) || (byLast.get(deburr(ps.last)) && !ps.first ? byLast.get(deburr(ps.last)) : null);
-      if (!s) { s = { id: uid(), last: ps.last, first: ps.first, name: ps.last && ps.first ? `${ps.last}, ${ps.first}` : (ps.last || ps.first) }; if (ps.cls) s.cls = ps.cls; students.push(s); rep.newStudents.push(s.name); byKey.set(nameKey(ps.last, ps.first), s); }
+      let s = pick(ps);
+      if (s === 'cls') { const o = (byKey.get(nameKey(ps.last, ps.first)) || [])[0] || byLast.get(deburr(ps.last)); rep.ambiguous = rep.ambiguous || []; rep.ambiguous.push(`${ps.last}${ps.first ? ', ' + ps.first : ''} (${ps.cls})`); rep.warnings.push(`„${ps.last}${ps.first ? ', ' + ps.first : ''}“ steht auf dem Notenblatt in ${ps.cls}, im Kurs aber in ${o && o.cls ? o.cls : 'einer anderen Klasse'} – die Noten wurden nicht übernommen. Bitte prüfen und von Hand eintragen.`); return; }
+      if (s === 'ambig') { rep.ambiguous = rep.ambiguous || []; rep.ambiguous.push(`${ps.last}${ps.first ? ', ' + ps.first : ''}${ps.cls ? ' (' + ps.cls + ')' : ''}`); rep.warnings.push(`„${ps.last}${ps.first ? ', ' + ps.first : ''}“ gibt es mehrfach im Kurs – die Noten dieser Person wurden nicht übernommen. Bitte von Hand eintragen.`); return; }
+      if (!s) { s = { id: uid(), last: ps.last, first: ps.first, name: ps.last && ps.first ? `${ps.last}, ${ps.first}` : (ps.last || ps.first) }; if (ps.cls) s.cls = ps.cls; students.push(s); rep.newStudents.push(s.name); }
       else rep.matched++;
-      sidOf.set(ps, s);
+      used.add(s.id); sidOf.set(ps, s);
     });
     const assessments = [], entries = [], xfer = {};
     const sig = r => (!r || r.status === 'ent' || r.status === 'bef') ? '' : R.cellText(r, false); /* wie xSig in app.js */
@@ -162,13 +174,13 @@
         if (!r || r.error) { rep.unknown.push(`${ps.last}: „${raw}“ (${big ? 'SA' : 'Ex'} ${col.date.slice(8)}.${col.date.slice(5, 7)}.)`); return; }
         if (r.status === 'ent') rep.nachtermin = (rep.nachtermin || 0) + 1;
         if (!a) return;
-        const s = sidOf.get(ps); a.results[s.id] = r; if (sig(r)) xfer[a.id + '|' + s.id] = sig(r); n++;
+        const s = sidOf.get(ps); if (!s) return; a.results[s.id] = r; if (sig(r)) xfer[a.id + '|' + s.id] = sig(r); n++;
       });
       if (a) { assessments.push(a); rep.assessments.push({ id: a.id, kind: big ? 'sa' : 'stex', label: (big ? 'Schulaufgabe' : 'Stegreifaufgabe/Kurzarbeit') + (col.typ === 'M' ? ' (mündlich)' : col.typ === 'N' ? ' (Nachschrift)' : ''), date: col.date, factor: col.factor, n }); }
       else rep.skipped.push(`${big ? 'Schulaufgabe' : 'Leistungsnachweis'} vom ${col.date.slice(8)}.${col.date.slice(5, 7)}. ist schon in Libretto – nicht verändert`);
     });
     p.students.forEach(ps => {
-      const s = sidOf.get(ps);
+      const s = sidOf.get(ps); if (!s) return;
       ps.orals.forEach(o => {
         const r = R.parseCell(o.raw, false); if (!r || r.error) { rep.unknown.push(`${ps.last}: „${o.raw}“`); return; }
         const date = o.date || p.date || null; const code = (o.code || '').toUpperCase();

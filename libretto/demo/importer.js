@@ -20,8 +20,8 @@ function classColumn(rows, from) {
 /* PDF → Zeilen; bei Tabellen mit Kopfzeile werden die Spalten über die x-Positionen erkannt */
 /* Rohe Textstücke mit Position je Seite (auch für das Notenblatt, siehe notenblatt.js) */
 async function pdfRaw(buf) {
-  const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
-  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise; const pages = [];
+  const lib = window.pdfjsLib || await import('./pdf.min.mjs'); lib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.mjs';   /* pdf.js 6 (ES-Modul, über pdf-init.mjs) */
+  const pdf = await lib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise; const pages = [];   /* isEvalSupported: false – Härtung gegen CVE-2024-4367 */
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p); const tc = await page.getTextContent();
     pages.push({ items: tc.items.filter(it => it.str && it.str.trim()).map(it => ({ s: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0 })) });

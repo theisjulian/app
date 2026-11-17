@@ -12,7 +12,8 @@ const FILES = NATIVE && NATIVE.platform === 'win32' ? 'Explorer' : NATIVE && NAT
 (() => { const sm = HTMLDialogElement.prototype.showModal; HTMLDialogElement.prototype.showModal = function () { sm.call(this); if (!this.querySelector('[autofocus]')) { this.tabIndex = -1; this.focus({ preventScroll: true }); } }; })();
 
 /* ---------------- Speicher ---------------- */
-/* GER-Niveaustufen fürs Sprechen nach ISB-Übersicht (Stand 12/2025, mit Stand 07/2026 unverändert); bei Doppelangaben gilt die niedrigere Stufe */
+/* GER-Niveaustufen fürs Sprechen nach ISB-Übersicht (Stand 12/2025, mit Stand 07/2026 unverändert); bei Doppelangaben gilt die niedrigere Stufe
+   (Ausnahme laut ISB: Chinesisch Jgst. 6–10 – dort betrifft die höhere Stufe das Sprechen). Q12/13 Russisch und Chinesisch: B1-Raster in Notenpunkten (ru/chi), ab B2 PuLSt. */
 const DEFAULT_MAP = {
   fs1: { 5: 'A1', 6: 'A1+', 7: 'A2', 8: 'A2+', 9: 'A2+', 10: 'B1', 11: 'B1+', 12: 'OS', 13: 'OS' },
   e1:  { 5: 'A1', 6: 'A1+', 7: 'A2', 8: 'A2+', 9: 'B1', 10: 'B1+', 11: 'B1+/B2', 12: 'OS', 13: 'OS' },
@@ -20,10 +21,12 @@ const DEFAULT_MAP = {
   fs2: { 6: 'A1', 7: 'A2', 8: 'A2+', 9: 'A2+', 10: 'B1', 11: 'B1+', 12: 'OS', 13: 'OS' },
   fs3: { 8: 'A2', 9: 'A2+', 10: 'B1', 11: 'B1+', 12: 'OS', 13: 'OS' },
   spb: { 11: 'A2', 12: 'B1spb', 13: 'B1spb' },
+  ru3: { 8: 'A1+', 9: 'A2', 10: 'A2+', 11: 'B1', 12: 'OSB1', 13: 'OS' },
+  zh3: { 8: 'A1', 9: 'A2', 10: 'A2+', 11: 'A2+', 12: 'OSB1', 13: 'OSB1' },
 };
-const SEQ_ROWS = [['fs1', 'Französisch 1. FS', [5, 6, 7, 8, 9, 10, 11, 12, 13]], ['e1', 'Englisch 1. FS', [5, 6, 7, 8, 9, 10, 11, 12, 13]], ['e2', 'Englisch 2. FS', [6, 7, 8, 9, 10, 11, 12, 13]], ['fs2', '2. FS (F/It/Sp)', [6, 7, 8, 9, 10, 11, 12, 13]], ['fs3', '3. FS (F/It/Sp)', [8, 9, 10, 11, 12, 13]], ['spb', 'spät beginnend', [11, 12, 13]]];
+const SEQ_ROWS = [['fs1', 'Französisch 1. FS', [5, 6, 7, 8, 9, 10, 11, 12, 13]], ['e1', 'Englisch 1. FS', [5, 6, 7, 8, 9, 10, 11, 12, 13]], ['e2', 'Englisch 2. FS', [6, 7, 8, 9, 10, 11, 12, 13]], ['fs2', 'Französisch 2. FS', [6, 7, 8, 9, 10, 11, 12, 13]], ['fs3', '3. FS (F/It/Sp)', [8, 9, 10, 11, 12, 13]], ['ru3', 'Russisch 3. FS', [8, 9, 10, 11, 12, 13]], ['zh3', 'Chinesisch 3. FS', [8, 9, 10, 11, 12, 13]], ['spb', 'spät beginnend', [11, 12, 13]]];
 const SUBJECT_LANG = { Englisch: 'en', Italienisch: 'it', Französisch: 'fr', Spanisch: 'es' };
-const SUBJECT_SEQ = { Englisch: 'e2', Italienisch: 'fs3' };
+const SUBJECT_SEQ = { Englisch: 'e2', Italienisch: 'fs3', Spanisch: 'fs3', Französisch: 'fs2', Russisch: 'ru3', Chinesisch: 'zh3' };
 const AI_DEFAULT_MODEL = { anthropic: 'claude-sonnet-5-5', openai: 'gpt-4.1-mini', gemini: 'gemini-2.5-flash', ollama: '' };
 const fresh = () => ({
   v: 1,
@@ -46,7 +49,7 @@ function migrate() {
   /* v3 (Okt. 2026): Zuordnung nach ISB-Übersicht 12/2025 neu setzen; danach nur ungültige oder fehlende Felder ergänzen, eigene Änderungen bleiben */
   if (st.mapV !== 3) { st.map = JSON.parse(JSON.stringify(DEFAULT_MAP)); st.mapV = 3; }
   else for (const [k, row] of Object.entries(DEFAULT_MAP)) { st.map[k] ||= {}; for (const [j, v] of Object.entries(row)) if (!SCHEMES[st.map[k][j]]) st.map[k][j] = v; }
-  for (const ex of S.exams) if (ex.seq === 'fs12') ex.seq = ex.subject === 'Englisch' ? 'e2' : 'fs2';
+  for (const ex of S.exams) if (ex.seq === 'fs12') ex.seq = SUBJECT_SEQ[ex.subject] || 'fs2'; /* nur die Angabe der Sprachenfolge; Raster und Punkte bleiben */
   for (const ex of S.exams) Tasks.ensure(ex);
   st.aiKeys ||= {}; if (st.aiKey) { st.aiKeys.anthropic ||= st.aiKey; delete st.aiKey; }
   st.aiModels = Object.assign({ ...AI_DEFAULT_MODEL }, st.aiModels || {}); st.aiProvider ||= 'anthropic';
@@ -133,8 +136,12 @@ const isRef = ex => !!ex && ex.kind === 'ref';
 const refStudents = ex => ex.groups.flatMap(g => g.members).map(id => klass(ex).students.find(s => s.id === id)).filter(s => s && !s.off);
 const refOf = (ex, id) => ex.groups.find(g => g.members.includes(id)) || null;
 /* Datum und Thema eines Referats für Bogen und Liste (bei anderen Prüfungen: leer, Ausgaben bleiben wie bisher) */
-const refInfo = (ex, id) => { if (!isRef(ex)) return {}; const g = refOf(ex, id); return { date: (g && g.date) || ex.date || '', topic: (g && g.topic) || '' }; };
+const refInfo = (ex, id) => { if (!isRef(ex)) return {}; const g = refOf(ex, id); const o = { date: (g && g.date) || ex.date || '', topic: (g && g.topic) || '' }; const w = g ? g.members.filter(x => x !== id).map(x => stById(ex, x)).filter(Boolean) : []; if (w.length) o.with = w.map(fullName); return o; };
 const unitOf = ex => isRef(ex) ? 'Referat' : 'Gruppe';
+/* Gruppenreferate: Dauer = Minuten je Person × Personen, außer sie ist für dieses Referat eigens eingestellt (g.dur) */
+const refLen = (ex, g) => (g.dur != null && g.dur !== '' && +g.dur > 0) ? Math.round(+g.dur) : (+ex.dur || 0) * Math.max(1, g.members.length);
+const refNames = (ex, g, full) => { const ss = g.members.map(id => stById(ex, id)).filter(Boolean); return ss.length === 1 || full ? ss.map(fullName).join(', ') : ss.map(x => x.first).join(' · '); };
+const refGroupy = ex => isRef(ex) && ex.groups.some(g => g.members.length > 1);
 const stById = (ex, id) => klass(ex).students.find(s => s.id === id);
 const res = (ex, id) => (ex.results[id] ||= { scores: {}, notes: {}, verdict: '', verdictAuto: true, absent: false, general: '' });
 const customKey = ex => (SCHEMES[ex.scheme].type === 'be' && ex.pct && ex.pct !== 50) ? keyFromPercent(ex.scheme, ex.pct) : null;
@@ -154,7 +161,7 @@ function schedule(ex) {
     ex.groups.forEach((g, i) => {
       const d = g.date || ex.date || '';
       if (d !== day) { day = d; t = h * 60 + m; }
-      const st = t, en = t + (+ex.dur || 0);
+      const st = t, en = t + refLen(ex, g);
       out.push({ g, i, start: st, end: en, date: d });
       t = en + (+ex.gap || 0) + pauseOf(ex, g);
     });
@@ -468,23 +475,33 @@ function renderPlan() {
 const dayShort = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) : '';
 function renderRefPlan() {
   const ex = exam(); const cls = klass(ex); const sch = schedule(ex); const pool = unassigned(ex); const sc = SCHEMES[ex.scheme];
+  const active = cls.students.filter(s => !s.off); const inList = refStudents(ex).length;
   const days = [...new Set(sch.map(x => x.date))];
+  const k = Math.max(1, Math.min(4, +ex.groupSize || 1));
+  const graded = id => { const r = ex.results[id]; return !!(r && (r.absent || Object.keys(r.scores || {}).length)); };
+  const chip = s => `<button class="chip${graded(s.id) ? ' graded' : ''}" data-sid="${esc(s.id)}" title="${graded(s.id) ? 'Schon bewertet – ziehen, um die Person in ein anderes Referat zu verschieben' : 'Ziehen oder antippen, um die Person zu verschieben'}"><span class="dot ${s.g}"></span>${esc(fullName(s))}${graded(s.id) ? '<i class="ok" aria-label="bewertet">✓</i>' : ''}</button>`;
   let lastDay = null;
   const rows = sch.map(({ g, i, start, end, date }) => {
-    const s = stById(ex, g.members[0]); const head = date !== lastDay ? `<div class="dayHead">${date ? esc(dateDe(date)) : 'Ohne Datum'}</div>` : ''; lastDay = date;
-    const r = s && ex.results[s.id]; const graded = r && (r.absent || Object.keys(r.scores || {}).length);
+    const head = date !== lastDay ? `<div class="dayHead">${date ? esc(dateDe(date)) : 'Ohne Datum'}</div>` : ''; lastDay = date;
+    const ms = g.members.map(id => stById(ex, id)).filter(Boolean); const len = end - start; const auto = (+ex.dur || 0) * Math.max(1, g.members.length); const custom = g.dur != null && g.dur !== '' && +g.dur !== auto;
     const next = sch[i + 1];
-    return `${head}<div class="rslot" data-ri="${i}" style="--hue:var(--g${(i % 8) + 1})">
+    return `${head}<div class="rslot" data-slot="${i}" style="--hue:var(--g${(i % 8) + 1})">
+      <div class="grip" data-grip="${i}" draggable="true" title="Ziehen, um das Referat zu verschieben" aria-label="Referat ${i + 1} verschieben">⠿</div>
       <div class="num">${i + 1}</div>
-      <div class="when"><input type="date" data-rdate="${i}" value="${esc(g.date || ex.date || '')}" aria-label="Datum des Referats"><small>${hm(start)}–${hm(end)} Uhr</small></div>
-      <div class="rbody"><div class="rname">${s ? `<span class="dot ${s.g}"></span><b>${esc(fullName(s))}</b>` : '<i>gelöscht</i>'}${graded ? '<span class="pill done">bewertet</span>' : ''}</div>
+      <div class="when"><input type="date" data-rdate="${i}" value="${esc(g.date || ex.date || '')}" aria-label="Datum des Referats">
+        <small>${hm(start)}–${hm(end)} Uhr</small>
+        <label class="rdur${custom ? ' custom' : ''}" title="${custom ? `Eigens eingestellt – Vorgabe wären ${auto} Min.` : `Vorgabe: ${ex.dur} Min. je Person`}"><input type="number" min="1" max="240" data-rdur="${i}" value="${len}" aria-label="Dauer in Minuten"> Min.${custom ? `<button type="button" class="rdurReset" data-rdurreset="${i}" title="Zurück zur Vorgabe (${auto} Min.)">↺</button>` : ''}</label></div>
+      <div class="rbody">
+        <div class="rhead"><span class="rkind">${ms.length > 1 ? `Gruppenreferat · ${ms.length} Personen` : ms.length ? 'Einzelreferat' : 'Noch niemand'}</span></div>
+        <div class="chips dropzone" data-drop="${g.id}">${ms.map(chip).join('') || '<span class="hint" style="margin:0">Namen hierher ziehen</span>'}</div>
         <input type="text" class="rtopic" data-rtopic="${i}" value="${esc(g.topic || '')}" placeholder="Thema des Referats" maxlength="160"></div>
       <div class="ctl">
         <button class="iconbtn" title="Nach oben" data-rup="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="iconbtn" title="Nach unten" data-rdown="${i}" ${i === ex.groups.length - 1 ? 'disabled' : ''}>↓</button>
-        <button class="iconbtn" title="Aus der Liste nehmen" data-rdel="${i}">✕</button>
+        <button class="iconbtn" title="Referat aus der Liste nehmen (die Personen kommen zurück nach links)" data-rdel="${i}">✕</button>
       </div></div>${next && next.date === date ? pauseRow(ex, g, i, end, next.start) : ''}`;
   }).join('');
+  const newZone = `<div class="chips dropzone rnew" data-drop="new"><span>＋ Neues Referat – Namen hierher ziehen</span></div>`;
   $('main').innerHTML = `
   <div class="layout">
     <aside class="rail">
@@ -492,47 +509,64 @@ function renderRefPlan() {
         <h2 class="ptitle">Referate</h2>
         <div class="meta" style="flex-direction:column;gap:4px">
           <span><b>${esc(ex.cls)}</b> · ${esc(ex.subject)} · Jgst. ${esc(ex.jgst)}</span>
-          <span>Raster <b>${esc(sc.label)}</b> · ${totalMax(ex.scheme)} BE${customKey(ex) ? ` · Grenze ${ex.pct} %` : ''}</span>
-          <span>${ex.dur} Min. je Referat${ex.room ? ' · Raum ' + esc(ex.room) : ''}</span>
+          <span>Raster <b>${esc(sc.label)}</b>${sc.type === 'be' || sc.type === 'bep' ? ` · ${totalMax(ex.scheme)} BE` : ''}${customKey(ex) ? ` · Grenze ${ex.pct} %` : ''}</span>
+          ${REF_OS.includes(ex.scheme) ? '<span class="refOsNote">Raster der mündlichen Schulaufgabe – für Referate in Q12/13 gibt es kein eigenes ISB-Raster.</span>' : ''}
+          <span>${ex.dur} Min. je Person${+ex.gap ? ` · ${ex.gap} Min. Wechsel` : ''}${ex.room ? ' · Raum ' + esc(ex.room) : ''}</span>
         </div>
         <div class="panelBtns"><button class="mini" id="pEdit">Referat ändern</button><button class="mini" id="pClass">Klassenliste bearbeiten</button></div>
       </section>
       <section class="panel glass">
-        <div class="phead"><h2 class="ptitle">Wer hält ein Referat?</h2><span class="count">${ex.groups.length} / ${cls.students.filter(s => !s.off).length}</span></div>
-        <p class="note" style="margin-top:0">Namen antippen, um sie in die Liste aufzunehmen – einzelne Schülerinnen und Schüler oder die ganze Klasse.</p>
-        <div class="chips" id="rpool">${pool.map(s => `<button class="chip" data-radd="${esc(s.id)}"><span class="dot ${s.g}"></span>${esc(s.first)} ${esc(s.last)}</button>`).join('') || '<span class="hint" style="margin:0">Alle sind eingetragen.</span>'}</div>
-        ${pool.length ? `<button class="go secondary" id="raddAll">Alle ${pool.length} eintragen</button>` : ''}
+        <div class="phead"><h2 class="ptitle">Noch ohne Referat</h2><span class="count">${pool.length} / ${active.length}</span></div>
+        <div class="chips dropzone" id="rpool" data-drop="pool">${pool.map(chip).join('') || '<span class="hint" style="margin:0">Alle stehen in der Liste.</span>'}</div>
+        <div class="field" style="margin:10px 0 0"><span>Einteilen in</span>
+        <div class="seg" role="group" id="rsize">${[1, 2, 3, 4].map(n => `<button data-n="${n}" aria-pressed="${k === n}">${n === 1 ? 'Einzeln' : n + 'er'}</button>`).join('')}</div></div>
+        <div class="rsplit"><button class="go" id="rRand" ${pool.length ? '' : 'disabled'}>Zufällig</button><button class="go secondary" id="rSeq" ${pool.length ? '' : 'disabled'}>Der Reihe nach</button></div>
+        <p class="note">${pool.length ? refSplitNote(pool.length, k) : 'Alle sind eingeteilt. Zum neuen Einteilen erst „Liste leeren …“ – vergebene Punkte bleiben erhalten.'}</p>
+        <p class="note">Einzelne Namen ziehst du auf ein Referat oder auf „＋ Neues Referat“. Ohne Maus: Namen antippen, dann das Ziel antippen. Auf einen anderen Namen gezogen, tauschen beide.</p>
+        ${ex.groups.length ? '<button class="mini" id="rClear">Liste leeren …</button>' : ''}
       </section>
     </aside>
     <section>
       <div class="planHead">
-        <h2>Referatsliste<small>${ex.groups.length} ${ex.groups.length === 1 ? 'Referat' : 'Referate'}${days.length > 1 ? ` an ${days.length} Tagen` : days[0] ? ` · ${esc(dateDe(days[0]))}` : ''}</small></h2>
+        <h2>Referatsliste<small>${ex.groups.length} ${ex.groups.length === 1 ? 'Referat' : 'Referate'} · ${inList} ${inList === 1 ? 'Person' : 'Personen'}${days.length > 1 ? ` · ${days.length} Tage` : days[0] ? ` · ${esc(dateDe(days[0]))}` : ''}</small></h2>
         <div class="exportBar" style="margin:0"><button class="mini accent" id="planPrint" ${ex.groups.length ? '' : 'disabled'}>Liste drucken …</button><button class="mini" id="planDocx" ${ex.groups.length ? '' : 'disabled'}>Als Word</button></div>
       </div>
-      <div class="slots rlist">${rows || '<div class="empty glass" style="min-height:260px"><div><strong>Noch keine Referate eingetragen</strong>Links die Namen antippen – oder „Alle eintragen“. Thema und Datum trägst du hier in der Liste ein.</div></div>'}</div>
-      ${ex.groups.length ? '<p class="hint">Das Datum gilt zunächst für alle Referate; einzelne Termine lassen sich hier ändern – die Liste ordnet sich dann nach Datum. Die Uhrzeiten ergeben sich aus Beginn und Dauer.</p>' : ''}
+      <div class="slots rlist" id="slots">${rows}${ex.groups.length ? newZone : `<div class="empty glass rempty" data-drop="new"><div><strong>Noch keine Referate</strong>Links „Einteilen in“ wählen und „Zufällig“ oder „Der Reihe nach“ drücken – oder Namen einzeln hierher ziehen. Einzel- und Gruppenreferate dürfen gemischt vorkommen.</div></div>`}</div>
+      ${ex.groups.length ? `<p class="hint">Die Dauer ergibt sich aus ${ex.dur} Min. je Person; bei jedem Referat lässt sie sich eigens einstellen. Die Uhrzeiten rechnet Voce daraus und aus dem Beginn (${esc(ex.start || '08:00')} Uhr) – an jedem Tag neu. Ein anderes Datum ordnet das Referat dem Tag zu. Bewertet wird jede Person einzeln, auch im Gruppenreferat.</p>` : ''}
     </section>
   </div>`;
-  const redraw = () => { save(); renderRefPlan(); renderSide(); };
+  const redraw = () => { sortByDate(); save(); renderRefPlan(); renderSide(); };
+  const setDate = (g, v) => { if (!v || v === ex.date) delete g.date; else g.date = v; };
+  const sortByDate = () => { ex.groups = ex.groups.map((x, j) => [x, j]).sort((a, b) => (a[0].date || ex.date || '9999').localeCompare(b[0].date || ex.date || '9999') || a[1] - b[1]).map(x => x[0]); };
+  /* nach dem Verschieben: Referat übernimmt den Tag seines neuen Vorgängers (bzw. Nachfolgers ganz vorn) */
+  const adopt = to => { const g = ex.groups[to], nb = ex.groups[to - 1] || ex.groups[to + 1]; if (g && nb) setDate(g, nb.date || ex.date); };
   $('pEdit').onclick = () => openExamDlg(ex);
   $('pClass').onclick = () => openClassDlg(ex.cls);
-  const add = ids => { for (const id of ids) if (!refOf(ex, id)) ex.groups.push({ id: uid(), members: [id], topic: '' }); };
-  document.querySelectorAll('[data-radd]').forEach(b => b.onclick = () => { add([b.dataset.radd]); redraw(); });
-  if ($('raddAll')) $('raddAll').onclick = () => { add(pool.map(s => s.id)); redraw(); };
+  document.querySelectorAll('#rsize button').forEach(b => b.onclick = () => { ex.groupSize = +b.dataset.n; save(); renderRefPlan(); });
+  if ($('rRand')) $('rRand').onclick = () => { refSplit(ex, pool.map(s => s.id), k, true); redraw(); };
+  if ($('rSeq')) $('rSeq').onclick = () => { refSplit(ex, pool.map(s => s.id), k, false); redraw(); };
+  if ($('rClear')) $('rClear').onclick = async () => {
+    if (!(await ask(`Alle ${ex.groups.length} Referate aus der Liste nehmen? Themen und Termine gehen verloren; vergebene Punkte bleiben gespeichert und sind wieder da, sobald die Person erneut eingetragen ist.`, 'Liste leeren'))) return;
+    ex.groups = []; ex.cur = 0; redraw();
+  };
   document.querySelectorAll('[data-rtopic]').forEach(inp => { inp.oninput = () => { ex.groups[+inp.dataset.rtopic].topic = inp.value; save(); }; inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const n = document.querySelector(`[data-rtopic="${+inp.dataset.rtopic + 1}"]`); if (n) n.focus(); else inp.blur(); } }; });
-  document.querySelectorAll('[data-rdate]').forEach(inp => inp.onchange = () => {
-    const g = ex.groups[+inp.dataset.rdate]; const v = inp.value;
-    if (!v || v === ex.date) delete g.date; else g.date = v;
-    /* stabil nach Datum ordnen, Reihenfolge am selben Tag bleibt */
-    ex.groups = ex.groups.map((x, k) => [x, k]).sort((a, b) => (a[0].date || ex.date || '9999').localeCompare(b[0].date || ex.date || '9999') || a[1] - b[1]).map(x => x[0]);
-    redraw();
+  document.querySelectorAll('[data-rdate]').forEach(inp => inp.onchange = () => { setDate(ex.groups[+inp.dataset.rdate], inp.value); redraw(); });
+  document.querySelectorAll('[data-rdur]').forEach(inp => {
+    const fin = () => { const g = ex.groups[+inp.dataset.rdur]; if (!g) return; const v = Math.round(+inp.value); const auto = (+ex.dur || 0) * Math.max(1, g.members.length);
+      if (!(v >= 1) || v === auto) delete g.dur; else g.dur = Math.min(240, v); redraw(); };
+    inp.onchange = fin; inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
   });
-  document.querySelectorAll('[data-rup]').forEach(b => b.onclick = () => { moveGroup(ex, +b.dataset.rup, +b.dataset.rup - 1); redraw(); });
-  document.querySelectorAll('[data-rdown]').forEach(b => b.onclick = () => { moveGroup(ex, +b.dataset.rdown, +b.dataset.rdown + 1); redraw(); });
+  document.querySelectorAll('[data-rdurreset]').forEach(b => b.onclick = e => { e.preventDefault(); delete ex.groups[+b.dataset.rdurreset].dur; redraw(); });
+  const step = (i, dir) => { const j = i + dir; const a = ex.groups[i], b = ex.groups[j]; if (!a || !b) return;
+    const da = a.date || ex.date || '', db = b.date || ex.date || '';
+    if (da !== db) setDate(a, db); else moveGroup(ex, i, j); /* über die Tagesgrenze: nur den Tag wechseln */
+    redraw(); };
+  document.querySelectorAll('[data-rup]').forEach(b => b.onclick = () => step(+b.dataset.rup, -1));
+  document.querySelectorAll('[data-rdown]').forEach(b => b.onclick = () => step(+b.dataset.rdown, 1));
   document.querySelectorAll('[data-rdel]').forEach(b => b.onclick = async () => {
-    const i = +b.dataset.rdel; const g = ex.groups[i]; const s = stById(ex, g.members[0]); const r = s && ex.results[s.id];
-    if (r && (r.absent || Object.keys(r.scores || {}).length) && !(await ask(`${fullName(s)} aus der Liste nehmen? Die Bewertung bleibt gespeichert und ist wieder da, wenn du ${s.first} erneut einträgst.`, 'Aus der Liste nehmen'))) return;
-    ex.groups.splice(i, 1); redraw();
+    const i = +b.dataset.rdel; const g = ex.groups[i]; const gs = g.members.filter(graded).map(id => stById(ex, id)).filter(Boolean);
+    if (gs.length && !(await ask(`Referat ${i + 1} aus der Liste nehmen? ${gs.map(fullName).join(', ')} ${gs.length === 1 ? 'ist' : 'sind'} schon bewertet – die Punkte bleiben gespeichert und sind wieder da, sobald die Person erneut eingetragen ist.`, 'Aus der Liste nehmen'))) return;
+    ex.groups.splice(i, 1); ex.cur = Math.min(ex.cur || 0, Math.max(0, ex.groups.length - 1)); redraw();
   });
   document.querySelectorAll('[data-addpause]').forEach(b => b.onclick = () => { const g = ex.groups[+b.dataset.addpause]; g.breakAfter = true; g.brk = +ex.brk || 15; redraw(); });
   document.querySelectorAll('[data-pmin]').forEach(b => b.onclick = () => { const g = ex.groups[+b.dataset.pause]; const cur = pauseOf(ex, g) || (+ex.brk || 15); g.brk = Math.max(5, Math.min(180, +b.dataset.pmin > 0 ? Math.floor(cur / 5) * 5 + 5 : Math.ceil(cur / 5) * 5 - 5)); g.breakAfter = true; redraw(); });
@@ -544,8 +578,35 @@ function renderRefPlan() {
     inp.onblur = () => fin(true);
   });
   document.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { const g = ex.groups[+b.dataset.pdel]; g.breakAfter = false; delete g.brk; redraw(); });
+  // Antippen: auswählen, dann Ziel antippen (Referat, „Neues Referat“, „Noch ohne Referat“) oder anderen Namen (tauschen)
+  document.querySelectorAll('.chip[data-sid]').forEach(c => c.onclick = e => {
+    e.stopPropagation(); const id = c.dataset.sid;
+    if (!picked) { picked = id; return markPicked(); }
+    if (picked === id) { picked = null; return markPicked(); }
+    swapStudents(ex, picked, id); picked = null; redraw();
+  });
+  document.querySelectorAll('[data-drop]').forEach(z => z.onclick = e => { if (!picked || e.target.closest('input,button:not(.chip),label')) return; e.stopPropagation(); moveStudent(ex, picked, z.dataset.drop); picked = null; redraw(); });
+  /* ausgewählten Namen auf die ganze Zeile antippen (nicht nur auf die Namensfläche) */
+  document.querySelectorAll('.rslot[data-slot]').forEach(r => r.addEventListener('click', e => { if (!picked || e.target.closest('input,button,label,.chip')) return; const g = ex.groups[+r.dataset.slot]; if (g) { moveStudent(ex, picked, g.id); picked = null; redraw(); } }));
+  markPicked();
+  bindDnD(ex, redraw, to => adopt(to));
   $('planPrint').onclick = () => printPlan(ex);
   $('planDocx').onclick = () => Export.plan(ex, S.settings, studentsOf(ex)).catch(err => toast(err.message || 'Export fehlgeschlagen'));
+}
+/* Gleichmäßig einteilen: Gruppen so groß wie gewählt, der Rest verteilt sich (Größen unterscheiden sich höchstens um 1) */
+function refSizes(n, k) {
+  if (!n) return []; let c = Math.max(1, Math.floor(n / k)); if (Math.ceil(n / c) > k + 1) c++;
+  return Array.from({ length: c }, (_, i) => Math.floor(n / c) + (i < n % c ? 1 : 0));
+}
+function refSplitNote(n, k) {
+  if (k === 1) return `Jede der ${n} Personen bekommt ein eigenes Referat.`;
+  const sz = refSizes(n, k); const cnt = {}; sz.forEach(x => { cnt[x] = (cnt[x] || 0) + 1; });
+  return `${n} ${n === 1 ? 'Person' : 'Personen'} → ${Object.keys(cnt).sort((a, b) => b - a).map(x => `${cnt[x]} × ${x === '1' ? 'einzeln' : x + 'er'}`).join(' und ')}. Die Liste bleibt erhalten; neue Referate kommen ans Ende.`;
+}
+function refSplit(ex, ids, k, random) {
+  const list = ids.slice();
+  if (random) for (let i = list.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [list[i], list[j]] = [list[j], list[i]]; }
+  let p = 0; refSizes(list.length, k).forEach(n => { ex.groups.push({ id: uid(), members: list.slice(p, p + n), topic: '' }); p += n; });
 }
 /* Pause zwischen zwei Gruppen: beschriftete Leiste mit − / + (5 Min.) und „Entfernen“, sonst „+ Pause einfügen“ */
 function pauseRow(ex, g, i, end, nextStart) {
@@ -571,19 +632,19 @@ function moveGroup(ex, from, to) {
   if (ex.cur === from) ex.cur = to;
 }
 /* Ziehen & Ablegen (Maus/Trackpad) */
-function bindDnD(ex) {
+function bindDnD(ex, redraw = renderPlan, onMoved = null) {
   let dragId = null, dragGrp = null;
   /* Gruppen und Pausen ziehen: ein blauer Einfügestrich zeigt, wo losgelassen wird */
   const box = document.getElementById('slots'); let dragPause = null;
   const line = box ? Object.assign(document.createElement('div'), { className: 'dropLine', hidden: true }) : null; if (box) box.appendChild(line);
   const rel = r => { const b = box.getBoundingClientRect(); return { top: r.top - b.top, bottom: r.bottom - b.top }; };
-  const slotsEls = () => [...box.querySelectorAll('.slot[data-slot]')];
+  const slotsEls = () => [...box.querySelectorAll('[data-slot]')];
   const boundary = y => { const els = slotsEls(); let b = 0; els.forEach(sl => { const r = sl.getBoundingClientRect(); if (y > r.top + r.height / 2) b++; }); return b; };
   const lineAt = b => { const els = slotsEls(); if (!els.length) return; const top = b === 0 ? rel(els[0].getBoundingClientRect()).top - 5 : b >= els.length ? rel(els[els.length - 1].getBoundingClientRect()).bottom + 1 : (rel(els[b - 1].getBoundingClientRect()).bottom + rel(els[b].getBoundingClientRect()).top) / 2 - 2; line.style.top = top + 'px'; line.hidden = false; };
   const gapNear = y => { let best = -1, bd = 1e9; box.querySelectorAll('.gapRow[data-gap]').forEach(g => { const r = g.getBoundingClientRect(); const d = Math.abs(y - (r.top + r.height / 2)); if (d < bd) { bd = d; best = +g.dataset.gap; } }); return best; };
-  const clearDrag = () => { dragGrp = null; dragPause = null; if (line) line.hidden = true; document.querySelectorAll('.slot.dragging,.pauseBar.dragging').forEach(x => x.classList.remove('dragging')); box && box.querySelectorAll('.pTarget').forEach(x => x.classList.remove('pTarget')); };
+  const clearDrag = () => { dragGrp = null; dragPause = null; if (line) line.hidden = true; document.querySelectorAll('[data-slot].dragging,.pauseBar.dragging').forEach(x => x.classList.remove('dragging')); box && box.querySelectorAll('.pTarget').forEach(x => x.classList.remove('pTarget')); };
   document.querySelectorAll('.grip[data-grip]').forEach(gr => {
-    gr.addEventListener('dragstart', e => { dragGrp = +gr.dataset.grip; picked = null; markPicked(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'gruppe'); const sl = gr.closest('.slot'); try { e.dataTransfer.setDragImage(sl, 24, 20); } catch (x) {} requestAnimationFrame(() => sl.classList.add('dragging')); });
+    gr.addEventListener('dragstart', e => { dragGrp = +gr.dataset.grip; picked = null; markPicked(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'gruppe'); const sl = gr.closest('[data-slot]'); try { e.dataTransfer.setDragImage(sl, 24, 20); } catch (x) {} requestAnimationFrame(() => sl.classList.add('dragging')); });
     gr.addEventListener('dragend', clearDrag);
   });
   document.querySelectorAll('.pgrip[data-pgrip]').forEach(gr => {
@@ -597,8 +658,8 @@ function bindDnD(ex) {
     });
     box.addEventListener('dragleave', e => { const r = box.getBoundingClientRect(); if (line && (e.clientX <= r.left || e.clientX >= r.right || e.clientY <= r.top || e.clientY >= r.bottom)) line.hidden = true; });
     box.addEventListener('drop', e => {
-      if (dragGrp != null) { e.preventDefault(); const b = boundary(e.clientY); const from = dragGrp; clearDrag(); const to = b > from ? b - 1 : b; if (to !== from) { moveGroup(ex, from, to); save(); renderPlan(); } }
-      else if (dragPause != null) { e.preventDefault(); const g = gapNear(e.clientY); const from = dragPause; clearDrag(); if (g >= 0 && g !== from) { movePause(ex, from, g); save(); renderPlan(); } }
+      if (dragGrp != null) { e.preventDefault(); const b = boundary(e.clientY); const from = dragGrp; clearDrag(); const to = b > from ? b - 1 : b; if (to !== from) { moveGroup(ex, from, to); if (onMoved) onMoved(to); save(); redraw(); } }
+      else if (dragPause != null) { e.preventDefault(); const g = gapNear(e.clientY); const from = dragPause; clearDrag(); if (g >= 0 && g !== from) { movePause(ex, from, g); save(); redraw(); } }
     });
   }
   document.querySelectorAll('.chip[data-sid]').forEach(c => {
@@ -607,12 +668,12 @@ function bindDnD(ex) {
     c.addEventListener('dragend', () => { dragId = null; c.classList.remove('dragging'); document.querySelectorAll('.over,.swapTarget').forEach(x => x.classList.remove('over', 'swapTarget')); });
     c.addEventListener('dragover', e => { if (!dragId || dragId === c.dataset.sid) return; e.preventDefault(); e.stopPropagation(); c.classList.add('swapTarget'); });
     c.addEventListener('dragleave', () => c.classList.remove('swapTarget'));
-    c.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); const id = dragId || e.dataTransfer.getData('text/plain'); if (id && id !== c.dataset.sid) { swapStudents(ex, id, c.dataset.sid); save(); renderPlan(); } });
+    c.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); const id = dragId || e.dataTransfer.getData('text/plain'); if (id && id !== c.dataset.sid) { swapStudents(ex, id, c.dataset.sid); save(); redraw(); } });
   });
   document.querySelectorAll('[data-drop]').forEach(z => {
     z.addEventListener('dragover', e => { if (!dragId) return; e.preventDefault(); z.classList.add('over'); });
     z.addEventListener('dragleave', e => { if (!z.contains(e.relatedTarget)) z.classList.remove('over'); });
-    z.addEventListener('drop', e => { e.preventDefault(); const id = dragId || e.dataTransfer.getData('text/plain'); z.classList.remove('over'); if (id) { moveStudent(ex, id, z.dataset.drop); save(); renderPlan(); } });
+    z.addEventListener('drop', e => { e.preventDefault(); const id = dragId || e.dataTransfer.getData('text/plain'); z.classList.remove('over'); if (id) { moveStudent(ex, id, z.dataset.drop); save(); redraw(); } });
   });
 }
 function chipHtml(s) { return `<button class="chip" data-sid="${esc(s.id)}"><span class="dot ${s.g}"></span>${esc(fullName(s))}</button>`; }
@@ -629,8 +690,12 @@ function swapStudents(ex, a, b) {
 }
 function moveStudent(ex, id, target) {
   const l = locate(ex, id); if (l) l.g.members.splice(l.i, 1);
-  if (target !== 'pool') { const g = ex.groups.find(x => x.id === target); if (g && !g.members.includes(id)) g.members.push(id); }
+  if (target === 'new') ex.groups.push({ id: uid(), members: [id], topic: '' });
+  else if (target !== 'pool') { const g = ex.groups.find(x => x.id === target); if (g && !g.members.includes(id)) g.members.push(id); }
+  if (isRef(ex)) refTidy(ex);
 }
+/* Referate: leere Einträge ohne Thema verschwinden von selbst (z. B. wenn jemand zu einer Gruppe gezogen wurde) */
+function refTidy(ex) { const before = ex.groups.length; ex.groups = ex.groups.filter(g => g.members.length || (g.topic || '').trim()); if (ex.groups.length !== before) ex.cur = Math.min(ex.cur || 0, Math.max(0, ex.groups.length - 1)); }
 function shuffleGroups(ex) {
   const list = studentsOf(ex).map(s => s.id);
   for (let i = list.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [list[i], list[j]] = [list[j], list[i]]; }
@@ -808,7 +873,8 @@ function refPlanData(ex) {
   return { ref: true, unit: 'Referat', title: /^referat$/i.test(String(ex.title || '').trim()) ? '' : ex.title, subject: ex.subject, cls: ex.cls, room: ex.room, dur: ex.dur, gap: +ex.gap || 0, parts: '', note: ex.planNote,
     date: multi ? `${dayShort(days[0])} – ${dayShort(days[days.length - 1])}` : dateDe(days[0] || ex.date), span: !multi && sch.length ? `${hm(sch[0].start)}–${hm(sch[sch.length - 1].end)} Uhr` : '',
     logo: S.settings.logo || null, level: sc.badge || sc.label,
-    slots: sch.map(({ g, i, start, end, date }) => { const st = stById(ex, g.members[0]); const people = st ? [fullName(st)] : [];
+    durTxt: refGroupy(ex) ? `${ex.dur} Min. je Person` : '',
+    slots: sch.map(({ g, i, start, end, date }) => { const people = g.members.map(id => stById(ex, id)).filter(Boolean).map(fullName);
       const nx = sch[i + 1]; return { i, start, end, people, names: people.join(', '), tasks: g.topic ? [g.topic] : [], day: multi ? dayShort(date) : '', brk: nx && nx.date === date ? pauseOf(ex, g) : 0 }; }) };
 }
 function printPlan(ex) {
@@ -853,21 +919,23 @@ function renderGrade() {
   if (!ex.groups.length) { $('main').innerHTML = isRef(ex) ? `<div class="empty glass"><div><strong>Noch keine Referate eingetragen</strong><p>Trage zuerst unter „Referate“ ein, wer ein Referat hält.</p><button class="go" id="toPlan">Zur Referatsliste</button></div></div>` : `<div class="empty glass"><div><strong>Noch keine Gruppen</strong><p>Bilde zuerst im Reiter „Gruppen &amp; Plan“ die Prüfungsgruppen.</p><button class="go" id="toPlan">Zu den Gruppen</button></div></div>`; $('toPlan').onclick = () => setTab('plan'); return; }
   ex.cur = Math.min(Math.max(0, ex.cur || 0), ex.groups.length - 1);
   const sch = schedule(ex); const cur = sch[ex.cur]; const g = cur.g;
-  if (timer.group !== g.id) { stopTimer(); timer = { left: ex.dur * 60, run: false, id: null, group: g.id }; }
+  const tLen = (isRef(ex) ? cur.end - cur.start : ex.dur) * 60;
+  if (timer.group !== g.id) { stopTimer(); timer = { left: tLen, run: false, id: null, group: g.id }; }
+  timer.full = tLen;
   $('main').innerHTML = `
   <div class="layout">
     <aside class="rail"><section class="panel glass">
       <div class="phead"><h2 class="ptitle">${isRef(ex) ? 'Referate' : 'Gruppen'}</h2><span class="count">${countDone(ex)} / ${studentsOf(ex).length} bewertet</span></div>
       <div class="glist">${sch.map(({ g, i, start, date }) => { const st = groupStatus(ex, g); return `
         <button class="gitem" data-g="${i}" aria-current="${i === ex.cur}"><span class="n">${i + 1}</span>
-          <span class="who">${esc(isRef(ex) ? fullName(stById(ex, g.members[0])) : shortNames(ex, g.members) || '—')}<small>${isRef(ex) ? `${esc(dayShort(date))}${date ? ' · ' : ''}${hm(start)} Uhr` : `${hm(start)} Uhr`}</small>${isRef(ex) && g.topic ? `<small class="topic" title="${esc(g.topic)}">${esc(g.topic)}</small>` : ''}</span>
+          <span class="who">${esc(isRef(ex) ? refNames(ex, g) || '—' : shortNames(ex, g.members) || '—')}<small>${isRef(ex) ? `${esc(dayShort(date))}${date ? ' · ' : ''}${hm(start)} Uhr` : `${hm(start)} Uhr`}</small>${isRef(ex) && g.topic ? `<small class="topic" title="${esc(g.topic)}">${esc(g.topic)}</small>` : ''}</span>
           <span class="pill ${st.cls}">${st.txt}</span></button>`; }).join('')}</div>
       <p class="srcLine">Raster und Beschreibungen: <a href="${ISB.url}" target="_blank" rel="noopener" title="${esc(ISB.name)}">ISB München</a></p>
     </section></aside>
     <section>
       <div id="nowWrap">${nowBarHtml(ex)}</div>
       <div class="gradeHead">
-        ${isRef(ex) ? `<h2>Referat ${ex.cur + 1}<small>${cur.date ? esc(dayShort(cur.date)) + ' · ' : ''}${hm(cur.start)}–${hm(cur.end)} Uhr${g.topic ? ` · Thema: ${esc(g.topic)}` : ''}</small></h2>` : `<h2>Gruppe ${ex.cur + 1}<small>${hm(cur.start)}–${hm(cur.end)} Uhr · ${esc(ex.parts || '')}</small></h2>`}
+        ${isRef(ex) ? `<h2>${g.members.length > 1 ? 'Gruppenreferat' : 'Referat'} ${ex.cur + 1}<small>${cur.date ? esc(dayShort(cur.date)) + ' · ' : ''}${hm(cur.start)}–${hm(cur.end)} Uhr${g.topic ? ` · Thema: ${esc(g.topic)}` : ''}</small></h2>` : `<h2>Gruppe ${ex.cur + 1}<small>${hm(cur.start)}–${hm(cur.end)} Uhr · ${esc(ex.parts || '')}</small></h2>`}
         <div class="timer glass" id="timerBox"><span class="clock" id="clock"></span>
           <button class="mini" id="tStart"></button><button class="mini" id="tReset">Zurücksetzen</button></div>
         <div class="nav"><button class="mini" id="descTog" aria-pressed="${!!S.settings.hideDesc}" title="Beschreibungen der Rasterstufen bei allen Prüflingen ein- oder ausblenden">${S.settings.hideDesc ? 'Beschreibungen einblenden' : 'Beschreibungen ausblenden'}</button><button class="mini" id="prevG" ${ex.cur === 0 ? 'disabled' : ''}>← Vorherige</button><button class="mini accent" id="nextG" ${ex.cur === ex.groups.length - 1 ? 'disabled' : ''}>Nächste →</button></div>
@@ -882,7 +950,7 @@ function renderGrade() {
   $('prevG').onclick = () => { ex.cur--; save(); renderGrade(); window.scrollTo(0, 0); };
   $('nextG').onclick = () => { ex.cur++; save(); renderGrade(); window.scrollTo(0, 0); };
   $('tStart').onclick = () => timer.run ? stopTimer() : startTimer();
-  $('tReset').onclick = () => { stopTimer(); timer.left = ex.dur * 60; paintTimer(); };
+  $('tReset').onclick = () => { stopTimer(); timer.left = tLen; paintTimer(); };
   paintTimer();
   bindCards(ex);
 }
@@ -892,7 +960,7 @@ function paintTimer() {
   const c = $('clock'); if (!c) return; const l = timer.left; const a = Math.abs(l);
   c.textContent = `${l < 0 ? '+' : ''}${Math.floor(a / 60)}:${String(a % 60).padStart(2, '0')}`;
   $('timerBox').classList.toggle('over', l < 0);
-  $('tStart').textContent = timer.run ? 'Pause' : (l === exam().dur * 60 ? 'Start' : 'Weiter');
+  $('tStart').textContent = timer.run ? 'Pause' : (l === (timer.full ?? exam().dur * 60) ? 'Start' : 'Weiter');
 }
 function groupStatus(ex, g) {
   const ms = g.members.filter(id => stById(ex, id)); if (!ms.length) return { cls: '', txt: 'leer' };
@@ -975,7 +1043,7 @@ function bindCards(ex) {
 }
 /* ---------------- Aussprache markieren (Laute / häufige Fehler) ---------------- */
 const PD = { lang: 'en', stage: 1, tab: 's', sel: new Map(), cur: null, ctx: null };
-const SEQ_START = { fs1: 5, e1: 5, e2: 6, fs2: 6, fs3: 8, spb: 11 };
+const SEQ_START = { fs1: 5, e1: 5, e2: 6, fs2: 6, fs3: 8, ru3: 8, zh3: 8, spb: 11 };
 const STAGES = [{ n: 1, t: 'Anfang', s: '1.–2. Lernjahr' }, { n: 2, t: 'Mitte', s: '3.–4. Lernjahr' }, { n: 3, t: 'Fortgeschritten', s: 'ab 5. Lernjahr' }];
 function pronStage(ex) { const y = (+ex.jgst || 9) - (SEQ_START[ex.seq] || 6) + 1; return y <= 2 ? 1 : y <= 4 ? 2 : 3; }
 /* Text für die Notiz – in der Sprache des Bewertungsbogens, wenn die Liste dieselbe Sprache hat (Italienisch-Liste auf italienischem Bogen …), sonst deutsch */
@@ -1071,7 +1139,7 @@ function verdictFor(ex, s) {
   const e = evalOf(ex, s.id); if (!e.complete || r.absent) return '';
   return autoVerdict(ex, s);
 }
-const autoVerdict = (ex, s) => { const r = res(ex, s.id); return worturteil(ex.scheme, s, r.scores, ex.wlang, null, customKey(ex)); };
+const autoVerdict = (ex, s) => { const r = res(ex, s.id); return worturteil(ex.scheme, s, r.scores, ex.wlang, null, customKey(ex), { ref: isRef(ex) }); };
 /* Grundlage eines von Hand bearbeiteten Worturteils: ändern sich danach Punkte, Raster, Notenschlüssel oder „fehlt“, muss es geprüft werden */
 const verdictBasis = (ex, id) => { const r = res(ex, id); const sc = r.scores || {}; return [ex.scheme, customKey(ex) ? ex.pct : 50, catsOf(ex.scheme).map(c => sc[c] ?? '-').join(','), r.absent ? 1 : 0].join('|'); };
 const verdictStale = (ex, id) => { const r = res(ex, id); return !!(r.verdict && !r.verdictAuto && r.verdictBasis && r.verdictBasis !== verdictBasis(ex, id)); };
@@ -1133,7 +1201,7 @@ async function exportCsv(ex) {
   const lines = [head];
   for (const s of studentsOf(ex)) {
     const r = res(ex, s.id); const e = evalOf(ex, s.id);
-    lines.push([s.last, s.first, ...cats.map(c => r.scores[c] != null ? fmt(r.scores[c]) : ''), r.absent ? 'fehlt' : e.complete ? (sc.type === 'np' ? e.np : fmt(e.be)) : '', ...(sc.type === 'bep' ? [e.complete ? e.np : ''] : []), !r.absent && e.complete ? e.grade : '']);
+    lines.push([s.last, s.first, ...cats.map(c => r.scores[c] != null ? fmt(r.scores[c]) : ''), r.absent ? 'fehlt' : e.complete ? (sc.type === 'np' ? e.np : fmt(e.be)) : '', ...(sc.type === 'bep' ? [!r.absent && e.complete ? e.np : ''] : []), !r.absent && e.complete ? e.grade : '']);
   }
   const csv = '﻿' + lines.map(l => l.map(v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(';')).join('\r\n');
   await Export.saveBytes(new TextEncoder().encode(csv), Export.fileBase(ex, 'Notenliste') + '.csv', 'csv');
@@ -1163,7 +1231,7 @@ $('vdAi').onclick = async () => {
   const langName = { de: 'Deutsch', en: 'Englisch', it: 'Italienisch', fr: 'Französisch', es: 'Spanisch' }[ex.wlang];
   const sc = SCHEMES[ex.scheme]; const e = evalOf(ex, s.id);
   const facts = catsOf(ex.scheme).map(c => `- ${CATS[c].label}: ${fmt(r.scores[c])} ${sc.type === 'np' ? 'Notenpunkte (0–15)' : 'von ' + maxOf(ex.scheme, c) + ' BE'}\n  ISB-Beschreibung: ${descriptor(ex.scheme, c, r.scores[c]).join('; ')}`).join('\n');
-  const prompt = `Du formulierst das Worturteil für den Bewertungsbogen ${isRef(ex) ? `eines Referats (kleiner monologischer mündlicher Leistungsnachweis${refInfo(ex, s.id).topic ? `, Thema: ${scrub(refInfo(ex, s.id).topic)}` : ''})` : 'einer mündlichen Schulaufgabe'} (Gymnasium Bayern, Fach ${ex.subject}, Jahrgangsstufe ${ex.jgst}, Raster ${sc.label}). Gesamtnote: ${e.grade}${sc.type !== 'be' ? ` (${e.np} Notenpunkte)` : ''} – insgesamt eine ${GRADE_WORD.de[e.grade - 1]} Leistung. Diese Gesamteinschätzung ist verbindlich: Das Worturteil muss sie sinngemäß enthalten und darf ihr nirgends widersprechen.
+  const prompt = `Du formulierst das Worturteil für den Bewertungsbogen ${isRef(ex) ? `eines ${refInfo(ex, s.id).with ? 'Gruppenreferats (die Person wird einzeln bewertet; ' : 'Referats ('}kleiner monologischer mündlicher Leistungsnachweis${refInfo(ex, s.id).topic ? `, Thema: ${scrub(refInfo(ex, s.id).topic)}` : ''})` : 'einer mündlichen Schulaufgabe'} (Gymnasium Bayern, Fach ${ex.subject}, Jahrgangsstufe ${ex.jgst}, Raster ${sc.label}). Gesamtnote: ${e.grade}${sc.type !== 'be' ? ` (${e.np} Notenpunkte)` : ''} – insgesamt eine ${GRADE_WORD.de[e.grade - 1]} Leistung. Diese Gesamteinschätzung ist verbindlich: Das Worturteil muss sie sinngemäß enthalten und darf ihr nirgends widersprechen.
 
 Bewertung je Bereich:
 ${facts}
@@ -1188,9 +1256,15 @@ function fillClassSel(sel, val) {
   if (val) sel.value = val;
 }
 /* Referat: monologische Raster; Vorschlag aus der GER-Zuordnung der Prüfungen (unverändert) abgeleitet */
-const REF_MAP = { 'A1': 'A1m', 'A1+': 'A1+m', 'A2': 'A2m', 'A2+': 'A2+m', 'B1': 'B1m', 'B1+': 'B1+m', 'B1+/B2': 'B1+m', 'OS': 'B1+m', 'OSB1': 'B1+m', 'B1spb': 'B1m' };
+/* Oberstufe (Q12/13): kein monologisches ISB-Raster – wie in der Praxis üblich das Raster der mündlichen Schulaufgabe (PuLSt bzw. B1 in Notenpunkten) */
+const REF_OS = ['OS', 'OSB1', 'B1spb'];
+const REF_MAP = { 'A1': 'A1m', 'A1+': 'A1+m', 'A2': 'A2m', 'A2+': 'A2+m', 'B1': 'B1m', 'B1+': 'B1+m', 'B1+/B2': 'B1+m', 'OS': 'OS', 'OSB1': 'OSB1', 'B1spb': 'B1spb' };
 let exKind = 'exam';
-function fillSchemeSel(val) { $('exScheme').innerHTML = (exKind === 'ref' ? MONO_ORDER : SCHEME_ORDER).map(k => `<option value="${esc(k)}">${esc(SCHEMES[k].label)}${SCHEMES[k].type === 'be' ? ` · ${totalMax(k)} BE` : ''}</option>`).join(''); $('exScheme').value = val; }
+function fillSchemeSel(val) {
+  const o = k => `<option value="${esc(k)}">${esc(SCHEMES[k].label)}${SCHEMES[k].type === 'be' ? ` · ${totalMax(k)} BE` : ''}</option>`;
+  $('exScheme').innerHTML = exKind === 'ref' ? `<optgroup label="Monologisch (ISB, A1–B1+)">${MONO_ORDER.map(o).join('')}</optgroup><optgroup label="Oberstufe 12/13 – Raster der mündlichen Schulaufgabe">${REF_OS.map(o).join('')}</optgroup>` : SCHEME_ORDER.map(o).join('');
+  $('exScheme').value = val;
+}
 function suggestScheme() {
   const m = S.settings.map[$('exSeq').value] || {}; const s = m[$('exJgst').value];
   if (exKind === 'ref') { if (s && REF_MAP[s]) $('exScheme').value = REF_MAP[s]; refHint(s); updateSchemeHint(); return; }
@@ -1198,9 +1272,10 @@ function suggestScheme() {
 }
 /* Oberstufe/B2: Das ISB bietet monologische Raster nur bis B1+ an */
 function refHint(s) {
-  const el = $('exRefHint'); const hi = ['B1+/B2', 'OS', 'OSB1'].includes(s) || +$('exJgst').value >= 12;
-  el.hidden = exKind !== 'ref' || !hi;
-  el.textContent = hi ? 'Für B2 und die Oberstufe gibt es vom ISB kein monologisches Raster (die Raster reichen bis B1+). Voce schlägt deshalb B1+ (monologisch) vor; bitte ggf. mit der Fachschaft abstimmen. Die Note (1–6) überträgst du in der Oberstufe selbst in Notenpunkte.' : '';
+  const el = $('exRefHint'); const os = REF_OS.includes($('exScheme').value); const b2 = !os && (s === 'B1+/B2' || +$('exJgst').value >= 12);
+  el.hidden = exKind !== 'ref' || !(os || b2);
+  el.textContent = os ? 'Für Referate in Q12/13 gibt es vom ISB kein eigenes Raster. Voce verwendet – wie in der Praxis üblich – das Raster der mündlichen Schulaufgabe (Notenpunkte). Die Gesprächsfähigkeit bewertest du z. B. in der anschließenden Diskussion; bitte mit der Fachschaft abstimmen.'
+    : b2 ? 'Für B2 gibt es vom ISB kein monologisches Raster (die Raster reichen bis B1+). Voce schlägt deshalb B1+ (monologisch) vor; bitte ggf. mit der Fachschaft abstimmen.' : '';
 }
 function updateSchemeHint() {
   const k = $('exScheme').value; const sc = SCHEMES[k];
@@ -1239,11 +1314,11 @@ function openExamDlg(ex, tpl) {
 function applyKind(locked) {
   const ref = exKind === 'ref'; const set = (id, txt) => { if ($(id).textContent !== txt) $(id).textContent = txt; };
   document.querySelectorAll('#exKind [data-k]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.k === exKind); b.disabled = locked && b.dataset.k !== exKind; });
-  set('exKindHint', locked ? 'Die Art lässt sich nach dem Anlegen nicht mehr ändern.' : ref ? 'Einzelvortrag nach dem ISB-Raster „Sprechen (monologisch)“ – für einzelne Schülerinnen und Schüler oder die ganze Klasse.' : 'Gruppenprüfung mit monologischem und dialogischem Teil nach den ISB-Rastern.');
+  set('exKindHint', locked ? 'Die Art lässt sich nach dem Anlegen nicht mehr ändern.' : ref ? 'Einzel- oder Gruppenreferat nach dem ISB-Raster „Sprechen (monologisch)“, in Q12/13 nach dem Raster der mündlichen Schulaufgabe – jede Person wird einzeln bewertet. Für einzelne Schülerinnen und Schüler oder die ganze Klasse.' : 'Gruppenprüfung mit monologischem und dialogischem Teil nach den ISB-Rastern.');
   $('exWLangField').hidden = ref; $('exPartsField').hidden = ref;
-  set('exSchemeLbl', ref ? 'Bewertungsraster (ISB, monologisch)' : 'Bewertungsraster (ISB)');
+  set('exSchemeLbl', 'Bewertungsraster (ISB)');
   set('exDateLbl', ref ? 'Datum (erster Termin)' : 'Datum');
-  set('exDurLbl', ref ? 'Minuten je Referat' : 'Minuten je Gruppe');
+  set('exDurLbl', ref ? 'Minuten je Person' : 'Minuten je Gruppe');
   set('exNoteLbl', ref ? 'Hinweis auf der Referatsliste' : 'Hinweis auf dem Prüfungsplan');
   $('exPlanNote').placeholder = ref ? 'Bitte Handout für alle mitbringen.' : 'Bitte 10 Minuten vor eurer Zeit vor dem Raum warten.';
   set('exDelete', ref ? 'Referat löschen' : 'Prüfung löschen'); set('exCopy', ref ? 'Referat kopieren …' : 'Prüfung kopieren …');
@@ -1259,7 +1334,7 @@ document.querySelectorAll('#exKind [data-k]').forEach(b => b.onclick = () => {
   if (!$('exScheme').value) $('exScheme').selectedIndex = 0, updateSchemeHint();
 });
 $('exJgst').onchange = suggestScheme; $('exSeq').onchange = suggestScheme;
-$('exScheme').onchange = updateSchemeHint; $('exPct').onchange = updateSchemeHint;
+$('exScheme').onchange = () => { updateSchemeHint(); if (exKind === 'ref') refHint((S.settings.map[$('exSeq').value] || {})[$('exJgst').value]); }; $('exPct').onchange = updateSchemeHint;
 $('exSubject').onchange = () => { const sub = $('exSubject').value; const l = SUBJECT_LANG[sub]; if (l) $('exWLang').value = l; $('exSeq').value = SUBJECT_SEQ[sub] || 'fs2'; suggestScheme(); };
 $('exNewClass').onclick = () => openClassDlg(null, name => fillClassSel($('exClass'), name));
 $('examForm').onsubmit = e => {
@@ -1680,7 +1755,7 @@ function renderMap() {
   document.querySelectorAll('[data-mk]').forEach(s => s.onchange = () => { (S.settings.map[s.dataset.mk] ||= {})[s.dataset.mj] = s.value; save(); });
 }
 $('mapReset').onclick = async () => {
-  if (!await ask('Die Voreinstellung für alle Jahrgangsstufen wird auf die ISB-Übersicht (Stand 12/2025) zurückgesetzt. Bereits angelegte Prüfungen bleiben unverändert.', 'Zurücksetzen')) return;
+  if (!await ask('Die Voreinstellung für alle Jahrgangsstufen wird auf die ISB-Übersicht (Stand 07/2026) zurückgesetzt. Bereits angelegte Prüfungen bleiben unverändert.', 'Zurücksetzen')) return;
   S.settings.map = JSON.parse(JSON.stringify(DEFAULT_MAP)); save(); renderMap();
 };
 ['stSchool', 'stExaminer', 'stYear'].forEach(id => $(id).oninput = () => { const k = { stSchool: 'school', stExaminer: 'examiner', stYear: 'year' }[id]; S.settings[k] = $(id).value.trim(); save(); });

@@ -65,7 +65,23 @@
     const rest = [];
     inc.forEach((s, j) => { const i = s.id != null ? byX.get(s.id) : undefined; if (i != null && !usedC.has(i)) { usedC.add(i); pair.push([i, j]); } else rest.push(j); });
     const byN = new Map(); cur.forEach((s, i) => { if (usedC.has(i)) return; const k = nameKey(s); (byN.get(k) || byN.set(k, []).get(k)).push(i); });
-    for (const j of rest) { const k = nameKey(inc[j]); const l = byN.get(k); const i = l && l.length ? l.shift() : undefined; if (i != null) { usedC.add(i); pair.push([i, j]); } else out.added.push({ inc: inc[j], j }); }
+    /* Ohne Kennung zählt der Name. Gibt es ihn mehrfach (im Kurs oder in der Datei), entscheidet nur eine eindeutige Klasse.
+       Bleibt es offen, wird NICHTS verknüpft, ergänzt oder entfernt (nie nach Listenreihenfolge) – das steht dann unter „nicht eindeutig“. */
+    const cls = x => str(x && x.cls).replace(/\s+/g, '').toUpperCase();
+    out.ambiguous = []; const ambC = new Set();
+    const byNi = new Map(); rest.forEach(j => { const k = nameKey(inc[j]); (byNi.get(k) || byNi.set(k, []).get(k)).push(j); });
+    for (const [k, js] of byNi) {
+      const l = byN.get(k) || [];
+      if (l.length <= 1 && js.length <= 1) { if (l.length) { usedC.add(l[0]); pair.push([l[0], js[0]]); } else out.added.push({ inc: inc[js[0]], j: js[0] }); continue; }
+      let L = l.slice(), J = js.slice();
+      for (const j of js) { const cj = cls(inc[j]); if (!cj) continue;
+        const ci = L.filter(i => cls(cur[i]) === cj), cj2 = J.filter(x => cls(inc[x]) === cj);
+        if (ci.length === 1 && cj2.length === 1) { usedC.add(ci[0]); pair.push([ci[0], j]); L = L.filter(i => i !== ci[0]); J = J.filter(x => x !== j); } }
+      if (!L.length) J.forEach(j => out.added.push({ inc: inc[j], j }));
+      else if (!J.length) { /* übrig gebliebene Personen im Kurs: „nicht mehr in der Datei“ (wird unten ergänzt) */ }
+      else { L.forEach(i => { usedC.add(i); ambC.add(i); }); out.ambiguous.push({ name: k, cur: L.map(i => cur[i]), inc: J.map(j => inc[j]) }); }
+    }
+    out.added.sort((x, y) => x.j - y.j);
     cur.forEach((s, i) => { if (!usedC.has(i)) out.removed.push({ cur: s, i }); });
     for (const [i, j] of pair) {
       const a = cur[i], b = inc[j]; const f = [];

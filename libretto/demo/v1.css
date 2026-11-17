@@ -773,3 +773,31 @@ dialog.setDlg .sheetbody{flex:1;min-height:0;padding:0;display:flex}
 .lockSafe svg{width:15px;height:15px;fill:none;stroke:#1e9e6a;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .pwField.shake{animation:pwShake .42s}
 @keyframes pwShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+/* 1.0.10 Prüfungsteile: fehlende BE deutlich, Vorlagen */
+.prow [data-pm].need{box-shadow:inset 0 0 0 2px var(--red)!important;background:color-mix(in srgb,var(--red) 8%,var(--fill))}
+.needMsg{display:block;margin-top:6px;padding:8px 11px;border-radius:10px;background:color-mix(in srgb,var(--red) 10%,transparent);color:var(--red);font-weight:500}
+.needMsg b{font-weight:700}
+.pTplL{align-self:center;font-size:12.5px;color:var(--label-3);margin-right:2px}
+.srcL{display:block;margin-top:4px;font-size:12px;color:var(--blue);text-decoration:none;word-break:break-all}
+.srcL:hover{text-decoration:underline}
+.srcS{display:block;margin-top:4px;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.02em}
+.srcS.Volltext{color:#1e9e6a}.srcS.Passage{color:var(--blue)}.srcS.Titel{color:var(--label-3)}
+/* 1.0.10 Gastschüler */
+.guestTag{margin-left:8px;font-size:11px;font-weight:700;color:#7a4fd0;background:color-mix(in srgb,#7a4fd0 13%,transparent);border-radius:6px;padding:2px 6px;vertical-align:1px;font-style:normal}
+.guestTag.off{color:var(--label-2);background:var(--fill-2);text-decoration:line-through;text-decoration-thickness:1px}
+.guestTag.sm{margin:0;padding:1px 5px;font-size:10.5px}
+.feedLine{margin:8px 0 4px}
+.kmkList{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.kmkItem{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;border-radius:11px;padding:9px 12px;background:var(--fill);font:inherit;color:var(--label);text-align:left;cursor:pointer}
+.kmkItem:hover{background:color-mix(in srgb,var(--blue) 9%,var(--fill))}
+.kmkItem span{font-size:12.5px;color:var(--label-2)}
+.man { color: var(--accent, #b45309); font-size: .85em; margin-left: 2px; cursor: help; }
+.ldoRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line, rgba(0,0,0,.08)); }
+.ldoRow small { display: block; color: var(--muted, #6b7280); margin-top: 2px; }
+.ldoRow .late { color: var(--red, #b91c1c); }
+.ldoBtns { display: flex; gap: 6px; flex: none; }
+/* Zwischensumme Schreiben/Sprachmittlung im Aufgabenblatt: rechts in der letzten Zelle der Gruppe */
+.tkTbl td.tkInG.gE{position:relative;padding-right:46px}
+.tkTbl .gTot{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12.5px;font-weight:650;color:var(--blue);white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
+.tkTbl .gMax{font-size:11px;color:var(--muted,#8a93a6);margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.setBtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
