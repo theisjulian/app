@@ -231,7 +231,7 @@ ${m.sections.map((s, i) => { const n = s.n || i + 1; return `<section class="sec
     return `<div class="hl">${d.slots.map(s => `<div class="he"><span class="hn">${s.i + 1}</span><div class="ht">${dayOf(s)}${hm(s.start)}<small>bis ${hm(s.end)}</small></div><div class="hc"><div class="who">${peopleOf(s).map(esc).join(', ') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div></div>${s.brk ? `<div class="hp"><mark>Pause · ${s.brk} Min.</mark></div>` : ''}`).join('')}</div>`;
   }
   function planPage(d, teacher, design) {
-    return `<div class="page"><div class="pin">${kopf(d.ref ? 'Referate' + (d.title ? ' · ' + d.title : '') : `Prüfungsplan · ${d.title}`, `${d.subject} · ${d.cls}`, [d.date, d.span, d.room ? ['Raum ' + d.room, 'hi'] : '', `${d.dur} Min. je ${d.unit || 'Gruppe'}${d.gap ? ` · ${d.gap} Min. Wechsel` : ''}`], d.logo, d.level)}
+    return `<div class="page"><div class="pin">${kopf(d.ref ? 'Referate' + (d.title ? ' · ' + d.title : '') : `Prüfungsplan · ${d.title}`, `${d.subject} · ${d.cls}`, [d.date, d.span, d.room ? ['Raum ' + d.room, 'hi'] : '', `${d.durTxt || `${d.dur} Min. je ${d.unit || 'Gruppe'}`}${d.gap ? ` · ${d.gap} Min. Wechsel` : ''}`], d.logo, d.level)}
 ${teacher && !d.ref ? '<div class="tbanner">Nur für die Lehrkraft – enthält die Aufgaben. Bitte nicht an die Prüflinge weitergeben.</div>' : ''}
 <div class="slots${d.slots.length <= 6 && !teacher ? ' roomy' : ''}">${planSlots(d, teacher, design)}</div>
 <div class="notes">${d.parts ? `<p><b>Ablauf:</b> ${esc(d.parts)}</p>` : ''}${d.note ? `<p>${esc(d.note)}</p>` : ''}</div></div>${foot()}</div>`;

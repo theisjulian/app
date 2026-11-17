@@ -1,7 +1,9 @@
 /* Libretto · Ausdrucke (PDF über HTML, Word über docx.js) – ein Modell, zwei Ausgaben · © 2026 theis */
 'use strict';
 const Print = (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* Zahl und Einheit nie trennen („50 %“, „12 P.“, „24 BE“) – geschütztes Leerzeichen */
+  const nb = s => String(s ?? '').replace(/(\d) (%|P\.|BE\b|Min\.)/g, '$1\u00a0$2');
+  const esc = s => nb(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const DISCLAIMER = 'Libretto ersetzt nicht die Notendokumentation der Schule. Noten bitte zeitnah ins Infoportal bzw. Schulprogramm übertragen. Berechnung nach GSO ohne Gewähr – die Verantwortung für die Notengebung liegt bei der Lehrkraft.';
   const today = () => new Date().toLocaleDateString('de-DE');
 
@@ -17,7 +19,7 @@ const Print = (() => {
   function barsSvg(b, w, h) {
     const n = b.labels.length, max = Math.max(1, ...b.values), tot = b.values.reduce((x, y) => x + y, 0) || 1;
     const padL = 4, padR = 4, padT = 30, padB = 22, bw = (w - padL - padR) / n, small = n > 8;
-    let o = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="-apple-system,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif">`;
+    let o = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="max-width:100%;height:auto" font-family="-apple-system,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif">`;
     o += `<line x1="${padL}" y1="${h - padB + .5}" x2="${w - padR}" y2="${h - padB + .5}" stroke="#9aa1ad" stroke-width="1"/>`;
     b.values.forEach((v, i) => {
       const bh = Math.max(v ? 2 : 0, (h - padT - padB) * v / max), x = padL + i * bw + bw * (small ? .12 : .16), wd = bw * (small ? .76 : .68), y = h - padB - bh, cx = x + wd / 2;
@@ -31,6 +33,10 @@ const Print = (() => {
   const INK = '#1d2b4f';
   const CSS = `
       *{box-sizing:border-box}
+      /* „Auf weniger Seiten“: nur wenn sonst ein fast leeres letztes Blatt entstünde (siehe fitHtml in app.js) */
+      body.fit1 td{padding-top:1.6px!important;padding-bottom:1.6px!important} body.fit1 h2{margin-top:11px} body.fit1 .stats{margin-bottom:8px}
+      body.fit2{font-size:8.9pt} body.fit2 table{font-size:8.5pt} body.fit2 .hd{margin-bottom:8px}
+      body.fit3{font-size:8.5pt} body.fit3 table{font-size:8.1pt} body.fit3 td{padding-top:1.1px!important;padding-bottom:1.1px!important} body.fit3 h2{margin:8px 0 4px} body.fit3 .stats .v{font-size:14pt}
       body{margin:0;font:9.4pt/1.42 -apple-system,"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;color:#1b1d22;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:9px;margin-bottom:10px;border-bottom:2pt solid ${INK}}
       .hd .eyebrow{font-size:7.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#3f4552;margin-bottom:3px}
@@ -62,7 +68,7 @@ const Print = (() => {
       th{font-size:7pt;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#4b5160;border-bottom:1.25pt solid ${INK};padding:5px 5px 4px;text-align:center;vertical-align:bottom;background:#fff}
       tr.hg th{border-bottom:.75pt solid #c3c9d4;color:${INK};padding-bottom:2px}
       tr.hg th.e{border-bottom:none}
-      td{border-bottom:.5pt solid #e3e6ec;padding:3.6px 5px;text-align:center;vertical-align:middle}
+      td{border-bottom:.5pt solid #e3e6ec;padding:3.6px 5px;text-align:center;vertical-align:middle;overflow-wrap:break-word}
       table.small td{padding:2.6px 4px}
       table.dense td{padding-top:1.9px;padding-bottom:1.9px} table.dense td.big{font-size:10.5pt}
       tbody tr:nth-child(even) td{background:#f7f8fa}
@@ -111,9 +117,10 @@ const Print = (() => {
     const cellCls = (i, extra) => [al(i), i === nameCol ? 'nw' : '', (t.bold || []).includes(i) ? 'b' : '', (t.big || []).includes(i) ? 'big' : '', (t.muted || []).includes(i) ? 'mut' : '', edge(i), extra || ''].filter(Boolean).join(' ');
     const hg = t.headGroups ? `<tr class="hg">${t.headGroups.map(g => `<th colspan="${g.span || 1}" class="${g.label ? '' : 'e'}">${esc(g.label || '')}</th>`).join('')}</tr>` : '';
     const cg = t.pct && t.widths ? `<colgroup>${t.widths.map(x => `<col style="width:${x}%">`).join('')}</colgroup>` : '';
-    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense ? 'dense' : ''].join(' ')}"${cg ? ' style="table-layout:fixed"' : ''}>${cg}<thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
+    /* lange Listen (ganze Klasse) etwas enger, damit bis gut 30 Namen auf eine Seite passen */
+    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense || t.rows.length > 22 ? 'dense' : ''].join(' ')}"${cg ? ' style="table-layout:fixed"' : ''}>${cg}<thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
-        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
   /* Bewertungsraster: je Kriterium eine Karte mit Beschreibung, Gewicht, Wert, Skala und Anmerkungen (leer: Linien zum Ausfüllen)
      c = { scale: [{ g?:'1', v:['15','14','13'] } …] oder ['++','+','–','––'], items: [{ l, d, w, v, vs, sel, note }], lines } */
@@ -173,7 +180,9 @@ const Print = (() => {
     const land = !!m.landscape;
     const W = land ? 15136 : 10206;
     const FONT = 'Arial';
-    const t = (text, o = {}) => new TextRun({ text: String(text ?? ''), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color });
+    const t = (text, o = {}) => new TextRun({ text: nb(text), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color });
+    /* mehrzeiliger Zellentext (\n = neue Zeile, z. B. Link unter dem Titel im Quellenverzeichnis) */
+    const tl = (text, o = {}) => String(text ?? '').split('\n').map((ln, k) => new TextRun({ text: nb(ln), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color, break: k ? 1 : 0 }));
     /* Text mit Zeilenumbrüchen (z. B. Protokolle) */
     const lines = (text, o = {}) => String(text ?? '').split(/\r?\n/).map((ln, i) => new TextRun({ text: ln, font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color, break: i ? 1 : 0 }));
     const p = (runs, o = {}) => new Paragraph({ children: Array.isArray(runs) ? runs : [runs], alignment: o.align, spacing: { before: o.before || 0, after: o.after ?? 60 }, keepNext: o.keepNext });
@@ -192,12 +201,17 @@ const Print = (() => {
         new TableCell({ borders: { ...NB, bottom: { style: BorderStyle.SINGLE, size: 16, color: '1D2B4F' } }, width: { size: 3400, type: WidthType.DXA }, children: [settings.school, settings.teacher].filter(Boolean).map(x => p(t(x, { size: 16, color: '444444' }), { align: AlignmentType.RIGHT, after: 0 })).concat([p(t(''), { after: 0 })]) }),
       ] })] })];
       const meta = (mm.meta || []).filter(([k]) => !(settings.teacher && /^Lehrkraft/.test(k)));
-      if (meta.length) out.push(p(meta.flatMap(([k, v], i) => [t((i ? '     ' : '') + k + ': ', { color: '555555' }), t(v, { bold: true })]), { before: 120, after: 160 }));
+      /* Umbruch nur zwischen den Angaben, nie innerhalb (z. B. „Kursleitung: J. Muster“) */
+      const keep = x => String(x ?? '').replace(/ /g, '\u00a0');
+      if (meta.length) out.push(p(meta.flatMap(([k, v], i) => [t((i ? '    ' : '') + keep(k + ': '), { color: '555555' }), t(keep(v), { bold: true })]), { before: 120, after: 160 }));
       return out;
     };
     const kids = [...headBlock(m)];
     /* split (zwei Spalten im PDF) wird in Word untereinander gesetzt */
-    const flat = list => list.flatMap(b => b.split ? b.split.flat() : b.group ? b.group : [b]);
+    /* Word kennt keine zwei Spalten: lange Liste links → die rechte Spalte (Notenspiegel, Schlüssel, Unterschrift) geschlossen auf die nächste Seite,
+       statt dass nur ein Rest davon überläuft */
+    const longCol = col => col.some(x => x.table && x.table.rows && x.table.rows.length > 18);
+    const flat = list => list.flatMap(b => b.split ? (b.split.length > 1 && longCol(b.split[0]) ? [...b.split[0], { pagebreak: true }, ...b.split.slice(1).flat()] : b.split.flat()) : b.group ? b.group : [b]);
     for (const b of flat(m.blocks)) {
       if (b.stats) {   /* Kennzahlen als eine Zeile Kästchen; die erste (Durchschnitt) hervorgehoben */
         const n = b.stats.length, cw = Math.floor(W / n);
@@ -217,7 +231,8 @@ const Print = (() => {
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [w1, w2], layout: TableLayoutType.FIXED, rows: b.kv.map(([k, v]) => new TableRow({ cantSplit: false, children: [cell(k, w1, true), cell(v, w2, false)] })) }));
         kids.push(p(t(''), { after: 120 }));
       }
-      else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
+      /* „Seitenumbruch davor“ statt Umbruchzeichen: füllt der vorige Bogen die Seite genau, entsteht so keine leere Seite */
+      else if (b.pagebreak) kids.push(new Paragraph({ pageBreakBefore: true, spacing: { before: 0, after: 0, line: 20, lineRule: 'exact' }, children: [new TextRun({ text: '', size: 2 })] }));
       else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ keepNext: true, children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
       else if (b.sig) {   /* Unterschriftsfelder: Linie und Beschriftung in einer Tabellenzeile – nie getrennt */
@@ -253,26 +268,26 @@ const Print = (() => {
       }
       else if (b.table) {
         const tb = b.table, n = tb.head.length;
-        const nameW = tb.align && tb.align[0] === 'l' ? Math.min(3200, Math.round(W * 0.3)) : Math.round(W / n);
+        const nameW = tb.align && tb.align[0] === 'l' ? Math.min(n <= 4 ? 4400 : 3200, Math.round(W * (n <= 4 ? 0.42 : 0.3))) : Math.round(W / n);   /* wenige Spalten: Namen breiter, damit sie nicht umbrechen */
         const rest = n > 1 ? Math.floor((W - nameW) / (n - 1)) : W;
         const sumW = tb.widths ? tb.widths.reduce((a, x) => a + x, 0) : 0;
         const widths = tb.widths && tb.widths.length === n ? tb.widths.map(x => Math.floor(W * x / sumW)) : tb.head.map((_, i) => i === 0 ? nameW : rest);
         const sz = tb.small || n > 14 ? 14 : 17;
-        const lastRow = tb.rows.length - 1, keepT = !!tb.keep;
+        const lastRow = tb.rows.length - 1, keepT = !!tb.keep, mv = tb.dense || tb.rows.length > 22 ? 18 : 40;   /* lange Listen enger (wie im PDF) */
         const mk = (txt, i, head, rowIdx) => new TableCell({
           borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
           shading: head ? { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } : (rowIdx % 2 ? { type: ShadingType.CLEAR, color: 'auto', fill: 'FAFBFC' } : undefined),
-          margins: { top: 40, bottom: 40, left: 70, right: 70 },
-          children: [p(t(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0, keepNext: keepT && (head || rowIdx < lastRow) })] });
+          margins: { top: mv, bottom: mv, left: 70, right: 70 },
+          children: [p(tl(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0, keepNext: keepT && (head || rowIdx < lastRow) })] });
         /* Kopfgruppen (z. B. „Schreiben“ über Inhalt und Sprache) als eigene Kopfzeile */
         const hgRow = tb.headGroups ? [new TableRow({ tableHeader: true, children: (() => { let col = 0; return tb.headGroups.map(g => { const span = g.span || 1, w = widths.slice(col, col + span).reduce((x, y) => x + y, 0); col += span;
           return new TableCell({ borders: B, columnSpan: span, width: { size: w, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' }, margins: { top: 30, bottom: 30, left: 70, right: 70 }, children: [p(t(g.label || '', { size: sz - 1, bold: true, color: '1D2B4F' }), { align: AlignmentType.CENTER, after: 0 })] }); }); })() })] : [];
         const mkRow = (r, ri) => { const cells = Array.isArray(r) ? r : r.cells, foot = !Array.isArray(r) && r.cls === 'foot', tint = !Array.isArray(r) && ({ up: 'E5F4EA', down: 'FBE7E5' })[r.cls];
           return new TableRow({ cantSplit: true, children: cells.map((c, i) => { const cell = mk(c, i, false, ri);
-            if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
+            if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: mv, bottom: mv, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: (tb.bold || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
             if (!foot) return cell;
-            return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F6' }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
+            return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F6' }, margins: { top: mv, bottom: mv, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: true, color: '1D2B4F' }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] }); }) }); };
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: widths, layout: TableLayoutType.FIXED, rows: [
           ...hgRow,
@@ -286,13 +301,14 @@ const Print = (() => {
     const who = [settings.teacher, settings.school].filter(Boolean).join(' · ');
     const footer = new Footer({ children: [p(t(`Erstellt am ${today()} · ${DISCLAIMER}`, { size: 14, color: '222222' }), { after: 40 }), p([t('Libretto · ', { size: 15, color: '222222' }), new ImageRun({ type: 'png', data: bytes, transformation: { width: 47, height: 11 } }), t(' · theisapps.de', { size: 15, color: '222222' })], { align: AlignmentType.RIGHT, after: 0 })] });
     const doc = new Document({ creator: 'Libretto (theisapps)', title: m.title, styles: { default: { document: { run: { font: FONT } } } },
-      sections: [{ properties: { page: { size: land ? { orientation: PageOrientation.LANDSCAPE, width: 16838, height: 11906 } : { width: 11906, height: 16838 }, margin: { top: 850, bottom: 1000, left: 850, right: 850 } } }, footers: { default: footer }, children: kids }] });
+      sections: [{ properties: { page: { size: land ? { orientation: PageOrientation.LANDSCAPE, width: 11906, height: 16838 } : { width: 11906, height: 16838 }   /* docx tauscht Breite und Höhe bei LANDSCAPE selbst */, margin: { top: 850, bottom: 1000, left: 850, right: 850 } } }, footers: { default: footer }, children: kids }] });
     return new Uint8Array(await (await Packer.toBlob(doc)).arrayBuffer());
   }
 
   /* CSV (Excel, Semikolon, UTF-8 mit BOM) */
   function csv(m) {
-    const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    /* Text, den Excel als Formel lesen würde (= + - @ am Anfang), bekommt ein Hochkomma davor; Zahlen und ein einzelnes „-“ bleiben unverändert */
+    const q = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s) && !/^[-+]?\d+([.,]\d+)?$/.test(s) && s !== '-') s = "'" + s; return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const lines = [];
     const all = m.blocks.flatMap(b => b.split ? b.split.flat() : b.group ? b.group : [b]);
     all.forEach(b => { if (b.crit) { b.crit.items.forEach(it => lines.push([q(it.l), q(it.w || ''), q(it.v || ''), q(it.sel ?? ''), q(it.note || '')].join(';'))); lines.push(''); } if (b.h) lines.push(q(b.h)); if (b.stats) { b.stats.forEach(x => lines.push([q(x.l), q(x.v), q(x.s || '')].join(';'))); lines.push(''); } if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : (Array.isArray(r) ? r : r.cells).map(q).join(';'))); lines.push(''); } });

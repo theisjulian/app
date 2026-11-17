@@ -752,3 +752,28 @@ html[data-skin="heft"] .hnTitle .cl{border-radius:6px;box-shadow:2px 2px 0 color
 .setSec .subhead{border-top:0;padding-top:0}
 .setSec .aboutCard{display:grid;gap:14px}
 .setSec .aboutCard .maker{margin:0;background:transparent;padding:14px 0 0;border-radius:0;border-top:.5px solid var(--hairline)}
+
+/* ===== 1.10 Gruppenreferate: Referatsliste mit Ziehen, Dauer je Referat ===== */
+.rslot{grid-template-columns:20px 34px 150px minmax(0,1fr) auto}
+.rslot.dragging{opacity:.4}
+.rslot .rhead{display:flex;align-items:center;gap:8px;min-height:18px}
+.rslot .rkind{font-size:11.5px;font-weight:600;letter-spacing:.02em;color:color-mix(in srgb,var(--hue) 70%,var(--label-2))}
+.rslot .dropzone{padding:4px;min-height:38px;margin:-4px;border-radius:12px}
+.rslot .rdur{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--label-2);padding-left:2px}
+.rslot .rdur input{width:52px;font:inherit;font-size:12.5px;padding:2px 5px;border-radius:7px;border:0;background:var(--fill);color:var(--label);font-variant-numeric:tabular-nums;text-align:right}
+.rslot .rdur.custom input{background:color-mix(in srgb,var(--orange) 18%,transparent);color:color-mix(in srgb,var(--orange) 75%,var(--label));font-weight:600}
+.rdurReset{border:0;background:none;color:var(--blue);font-size:13px;padding:0 2px;cursor:pointer}
+.chip.graded .ok{font-style:normal;font-size:11px;font-weight:700;color:var(--green)}
+.chip.sel.graded .ok{color:#fff}
+.rnew{justify-content:center;border:1.5px dashed color-mix(in srgb,var(--label) 18%,transparent);color:var(--label-2);font-size:13px;min-height:46px;align-items:center;margin-top:2px}
+.rnew.over,.rnew.target{border-color:var(--blue);color:var(--blue)}
+.rempty{min-height:260px}
+.rempty.over,.rempty.target{box-shadow:inset 0 0 0 2px var(--blue)}
+#rpool{margin:2px 0 0;max-height:300px;overflow:auto;padding:6px;min-height:46px}
+.rsplit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.rsplit .go{margin:0;width:100%}
+#rClear{margin-top:10px}
+@media (max-width:900px){.rslot{grid-template-columns:34px minmax(0,1fr) auto}.rslot .grip{display:none}.rslot .num{grid-row:1 / span 2}.rslot .when{grid-column:2;grid-row:2}.rslot .rbody{grid-column:2;grid-row:1}.rslot .ctl{grid-row:1 / span 2;grid-column:3;flex-direction:column}}
+body .rlist.picking .rslot{cursor:copy}
+.rsplit .go:disabled{opacity:.4;cursor:default;box-shadow:none}
+.refOsNote{font-size:12px;color:var(--label-3);line-height:1.35}

@@ -420,7 +420,18 @@ const FLU_A1 = {
     '{S} se hace entender por lo general bien, aunque duda de vez en cuando; aparecen algunos errores de pronunciación y entonación.'],
 };
 for (const l of Object.keys(FLU)) { BANK[l].flu = FLU[l]; BANK[l].fluA1 = [...FLU_A1[l], ...FLU[l].slice(3)]; BANK[l].tip.flu = FLU_TIP[l]; }
+/* Referat A1–A2+ (monologisch): Das Raster beschreibt ein „einfaches“ bzw. „grundlegendes“ Spektrum – oberste Stufe daher ohne „breites Spektrum“ */
+const LANG_A12 = {
+  de: '{S} verwendet die der Lernstufe entsprechenden sprachlichen Mittel durchgehend sicher und nahezu fehlerfrei.',
+  en: '{S} uses the language appropriate to this level confidently and almost without errors throughout.',
+  it: '{S} usa con sicurezza e quasi senza errori i mezzi linguistici adeguati al livello.',
+  fr: '{S} utilise avec assurance et presque sans erreur les moyens linguistiques correspondant à son niveau.',
+  es: '{S} utiliza con seguridad y casi sin errores los recursos lingüísticos propios de su nivel.',
+};
+for (const l of Object.keys(LANG_A12)) BANK[l].langA12 = [LANG_A12[l], ...BANK[l].lang.slice(1)];
 function fillSubject(tpl, subj, name, lang) {
+  /* Französisch: Elision vor Vokal oder stummem h („la prestation d’Alex“) */
+  if (lang === 'fr' && /^[aeiouhàâäæéèêëîïôöœùûü]/i.test(name || '')) tpl = tpl.replace('de {N}', 'd’{N}');
   let s = tpl.replace('{N}', name);
   const pron = subj;                         // '' (it), Pronomen oder Name
   s = s.replace('{S}', pron ? cap(pron) : '').replace(/\{s\}/g, pron);
@@ -432,7 +443,7 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 /* student: {first, last, g}; scores: {cat: number}; lang: de|en|it|fr|es
    customKey: derselbe Notenschlüssel wie bei der Notenberechnung (eigene Prozentgrenze) – Note und Worturteil dürfen nie auseinanderfallen */
-function worturteil(scheme, student, scores, lang, notes, customKey) {
+function worturteil(scheme, student, scores, lang, notes, customKey, opts) {
   const ev = evaluate(scheme, scores, customKey);
   if (!ev.complete) return '';
   const B = BANK[lang]; const name = student.first;
@@ -440,9 +451,10 @@ function worturteil(scheme, student, scores, lang, notes, customKey) {
   const later = known ? PRON[lang][student.g] : name;
   const cats = catsOf(scheme);
   const order = SCHEMES[scheme].mono ? ['content', 'flu', 'lang'] : cats.includes('pron') ? ['content', 'inter', 'lang', 'pron'] : ['content', 'inter', 'npLang'];
-  const parts = [fillSubject((SCHEMES[scheme].mono ? OPEN_REF : OPEN)[lang](ev.grade), '', name, lang)];
+  const parts = [fillSubject((SCHEMES[scheme].mono || (opts && opts.ref) ? OPEN_REF : OPEN)[lang](ev.grade), '', name, lang)];
   order.forEach((c, i) => {
-    const bank = c === 'flu' && SCHEMES[scheme].desc === 'A1M' ? B.fluA1 : B[c === 'npLang' ? 'lang' : c];
+    const dsc = SCHEMES[scheme].desc;
+    const bank = c === 'flu' && dsc === 'A1M' ? B.fluA1 : c === 'lang' && (dsc === 'A1M' || dsc === 'A2M') ? B.langA12 : B[c === 'npLang' ? 'lang' : c];
     const b = step(scheme, c, scores[c]);
     // Name steht im ersten Satz; danach Pronomen (Italienisch: ohne Subjekt)
     const subj = later;

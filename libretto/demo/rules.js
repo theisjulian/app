@@ -171,9 +171,35 @@
     if (upper) return { ...suggestKey15(max, KMK_PCT15, 1, roundStep), preset: 'kmk' };
     return { max, thresholds: KMK_PCT5.map(p => kmkStep(max * p / 100, step)), pct: KMK_PCT5.slice(), tendThresholds: KMK_PCT15.map(p => kmkStep(max * p / 100, step)), tend: !!tend, preset: 'kmk' };
   }
+  /* Hörverstehen Q12/Q13 (fortgeführte moderne Fremdsprachen): ISB-Rechentabelle PuLSt 12/2025, Deckblatt D22:S23 und Klassenliste E7/F7 –
+     Teilnote über den Lösungsgrad (erreichte ÷ erreichbare BE) ohne Rundung der Grenzen. Bei ganzen BE heißt das: Grenze = nächste ganze BE ab max × Prozent.
+     (Die amtliche BE-Tabelle für Gesamt-BE rundet dagegen kaufmännisch – z. B. 7 von 22 BE: Tabelle 3 P., Hörverstehen 2 P.) */
+  function suggestKeyHV(max) {
+    return { max, pointThresholds: KMK_PCT15.map(p => Math.ceil(max * p / 100 - 1e-9)), pct15: KMK_PCT15.slice(), preset: 'hv' };
+  }
+  /* Notenschlüssel prüfen, bevor er gespeichert wird: ks = Grenzen von der besten zur schlechtesten Stufe (Note 1…5 bzw. 15…1 Punkte).
+     Gleich hohe Nachbargrenzen sind bei kleinen Punktzahlen unvermeidlich und erlaubt; eine Grenze von 0 Punkten für die unterste positive Stufe nicht
+     (sonst bekäme auch ein leeres Blatt diese Note). */
+  function keyProblem(max, ks) {
+    if (!(isFinite(max) && max > 0)) return 'Erreichbare Punkte: bitte eine Zahl größer als 0';
+    if (ks.some(x => x == null || !isFinite(x) || x < 0)) return 'Jede Grenze braucht eine Zahl ab 0';
+    if (ks.some(x => x > max)) return 'Eine Grenze liegt über den erreichbaren Punkten';
+    for (let i = 1; i < ks.length; i++) if (ks[i] > ks[i - 1]) return 'Die Grenzen müssen von der besten zur schlechtesten Stufe abnehmen';
+    if (ks[ks.length - 1] <= 0) return ks.length === 5 ? 'Die Grenze für Note 5 ist 0 Punkte – dann gibt es keine 6. Bitte höher setzen (bei sehr wenigen Punkten lieber direkt Noten eintragen).' : 'Die Grenze für 1 Punkt ist 0 BE – dann gibt es keine 0 Punkte. Bitte höher setzen (bei sehr wenigen BE lieber direkt Notenpunkte eintragen).';
+    return '';
+  }
   /* Ergebnis (Note bzw. Notenpunkte, ggf. mit Tendenz) aus Punkten */
+  /* Prüft einen gespeicherten Schlüssel (mit erreichbaren Punkten) – dieselbe Prüfung wie im Dialog, für alle anderen Wege (Aufgaben ändern, Einfügen, Vorlagen …) */
+  function keyCheck(key, upper) {
+    if (!key) return '';
+    const ks = upper ? key.pointThresholds : key.thresholds;
+    if (!Array.isArray(ks) || key.max == null) return '';
+    return keyProblem(+key.max, ks.map(x => x == null || x === '' ? null : +x));
+  }
   function keyResult(points, key, upper) {
     if (points == null || !key) return null;
+    /* ungültiger Schlüssel (z. B. nach dem Verkleinern der Summe auf 1 BE) oder mehr Punkte als erreichbar: keine Note statt einer falschen */
+    if (key.max != null && (+points > +key.max + 1e-9 || keyCheck(key, upper))) return null;
     if (upper) { const v = keyPoints(points, key); return v == null ? null : { v }; }
     const v = keyGrade(points, key); if (v == null) return null;
     if (key.tend && key.tendThresholds) {
@@ -193,11 +219,31 @@
   /* Rechnet r (Ergebnis einer Person) aus den Aufgabenpunkten neu. Erst wenn jede Aufgabe einen Wert hat (auch 0), gibt es Punkte und Note. */
   function applyTasks(a, r, upper) {
     const ts = a.tasks || [], p = r.pts || {};
-    delete r.raw; delete r.v; delete r.tend;
+    delete r.raw; delete r.v; delete r.tend; delete r.rawMan;
     if (!ts.length || !ts.every(t => p[t.id] != null && p[t.id] !== '')) return r;
     r.raw = tasksSum(a, p);
     const k = keyResult(r.raw, a.key, upper); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; }
     return r;
+  }
+  /* Herkunft der Gesamtpunkte: r.rawMan = true heißt „von Hand eingetragen“ (bleibt stehen, wenn sich Aufgaben ändern);
+     sonst kommt die Summe immer aus den Aufgabenpunkten. Nie aus einem Zahlenvergleich raten (außer einmalig für Daten vor 1.0.12, s. markRawOrigin). */
+  function regrade(a, r, upper) {
+    if (!r || r.status) return r;
+    if (byParts(a)) return r;
+    if (byTask(a) && r.pts && !(r.rawMan && r.raw != null)) return applyTasks(a, r, upper);
+    if (r.raw != null) { delete r.v; delete r.tend; const k = keyResult(r.raw, a.key, upper); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; } }
+    return r;
+  }
+  /* Daten vor 1.0.12: Herkunft einmalig bestimmen, solange Aufgaben und Summen noch zueinander passen (beim Laden, vor jeder Änderung).
+     Eine Summe, die genau aus vollständigen Aufgabenpunkten kommt, ist automatisch; jede andere Summe wurde von Hand eingetragen. */
+  function markRawOrigin(a) {
+    if (!a || a.rawOrigin) return;
+    Object.values(a.results || {}).forEach(r => {
+      if (!r || r.raw == null || r.rawMan != null) return;
+      const full = byTask(a) && r.pts && a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== '');
+      if (!(full && Math.abs(r.raw - tasksSum(a, r.pts)) < 1e-9)) r.rawMan = true;
+    });
+    a.rawOrigin = 1;
   }
   /* ---- Oberstufe: Bewertung nach Prüfungsteilen (ISB-Rechentabelle „PULST“, moderne Fremdsprachen, Stand 12/2025) ----
      a.byParts = true, a.parts = [{ id, label, kind: 'be' | 'is', max (nur 'be'), w (Gewicht in %) }], r.pp = { teilId: Zahl | { i, s } }
@@ -228,7 +274,7 @@
     if (tns.some(x => x == null)) return r;
     const W = ps.reduce((x, p) => x + (+p.w || 0), 0); if (!(W > 0)) return r;
     const x = ps.reduce((x, p, i) => x + tns[i].tn * (+p.w || 0), 0) / W;
-    r.exact = r2(x);
+    r.exact = r2(x);   /* nur Anzeige (zwei Stellen) – gerundet wird der ungerundete Wert x, wie die ISB-Rechentabelle (X7 → Y7 = RUNDEN(X7;0)) */
     delete r.cap;
     if (a.alt) {   /* zweigeteilte Schulaufgabe Latein/Griechisch: bei n,5 die bessere Note */
       const u = tns[0].tn, t = tns[1] ? tns[1].tn : u; let v;
@@ -240,15 +286,24 @@
       }
       r.v = v; return r;
     }
-    r.v = Math.max(0, Math.min(15, Math.round(r.exact + 1e-9)));
+    r.v = Math.max(0, Math.min(15, Math.round(x + 1e-9)));
     return r;
   }
   /* Vorlage wie im Abitur (KMS „Schriftliche Prüfungsformen in der Profil- und Leistungsstufe und im Abitur“): A 20 %, B 55 %, C 25 % */
-  const PARTS_ABI = () => [{ label: 'Hörverstehen', kind: 'be', max: '', w: 20 }, { label: 'Schreiben', kind: 'is', w: 55 }, { label: 'Sprachmittlung', kind: 'is', w: 25 }];
+  /* Vorlagen für Schulaufgaben aus zwei Prüfungsteilen – ISB-Leitfaden „Leistungsnachweise in der Profil- und Leistungsstufe, Moderne Fremdsprachen“ (Stand April 2025), S. 2:
+     Hörverstehen 30–40 % + Sprachmittlung 60–70 %; Schreiben (Textverstehen/Textanalyse) 60–70 % + Schreiben (persönliche Stellungnahme/gestaltendes Schreiben) 30–40 %.
+     Libretto nimmt jeweils die Mitte; die Lehrkraft legt den Anteil fest. */
+  /* Hörverstehen-Teil: ausdrücklich markiert (fmt: 'hv', ab 1.0.12 aus den Vorlagen) – ältere Teile ohne Markierung am Namen erkannt */
+  const isHVPart = p => !!p && p.kind === 'be' && (p.fmt === 'hv' || (p.fmt == null && /h(ö|oe)r/i.test(p.label || '')));
+  const PARTS_TPL = k => k === 'hvsm' ? [{ label: 'Hörverstehen', kind: 'be', fmt: 'hv', max: '', w: 35 }, { label: 'Sprachmittlung', kind: 'is', w: 65 }]
+    : k === 'tvps' ? [{ label: 'Textaufgaben', kind: 'is', w: 65 }, { label: 'Stellungnahme', kind: 'is', w: 35 }]
+    : PARTS_ABI();
+  const PARTS_ABI = () => [{ label: 'Hörverstehen', kind: 'be', fmt: 'hv', max: '', w: 20 }, { label: 'Schreiben', kind: 'is', w: 55 }, { label: 'Sprachmittlung', kind: 'is', w: 25 }];
   /* Auswertung je Aufgabe: Anzahl, Ø Punkte, Lösungsquote (Ø ÷ erreichbar) */
   function taskStats(a, students) {
+    students = students.filter(counted);
     return (a.tasks || []).map(t => {
-      const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && !r.status && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' ? +r.pts[t.id] : null; }).filter(v => v != null);
+      const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && !r.status && !r.nt && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' ? +r.pts[t.id] : null; }).filter(v => v != null);
       const avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null;
       return { id: t.id, label: t.label, max: +t.max, f: taskF(t), n: vals.length, avg, quote: avg != null && +t.max ? avg / +t.max : null };
     });
@@ -287,7 +342,11 @@
   function saRatio(course) {
     if (course.ratio === '1:1') return 1;
     if (course.ratio === '2:1') return 2;
-    const n = Math.max(+course.saPlanned || 0, (course.assessments || []).filter(a => a.type === 'sa').length);
+    /* Zahl der Schulaufgaben im Schuljahr: geplant – sonst die Mindestzahl nach § 22 Abs. 1 GSO –, mindestens aber die schon eingetragenen.
+       So wechselt das Verhältnis nicht erst, wenn die dritte Arbeit angelegt wird. */
+    /* gezählt nach Gewicht: eine Ersatz-Schulaufgabe in zwei Teilen (je ½) ist EINE Schulaufgabe (1 + ½ + ½ = 2, nicht 3) */
+    const done = (course.assessments || []).filter(a => a.type === 'sa').reduce((x, a) => x + (+a.bigWeight > 0 ? Math.min(1, +a.bigWeight) : 1), 0);   /* ×2 bleibt eine Arbeit */
+    const n = Math.max(+course.saPlanned || minSA(course) || 0, Math.round(done * 10) / 10);
     return n > 2 ? 2 : 1;
   }
 
@@ -318,7 +377,7 @@
      course.entries = [{ id, sid, type, date, v, tend, status, note, weight, term }]
      Jede Einzelnote zählt als eigener kleiner Leistungsnachweis (Gewicht nach Art bzw. individuell). */
   function entryItems(course, sid, scope) {
-    return (course.entries || []).filter(e => e.sid === sid && inScope(e, scope)).map(e => ({ id: e.id, type: e.type, weight: e.weight, area: e.area, date: e.date, term: e.term, results: { [sid]: e }, single: true }));
+    return (course.entries || []).filter(e => e.sid === sid && inScope(e, scope)).map(e => ({ id: e.id, type: e.type, weight: e.weight, area: e.area, st: e.st, date: e.date, term: e.term, results: { [sid]: e }, single: true }));
   }
 
   /* ---------- Berechnung 5–11 ---------- */
@@ -349,21 +408,27 @@
     }
     return +course.grade === 12 ? ['12/1', '12/2'] : ['13/1', '13/2'];
   }
+  /* Sport mit Praxisformel (§ 29 Abs. 5 Satz 1 GSO) nur für „Sport“ selbst – nicht für Sporttheorie (eigene Punktzahl nach § 29 Abs. 2 Satz 2) */
+  const isSportPraxis = subj => { const s = String(subj || '').trim().toLowerCase(); return /^sport\b/.test(s) && !/theorie|gesellschaft/.test(s); };
   /* Gibt es in diesem Halbjahr eine Schulaufgabe? (§ 29 GSO; 13/2: nur Deutsch, Mathematik, Leistungsfach) */
   function termHasSA(course, term) {
     if (course.seminar) return false;
-    if (/^sport/i.test((course.subject || '').trim()) && !course.lf) return false;
+    if (isSportPraxis(course.subject) && !course.lf) return false;
     if (term === '13/2') {
       const s = (course.subject || '').toLowerCase();
       return !!course.lf || s.startsWith('deutsch') || s.startsWith('mathe');
     }
     return true;
   }
-  /* Besondere Halbjahresleistung (§ 29 Abs. 3–5 GSO): 'kunst' / 'musik' als Leistungsfach, 'sport' */
+  /* Leistungsfach Sport: Gehört ein Leistungsnachweis zum „Fach Sport“ ('f') oder zur „Sporttheorie“ ('t')?
+     Schulaufgabe immer Sporttheorie, praktische Leistung immer Fach Sport; sonst die Wahl der Lehrkraft (a.st), ohne Wahl: schriftlich → Sporttheorie, sonst Fach Sport. */
+  const sportPart = a => { if (!a) return 'f'; if (isBig(a)) return 't'; if (a.type === 'prak') return 'f'; if (a.st === 't' || a.st === 'f') return a.st; return areaOf(a) === 'schriftlich' ? 't' : 'f'; };
+  /* Besondere Halbjahresleistung (§ 29 Abs. 3–5 GSO): 'kunst' / 'musik' als Leistungsfach, 'sport', 'sportlf' (Leistungsfach Sport) */
   function upperFormula(course) {
     if (!course || course.seminar) return null;
     const s = (course.subject || '').trim().toLowerCase();
-    if (s.startsWith('sport')) return 'sport';
+    /* Leistungsfach Sport: Sporttheorie im selben Kurs (course.sportTh === 'here') → Endpunktzahl nach Nr. 2.3.1; ältere Kurse mit eigenem Theoriekurs rechnen wie bisher */
+    if (isSportPraxis(s)) return course.lf && course.sportTh === 'here' ? 'sportlf' : 'sport';
     if (course.lf && s.startsWith('kunst')) return 'kunst';
     if (course.lf && s.startsWith('musik')) return 'musik';
     return null;
@@ -383,7 +448,25 @@
       const prV = smallAverage({ ...course, smallMode: 'flat' }, pr, sid, true), reV = smallAverage({ ...course, smallMode: 'flat' }, rest, sid, true);
       if (prV != null && reV != null) raw = (2 * prV + reV) / 3; else if (prV != null) { raw = prV; note = 'nur praktische Leistungen'; } else if (reV != null) { raw = reV; note = 'praktische Leistungen fehlen'; }
       const pts = roundPoints(raw), open = as.filter(a => a.results && a.results[sid] && a.results[sid].status === 'ent').map(a => a.id);
+      if (course.lf) note = (note ? note + ' · ' : '') + 'Leistungsfach: Endpunktzahl = Durchschnitt mit der Sporttheorie (§ 29 Abs. 5 Satz 2 GSO)';
       return { term, sa: prV, small: reV, raw, points: pts, note, open, zero: pts === 0, under5: pts != null && pts < 5, formula: fm };
+    }
+    if (fm === 'sportlf') {
+      /* Leistungsfach Sport – § 29 Abs. 5 Satz 2 GSO und KMBek „Durchführung des Sportunterrichts in den Jgst. 12 und 13“ Nr. 2.3.1:
+         Fach Sport = (2 × Ø praktische Leistungen im Handlungsfeld + Ø kleine LN des Fachs Sport) ÷ 3, gerundet (Nr. 1.2.1);
+         Sporttheorie = (Schulaufgabe + Ø kleine LN) ÷ 2, gerundet (§ 29 Abs. 2 Satz 2); Endpunktzahl = (Fach Sport + Sporttheorie) ÷ 2, gerundet.
+         Keine Aufrundung zur Endpunktzahl 1 (roundPoints). */
+      const flat = { ...course, smallMode: 'flat' };
+      const pr = small.filter(a => a.type === 'prak'), fsm = small.filter(a => a.type !== 'prak' && sportPart(a) === 'f'), tsm = small.filter(a => sportPart(a) === 't');
+      const prV = smallAverage(flat, pr, sid, true), reV = smallAverage(flat, fsm, sid, true), thV = smallAverage(course, tsm, sid, true);
+      const notes = [];
+      let fsRaw = null; if (prV != null && reV != null) fsRaw = (2 * prV + reV) / 3; else if (prV != null) { fsRaw = prV; notes.push('Fach Sport: kleiner LN fehlt'); } else if (reV != null) { fsRaw = reV; notes.push('Fach Sport: praktische Leistungen fehlen'); }
+      let thRaw = null; if (saV != null && thV != null) thRaw = (saV + thV) / 2; else if (saV != null) { thRaw = saV; notes.push('Sporttheorie: kleiner LN fehlt'); } else if (thV != null) { thRaw = thV; notes.push('Sporttheorie: Schulaufgabe fehlt'); }
+      const fs = roundPoints(fsRaw), th = roundPoints(thRaw);
+      if (fs == null) notes.push('Fach Sport fehlt'); if (th == null) notes.push('Sporttheorie fehlt');
+      raw = fs != null && th != null ? (fs + th) / 2 : null;
+      const pts = roundPoints(raw), open = as.filter(a => a.results && a.results[sid] && a.results[sid].status === 'ent').map(a => a.id);
+      return { term, sa: fs, small: th, fs, th, fsRaw, thRaw, raw, points: pts, note: notes.join(' · '), open, zero: pts === 0, under5: pts != null && pts < 5, formula: fm };
     }
     if (fm === 'kunst' || fm === 'musik') {
       /* § 29 Abs. 3/4 GSO: Durchschnitt aus Schulaufgabe, künstlerischem Projekt bzw. praktischer Prüfung und Durchschnitt der kleinen LN */
@@ -432,7 +515,7 @@
     const end = { '12/1': `${start + 1}-${mid}`, '12/2': `${start + 1}-08-01`, '13/1': `${start + 2}-${mid}` }[term];
     return !!end && today >= end;
   }
-  /* Vorschlag Abgabetermin: zweiter Unterrichtstag im November (§ 24 Abs. 2 GSO). isFree(iso) = Ferien/Feiertag */
+  /* Vorschlag Abgabetermin: zweiter Unterrichtstag im November (§ 24 Abs. 1 Satz 3 GSO). isFree(iso) = Ferien/Feiertag */
   function secondSchoolDayNov(year, isFree = () => false) {
     let n = 0;
     for (let d = 1; d <= 30; d++) {
@@ -456,7 +539,7 @@
     const a = semNum(sp.arbeit), p = semNum(sp.gespraech), g = seminarPaper(sp.arbeit, sp.gespraech);
     const out = [];
     if (a === 0 || p === 0) out.push({ level: 'red', key: 'zero', text: `${a === 0 ? 'Seminararbeit' : 'Prüfungsgespräch'} mit 0 Punkten – damit ist keine Zulassung zur Abiturprüfung möglich (§ 44 Abs. 2 Nr. 6 GSO).` });
-    if (g != null && g < 9) out.push({ level: 'red', key: 'u9', text: `Gesamtleistung ${g} von 30 Punkten – mindestens 9 Punkte sind für die Zulassung nötig (§ 44 Abs. 2 Nr. 3 GSO). Schriftliche Information bis Ende 13/1 (§ 44 Abs. 1 GSO).` });
+    if (g != null && g < 9) out.push({ level: 'red', key: 'u9', text: `Gesamtleistung ${g} von 30 Punkten – unter 9 Punkten: Mitteilung an die Schülerin bzw. den Schüler bis Ende 13/1 (§ 44 Abs. 1 Satz 2 GSO). Die Zulassung kann gefährdet sein (§ 44 Abs. 2 Nr. 3 GSO); darüber entscheidet die Schule mit Blick auf alle eingebrachten Leistungen.` });
     const due = st.verl || cfg.deadline;
     if (!st.abgabe && due && today && today > due) out.push({ level: 'red', key: 'late', text: `Seminararbeit nicht als abgegeben vermerkt – Frist ${fmtDate(due)}${st.verl ? ' (verlängert)' : ''}. Abgabe ist Voraussetzung für die Zulassung (§ 44 Abs. 2 Nr. 6 GSO).` });
     else if (st.abgabe && due && st.abgabe > due) out.push({ level: 'warn', key: 'after', text: `Abgegeben am ${fmtDate(st.abgabe)} – nach der Frist (${fmtDate(due)}). Über die Folgen entscheidet die Schule.` });
@@ -483,6 +566,7 @@
   }
   function studentWarnings(course, sid, res) {
     const w = [];
+    if (!counted((course.students || []).find(x => x.id === sid))) return w;
     if (!isUpper(course)) {
       if (res.open.length) w.push({ level: 'info', text: `${res.open.length} Nachtermin(e) offen (§ 27 GSO)` });
       if (res.suggestion && (res.suggestion.grade >= 5 || (res.suggestion.borderline && res.suggestion.options && res.suggestion.options[1] >= 5)))
@@ -502,8 +586,8 @@
   function dateConflicts(dates) { // dates: [{date, label}]
     const out = [], byDay = {}, byWeek = {};
     dates.filter(d => d.date).forEach(d => { (byDay[d.date] = byDay[d.date] || []).push(d); (byWeek[isoWeek(d.date)] = byWeek[isoWeek(d.date)] || []).push(d); });
-    Object.entries(byDay).forEach(([k, v]) => { if (v.length > 1) out.push({ kind: 'day', key: k, items: v, text: `Mehr als eine Schulaufgabe am ${fmtDate(k)}: ${v.map(x => x.label).join(', ')}` }); });
-    Object.entries(byWeek).forEach(([k, v]) => { if (v.length > 2) out.push({ kind: 'week', key: k, items: v, text: `Mehr als zwei Schulaufgaben in einer Woche (KW ${k.split('-')[1]}): ${v.map(x => x.label).join(', ')}` }); });
+    Object.entries(byDay).forEach(([k, v]) => { if (v.length > 1) out.push({ kind: 'day', key: k, items: v, text: `Mehr als ein großer schriftlicher Leistungsnachweis am ${fmtDate(k)} – nicht zulässig (§ 22 Abs. 4 Satz 2 GSO): ${v.map(x => x.label).join(', ')}` }); });
+    Object.entries(byWeek).forEach(([k, v]) => { if (v.length > 2) out.push({ kind: 'week', key: k, items: v, text: `Mehr als zwei große schriftliche Leistungsnachweise in KW ${k.split('-')[1]} – soll vermieden werden (§ 22 Abs. 4 Satz 2 GSO): ${v.map(x => x.label).join(', ')}` }); });
     return out;
   }
   function fmtDate(d) { if (!d) return ''; const [y, m, dd] = d.split('-'); return `${+dd}.${+m}.${y}`; }
@@ -511,7 +595,10 @@
   function classOf(name) { const m = /^\s*(\d{1,2}\s*[A-Za-zÄÖÜäöü]{0,3})/.exec(name || ''); return m ? m[1].replace(/\s+/g, '').toUpperCase() : (name || '').trim(); }
 
   /* Notenspiegel einer Arbeit */
+  /* Gastschüler/in, deren Noten nach Vereinbarung nicht zählen: werden dokumentiert, aber nicht in Notenspiegel, Ø und Statistik der Klasse gerechnet */
+  const counted = s => !(s && s.guest && s.guest.counts === false);
   function distribution(a, students, upper) {
+    students = students.filter(counted);
     /* Nachtermin (nt): zählt für die Person, aber nicht im Notenspiegel / Ø der Arbeit – andere Aufgaben, anderer Tag */
     const vals = students.map(s => { const r = a.results && a.results[s.id]; return r && r.nt ? null : valueOf(r, upper); }).filter(v => v != null);
     const counts = upper ? Array(16).fill(0) : Array(6).fill(0);
@@ -522,10 +609,22 @@
   }
 
   /* Schuljahr aus Datum ("2026/27") */
+  /* Datenschutz (LDO § 14a Abs. 2 Satz 2): Aufzeichnungen über Schüler, die nicht zu den Schülerunterlagen gehören, spätestens zwei Jahre nach Ablauf
+     des jeweiligen Schuljahres löschen. Das Schuljahr eines Kurses ergibt sich aus dem spätesten eingetragenen Datum (Leistungsnachweise, Einzelnoten, W-Seminar).
+     Ergebnis: { year: '2023/24', end: '2024-07-31', due: '2026-07-31' } oder null (keine Daten mit Datum). */
+  function retention(course) {
+    const ds = [];
+    (course.assessments || []).forEach(a => { if (a.date) ds.push(a.date); });
+    (course.entries || []).forEach(e => { if (e.date) ds.push(e.date); });
+    const st = course.sem && course.sem.st; if (st) Object.values(st).forEach(x => { if (!x) return; ['abgabe', 'pgAm', 'themaAm'].forEach(k => { if (/^\d{4}-\d{2}-\d{2}$/.test(x[k] || '')) ds.push(x[k]); }); (x.termine || []).forEach(t => { if (t && /^\d{4}-\d{2}-\d{2}$/.test(t.date || '')) ds.push(t.date); }); });
+    const last = ds.filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().pop(); if (!last) return null;
+    const y = +last.slice(0, 4), m = +last.slice(5, 7), s0 = m >= 8 ? y : y - 1;
+    return { year: `${s0}/${String((s0 + 1) % 100).padStart(2, '0')}`, end: `${s0 + 1}-07-31`, due: `${s0 + 3}-07-31` };
+  }
   function schoolYearOf(d = new Date()) { const y = d.getFullYear(), m = d.getMonth() + 1; const s = m >= 8 ? y : y - 1; return `${s}/${String((s + 1) % 100).padStart(2, '0')}`; }
 
-  return { entryItems, pctFromAnchors, pct15FromAnchors, anchor4, pct15Old, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
+  return { counted, sportPart, isHVPart, PARTS_TPL, keyProblem, keyCheck, regrade, markRawOrigin, suggestKeyHV, isSportPraxis, entryItems, pctFromAnchors, pct15FromAnchors, anchor4, pct15Old, isBig, areaOf, bigAverage, TYPES, AREAS, STATUS, LANGS, SUBJECTS, isLang, minSA, isUpper, parseCell, cellText, valueOf, POINT_GRADE, POINT_LABEL,
     keyGrade, suggestKey, keyPoints, roundStep, suggestKey15, DEFAULT_PCT, DEFAULT_PCT15, KMK_PCT15, KMK_PCT5, suggestKeyKmk, keyResult, byTask, tasksMax, tasksSum, taskF, applyTasks, taskStats, byParts, partNote, applyParts, altRule, isAncient, isOwn, upperFormula, PARTS_ABI, PART_W, isModernLang, ceilStep, mean, wmean, weightOf, smallAverage, saRatio, gradeSuggestion,
     roundPoints, computeLower, termsOf, termHasSA, computeTerm, seminarPaper, semTermAt, semTermOver, secondSchoolDayNov, countSmall, semStatus, SEM_MID, courseWarnings, studentWarnings, dateConflicts, isoWeek,
-    fmtDate, classOf, distribution, schoolYearOf, inScope };
+    fmtDate, classOf, distribution, schoolYearOf, retention, inScope };
 });
