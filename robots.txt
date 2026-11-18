@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /foerderverein-entwuerfe/
 Sitemap: https://theisapps.de/sitemap.xml
