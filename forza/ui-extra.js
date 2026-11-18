@@ -345,8 +345,7 @@
       return hits.length ? `<div class="list">${hits.slice(0, 60).map(one).join('')}</div>` : '<div class="mute" style="padding:10px 0">Nichts gefunden. Versuche es mit dem Muskel (z. B. Bauch, Rücken), dem Gerät (Kabel, Kurzhantel) oder einem Teil des Namens.</div>';
     }
     // Ohne Suche: zuerst, was du in den letzten Wochen oft gemacht hast
-    const cut = F.addDays(F.today(), -60), freq = {};
-    for (const q of F.S.sessions) if (q.session_date >= cut && q.id !== s.id) for (const se of q.session_exercises) if (se.sets.some((x) => x.done)) freq[se.exercise_id] = (freq[se.exercise_id] || 0) + 1;
+    const freq = F.exFreq(60, s.id);
     const top = hits.map((x) => x.e).filter((e) => freq[e.id]).sort((a, b) => freq[b.id] - freq[a.id]).slice(0, 8);
     const topHtml = top.length ? `<div class="eyebrow" style="margin:6px 0 4px">Häufig bei dir</div><div class="list">${top.map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${freq[e.id]}× in den letzten Wochen</div></div></button>`).join('')}</div>` : '';
     const groups = {}; hits.forEach((x) => (groups[x.e.muscles_primary[0]] = groups[x.e.muscles_primary[0]] || []).push(x.e));
