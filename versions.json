@@ -9,21 +9,21 @@
  "gruppen": {
   "version": "1.4.0",
   "url": "https://theisapps.de/aula/",
-  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Gruppen zusammenführen (Phase 2: z. B. Gruppe 1 und 3 arbeiten weiter), neu geordnete Einstellungen, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
+  "notes": "Gruppo heißt jetzt Aula – alle Daten bleiben erhalten. Neu: Kalender mit Ferien, Feiertagen und Kalender-Abos (ICS), Statistik mit Unterricht, Schuljahr und Arbeitszeit, Gruppen zusammenführen, neue Seitenleiste und Einstellungen, Liquid-Glass-Design, Übersicht mit Tagesband, Schnellsuche, „Stunde starten“, Timer-Abläufe, Mini-Timer und der Timer „Moka“."
  },
  "aula": {
   "version": "1.4.0",
   "url": "https://theisapps.de/aula/",
-  "notes": "Gruppo heißt jetzt Aula. Alle Klassen, Sitzpläne, Abläufe und Einstellungen werden automatisch übernommen. Neu dabei: Liquid-Glass-Design, eine Übersicht mit Tagesband, Countdown und Wochenblick, Schnellsuche, „Stunde starten“, Gruppen zusammenführen (Phase 2: z. B. Gruppe 1 und 3 arbeiten weiter), neu geordnete Einstellungen, Timer-Abläufe, ein Mini-Timer über allen Fenstern und der Timer „Moka“."
+  "notes": "Gruppo heißt jetzt Aula – alle Daten bleiben erhalten. Neu: Kalender mit Ferien, Feiertagen und Kalender-Abos (ICS), Statistik mit Unterricht, Schuljahr und Arbeitszeit, Gruppen zusammenführen, neue Seitenleiste und Einstellungen, Liquid-Glass-Design, Übersicht mit Tagesband, Schnellsuche, „Stunde starten“, Timer-Abläufe, Mini-Timer und der Timer „Moka“."
  },
  "sportwahl": {
   "version": "1.6.0",
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "1.10.0",
+  "version": "2.0.0",
   "url": "https://theisapps.de/voce/",
-  "notes": "Neu: Referate – Einzel- und Gruppenreferate, bewertet nach den monologischen ISB-Rastern A1 bis B1+ (jede Person einzeln), für die ganze Klasse oder einzelne Schüler, an einem oder mehreren Tagen, mit Referatsliste (Namen ziehen oder zufällig einteilen, Datum, Dauer, Thema). In Q12/13 Referate nach dem Raster der mündlichen Schulaufgabe (Notenpunkte). Russisch und Chinesisch als 3. Fremdsprache mit eigenen Niveaustufen. Neues Handbuch mit häufigen Fragen und ausführlichem Quellenverzeichnis, auch als PDF. Einstellungen neu gestaltet, modernere Oberfläche und neues Symbol. Die Raster der Schulaufgaben bleiben unverändert."
+  "notes": "Voce 2.0: auf aktueller Technik neu aufgebaut, schneller und sicherer, mit verfeinerter Oberfläche. Für den Mac jetzt als einfaches Installationsfenster (DMG) mit Anleitung. Voraussetzung am Mac ist ab jetzt macOS 13 Ventura oder neuer – auf älteren Macs bitte Voce 1.10.0 weiter verwenden (theisapps.de/voce). Ihre Klassen und Prüfungen bleiben beim Update erhalten. Die Raster der Schulaufgaben bleiben unverändert."
  },
  "foliva": {
   "version": "0.9.14",

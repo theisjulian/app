@@ -120,6 +120,7 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
 <nav id="tabs" hidden aria-label="Bereiche"><span class="lens" aria-hidden="true"></span>
   <button data-t="o" type="button" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8.5 3v3M15.5 3v3M8 13.5h2.5M13.5 13.5H16M8 17h2.5"/></svg>Wer ist wo?</button>
   <button data-t="g" type="button"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.4-.1 4 1.4 4.3 4"/></svg>Aula</button>
+  <button data-t="k" type="button"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><rect x="13" y="13.5" width="4" height="4" rx="1" fill="currentColor" stroke="none"/></svg>Kalender</button>
   <button data-t="more" type="button"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>Abgleich<i id="fabDot"></i></button>
 </nav>
 <div id="sheet" hidden>
@@ -182,9 +183,9 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
     return (await r.json()).content.sha;
   }
   /* Was abgeglichen wird: nur echte Daten. Einstellungen, Aussehen, Ansicht und Sicherungskopien bleiben je Gerät. */
-  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine|gb_events)$/.test(k);
+  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine|gb_events|gb_work|gb_stat)$/.test(k);
   /* Große Datenbestände werden nie durch einen Abgleich gelöscht – Löschen geht nur am jeweiligen Gerät. */
-  const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1 };
+  const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1, gb_work: 1, gb_stat: 1 };
   const parse = s => { try { return JSON.parse(s); } catch (e) { return undefined; } };
   /* Inhalt prüfen, bevor er irgendwo übernommen wird */
   function valid(k, v) {
@@ -196,7 +197,9 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
     if (k === 'gb_seen') return Array.isArray(d);
     if (/^gb_hist_/.test(k)) return Array.isArray(d);
     if (k === 'gb_sitz') return !!(d && typeof d === 'object');
-    if (k === 'gb_events') return !!(d && typeof d === 'object' && Array.isArray(d.ev) && d.ev.length <= 3000 && d.ev.every(e => e && typeof e.a === 'string' && typeof e.b === 'string' && typeof e.ti === 'string'));
+    if (k === 'gb_work') return !!(d && typeof d === 'object' && Array.isArray(d.e));
+    if (k === 'gb_stat') return !!(d && typeof d === 'object' && !Array.isArray(d));
+    if (k === 'gb_events') return !!(d && typeof d === 'object' && Array.isArray(d.ev) && d.ev.length <= 6000 && d.ev.every(e => e && typeof e.a === 'string' && typeof e.b === 'string' && typeof e.ti === 'string'));
     return true;
   }
   /* Nur gültige Einträge {v, t} der abgeglichenen Schlüssel behalten */
@@ -209,10 +212,24 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
   function payload(o) { if (!o || o.fmt !== FMT || !o.data) { const e = new Error('Die Daten auf GitHub stammen von einer älteren Version. Bitte am Mac Aula (früher Gruppo) öffnen und „Jetzt abgleichen“ tippen.'); e.user = true; e.fmt = true; throw e; } return clean(o.data); }
   const wrap = data => ({ fmt: FMT, data: clean(data) });
   /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). */
+  const UNION = { gb_work: 1, gb_stat: 1 };
+  function deep(a, b, aNew) { /* Zahlen: größerer Wert; Objekte: zusammen; sonst der neuere Stand */
+    if (typeof a === 'number' && typeof b === 'number') return Math.max(a, b);
+    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) { const o = {}; new Set(Object.keys(a).concat(Object.keys(b))).forEach(k => { o[k] = !(k in a) ? b[k] : !(k in b) ? a[k] : deep(a[k], b[k], aNew); }); return o; }
+    return aNew ? a : b;
+  }
+  function unite(k, l, r) {
+    const a = parse(l.v), b = parse(r.v), lNew = l.t >= r.t; if (!a || !b) return null;
+    if (k === 'gb_work') { const m = new Map(); (b.e || []).concat(a.e || []).forEach(e => { if (!e || !e.id) return; const o = m.get(e.id); if (!o || (e.u || 0) >= (o.u || 0)) m.set(e.id, e); });
+      const o = Object.assign({}, lNew ? b : a, lNew ? a : b); o.e = [...m.values()].sort((p, q) => (p.d < q.d ? -1 : p.d > q.d ? 1 : (p.u || 0) - (q.u || 0))); return JSON.stringify(o); }
+    return JSON.stringify(deep(a, b, lNew));
+  }
   function merge(local, remote) {
     local = clean(local); remote = clean(remote);
     const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local).concat(Object.keys(remote)));
     ks.forEach(k => { const l = local[k], r = remote[k];
+      /* Arbeitszeit und Statistik: Einträge beider Geräte zusammenführen statt überschreiben */
+      if (l && r && l.v && r.v && l.v !== r.v && UNION[k]) { const m = unite(k, l, r); if (m) { out[k] = { v: m, t: Math.max(l.t, r.t) }; if (m !== l.v) remoteWon.push(k); if (m !== r.v) localWon.push(k); return; } }
       if (l && (!r || l.t >= r.t)) { out[k] = l; if (!r || r.v !== l.v) localWon.push(k); } else { out[k] = r; if (!l || l.v !== r.v) remoteWon.push(k); } });
     return { merged: out, remoteWon, localWon };
   }
@@ -276,18 +293,19 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
   async function startG() { window._opData = store.data;
     try { const g = store.data.gb_tool && store.data.gb_tool.v ? JSON.parse(store.data.gb_tool.v) : {}; if (store.data.orario_v1 && store.data.orario_v1.v && !(g.plan && g.plan.on)) { g.plan = Object.assign({}, g.plan, { on: true }); store.data.gb_tool = { v: JSON.stringify(g), t: Date.now() }; } } catch (e) {}
     const h = await load('gruppo.html'), f = $('fG');
-    await new Promise(res => { f.onload = () => res(); f.srcdoc = h.replace('<head>', '<head>' + base() + '<style>' + PHONE_CSS + '</style><script>(' + shim.toString() + ')(false);window._phoneMode=true;window._phoneOrario=function(){top._showO()};addEventListener("DOMContentLoaded",function(){var f=function(){try{top._phBar(!!document.querySelector("dialog[open]")||document.body.classList.contains("ov-on"))}catch(e){}};new MutationObserver(f).observe(document.body,{subtree:true,attributes:true,attributeFilter:["open","class"]});f()});<' + '/script>'); setTimeout(res, 4000); });
+    await new Promise(res => { f.onload = () => res(); f.srcdoc = h.replace('<head>', '<head>' + base() + '<style>' + PHONE_CSS + '</style><script>(' + shim.toString() + ')(false);window._phoneMode=true;window._phoneOrario=function(){top._showO()};addEventListener("DOMContentLoaded",function(){var f=function(){try{top._phBar(!!document.querySelector("dialog[open]")||(document.body.classList.contains("ov-on")&&!document.querySelector("#kaOv:not([hidden])")))}catch(e){}};new MutationObserver(f).observe(document.body,{subtree:true,attributes:true,attributeFilter:["open","class"]});f()});<' + '/script>'); setTimeout(res, 4000); });
     gLoaded = true; window._phTheme(); show(tab); }
   async function startUI() { showUI(true); await startG(); }
   async function refresh() { await startG(); }
   window._showO = () => show('o');
+  window._phTab = t => show(t);
   /* Tab-Leiste und Ränder übernehmen das Gruppo-Theme dieses Geräts */
   window._phTheme = () => { try { const d = $('fG').contentDocument, cs = d && getComputedStyle(d.documentElement); if (!cs) return; const r = document.documentElement.style, g = n => cs.getPropertyValue(n).trim();
     const map = { '--bar': g('--sheet') || g('--glass-solid'), '--bg': g('--canvas'), '--card': g('--sheet'), '--tx': g('--label'), '--tx2': g('--label-2'), '--blue': g('--blue'), '--line': g('--hairline'), '--fill': g('--fill') };
     Object.keys(map).forEach(k => { if (map[k]) r.setProperty(k, map[k]); }); document.documentElement.toggleAttribute('data-dark', d.documentElement.dataset.theme === 'dark');
     document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = map['--bar'] || m.content); } catch (e) {} };
   function show(t) {
-    tab = t; try { const w = $('fG').contentWindow; w && w._phoneOr && w._phoneOr(t === 'o'); } catch (e) {}
+    tab = t; try { const w = $('fG').contentWindow; w && w._phoneOr && w._phoneOr(t === 'o'); w && w._phoneKal && w._phoneKal(t === 'k'); } catch (e) {}
     document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
     lens();
   }
@@ -305,6 +323,7 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
   function home(t) {
     try {
       const w = $('fG').contentWindow;
+      if (t === 'k') { w._kalHome && w._kalHome(); return; }
       if (t === 'o') { const f = w.document.getElementById('phOr'); f && f.contentWindow && f.contentWindow._orHome && f.contentWindow._orHome(); }
       else { w.document.querySelectorAll('dialog[open]').forEach(d => { try { d.close(); } catch (e) {} }); w._view && w._view('dash'); w.scrollTo(0, 0); }
     } catch (e) {}

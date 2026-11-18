@@ -433,7 +433,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
 :root[data-skin="apple"] ::-webkit-scrollbar-track{background:transparent}
 :root[data-skin="apple"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.28);border-radius:8px;border:4px solid transparent;background-clip:content-box}
 :root[data-skin="apple"][data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.30);background-clip:content-box}
-@media (min-width:981px){
+@media (min-width:701px){
   /* Seitenleiste: bündig, durchscheinend (Vibrancy), Trennlinie – wie im Finder */
   :root[data-skin="apple"] .toolbar{padding:0;background:color-mix(in srgb,var(--canvas) 72%,transparent);-webkit-backdrop-filter:saturate(180%) blur(40px);backdrop-filter:saturate(180%) blur(40px);border-right:.5px solid var(--hairline)}
   :root[data-skin="apple"] .toolbar .bar{background:none;border:0;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;padding:22px 10px 12px;gap:1px}
@@ -448,7 +448,7 @@ dialog::backdrop{background:rgba(10,14,22,.34);-webkit-backdrop-filter:blur(6px)
   :root[data-skin="apple"] .toolbar .setbtn{border-top:.5px solid var(--hairline);border-radius:0}
   :root[data-skin="apple"] .toolbar .tbtn.stnow{background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:8px;font-size:13px;font-weight:500}
 }
-@media (max-width:980px){
+@media (max-width:700px){
   /* iOS-Navigationsleiste: durchscheinend mit Haarlinie */
   :root[data-skin="apple"] .toolbar .bar{background:color-mix(in srgb,var(--canvas) 78%,transparent);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);border-radius:14px}
 }
@@ -846,7 +846,7 @@ html[data-view="chips"] .rolebadge{margin-left:6px}
 .setbackup{display:block}.setbackup .ptitle{font-size:15px;font-weight:600;color:var(--label);margin:0 0 8px}.setbackup .linkrow{margin-top:10px}
 
 /* ---- Seitenleiste (Computer) ---- */
-@media (min-width:981px){
+@media (min-width:701px){
   body{display:grid;grid-template-columns:236px minmax(0,1fr);align-items:start}
   .toolbar{grid-column:1;grid-row:1;position:sticky;top:0;height:100vh;padding:14px 0 14px 14px;z-index:30}
   .wrap{grid-column:2;grid-row:1;max-width:none;width:100%;min-width:0}
@@ -862,7 +862,7 @@ html[data-view="chips"] .rolebadge{margin-left:6px}
   .toolbar .setbtn{margin-top:auto;border-top:.5px solid var(--hairline);border-radius:0 0 11px 11px;padding-top:14px}
   .toolbar #stNow{order:8}.toolbar .setbtn{order:9}
 }
-@media (max-width:980px){.toolbar .setbtn{order:20}}
+@media (max-width:700px){.toolbar .setbtn{order:20}}
 
 /* Timer „Punkte“: 60 Punkte, die nacheinander verblassen */
 .tmdots .dot{fill:var(--tc);transition:fill .5s,opacity .6s,transform .6s var(--spring);transform-box:fill-box;transform-origin:center}
@@ -990,7 +990,7 @@ body[data-sb="min"]{--sbw:72px}
   .sbinfo,.sbtog,.toolbar .tbtn[data-kbd]::after{display:none!important}
   .sbprof .pn{display:none}
 }
-@media (min-width:981px){
+@media (min-width:701px){
   body{grid-template-columns:var(--sbw) minmax(0,1fr)!important;transition:grid-template-columns .25s var(--spring)}
   #spOv,#stOv{left:var(--sbw);z-index:25;transition:left .25s var(--spring)}
   body.ov-inline #fsLogo{display:none}
@@ -1031,7 +1031,7 @@ html.proj .ov{cursor:none}
 html.proj body{background:#000}
 .projchip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border-radius:13px;background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--label);text-align:left;font-size:12.5px;font-weight:500;order:7}
 .projchip b{font-size:12px;color:var(--red)}
-@media (min-width:981px){body.proj-on #tmOv,body.proj-on #clOv{left:var(--sbw);z-index:25}body.proj-on.ov-inline #fsLogo{display:none}body.proj-on #tmFull,body.proj-on #clFull{display:none}}
+@media (min-width:701px){body.proj-on #tmOv,body.proj-on #clOv{left:var(--sbw);z-index:25}body.proj-on.ov-inline #fsLogo{display:none}body.proj-on #tmFull,body.proj-on #clFull{display:none}}
 /* Einstellungen: feste Größe, kein Springen zwischen den Reitern */
 #setDlg{width:min(600px,94vw)}
 #setDlg .sheet{display:flex;flex-direction:column;height:min(680px,88vh)}
@@ -1629,7 +1629,7 @@ html:not([data-skin]) .tile{
 }
 
 /* --- Seitenleiste: schwebende Glasscheibe --- */
-@media (min-width:981px){
+@media (min-width:701px){
   html:not([data-skin]) .toolbar{padding:12px 0 12px 12px}
   html:not([data-skin]) .toolbar .bar{border-radius:28px;padding:20px 12px 12px}
   html:not([data-skin]) .toolbar h1{font-size:23px;font-weight:700;letter-spacing:-.03em}
@@ -1707,7 +1707,7 @@ html:not([data-skin]) #dash[data-ds="std"] .dhero,html:not([data-skin]) #dash:no
   box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 1px rgba(255,255,255,.12),0 24px 50px -22px color-mix(in srgb,var(--blue) 75%,transparent)}
 
 /* Seitenleiste: Text in Schriftfarbe, Symbole in Akzentfarbe (ruhiger, wie macOS) */
-@media (min-width:981px){
+@media (min-width:701px){
   html:not([data-skin]) .toolbar .tbtn{color:var(--label);font-weight:500}
   html:not([data-skin]) .toolbar .tbtn svg{color:var(--blue)}
   html:not([data-skin]) .toolbar #addBtn,html:not([data-skin]) .toolbar #editBtn{color:var(--label-2);font-size:14px;padding:6px 11px}
@@ -1718,7 +1718,7 @@ html:not([data-skin]) .groups{grid-template-columns:repeat(auto-fit,minmax(210px
 /* ===== 1.3.0: Über Gruppo, Schnellsuche, Stunde starten, Seitenleiste ===== */
 /* Suchfeld in der Seitenleiste */
 .sbsearch{display:none}
-@media (min-width:981px){
+@media (min-width:701px){
   .sbsearch{display:flex;align-items:center;gap:8px;width:100%;border:0;margin:0 0 8px;padding:8px 10px;border-radius:12px;background:var(--fill);color:var(--label-2);font:inherit;font-size:14px;cursor:pointer;text-align:left}
   .sbsearch:hover{background:var(--fill-2)}
   .sbsearch svg{width:16px;height:16px;flex:none}
@@ -1733,7 +1733,7 @@ html:not([data-skin]) .groups{grid-template-columns:repeat(auto-fit,minmax(210px
   body[data-sb="min"] .sbbrand svg{height:9px}
   footer.brand{display:none}
 }
-@media (max-width:980px){.sbbrand{display:none}}
+@media (max-width:700px){.sbbrand{display:none}}
 /* Dialog-Grundform (neue Dialoge) */
 .abdlg,.ckdlg,.lsdlg{padding:0;overflow:hidden}
 .abx{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:0;background:var(--fill);color:var(--label-2);font-size:20px;line-height:1;cursor:pointer;z-index:2}
@@ -1811,12 +1811,16 @@ html:not([data-skin]) .ovbtn{border-radius:999px;background:color-mix(in srgb,va
 html:not([data-skin]) .ovbtn[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
 html:not([data-skin]) #spBuild{border-radius:24px}
 /* Mac-App: Platz für die Fensterknöpfe, Fenster an Seitenleiste und Kopf verschiebbar */
-@media (min-width:981px){
+@media (min-width:701px){
   html.macapp .toolbar .bar{padding-top:48px!important}
   html.macapp .toolbar h1,html.macapp .dhead,html.macapp .ovbar{-webkit-app-region:drag}
   html.macapp .toolbar h1 *,html.macapp .dhead :is(button,select,input,a),html.macapp .ovbar :is(button,select,input,label,a),html.macapp .sbtog{-webkit-app-region:no-drag}
   html.macapp body::after{content:"";position:fixed;left:0;right:0;top:0;height:14px;-webkit-app-region:drag;z-index:5}
   html.macapp .toolbar .sbtog{top:14px}
+  /* Electron beachtet bei Zieh-Bereichen keine Überlagerung: Kopf der Übersicht darf unter offenen Fenstern/Werkzeugen keine Klicks schlucken */
+  html.macapp body.ov-on .dhead,html.macapp body:has(dialog[open]) :is(.dhead,.ovbar,.toolbar h1){-webkit-app-region:no-drag}
+  html.macapp body:has(dialog[open])::after{display:none}
+  html.macapp .ov>:not(.ovbar),html.macapp .ov>:not(.ovbar) *{-webkit-app-region:no-drag}
 }
 /* Ton-Auswahl, Timer-Abläufe, Mini-Timer */
 .ovsel{appearance:none;-webkit-appearance:none;border:0;border-radius:999px;background:var(--fill);color:var(--label);font:inherit;font-size:13.5px;font-weight:500;padding:7px 28px 7px 12px;cursor:pointer;
@@ -1845,8 +1849,8 @@ html:not([data-skin]) #spBuild{border-radius:24px}
 #tmMini[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
 .abx:focus:not(:focus-visible){outline:none}
 /* Seitenleiste bei niedrigen Fenstern: nichts überlappt, sie scrollt; Hinweis „Jetzt“ entfällt (steht in der Übersicht) */
-@media (min-width:981px){ .toolbar .bar>*{flex-shrink:0} }
-@media (min-width:981px) and (max-height:860px){ .toolbar .sbinfo{display:none} }
+@media (min-width:701px){ .toolbar .bar>*{flex-shrink:0} }
+@media (min-width:701px) and (max-height:860px){ .toolbar .sbinfo{display:none} }
 .tmmoka .mkrim{fill:#c9ced5;stroke:color-mix(in srgb,#3b414a 60%,transparent);stroke-width:1.5}
 /* ===== 1.4.0: „Zeit ist um“ – Glas-Plakette + Effekt passend zur Anzeige ===== */
 .ovstage .tmdone{position:absolute;left:50%;top:5%;bottom:auto;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:14px;padding:12px 26px 12px 14px;border-radius:999px;
@@ -1973,6 +1977,287 @@ html.lessmo *,html.lessmo *::before,html.lessmo *::after{animation-duration:.01m
 .spane{grid-template-columns:minmax(0,1fr)}.sgrp,.scard{min-width:0}
 @media (max-width:760px){.sbody{padding:14px 14px 24px}.smhead{padding:16px 16px 12px}.ssel{min-width:0;flex:1 1 160px}.sinput{width:100%}.snav{box-shadow:none}}
 @media (max-width:760px){.srow .sl{min-width:110px}.sctl{flex:1 1 200px}}
+/* ===== Kalender-Ansicht ===== */
+#kaOv{background:color-mix(in srgb,var(--canvas) 94%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#kaOv.calm .ovbar{opacity:1;pointer-events:auto}#kaOv.calm{cursor:auto}
+@media (min-width:701px){#kaOv{left:var(--sbw);z-index:25;transition:left .25s var(--spring)}}
+.kawrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 22px 16px;gap:12px}
+.kahead{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;justify-content:space-between}
+.kanav{display:flex;align-items:center;gap:6px;min-width:0}
+.kanav h2{margin:0 0 0 10px;font-size:26px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kanav h2::first-letter{text-transform:uppercase}
+.kactl{display:flex;gap:8px;flex-wrap:wrap}.kactl .seg button{padding:6px 12px;font-size:13px;flex:0 0 auto}.kactl .seg[hidden]{display:none}
+.kab{font:inherit;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:999px;border:.5px solid var(--hairline);background:var(--glass-solid);color:var(--label);cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.kab:hover{background:var(--fill)}.kab.ki{width:34px;height:34px;padding:0;display:grid;place-items:center}.kab.ki svg{width:17px;height:17px}.kab[hidden]{display:none}
+.kabody{flex:1;min-height:0;overflow:auto}
+.kalegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--label-2)}.kalegend span{display:inline-flex;align-items:center;gap:6px}
+.lg{width:12px;height:12px;border-radius:4px;display:inline-block}.lg.fer{background:var(--ka-fer)}.lg.hol{background:var(--ka-hol)}.lg.ev{background:var(--ka-ev)}.lg.rel{background:var(--ka-rel)}
+:root{--ka-fer:#34C759;--ka-hol:#FF3B30;--ka-ev:#0A84FF;--ka-rel:#AF52DE}
+/* Monat */
+.kamonth{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;height:100%;min-height:520px}
+.kagrid{display:grid;grid-template-columns:34px repeat(7,minmax(0,1fr));grid-auto-rows:auto;grid-template-rows:auto;gap:4px;align-content:stretch}
+.kagrid{grid-auto-rows:minmax(84px,1fr)}
+.kawd,.kakw.h{font-size:12px;font-weight:600;color:var(--label-2);text-align:center;align-self:end;padding-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.kagrid>.kawd,.kagrid>.kakw.h{height:auto}
+.kakw{font-size:11px;color:var(--label-3,var(--label-2));text-align:center;padding-top:9px;font-variant-numeric:tabular-nums}
+.kaday{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:2px;text-align:left;font:inherit;color:var(--label);border:.5px solid var(--hairline);border-radius:12px;background:var(--glass-solid);padding:6px 7px;cursor:pointer;overflow:hidden;min-width:0}
+.kaday:hover{border-color:color-mix(in srgb,var(--blue) 45%,var(--hairline))}
+.kaday.we{background:color-mix(in srgb,var(--fill) 70%,var(--glass-solid))}
+.kaday.out{opacity:.42}
+.kaday.fer{background:color-mix(in srgb,var(--ka-fer) 15%,var(--glass-solid));border-color:color-mix(in srgb,var(--ka-fer) 30%,transparent)}
+.kaday.hol{background:color-mix(in srgb,var(--ka-hol) 11%,var(--glass-solid));border-color:color-mix(in srgb,var(--ka-hol) 28%,transparent)}
+.kaday.sel{box-shadow:0 0 0 2px var(--blue)}
+.kaday .dn{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;margin:-2px 0 0 -3px}
+.kaday.today .dn{background:var(--ka-hol);color:#fff}
+.kaday.hol .dn{color:var(--ka-hol)}.kaday.today.hol .dn{color:#fff}
+.kaday span.fl,.kaday span.hl,.kaday span.el,.kaday span.rl,.kaday span.mo{display:block;font-size:11px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:5px;padding:1px 5px}
+.kaday .fl{color:color-mix(in srgb,var(--ka-fer) 70%,var(--label));font-weight:600;padding-left:0!important}
+.kaday .hl{color:var(--ka-hol);font-weight:600;padding-left:0!important}
+.kaday .el{background:color-mix(in srgb,var(--ka-ev) 14%,transparent);color:color-mix(in srgb,var(--ka-ev) 75%,var(--label))}
+.kaday .rl{background:color-mix(in srgb,var(--ka-rel) 12%,transparent);color:color-mix(in srgb,var(--ka-rel) 70%,var(--label))}
+.kaday .mo{color:var(--label-2)}
+/* Seitenleiste mit Tagesdetails */
+.kaside{background:var(--glass-solid);border:.5px solid var(--hairline);border-radius:16px;padding:16px;overflow:auto;display:flex;flex-direction:column;gap:8px;align-self:start;max-height:100%}
+.kadh{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}.kadh b{font-size:19px;font-weight:700;letter-spacing:-.01em}.kadh b::first-letter{text-transform:uppercase}.kadh span{font-size:13px;color:var(--label-2)}
+.kadh small{font-size:12px;color:var(--label-2)}.kadh small.now{color:var(--ka-hol);font-weight:600}
+.kar{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:11px;background:var(--fill);border:0;font:inherit;color:var(--label);text-align:left;width:100%}
+button.kar{cursor:pointer}button.kar:hover{background:color-mix(in srgb,var(--blue) 10%,var(--fill))}
+.kar>i{width:4px;align-self:stretch;border-radius:3px;flex:0 0 auto}
+.kar.fer>i{background:var(--ka-fer)}.kar.hol>i{background:var(--ka-hol)}.kar.ev>i{background:var(--ka-ev)}.kar.rel>i{background:var(--ka-rel)}
+.kar>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.kar b{font-size:14px;font-weight:600;line-height:1.3}.kar small{font-size:12px;color:var(--label-2)}
+.kar em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--ka-fer);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:1px}
+.kar .kgo{color:var(--label-2);font-size:18px;line-height:1}
+.kar.past{opacity:.45}
+.kanone{color:var(--label-2);font-size:13.5px;margin:4px 2px}
+.kahint{margin-top:8px;padding:12px;border-radius:12px;border:1px dashed var(--hairline);display:flex;flex-direction:column;gap:8px;align-items:flex-start}.kahint p{margin:0;font-size:12.5px;color:var(--label-2);line-height:1.4}
+.kacount{margin:0 0 6px;font-size:13px;font-weight:600;color:color-mix(in srgb,var(--ka-fer) 70%,var(--label))}
+/* Schuljahr */
+.kayear{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+.kamgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;align-content:start}
+.kamini{font:inherit;color:var(--label);text-align:left;background:var(--glass-solid);border:.5px solid var(--hairline);border-radius:14px;padding:12px;cursor:pointer}
+.kamini:hover{border-color:color-mix(in srgb,var(--blue) 45%,var(--hairline))}
+.kamini>b{display:block;font-size:14px;margin-bottom:6px}.kamini>b::first-letter{text-transform:uppercase}.kamini>b small{color:var(--label-2);font-weight:500}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10.5px;text-align:center;font-variant-numeric:tabular-nums}
+.mg span{height:20px;display:grid;place-items:center;border-radius:5px;position:relative}
+.mg .w{color:var(--label-2);font-weight:600;font-size:9.5px}
+.mg .we{color:var(--label-2)}
+.mg .fer{background:color-mix(in srgb,var(--ka-fer) 24%,transparent);color:var(--label)}
+.mg .hol{background:color-mix(in srgb,var(--ka-hol) 20%,transparent);color:var(--ka-hol);font-weight:700}
+.mg .ev::after{content:"";position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ka-ev)}
+.mg .today{background:var(--ka-hol);color:#fff;font-weight:700}
+/* Liste */
+.kalist{max-width:820px;display:flex;flex-direction:column;gap:6px;padding-bottom:20px}
+.kawk{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--label-2);margin:12px 0 2px 4px}
+.kald{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;background:var(--glass-solid);border:.5px solid var(--hairline);border-radius:14px;padding:10px 12px}
+.kald.today{box-shadow:0 0 0 2px color-mix(in srgb,var(--ka-hol) 60%,transparent)}
+.kaldd{display:flex;flex-direction:column;align-items:center;padding-top:2px}.kaldd b{font-size:24px;font-weight:700;line-height:1}.kaldd span{font-size:11.5px;color:var(--label-2);text-align:center}
+.kalr{display:flex;flex-direction:column;gap:6px}
+@media (max-width:980px){
+  .kawrap{padding:0 12px 12px}.kamonth,.kayear{grid-template-columns:1fr;height:auto}
+  .kagrid{grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(52px,auto);gap:3px}.kagrid .kakw{display:none}
+  .kaday{padding:4px;border-radius:9px;align-items:center}.kaday .dn{margin:0}
+  .kaday span.fl,.kaday span.hl,.kaday span.el,.kaday span.rl,.kaday span.mo{font-size:0;height:5px;width:100%;padding:0;border-radius:3px}
+  .kaday span.fl{display:none}.kaday .hl{background:var(--ka-hol)}.kaday .el{background:var(--ka-ev)}.kaday .rl{background:var(--ka-rel)}.kaday .mo{display:none}
+  .kanav h2{font-size:21px}.kaside{max-height:none}
+}
+.kaday .el i{font-style:normal;opacity:.7;font-variant-numeric:tabular-nums}
+body:has(#kaOv:not([hidden])) #fsLogo{display:none!important}
+@media (max-width:700px){#kaOv .kawrap{padding-bottom:104px;gap:10px}#kaOv .kahead{gap:8px}#kaOv .kactl .seg button{padding:5px 10px}#kaOv .kanav h2{font-size:19px;margin-left:4px}#kaOv .kalegend{font-size:11px;gap:4px 10px}}
+.kaevdlg{width:min(460px,92vw)}
+.kaevdlg .sheet{padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px}
+.kaevh{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--label-2)}
+.kaevh i{width:10px;height:10px;border-radius:3px;background:var(--ka-ev)}.kaevh span{flex:1}
+.kaevdlg h2{margin:0;font-size:21px;line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
+.kaevm{display:grid;gap:10px;background:var(--fill);border-radius:12px;padding:12px 14px}.kaevm small{display:block;font-size:11.5px;color:var(--label-2)}.kaevm b{font-size:14.5px;font-weight:600}.kaevm b::first-letter{text-transform:uppercase}
+.kaevdlg #kaEvCp{align-self:flex-start}
+.kaday .el{cursor:pointer}.kaday .el:hover{filter:brightness(.95)}
+/* ===== Statistik ===== */
+#saOv{background:color-mix(in srgb,var(--canvas) 94%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#saOv.calm .ovbar{opacity:1;pointer-events:auto}#saOv.calm{cursor:auto}
+@media (min-width:701px){#saOv{left:var(--sbw);z-index:25;transition:left .25s var(--spring)}}
+body:has(#saOv:not([hidden])) #fsLogo{display:none!important}
+.sabody{padding-bottom:24px}
+.sagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start;max-width:1400px}
+.sagrid>.wide{grid-column:1/-1}
+.sacard{background:var(--glass-solid);border:.5px solid var(--hairline);border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.05);min-width:0}
+.sacard h3{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--label-2)}
+.satiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.satile{background:var(--glass-solid);border:.5px solid var(--hairline);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.sacard .satile{background:var(--fill);border:0}
+.satile>b{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.satile>span{font-size:13px;font-weight:600;color:var(--label)}.satile>small{font-size:12px;color:var(--label-2)}
+.sanote{margin:0 0 10px;font-size:13px;color:var(--label-2);line-height:1.45}
+.sabar,.saday{display:grid;grid-template-columns:minmax(70px,auto) minmax(0,1fr) auto;align-items:center;gap:10px;padding:5px 0;font-size:13.5px}
+.sabar .k,.saday .k{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.sabar .t,.saday .t{height:10px;border-radius:6px;background:var(--fill);overflow:hidden}
+.sabar .t i,.saday .t i{display:block;height:100%;border-radius:6px;background:var(--blue)}
+.sabar .v,.saday .v{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}.sabar small,.saday small{font-weight:500;color:var(--label-2)}
+.saday.off .k{color:var(--label-2)}
+.sasyh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}.sasyh b{font-size:40px;font-weight:700;letter-spacing:-.03em;margin-right:10px}.sasyh span{font-weight:600}.sasyh small{color:var(--label-2)}
+.saprog{height:12px;border-radius:8px;background:var(--fill);overflow:hidden;margin-bottom:14px}.saprog i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--ka-fer),color-mix(in srgb,var(--ka-fer) 70%,var(--blue)))}
+.satab{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:10px}.satab th,.satab td{padding:8px 10px;border-bottom:.5px solid var(--hairline);text-align:right;font-variant-numeric:tabular-nums}.satab th:first-child{text-align:left}.satab thead th{font-size:12px;color:var(--label-2);font-weight:600}.satab td{font-weight:600}
+.sactl{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.sactl .ssel{min-width:160px}
+.sanever{margin-top:12px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.sanever b{margin-right:4px}.sanever span{background:var(--fill);border-radius:99px;padding:3px 10px}
+/* Arbeitszeit */
+.sawork{display:flex;flex-direction:column;gap:12px}
+.sarunbox{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center}
+.sartime b{font-size:40px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;line-height:1}.sartime span{font-size:12px;color:var(--label-2)}
+.sarunbox.on .sartime b{color:#FF9F0A}
+.sacats{display:flex;flex-wrap:wrap;gap:6px}
+.sacats button{font:inherit;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:.5px solid var(--hairline);background:var(--fill);color:var(--label);cursor:pointer}
+.sacats button i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.sacats button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 18%,var(--glass-solid));border-color:var(--c);font-weight:600}
+.sago{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:999px;padding:14px 28px;background:var(--ka-fer);color:#fff;cursor:pointer;min-width:120px;box-shadow:0 6px 16px -6px color-mix(in srgb,var(--ka-fer) 70%,transparent)}
+.sarunbox.on .sago{background:#FF3B30;box-shadow:0 6px 16px -6px rgba(255,59,48,.6)}
+.saadd summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue);list-style:none}.saadd summary::-webkit-details-marker{display:none}.saadd summary::before{content:"+ "}
+.saform{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:10px}
+.saform label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--label-2)}.saform label.w{flex:1;min-width:180px}
+.saform input,.sagoal input{font:inherit;font-size:14px;padding:8px 10px;border-radius:9px;border:.5px solid var(--hairline);background:var(--fill);color:var(--label)}
+.saform #waM{width:90px}
+.sagoal label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}.sagoal label span{flex:1}.sagoal input{width:76px;text-align:right}
+.sachart{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.saplot{position:relative;height:170px;display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end;border-bottom:.5px solid var(--hairline)}
+.sacol{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.sacol b{font-size:11px;font-weight:600;color:var(--label-2);font-variant-numeric:tabular-nums}
+.sastack{width:100%;max-width:42px;display:flex;flex-direction:column;border-radius:7px 7px 2px 2px;overflow:hidden;min-height:0}
+.sastack i{display:block;min-height:0}.sastack .t{background:var(--blue)}.sastack .l{background:#FF9F0A}
+.saxl{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;text-align:center;font-size:11px;color:var(--label-2)}
+.sagl{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ka-hol);pointer-events:none;z-index:1}.sagl em{position:absolute;right:0;top:-18px;font-style:normal;font-size:11px;font-weight:600;color:var(--ka-hol)}
+.salist{display:flex;flex-direction:column;gap:6px}
+.saent{display:grid;grid-template-columns:4px minmax(0,1fr) auto auto;gap:12px;align-items:center;background:var(--fill);border-radius:11px;padding:9px 12px}
+.saent>i{align-self:stretch;border-radius:3px}.saent b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.saent small{font-size:12px;color:var(--label-2)}.saent>span{font-weight:700;font-variant-numeric:tabular-nums}
+.sadel{border:0;background:none;color:var(--label-2);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}.sadel:hover{background:color-mix(in srgb,var(--ka-hol) 14%,transparent);color:var(--ka-hol)}
+#statBtn{position:relative}.sarun{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-style:normal;font-size:11px;font-weight:700;color:#fff;background:#FF9F0A;border-radius:99px;padding:2px 7px;font-variant-numeric:tabular-nums}
+#statBtn:has(.sarun:not([hidden]))::after{display:none!important}
+@media (max-width:700px){.sagrid{grid-template-columns:1fr}.sarunbox{grid-template-columns:1fr auto}.sacats{grid-column:1/-1;order:3}.satile>b{font-size:24px}#saOv .kawrap{padding-bottom:104px}.saplot{gap:4px}.saxl{gap:4px;font-size:10px}}
+/* ===== Seitenleiste 1.4: ruhig, einheitlich in allen Farbwelten ===== */
+@media (min-width:701px){
+  :root .toolbar .bar{gap:2px!important}
+  :root .toolbar .tgrp{margin:16px 0 0!important;gap:2px!important}
+  :root .toolbar .tgrp::before{font-size:11px!important;font-weight:700!important;letter-spacing:.07em!important;text-transform:uppercase!important;color:var(--label-2)!important;padding:0 10px 6px!important;opacity:.85}
+  :root .toolbar .tbtn.ib{color:var(--label)!important;font-size:14.5px!important;font-weight:500!important;padding:8px 10px!important;gap:11px!important;border-radius:10px!important;border:0!important;box-shadow:none!important;background:none;position:relative;letter-spacing:-.005em}
+  :root .toolbar .tbtn.ib svg{color:var(--blue)!important;width:19px!important;height:19px!important;flex:none;opacity:.95}
+  :root .toolbar .tbtn.ib:hover{background:color-mix(in srgb,var(--label) 6%,transparent)!important}
+  :root .toolbar .tbtn.ib.on,:root .toolbar .tbtn.ib[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 14%,transparent)!important;color:color-mix(in srgb,var(--blue) 70%,var(--label))!important;font-weight:600!important}
+  :root .toolbar .tbtn.ib.on::before{display:none!important}
+  :root .toolbar .tbtn[data-kbd]::after{opacity:0;transition:opacity .15s;font-size:11px;color:var(--label-3,var(--label-2))}
+  :root .toolbar .tbtn[data-kbd]:hover::after{opacity:.8}
+  /* Klasse */
+  .sbcls{display:flex;align-items:center;gap:4px;padding:2px 2px 4px 10px;min-height:30px}
+  .sbcls .sbinfo{flex:1;min-width:0;padding:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;color:var(--label-2)}
+  :root .toolbar .sbcls .sbico{width:30px!important;height:30px;min-width:30px;padding:0!important;display:grid;place-items:center;border-radius:9px!important;background:none!important;border:0!important;box-shadow:none!important;color:var(--blue)!important;flex:none}
+  :root .toolbar .sbcls .sbico:hover{background:color-mix(in srgb,var(--blue) 12%,transparent)!important}
+  .sbcls .sbico svg{width:17px;height:17px}
+  /* „Jetzt“ */
+  :root .toolbar .tbtn.stnow{margin-top:12px!important;font-size:12.5px!important;font-weight:600!important;color:var(--label)!important;background:color-mix(in srgb,var(--blue) 9%,transparent)!important;border:0!important;border-radius:12px!important;padding:9px 12px!important;text-align:left}
+  /* Fuß: Profil + Einstellungen */
+  .sbfoot{order:9;margin-top:auto;display:flex;align-items:center;gap:6px;padding-top:12px;border-top:.5px solid var(--hairline)}
+  :root .toolbar .sbfoot .sbprof{flex:1;min-width:0;margin:0!important;order:0;padding:6px 8px!important;background:none!important;border-radius:12px}
+  :root .toolbar .sbfoot .sbprof:hover{background:color-mix(in srgb,var(--label) 6%,transparent)!important}
+  :root .toolbar .sbfoot .setbtn{order:0;width:38px!important;height:38px;margin:0!important;padding:0!important;border:0!important;border-radius:11px!important;justify-content:center!important;flex:none}
+  :root .toolbar .sbfoot .setbtn span,:root .toolbar .sbfoot .setbtn::after{display:none!important}
+  .sbbrand{padding:12px 0 2px!important;margin-top:4px!important;flex:none}
+  #stNow{order:8}
+  /* Symbolleiste (eingeklappt oder schmales Fenster) */
+  body[data-sb="min"] .sbcls{display:none}
+  body[data-sb="min"] .sbfoot{flex-direction:column;gap:4px}
+  body[data-sb="min"] :root .toolbar .tbtn.ib,body[data-sb="min"] .toolbar .tbtn.ib{justify-content:center!important;padding:10px 0!important}
+  body[data-sb="min"] .toolbar .tgrp::before{content:""!important;display:block;height:1px;background:var(--hairline);margin:0 12px 8px;padding:0!important}
+  body[data-sb="min"] .toolbar .tbtn.stnow{display:none!important}
+  body[data-sb="min"] .sbfoot .sbprof{justify-content:center;padding:6px 0!important}
+}
+@media (max-width:700px){#addBtn svg,#editBtn svg{display:none}.sbcls{display:contents}}
+/* Mac-Vollbild: keine Fensterknöpfe, also kein Abstand oben; eigener Knopf „Vollbild beenden“ */
+.sbfsx{display:none}
+@media (min-width:701px){
+  html.macapp.macfs .toolbar .bar{padding-top:18px!important}
+  html.macfs .sbfsx:not([hidden]){display:grid;place-items:center;position:absolute;top:16px;right:48px;width:30px;height:30px;border:0;border-radius:9px;background:none;color:var(--label-2);cursor:pointer;z-index:2}
+  html.macfs .sbfsx:hover{background:var(--fill)}html.macfs .sbfsx svg{width:17px;height:17px}
+  body[data-sb="min"] .sbfsx{position:static!important;margin:0 auto 6px}
+  html.macapp.macfs body::after{display:none}
+}
+@media (min-width:701px){
+  body[data-sb="min"] .toolbar .picker{display:flex!important;margin:0 0 6px}
+  body[data-sb="min"] .toolbar .picker .classBtn{font-size:12.5px!important;font-weight:700;padding:8px 2px!important;justify-content:center;text-align:center;min-height:0;background-image:none!important}
+  body[data-sb="min"] .toolbar .picker .classBtn::after{display:none!important}
+  body[data-sb="min"] #classBtnT{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52px;display:block}
+}
+@media (min-width:701px){body[data-sb="min"] .sbbrand{padding:10px 4px 2px!important;overflow:visible}body[data-sb="min"] .sbbrand svg{width:100%!important;max-width:52px;height:auto!important}}
+/* Statistik: Unterricht */
+.salhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.salhead .sanote{margin:0;flex:1;min-width:240px}
+.salesmode button{padding:7px 14px;font-size:13.5px}
+.satile>span{line-height:1.3}
+.sagridcard{grid-row:span 2}
+.sagrid5{display:grid;grid-template-columns:44px repeat(5,minmax(0,1fr));gap:4px;font-size:12px}
+.sagrid5>b{text-align:center;font-size:11.5px;font-weight:700;color:var(--label-2);text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px}
+.sagrid5>small{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding-right:6px;font-weight:700;color:var(--label-2);font-size:12px;line-height:1.1;min-height:34px}
+.sagrid5>small em{font-style:normal;font-weight:500;font-size:10px;opacity:.8}
+.sagrid5 .ge{border-radius:8px;background:color-mix(in srgb,var(--label) 3.5%,transparent);min-height:34px}
+.sagrid5 .go{border-radius:8px;border:1px dashed var(--hairline);color:var(--label-2);font-size:10.5px;display:grid;place-items:center;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px;min-height:34px}
+.sagrid5 .gl{border-radius:9px;background:color-mix(in srgb,var(--c) 16%,var(--glass-solid));border-left:3px solid var(--c);padding:5px 7px;display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:34px}
+.sagrid5 .gl b{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--c) 55%,var(--label))}
+.sagrid5 .gl span{font-size:10.5px;color:var(--label-2)}
+.sadonut{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.sadonut svg{width:160px;height:160px;flex:none}.sadonut path{stroke:var(--glass-solid);stroke-width:2}
+.sadonut .dn1{font-size:30px;font-weight:700;fill:var(--label);font-family:inherit}.sadonut .dn2{font-size:11px;fill:var(--label-2);font-family:inherit}
+.salegend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:160px}
+.salegend div{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:9px;align-items:center;font-size:13.5px}
+.salegend i{width:12px;height:12px;border-radius:4px}.salegend span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.salegend b{font-variant-numeric:tabular-nums}.salegend small{color:var(--label-2);min-width:38px;text-align:right}
+.sadays .saday .t{display:flex;gap:2px;background:none}.sadays .saday .t i{border-radius:4px;height:100%}
+.sadays .saday{grid-template-columns:42px minmax(0,1fr) auto}.sadays .saday .t{height:14px}
+.sawk{display:flex;align-items:flex-end;gap:4px;height:180px;padding-top:6px}
+.sawk>div{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px}
+.sawk>div i{display:block;width:100%;max-width:36px;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,var(--blue) 30%,transparent)}
+.sawk>div.p i{background:var(--blue)}.sawk>div.c i{background:#FF9F0A}
+.sawk b{font-size:10.5px;color:var(--label-2);font-variant-numeric:tabular-nums;font-weight:600}.sawk small{font-size:10px;color:var(--label-2);white-space:nowrap;height:13px}
+.satab .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.satab td.l{text-align:left;font-weight:500;color:var(--label-2)}
+.satab .mini{display:block;height:4px;border-radius:3px;background:var(--fill);margin-top:4px;overflow:hidden}.satab .mini i{display:block;height:100%;background:var(--ka-fer)}
+@media (max-width:700px){.sagrid5{grid-template-columns:30px repeat(5,minmax(0,1fr));gap:3px}.sagrid5 .gl{padding:4px}.sagrid5 .gl span{display:none}.sagrid5 .gl b{font-size:10.5px}.sagridcard{grid-row:auto}.sadonut svg{width:130px;height:130px}}
+.salesmode button,.kactl .seg button,#saTabs button{white-space:nowrap}
+.satab .mini{width:90px;margin-left:auto}
+/* ===== Kalender/Statistik: deckender Hintergrund (in manchen Farbwelten schien die Übersicht durch) ===== */
+#kaOv,#saOv{background:var(--canvas)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.kagrid.nokw{grid-template-columns:repeat(7,minmax(0,1fr))}
+/* Schuljahr endlos */
+.kayear{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.kaylist{display:flex;flex-direction:column;gap:22px;min-width:0}
+.kasy h3{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 2px 12px;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.kasy h3 small{font-size:13px;font-weight:500;color:var(--label-2)}
+.kasent{height:40px}
+.kayside{position:sticky;top:0;max-height:calc(100vh - 190px)}
+.kadh span{font-size:13px;color:var(--label-2)}
+@media (max-width:980px){.kayear{grid-template-columns:1fr}.kayside{position:static;max-height:none;order:-1}}
+/* Einstellungen: Kalender-Abos */
+.calblk{display:block}
+.fdlist{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.fdlist:empty{display:none}
+.fdrow{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--fill)}
+.fdrow>i{width:10px;height:10px;border-radius:50%}
+.fdt{display:flex;flex-direction:column;gap:2px;min-width:0}.fdt b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdt small{font-size:12px;color:var(--label-2)}.fdt small em{font-style:normal;color:#FF3B30;font-weight:600}
+.fdt small.u{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.75;font-size:11px}
+.cbody .fdrow{margin:12px 0 8px}
+.fdadd{display:flex;gap:8px;margin:10px 0 8px}.fdadd .sinput{flex:1;width:auto}
+.sbtn.pri{background:var(--blue);color:var(--on-accent,#fff);border-color:transparent;font-weight:600}
+.sbtn.ghost{background:none;border-color:transparent;color:var(--label-2);font-size:18px;padding:4px 10px;line-height:1}
+.sbtn.ghost:hover{color:#FF3B30;background:color-mix(in srgb,#FF3B30 10%,transparent)}
+.snote2{margin:6px 0 12px;font-size:12px;color:var(--label-2);line-height:1.45}
+.fdmix{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--blue) 8%,transparent);font-size:13px;margin-bottom:12px}.fdmix span{flex:1;min-width:200px}
+.calblk>.srow+.srow,.calblk>.srow+div.srow{border-top:.5px solid var(--hairline)}
+/* Einstellungen: Aussehen als Pillen */
+#setDlg .skinGrid{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0}
+#setDlg .skinBtn{flex-direction:row;align-items:center;gap:9px;padding:6px 15px 6px 6px;border-radius:999px;border:1px solid var(--hairline);background:var(--fill);font-size:14px;font-weight:500;transform:none!important}
+#setDlg .skinBtn:hover{background:color-mix(in srgb,var(--label) 7%,var(--fill))}
+#setDlg .skinBtn[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 12%,var(--glass-solid));border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);font-weight:600}
+#setDlg .skinSw{height:24px;width:44px;flex:none;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+#setDlg .fontGrid{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0}
+#setDlg .fontBtn{flex-direction:row;align-items:baseline;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--hairline);background:var(--fill)}
+#setDlg .fontBtn b{font-size:16px}#setDlg .fontBtn small{font-size:11.5px}
+#setDlg .fontBtn[aria-pressed="true"]{background:color-mix(in srgb,var(--blue) 12%,var(--glass-solid));border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+#setDlg #modeRow .wchip{border-radius:999px}
+.scard .srow+.srow,.scard .srow+label.srow{border-top:.5px solid var(--hairline)}
+.salesmode,#saTabs,#kaMode,#kaFilt{display:inline-flex!important;width:auto!important;flex:none}.salesmode button,#saTabs button,#kaMode button,#kaFilt button{flex:0 0 auto!important}
 
 </style>
 <script>try{var l=JSON.parse(localStorage.getItem("gb_look")||"{}"),e=document.documentElement,d=l.mode==="dark"||(l.mode!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);if(l.skin&&l.skin!=="standard")e.dataset.skin=l.skin;if(l.view&&l.view!=="karten")e.dataset.view=l.view;if(l.font&&l.font!=="standard")e.dataset.font=l.font;e.dataset.theme=d?"dark":"light"}catch(x){}</script>
@@ -2534,7 +2819,7 @@ function renderRoster(){
     b.setAttribute('aria-pressed', !absent.has(i));
     b.innerHTML = `<span class="dot ${s.g}"></span>`;
     b.append(s.last ? `${s.first} ${s.last}` : s.first);
-    b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); renderRoster(); $('preview').textContent = describe(present().length); };
+    b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); renderRoster(); $('preview').textContent = describe(present().length); try { window._statAbs && window._statAbs(); } catch (e) {} };
     box.appendChild(b);
   });
   $('count').textContent = `${c.students.length - absent.size} / ${c.students.length}`;
@@ -2737,7 +3022,7 @@ $('againBtn').onclick = () => build(true);
 $('commitBtn').onclick = commit;
 $('histUndo').onclick = () => { const h = getHist(); h.pop(); setHist(h); committed = false; renderHist(); renderBoard(); toast(t('tUndone')); };
 $('histClear').onclick = () => { if (!confirm(t('confirmClear')(settings.cls))) return; setHist([]); committed = false; renderHist(); renderBoard(); };
-$('allIn').onclick = () => { absent.clear(); renderRoster(); renderControls(); };
+$('allIn').onclick = () => { absent.clear(); renderRoster(); renderControls(); try { window._statAbs && window._statAbs(); } catch (e) {} };
 $('classSel').onchange = e => { settings.cls = e.target.value; save(); absent.clear(); lastResult = null; renderAll(); };
 $('expBtn').onclick = exportData;
 $('folderBtn').onclick = () => { try{ native.showFolder(); }catch(e){} };
@@ -3611,6 +3896,7 @@ function pkGo(){
     step++;
     if (step >= total){
       pkShow(pick.map(s => displayName(s, all)), false, hue0);
+      try { window._statPick && window._statPick(pick); } catch (e) {}
       if ($('pkNoRep').checked) pick.forEach(s => PK.drawn.add(skey(s)));
       buildPk(); confetti($('pkStage'), 2400, 90); return;
     }
@@ -4311,7 +4597,7 @@ Object.assign(X, {
   uiLang: ['Sprache der App', 'App language', 'Lingua dell’app', 'Langue de l’app', 'Idioma de la app'],
   uiAuto: ['Je nach Fach', 'By subject', 'Secondo la materia', 'Selon la matière', 'Según la asignatura'],
   uiLangNote: ['„Je nach Fach“ nimmt die Sprache der gewählten Klasse (bei einer Italienischklasse also Italienisch). Die Sprache einer Klasse stellst du bei „Bearbeiten“ ein.', '“By subject” uses the language of the selected class (an Italian class gets Italian). You set a class’s language under “Edit”.', '«Secondo la materia» usa la lingua della classe scelta (una classe di italiano avrà l’italiano). La lingua di una classe si imposta in «Modifica».', '« Selon la matière » prend la langue de la classe choisie (une classe d’italien aura l’italien). La langue d’une classe se règle sous « Modifier ».', '«Según la asignatura» usa el idioma de la clase elegida (una clase de italiano tendrá italiano). El idioma de una clase se ajusta en «Editar».'],
-  tools: ['Werkzeuge', 'Tools', 'Strumenti', 'Outils', 'Herramientas'],
+  tools: ['Im Unterricht', 'In class', 'In classe', 'En classe', 'En clase'],
   backupT: ['Sicherung', 'Backup', 'Copia di sicurezza', 'Sauvegarde', 'Copia de seguridad']
 });
 (function () {
@@ -4552,8 +4838,8 @@ Object.assign(X, {
   abNew: ['Neu in 1.4', 'New in 1.4', 'Novità della 1.4', 'Nouveau dans la 1.4', 'Novedades de la 1.4'],
   abFormer: ['früher Gruppo', 'formerly Gruppo', 'prima Gruppo', 'anciennement Gruppo', 'antes Gruppo'],
   abNews: [
-    'Gruppo heißt jetzt Aula – deine Klassen, Sitzpläne und Einstellungen sind alle noch da. Dazu: Liquid Glass, Übersicht mit Tagesband und Wochenblick, Schnellsuche ⌘K, „Stunde starten“, Gruppen zusammenführen, neue Einstellungen, Timer-Abläufe, Mini-Timer und der Timer „Moka“.',
-    'Gruppo is now called Aula – your classes, seating plans and settings are all still there. Plus: Liquid Glass, an overview with day band and week view, quick search ⌘K, “Start lesson”, combining groups, new settings, timer sequences, mini timer and the “Moka” timer.',
+    'Gruppo heißt jetzt Aula – deine Klassen, Sitzpläne und Einstellungen sind alle noch da. Dazu: Liquid Glass, Übersicht mit Tagesband und Wochenblick, Schnellsuche ⌘K, „Stunde starten“, Kalender mit Ferien und Schulterminen, Statistik mit Arbeitszeit, Gruppen zusammenführen, neue Einstellungen, Timer-Abläufe, Mini-Timer und der Timer „Moka“.',
+    'Gruppo is now called Aula – your classes, seating plans and settings are all still there. Plus: Liquid Glass, an overview with day band and week view, quick search ⌘K, “Start lesson”, a calendar with holidays and school events, statistics with working time, combining groups, new settings, timer sequences, mini timer and the “Moka” timer.',
     'Gruppo ora si chiama Aula – classi, piantine e impostazioni sono tutte ancora lì. In più: Liquid Glass, panoramica con giornata e settimana, ricerca rapida ⌘K, “Inizia lezione”, sequenze di timer, mini timer e il timer “Moka”.',
     'Gruppo s’appelle désormais Aula – vos classes, plans et réglages sont toujours là. En plus : Liquid Glass, aperçu avec journée et semaine, recherche rapide ⌘K, « Commencer le cours », séquences de minuteurs, mini-minuteur et le minuteur « Moka ».',
     'Gruppo ahora se llama Aula: tus clases, planos y ajustes siguen ahí. Además: Liquid Glass, resumen con día y semana, búsqueda rápida ⌘K, “Empezar clase”, secuencias de temporizador, mini temporizador y el temporizador “Moka”.'],
@@ -4643,7 +4929,7 @@ Object.assign(X, {
   dGo: ['Los geht’s', 'Let’s go', 'Si parte', 'C’est parti', 'Vamos'],
   vDash: ['Übersicht', 'Overview', 'Panoramica', 'Aperçu', 'Resumen'],
   vGroups: ['Gruppen', 'Groups', 'Gruppi', 'Groupes', 'Grupos'],
-  vNav: ['Ansicht', 'View', 'Vista', 'Vue', 'Vista'],
+  vNav: ['Planen', 'Plan', 'Pianificare', 'Planifier', 'Planificar'],
   dfToday: ['Heute', 'Today', 'Oggi', 'Aujourd’hui', 'Hoy'],
   dfClasses: ['Klassen', 'Classes', 'Classi', 'Classes', 'Clases'],
   dfTeach: ['Unterricht', 'Lesson', 'Lezione', 'Cours', 'Clase'],
@@ -4721,7 +5007,7 @@ Object.assign(X, {
   tog.onclick = () => { wt.sb = wt.sb === 'min' ? '' : 'min'; saveTool(); document.body.dataset.sb = wt.sb || ''; sbDraw(); setTimeout(() => { try { fitBoard(); } catch (e) {} }, 260); };
   document.body.dataset.sb = wt.sb === 'min' ? 'min' : '';
   /* Kürzel */
-  const KEYS = [['vDashBtn', '1'], ['vGroupsBtn', '2'], ['tmBtn', '3'], ['clBtn', '4'], ['pkBtn', '5'], ['spBtn', '6'], ['stBtn', '7']];
+  const KEYS = [['vDashBtn', '1'], ['stBtn', '2'], ['kaBtn', '3'], ['statBtn', '4'], ['vGroupsBtn', '5'], ['tmBtn', '6'], ['pkBtn', '7'], ['spBtn', '8'], ['clBtn', '9']];
   KEYS.forEach(([id, k]) => { const b = $d(id); if (b) { b.dataset.kbd = (isMac ? '⌘' : 'Ctrl+') + k; b.title = (b.textContent || '').trim() + '  ' + b.dataset.kbd; } });
   addEventListener('keydown', e => {
     if (!(isMac ? e.metaKey : e.ctrlKey) || e.shiftKey || e.altKey) return; if (document.querySelector('dialog[open]')) return;
@@ -4915,6 +5201,8 @@ Object.assign(X, {
       tile(IC.beam, lastResult ? x('dBeamer') : x('dBeamerOff'), 'var(--g3)', () => { setView('groups'); const f = $d('fsBtn'); if (f) f.click(); }, !lastResult));
     if (wt.seat && wt.seat.on) g.append(tile(IC.seat, x('sp'), 'var(--g6)', () => { toPlanCls(); $d('spBtn').click(); }));
     if (wt.plan && wt.plan.on) g.append(tile(IC.plan, x('stOn'), 'var(--g8)', () => $d('stBtn').click()));
+    if (window._kalOpen) g.append(tile(ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'), x('kaOn'), 'var(--g2)', () => window._kalOpen()));
+    if (window._statOpen) g.append(tile(ic('<path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6.5" rx="1"/><rect x="10.5" y="6.5" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8.5" rx="1"/>'), x('saOn'), 'var(--g4)', () => window._statOpen()));
     if ($d('ampBtn') && !$d('ampBtn').hidden) g.append(tile(IC.amp, x('ampBtn'), 'var(--g7)', () => $d('ampBtn').click()));
     host.appendChild(g);
   }
@@ -5448,7 +5736,7 @@ const EV = {
   hWeltkind: [
     ['Tag der Kinderrechte (20. September). Gesetzlicher Feiertag nur in Thüringen.', 'Day of children’s rights (20 September). A public holiday only in Thuringia.', 'Giornata dei diritti dei bambini (20 settembre). Festivo solo in Turingia.', 'Journée des droits de l’enfant (20 septembre). Férié seulement en Thuringe.', 'Día de los derechos del niño (20 de septiembre). Festivo solo en Turingia.'], null],
 };
-const FERD = {"BW":[["H","2026-10-26","2026-10-30"],["B","2026-10-31","2026-10-31"],["W","2026-12-23","2027-01-09"],["O","2027-03-30","2027-04-03"],["B","2027-03-25","2027-03-25"],["P","2027-05-18","2027-05-29"],["S","2027-07-29","2027-09-11"],["H","2027-11-02","2027-11-06"],["W","2027-12-23","2028-01-08"],["B","2028-04-13","2028-04-13"],["O","2028-04-18","2028-04-22"],["P","2028-06-06","2028-06-17"],["S","2028-07-27","2028-09-09"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["O","2029-03-26","2029-04-07"],["P","2029-05-22","2029-06-01"],["S","2029-07-26","2029-09-08"]],"BY":[["H","2026-11-02","2026-11-06"],["W","2026-12-24","2027-01-08"],["F","2027-02-08","2027-02-12"],["O","2027-03-22","2027-04-02"],["P","2027-05-18","2027-05-28"],["S","2027-08-02","2027-09-13"],["H","2027-11-02","2027-11-05"],["W","2027-12-24","2028-01-07"],["F","2028-02-28","2028-03-03"],["O","2028-04-10","2028-04-21"],["P","2028-06-06","2028-06-16"],["S","2028-07-31","2028-09-11"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-06-01"],["S","2029-07-30","2029-09-10"],["H","2029-10-29","2029-11-02"],["W","2029-12-24","2030-01-04"],["F","2030-03-04","2030-03-08"],["O","2030-04-15","2030-04-26"],["P","2030-06-11","2030-06-21"],["S","2030-07-29","2030-09-09"]],"BE":[["H","2026-10-19","2026-10-31"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-18","2027-05-19"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-22","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["P","2028-06-01","2028-06-02"],["S","2028-07-01","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["B","2029-03-09","2029-03-09"],["O","2029-03-26","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-22","2029-05-25"],["S","2029-07-01","2029-08-11"]],"BB":[["H","2026-10-19","2026-10-30"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["S","2028-06-29","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["O","2029-03-26","2029-04-06"],["B","2029-05-22","2029-05-22"],["S","2029-06-28","2029-08-11"]],"HB":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-08","2027-08-18"],["H","2027-10-18","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"HH":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-01"],["B","2027-01-29","2027-01-29"],["F","2027-03-01","2027-03-12"],["P","2027-05-07","2027-05-14"],["S","2027-07-01","2027-08-11"],["H","2027-10-11","2027-10-22"],["W","2027-12-20","2027-12-31"],["B","2028-01-28","2028-01-28"],["F","2028-03-06","2028-03-17"],["P","2028-05-22","2028-05-26"],["S","2028-07-03","2028-08-11"],["H","2028-10-02","2028-10-13"],["B","2028-10-30","2028-10-30"],["W","2028-12-18","2028-12-29"],["B","2029-02-02","2029-02-02"],["F","2029-03-05","2029-03-16"],["P","2029-05-11","2029-05-18"],["S","2029-07-02","2029-08-10"]],"HE":[["H","2026-10-05","2026-10-17"],["W","2026-12-23","2027-01-12"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-16"],["W","2027-12-23","2028-01-11"],["O","2028-04-03","2028-04-14"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-27","2029-01-12"],["O","2029-03-29","2029-04-13"],["S","2029-07-16","2029-08-24"]],"MV":[["H","2026-10-15","2026-10-24"],["W","2026-12-21","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-24","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-14","2027-05-18"],["S","2027-07-05","2027-08-14"],["H","2027-10-14","2027-10-23"],["W","2027-12-22","2028-01-04"],["F","2028-02-05","2028-02-18"],["O","2028-04-12","2028-04-21"],["B","2028-05-26","2028-05-26"],["P","2028-06-02","2028-06-06"],["S","2028-06-26","2028-08-05"],["H","2028-10-23","2028-10-28"],["B","2028-10-02","2028-10-02"],["B","2028-10-30","2028-10-30"],["W","2028-12-22","2029-01-02"],["F","2029-02-05","2029-02-16"],["B","2029-03-09","2029-03-09"],["O","2029-03-28","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-18","2029-05-22"],["S","2029-06-18","2029-07-28"]],"NI":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-02","2027-08-12"],["H","2027-10-16","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"NW":[["H","2026-10-17","2026-10-31"],["W","2026-12-23","2027-01-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-19","2027-08-31"],["H","2027-10-23","2027-11-06"],["W","2027-12-24","2028-01-08"],["O","2028-04-10","2028-04-22"],["S","2028-07-10","2028-08-22"],["H","2028-10-23","2028-11-04"],["W","2028-12-21","2029-01-05"],["O","2029-03-26","2029-04-07"],["B","2029-05-22","2029-05-22"],["S","2029-07-02","2029-08-14"]],"RP":[["H","2026-10-05","2026-10-16"],["W","2026-12-23","2027-01-08"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-23","2028-01-07"],["O","2028-04-10","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-21","2029-01-08"],["O","2029-03-26","2029-04-06"],["S","2029-07-16","2029-08-24"]],"SL":[["H","2026-10-05","2026-10-16"],["W","2026-12-21","2026-12-31"],["F","2027-02-08","2027-02-12"],["O","2027-03-30","2027-04-09"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-20","2027-12-31"],["F","2028-02-21","2028-02-29"],["O","2028-04-12","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-20","2029-01-02"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-05-25"],["S","2029-07-16","2029-08-24"]],"SN":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-26","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-15","2027-05-18"],["S","2027-07-10","2027-08-20"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-01"],["F","2028-02-14","2028-02-26"],["O","2028-04-14","2028-04-22"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-03"],["F","2029-02-05","2029-02-16"],["O","2029-03-29","2029-04-06"],["B","2029-05-11","2029-05-11"],["P","2029-05-19","2029-05-22"],["S","2029-07-21","2029-08-31"]],"ST":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-03-27"],["P","2027-05-15","2027-05-22"],["S","2027-07-10","2027-08-20"],["H","2027-10-18","2027-10-23"],["W","2027-12-20","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-10","2028-04-22"],["P","2028-06-03","2028-06-10"],["S","2028-07-22","2028-09-01"],["H","2028-10-30","2028-11-03"],["B","2028-10-02","2028-10-02"],["W","2028-12-21","2029-01-02"],["F","2029-02-05","2029-02-10"],["O","2029-03-26","2029-03-31"],["B","2029-04-30","2029-04-30"],["P","2029-05-11","2029-05-25"],["S","2029-07-21","2029-08-31"]],"SH":[["H","2026-10-12","2026-10-24"],["W","2026-12-21","2027-01-06"],["O","2027-03-30","2027-04-10"],["B","2027-05-07","2027-05-07"],["S","2027-07-03","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-08"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-06-24","2028-08-04"],["H","2028-10-16","2028-10-30"],["W","2028-12-21","2029-01-05"],["O","2029-03-23","2029-04-06"],["B","2029-05-11","2029-05-11"],["S","2029-06-23","2029-08-03"]],"TH":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["S","2027-07-10","2027-08-20"],["H","2027-10-09","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-17"],["O","2029-03-26","2029-04-07"],["B","2029-05-11","2029-05-11"],["S","2029-07-21","2029-08-31"]]};
+const FERD = {"BW":[["H","2026-10-26","2026-10-30"],["B","2026-10-31","2026-10-31"],["W","2026-12-23","2027-01-09"],["O","2027-03-30","2027-04-03"],["B","2027-03-25","2027-03-25"],["P","2027-05-18","2027-05-29"],["S","2027-07-29","2027-09-11"],["H","2027-11-02","2027-11-06"],["W","2027-12-23","2028-01-08"],["B","2028-04-13","2028-04-13"],["O","2028-04-18","2028-04-22"],["P","2028-06-06","2028-06-17"],["S","2028-07-27","2028-09-09"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["O","2029-03-26","2029-04-07"],["P","2029-05-22","2029-06-01"],["S","2029-07-26","2029-09-08"]],"BY":[["S","2026-08-03","2026-09-14"],["H","2026-11-02","2026-11-06"],["W","2026-12-24","2027-01-08"],["F","2027-02-08","2027-02-12"],["O","2027-03-22","2027-04-02"],["P","2027-05-18","2027-05-28"],["S","2027-08-02","2027-09-13"],["H","2027-11-02","2027-11-05"],["W","2027-12-24","2028-01-07"],["F","2028-02-28","2028-03-03"],["O","2028-04-10","2028-04-21"],["P","2028-06-06","2028-06-16"],["S","2028-07-31","2028-09-11"],["H","2028-10-30","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-06-01"],["S","2029-07-30","2029-09-10"],["H","2029-10-29","2029-11-02"],["W","2029-12-24","2030-01-04"],["F","2030-03-04","2030-03-08"],["O","2030-04-15","2030-04-26"],["P","2030-06-11","2030-06-21"],["S","2030-07-29","2030-09-09"]],"BE":[["H","2026-10-19","2026-10-31"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-18","2027-05-19"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-22","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["P","2028-06-01","2028-06-02"],["S","2028-07-01","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["B","2029-03-09","2029-03-09"],["O","2029-03-26","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-22","2029-05-25"],["S","2029-07-01","2029-08-11"]],"BB":[["H","2026-10-19","2026-10-30"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-01","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-01-31","2028-02-05"],["O","2028-04-10","2028-04-22"],["S","2028-06-29","2028-08-12"],["H","2028-10-02","2028-10-14"],["W","2028-12-22","2029-01-02"],["F","2029-01-29","2029-02-03"],["O","2029-03-26","2029-04-06"],["B","2029-05-22","2029-05-22"],["S","2029-06-28","2029-08-11"]],"HB":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-08","2027-08-18"],["H","2027-10-18","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"HH":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-01"],["B","2027-01-29","2027-01-29"],["F","2027-03-01","2027-03-12"],["P","2027-05-07","2027-05-14"],["S","2027-07-01","2027-08-11"],["H","2027-10-11","2027-10-22"],["W","2027-12-20","2027-12-31"],["B","2028-01-28","2028-01-28"],["F","2028-03-06","2028-03-17"],["P","2028-05-22","2028-05-26"],["S","2028-07-03","2028-08-11"],["H","2028-10-02","2028-10-13"],["B","2028-10-30","2028-10-30"],["W","2028-12-18","2028-12-29"],["B","2029-02-02","2029-02-02"],["F","2029-03-05","2029-03-16"],["P","2029-05-11","2029-05-18"],["S","2029-07-02","2029-08-10"]],"HE":[["H","2026-10-05","2026-10-17"],["W","2026-12-23","2027-01-12"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-16"],["W","2027-12-23","2028-01-11"],["O","2028-04-03","2028-04-14"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-27","2029-01-12"],["O","2029-03-29","2029-04-13"],["S","2029-07-16","2029-08-24"]],"MV":[["H","2026-10-15","2026-10-24"],["W","2026-12-21","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-24","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-14","2027-05-18"],["S","2027-07-05","2027-08-14"],["H","2027-10-14","2027-10-23"],["W","2027-12-22","2028-01-04"],["F","2028-02-05","2028-02-18"],["O","2028-04-12","2028-04-21"],["B","2028-05-26","2028-05-26"],["P","2028-06-02","2028-06-06"],["S","2028-06-26","2028-08-05"],["H","2028-10-23","2028-10-28"],["B","2028-10-02","2028-10-02"],["B","2028-10-30","2028-10-30"],["W","2028-12-22","2029-01-02"],["F","2029-02-05","2029-02-16"],["B","2029-03-09","2029-03-09"],["O","2029-03-28","2029-04-06"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["P","2029-05-18","2029-05-22"],["S","2029-06-18","2029-07-28"]],"NI":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-09"],["F","2027-02-01","2027-02-02"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["B","2027-05-18","2027-05-18"],["S","2027-07-02","2027-08-12"],["H","2027-10-16","2027-10-30"],["W","2027-12-23","2028-01-08"],["F","2028-01-31","2028-02-01"],["O","2028-04-10","2028-04-22"],["B","2028-05-26","2028-05-26"],["B","2028-06-06","2028-06-06"],["S","2028-07-20","2028-08-30"],["H","2028-10-23","2028-11-04"],["B","2028-10-02","2028-10-02"],["W","2028-12-27","2029-01-06"],["F","2029-02-01","2029-02-02"],["O","2029-03-19","2029-04-03"],["B","2029-04-30","2029-04-30"],["B","2029-05-11","2029-05-11"],["B","2029-05-22","2029-05-22"],["S","2029-07-19","2029-08-29"]],"NW":[["H","2026-10-17","2026-10-31"],["W","2026-12-23","2027-01-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-18","2027-05-18"],["S","2027-07-19","2027-08-31"],["H","2027-10-23","2027-11-06"],["W","2027-12-24","2028-01-08"],["O","2028-04-10","2028-04-22"],["S","2028-07-10","2028-08-22"],["H","2028-10-23","2028-11-04"],["W","2028-12-21","2029-01-05"],["O","2029-03-26","2029-04-07"],["B","2029-05-22","2029-05-22"],["S","2029-07-02","2029-08-14"]],"RP":[["H","2026-10-05","2026-10-16"],["W","2026-12-23","2027-01-08"],["O","2027-03-22","2027-04-02"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-23","2028-01-07"],["O","2028-04-10","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-21","2029-01-08"],["O","2029-03-26","2029-04-06"],["S","2029-07-16","2029-08-24"]],"SL":[["H","2026-10-05","2026-10-16"],["W","2026-12-21","2026-12-31"],["F","2027-02-08","2027-02-12"],["O","2027-03-30","2027-04-09"],["S","2027-06-28","2027-08-06"],["H","2027-10-04","2027-10-15"],["W","2027-12-20","2027-12-31"],["F","2028-02-21","2028-02-29"],["O","2028-04-12","2028-04-21"],["S","2028-07-03","2028-08-11"],["H","2028-10-09","2028-10-20"],["W","2028-12-20","2029-01-02"],["F","2029-02-12","2029-02-16"],["O","2029-03-26","2029-04-06"],["P","2029-05-22","2029-05-25"],["S","2029-07-16","2029-08-24"]],"SN":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-08","2027-02-19"],["O","2027-03-26","2027-04-02"],["B","2027-05-07","2027-05-07"],["P","2027-05-15","2027-05-18"],["S","2027-07-10","2027-08-20"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-01"],["F","2028-02-14","2028-02-26"],["O","2028-04-14","2028-04-22"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-03"],["F","2029-02-05","2029-02-16"],["O","2029-03-29","2029-04-06"],["B","2029-05-11","2029-05-11"],["P","2029-05-19","2029-05-22"],["S","2029-07-21","2029-08-31"]],"ST":[["H","2026-10-19","2026-10-30"],["W","2026-12-21","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-03-27"],["P","2027-05-15","2027-05-22"],["S","2027-07-10","2027-08-20"],["H","2027-10-18","2027-10-23"],["W","2027-12-20","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-10","2028-04-22"],["P","2028-06-03","2028-06-10"],["S","2028-07-22","2028-09-01"],["H","2028-10-30","2028-11-03"],["B","2028-10-02","2028-10-02"],["W","2028-12-21","2029-01-02"],["F","2029-02-05","2029-02-10"],["O","2029-03-26","2029-03-31"],["B","2029-04-30","2029-04-30"],["P","2029-05-11","2029-05-25"],["S","2029-07-21","2029-08-31"]],"SH":[["H","2026-10-12","2026-10-24"],["W","2026-12-21","2027-01-06"],["O","2027-03-30","2027-04-10"],["B","2027-05-07","2027-05-07"],["S","2027-07-03","2027-08-14"],["H","2027-10-11","2027-10-23"],["W","2027-12-23","2028-01-08"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-06-24","2028-08-04"],["H","2028-10-16","2028-10-30"],["W","2028-12-21","2029-01-05"],["O","2029-03-23","2029-04-06"],["B","2029-05-11","2029-05-11"],["S","2029-06-23","2029-08-03"]],"TH":[["H","2026-10-12","2026-10-24"],["W","2026-12-23","2027-01-02"],["F","2027-02-01","2027-02-06"],["O","2027-03-22","2027-04-03"],["B","2027-05-07","2027-05-07"],["S","2027-07-10","2027-08-20"],["H","2027-10-09","2027-10-23"],["W","2027-12-23","2027-12-31"],["F","2028-02-07","2028-02-12"],["O","2028-04-03","2028-04-15"],["B","2028-05-26","2028-05-26"],["S","2028-07-22","2028-09-01"],["H","2028-10-23","2028-11-03"],["W","2028-12-23","2029-01-05"],["F","2029-02-12","2029-02-17"],["O","2029-03-26","2029-04-07"],["B","2029-05-11","2029-05-11"],["S","2029-07-21","2029-08-31"]]};
 const REL = [["j","jRosch","2026-09-12","2026-09-13"],["j","jKippur","2026-09-21","2026-09-21"],["j","jSukkot","2026-09-26","2026-10-02"],["j","jSimchat","2026-10-04","2026-10-04"],["j","jChanukka","2026-12-05","2026-12-12"],["m","mRamadan","2027-02-08","2027-02-08"],["m","mQadr","2027-03-06","2027-03-06"],["m","mFitr","2027-03-09","2027-03-11"],["j","jPurim","2027-03-23","2027-03-23"],["j","jPessach","2027-04-22","2027-04-29"],["m","mAdha","2027-05-16","2027-05-19"],["m","mNeujahr","2027-06-06","2027-06-06"],["j","jSchawuot","2027-06-11","2027-06-12"],["m","mAschura","2027-06-15","2027-06-15"],["m","mMawlid","2027-08-14","2027-08-14"],["j","jRosch","2027-10-02","2027-10-03"],["j","jKippur","2027-10-11","2027-10-11"],["j","jSukkot","2027-10-16","2027-10-22"],["j","jSimchat","2027-10-24","2027-10-24"],["j","jChanukka","2027-12-25","2028-01-01"],["m","mRamadan","2028-01-28","2028-01-28"],["m","mQadr","2028-02-23","2028-02-23"],["m","mFitr","2028-02-26","2028-02-28"],["j","jPurim","2028-03-12","2028-03-12"],["j","jPessach","2028-04-11","2028-04-18"],["m","mAdha","2028-05-05","2028-05-08"],["m","mNeujahr","2028-05-25","2028-05-25"],["j","jSchawuot","2028-05-31","2028-06-01"],["m","mAschura","2028-06-03","2028-06-03"],["m","mMawlid","2028-08-03","2028-08-03"],["j","jRosch","2028-09-21","2028-09-22"],["j","jKippur","2028-09-30","2028-09-30"],["j","jSukkot","2028-10-05","2028-10-11"],["j","jSimchat","2028-10-13","2028-10-13"],["j","jChanukka","2028-12-13","2028-12-20"],["m","mRamadan","2029-01-16","2029-01-16"],["m","mQadr","2029-02-11","2029-02-11"],["m","mFitr","2029-02-14","2029-02-16"],["j","jPurim","2029-03-01","2029-03-01"],["j","jPessach","2029-03-31","2029-04-07"],["m","mAdha","2029-04-24","2029-04-27"],["m","mNeujahr","2029-05-14","2029-05-14"],["j","jSchawuot","2029-05-20","2029-05-21"],["m","mAschura","2029-05-23","2029-05-23"],["m","mMawlid","2029-07-24","2029-07-24"],["j","jRosch","2029-09-10","2029-09-11"],["j","jKippur","2029-09-19","2029-09-19"],["j","jSukkot","2029-09-24","2029-09-30"],["j","jSimchat","2029-10-02","2029-10-02"],["j","jChanukka","2029-12-02","2029-12-09"],["m","mRamadan","2030-01-05","2030-01-05"],["m","mQadr","2030-01-31","2030-01-31"],["m","mFitr","2030-02-04","2030-02-06"],["j","jPurim","2030-03-19","2030-03-19"],["m","mAdha","2030-04-13","2030-04-16"],["j","jPessach","2030-04-18","2030-04-25"],["m","mNeujahr","2030-05-03","2030-05-03"],["m","mAschura","2030-05-12","2030-05-12"],["j","jSchawuot","2030-06-07","2030-06-08"],["m","mMawlid","2030-07-13","2030-07-13"],["j","jRosch","2030-09-28","2030-09-29"],["j","jKippur","2030-10-07","2030-10-07"],["j","jSukkot","2030-10-12","2030-10-18"],["j","jSimchat","2030-10-20","2030-10-20"],["j","jChanukka","2030-12-21","2030-12-28"],["m","mRamadan","2030-12-26","2030-12-26"]];
 
 Object.assign(X, {
@@ -5463,6 +5751,34 @@ Object.assign(X, {
   evShort: ['Kurzstunden einschalten', 'Turn on short lessons', 'Attiva le lezioni brevi', 'Activer les cours courts', 'Activar clases cortas'],
   evTitle: ['Termine', 'Events', 'Eventi', 'Événements', 'Eventos'],
   evNoDay: ['Nichts eingetragen.', 'Nothing scheduled.', 'Niente in programma.', 'Rien de prévu.', 'Nada previsto.'],
+  fdAdd: ['Abonnieren', 'Subscribe', 'Iscriviti', 'S’abonner', 'Suscribirse'],
+  fdRefresh: ['Jetzt aktualisieren', 'Refresh now', 'Aggiorna ora', 'Actualiser', 'Actualizar'],
+  fdBusy: ['Wird aktualisiert …', 'Updating …', 'Aggiornamento …', 'Mise à jour …', 'Actualizando …'],
+  fdStat: ['{0} Termine · aktualisiert {1}', '{0} events · updated {1}', '{0} eventi · aggiornato {1}', '{0} événements · mis à jour {1}', '{0} eventos · actualizado {1}'],
+  fdNow: ['gerade eben', 'just now', 'adesso', 'à l’instant', 'ahora mismo'],
+  fdMin: ['vor {0} Min.', '{0} min ago', '{0} min fa', 'il y a {0} min', 'hace {0} min'],
+  fdErrShort: ['Konnte nicht geladen werden – Link prüfen', 'Could not be loaded – check the link', 'Impossibile caricare – controlla il link', 'Chargement impossible – vérifie le lien', 'No se pudo cargar – revisa el enlace'],
+  fdErr: ['Der Kalender konnte nicht geladen werden. Stimmt der Link?', 'The calendar could not be loaded. Is the link correct?', 'Impossibile caricare il calendario.', 'Impossible de charger le calendrier.', 'No se pudo cargar el calendario.'],
+  fdOk: ['{0} Termine geladen', '{0} events loaded', '{0} eventi caricati', '{0} événements chargés', '{0} eventos cargados'],
+  fdBadUrl: ['Bitte einen Kalender-Link einfügen (beginnt mit https:// oder webcal://).', 'Please paste a calendar link (https:// or webcal://).', 'Incolla un link (https:// o webcal://).', 'Colle un lien (https:// ou webcal://).', 'Pega un enlace (https:// o webcal://).'],
+  fdDup: ['Dieser Kalender ist schon abonniert.', 'Already subscribed.', 'Già iscritto.', 'Déjà abonné.', 'Ya suscrito.'],
+  fdDelQ: ['Dieses Abo entfernen? Seine Termine verschwinden aus Aula.', 'Remove this subscription? Its events disappear from Aula.', 'Rimuovere questo abbonamento?', 'Supprimer cet abonnement ?', '¿Quitar esta suscripción?'],
+  fdHelp: ['Kalender-Link (ICS oder webcal) z. B. aus dem Infoportal, WebUntis, Outlook, Google oder einem Ferienkalender einfügen. Mehrere Abos sind möglich.', 'Paste a calendar link (ICS or webcal), e.g. from your school portal, Outlook, Google or a holiday calendar. Several are possible.', 'Incolla un link (ICS o webcal). Sono possibili più abbonamenti.', 'Colle un lien (ICS ou webcal). Plusieurs abonnements possibles.', 'Pega un enlace (ICS o webcal). Se admiten varios.'],
+  fdPhone: ['Auf dem iPhone werden Abos über den Abgleich vom Mac aktualisiert.', 'On the iPhone, subscriptions are updated via sync from the Mac.', 'Su iPhone gli abbonamenti arrivano dalla sincronizzazione con il Mac.', 'Sur l’iPhone, les abonnements arrivent par la synchro du Mac.', 'En el iPhone, las suscripciones llegan por la sincronización del Mac.'],
+  fdMix: ['Zusätzlich sind {0} Termine aus einer Datei geladen. Doppelte werden zusammengefasst.', 'There are also {0} events from a file. Duplicates are merged.', 'Ci sono anche {0} eventi da file. I doppioni vengono uniti.', 'Il y a aussi {0} événements d’un fichier. Les doublons sont fusionnés.', 'Hay además {0} eventos de un archivo. Los duplicados se unen.'],
+  fdDropCsv: ['Nur noch Abos verwenden', 'Use subscriptions only', 'Usa solo abbonamenti', 'Utiliser seulement les abonnements', 'Usar solo suscripciones'],
+  fdAuto: ['Abos automatisch aktualisieren', 'Update subscriptions automatically', 'Aggiorna automaticamente', 'Mise à jour automatique', 'Actualizar automáticamente'],
+  fdAutoNote: ['Beim Start und alle 3 Stunden.', 'At start and every 3 hours.', 'All’avvio e ogni 3 ore.', 'Au démarrage et toutes les 3 heures.', 'Al iniciar y cada 3 horas.'],
+  fdDedupe: ['Kommt ein Termin in mehreren Quellen vor – auch leicht anders geschrieben –, zeigt Aula ihn nur einmal. Ferien und Feiertage aus Abos werden mit den eingebauten abgeglichen; Ferien-Abos ergänzen Jahre, für die Aula noch keine Daten hat.', 'Events found in several sources – even spelled slightly differently – are shown once. Holidays from subscriptions are matched with the built-in ones.', 'Gli eventi presenti in più fonti vengono mostrati una sola volta.', 'Les événements présents dans plusieurs sources ne sont affichés qu’une fois.', 'Los eventos de varias fuentes se muestran una sola vez.'],
+  csvTitle: ['Kalender-Datei (CSV)', 'Calendar file (CSV)', 'File calendario (CSV)', 'Fichier calendrier (CSV)', 'Archivo de calendario (CSV)'],
+  csvImp: ['Datei wählen …', 'Choose file …', 'Scegli file …', 'Choisir un fichier …', 'Elegir archivo …'],
+  csvDelQ: ['Die Termine aus der Datei entfernen?', 'Remove the events from the file?', 'Rimuovere gli eventi del file?', 'Supprimer les événements du fichier ?', '¿Quitar los eventos del archivo?'],
+  evMineNote: ['Erkennt z. B. „Jgst. 9“ oder „Klasse 9F“ im Titel.', 'Detects e.g. “Year 9” or “class 9F” in the title.', 'Riconosce p. es. „classe 9F“ nel titolo.', 'Reconnaît p. ex. « classe 9F » dans le titre.', 'Reconoce p. ej. «clase 9F» en el título.'],
+  kaMonth: ['Monat', 'Month', 'Mese', 'Mois', 'Mes'],
+  kaYear: ['Schuljahr', 'School year', 'Anno scolastico', 'Année scolaire', 'Curso escolar'],
+  kaList: ['Liste', 'List', 'Elenco', 'Liste', 'Lista'],
+  kwShow: ['Kalenderwochen anzeigen', 'Show week numbers', 'Mostra numeri di settimana', 'Afficher les numéros de semaine', 'Mostrar números de semana'],
+  kaStartV: ['Kalender öffnet mit', 'Calendar opens with', 'Il calendario si apre con', 'Le calendrier s’ouvre sur', 'El calendario abre con'],
   evMore: ['Das steht an', 'Coming up', 'In arrivo', 'À venir', 'Próximamente']
 });
 (function () {
@@ -5496,7 +5812,7 @@ Object.assign(X, {
   const fkey = (land, k) => k === 'F' ? (land === 'BY' ? 'fFasching' : 'fWinter') : FKEY[k];
   function info(d) {
     d = day0(d); const land = cfg().land, h = holidays(d.getFullYear(), land)[iso(d)]; if (h) return { kind: 'feiertag', key: h };
-    const f = (FR[land] || []).find(r => d >= r.a && d <= r.b); if (f) return { kind: f.k === 'B' ? 'frei' : 'ferien', key: fkey(land, f.k), until: f.b };
+    const f = ferAll(land).find(r => d >= r.a && d <= r.b); if (f) return { kind: f.k === 'B' ? 'frei' : 'ferien', key: f.key || fkey(land, f.k), until: f.b };
     if (wd(d) > 4) return { kind: 'we', key: 'calWe' };
     return null;
   }
@@ -5541,9 +5857,12 @@ Object.assign(X, {
   }
 
   /* ===== Schulkalender (CSV-Import): nur Titel, Datum, Uhrzeit – eigener Speicherschlüssel, wird mit dem iPhone abgeglichen ===== */
-  const EVK = 'gb_events'; let evRaw = null, evVal = [];
-  const getEv = () => { let r = null; try { r = localStorage.getItem(EVK); } catch (e) {} if (r !== evRaw) { evRaw = r; try { const o = JSON.parse(r || 'null'); evVal = o && Array.isArray(o.ev) ? o.ev : []; } catch (e) { evVal = []; } } return evVal; };
-  const setEv = a => { try { if (a && a.length) localStorage.setItem(EVK, JSON.stringify({ ev: a })); else localStorage.removeItem(EVK); } catch (e) {} };
+  const EVK = 'gb_events'; let evRaw = null, evObj = { ev: [], feeds: [] }, DC = null;
+  const getObj = () => { let r = null; try { r = localStorage.getItem(EVK); } catch (e) {} if (r !== evRaw) { evRaw = r; DC = null; try { const o = JSON.parse(r || 'null'); evObj = { ev: o && Array.isArray(o.ev) ? o.ev : [], feeds: o && Array.isArray(o.feeds) ? o.feeds : [] }; } catch (e) { evObj = { ev: [], feeds: [] }; } } return evObj; };
+  const getEv = () => getObj().ev;
+  const saveObj = o => { try { const ev = (o.ev || []).slice(0, 6000), feeds = o.feeds || []; if (ev.length || feeds.length) localStorage.setItem(EVK, JSON.stringify({ ev, feeds })); else localStorage.removeItem(EVK); } catch (e) {} };
+  const setEv = a => { const o = getObj(); saveObj({ ev: a || [], feeds: o.feeds }); };
+  const srcOf = e => e.s || 'c';
   { const c0 = cfg(); if (Array.isArray(c0.ev) && c0.ev.length) { if (!getEv().length) setEv(c0.ev); delete c0.ev; saveTool(); } }
   function csvRows(t) {
     t = String(t).replace(/^﻿/, ''); const first = t.split(/\r?\n/)[0] || ''; const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';' : ',';
@@ -5569,7 +5888,7 @@ Object.assign(X, {
       const k = a + '|' + ev.b + '|' + (ev.tm || '') + '|' + ti; if (seen[k]) return; seen[k] = 1; out.push(ev);
     });
     if (!out.length) return -1; out.sort((p, q) => p.a < q.a ? -1 : p.a > q.a ? 1 : (p.tm || '') < (q.tm || '') ? -1 : 1);
-    setEv(out); return out.length;
+    const o = getObj(); saveObj({ ev: o.ev.filter(e => srcOf(e) !== 'c').concat(out.map(e => Object.assign(e, { s: 'c' }))), feeds: o.feeds }); return out.length;
   }
   function myCls() { return Object.keys(classes).map(n => { const q = /^Q\s*(1[23])/i.exec(n.trim()), m = /^(\d{1,2})\s*([A-Za-z]*)/.exec(n.trim()); return q ? { g: +q[1], l: '' } : m ? { g: +m[1], l: m[2].toLowerCase() } : null; }).filter(Boolean); }
   function evHint(t) {
@@ -5593,10 +5912,124 @@ Object.assign(X, {
     const m = /Unterrichtsschluss[^:;]*?:\s*(\d{1,2})[.:](\d{2})\s*Uhr/i.exec(ev.ti); if (m) { o.end = pad(+m[1]) + ':' + m[2]; o.short = /nach\s*6\s*Kurzstunden/i.test(ev.ti); }
     return o;
   }
-  const evOk = ev => { if (/ferien\b/i.test(ev.ti)) { const i = info(pd(ev.a)); if (i && i.kind !== 'we') return false; } return evMineOk(ev); };
-  function evOn(d) { d = iso(day0(d)); return getEv().filter(e => e.a <= d && e.b >= d && evOk(e)).map(evInfo); }
-  function evNext(d, n, days) { const a = iso(day0(d)), z = iso(add(day0(d), days || 30)); return getEv().filter(e => e.b >= a && e.a <= z && e.a >= a && evOk(e)).slice(0, n).map(evInfo).map(o => ({ ...o, days: Math.round((o.a - day0(d)) / 864e5) })); }
-  window._cal = { evOn, evNext, evCount: () => getEv().length, info, free, backDay, upcoming, obs, show, holidays: (y) => holidays(y, cfg().land), LANDS };
+  /* ===== Mehrere Quellen (CSV + Kalender-Abos): Doppeltes zusammenfassen, Ferien/Feiertage mit den eingebauten abgleichen ===== */
+  const fold2 = t => String(t || '').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const STOP = new Set('der die das den dem des und oder fuer im in am an zum zur von vom mit bei auf aus ein eine einer alle ab bis the a of to and for'.split(' '));
+  const toks = t => fold2(t).split(' ').filter(w => w.length > 1 && !STOP.has(w));
+  function similar(p, q) {
+    const a = fold2(p).replace(/ /g, ''), b = fold2(q).replace(/ /g, ''); if (!a || !b) return false; if (a === b) return true;
+    if (Math.min(a.length, b.length) >= 6 && (a.includes(b) || b.includes(a))) return true;
+    const A = new Set(toks(p)), B = new Set(toks(q)); if (!A.size || !B.size) return false; let n = 0; A.forEach(w => { if (B.has(w)) n++; });
+    return n / Math.min(A.size, B.size) >= .75 || n / (A.size + B.size - n) >= .5;
+  }
+  const score = e => (srcOf(e) !== 'c' ? 4 : 0) + (e.tm ? 2 : 0) + Math.min(1, (e.ti || '').length / 200);
+  /* Ein Abo-Termin, der „…ferien“ heißt und mehrere Tage dauert, zählt als Ferien – aber nur dort, wo die eingebauten Ferien nicht reichen (z. B. nach 2030) */
+  const FKW = [[/herbst/, 'fHerbst'], [/weihnacht/, 'fWeih'], [/fasching|winter/, 'F'], [/oster/, 'fOstern'], [/pfingst/, 'fPfingsten'], [/sommer/, 'fSommer']];
+  let FFC = null;
+  function feedFerien(land) {
+    getObj(); if (FFC && FFC.raw === evRaw && FFC.land === land) return FFC.list;
+    const base = FR[land] || [], last = base.length ? Math.max(...base.map(r => +r.b)) : 0, first = base.length ? Math.min(...base.map(r => +r.a)) : Infinity, list = [];
+    evObj.ev.forEach(e => {
+      const t = fold2(e.ti); if (!/ferien|unterrichtsfrei|schulfrei/.test(t)) return; const a = pd(e.a), b = pd(e.b); if (+b < +a) return;
+      if (+a <= last && +b >= first) return; /* eingebaute Daten decken das ab */
+      const m = FKW.find(([r]) => r.test(t)); const key = m ? (m[1] === 'F' ? (land === 'BY' ? 'fFasching' : 'fWinter') : m[1]) : null;
+      list.push({ k: /ferien/.test(t) ? 'X' : 'B', a, b, key: key || ('fx:' + e.ti), ti: e.ti });
+    });
+    list.forEach(r => { if (r.key.startsWith('fx:') && !X[r.key]) X[r.key] = [r.ti, r.ti, r.ti, r.ti, r.ti]; });
+    FFC = { raw: evRaw, land, list }; return list;
+  }
+  function ferAll(land) { const base = FR[land] || []; return base.concat(feedFerien(land)); }
+  const HOLW = /ferien|feiertag|schulfrei|unterrichtsfrei|frei$|weihnacht|neujahr|ostern|pfingst|himmelfahrt|fronleichnam|allerheiligen|buss|bettag|maria|einheit|reformation|dreikoenig|tag der arbeit|karfreitag|ostermontag|pfingstmontag/;
+  function evView() {
+    getObj(); const land = cfg().land; if (DC && DC.land === land) return DC.list;
+    const all = evObj.ev.slice().sort((p, q) => p.a < q.a ? -1 : p.a > q.a ? 1 : score(q) - score(p)), out = [], byDay = {};
+    all.forEach(e => {
+      /* Ferien/Feiertage, die Aula ohnehin kennt, nicht doppelt zeigen */
+      const t = fold2(e.ti), i0 = info(pd(e.a));
+      if (i0 && i0.kind !== 'we' && (HOLW.test(t) || similar(e.ti, x(i0.key) || ''))) return;
+      if (/ferien/.test(t) && (+pd(e.b) - +pd(e.a)) >= 864e5) { const ff = feedFerien(land); if (ff.some(r => +r.a === +pd(e.a))) return; }
+      const near = (byDay[e.a] || []).concat(byDay[e.b] || []);
+      const dup = near.find(o => { if (o.tm && e.tm && o.tm !== e.tm) return false; return similar(o.ti, e.ti); });
+      if (dup) { if (!dup.tm && e.tm) { dup.tm = e.tm; dup.te = e.te; } return; }
+      const c = Object.assign({}, e); out.push(c); (byDay[e.a] = byDay[e.a] || []).push(c); if (e.b !== e.a) (byDay[e.b] = byDay[e.b] || []).push(c);
+    });
+    DC = { land, list: out }; return out;
+  }
+  const evOk = ev => evMineOk(ev);
+  function evOn(d) { d = iso(day0(d)); return evView().filter(e => e.a <= d && e.b >= d && evOk(e)).map(evInfo); }
+  function evNext(d, n, days) { const a = iso(day0(d)), z = iso(add(day0(d), days || 30)); return evView().filter(e => e.b >= a && e.a <= z && e.a >= a && evOk(e)).slice(0, n).map(evInfo).map(o => ({ ...o, days: Math.round((o.a - day0(d)) / 864e5) })); }
+  /* ===== Kalender-Abos (ICS/webcal) ===== */
+  function parseIcs(text) {
+    const L = String(text).replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '').split('\n'), evs = [], ovr = new Set(); let cur = null, name = '';
+    const un = v => v.replace(/\\n/gi, ' ').replace(/\\([,;\\])/g, '$1').replace(/\s+/g, ' ').trim();
+    const dt = (v, prm) => { const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$/.exec(v.trim()); if (!m) return null;
+      if (!m[4]) return { d: new Date(+m[1], +m[2] - 1, +m[3]), all: true };
+      const d = m[7] ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])) : new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]); return { d, all: false }; };
+    L.forEach(line => {
+      const i = line.indexOf(':'); if (i < 0) return; const head = line.slice(0, i), val = line.slice(i + 1), nm = head.split(';')[0].toUpperCase(), prm = head.slice(nm.length);
+      if (nm === 'BEGIN' && val.trim().toUpperCase() === 'VEVENT') { cur = { ex: [] }; return; }
+      if (nm === 'END' && val.trim().toUpperCase() === 'VEVENT') { if (cur) evs.push(cur); cur = null; return; }
+      if (!cur) { if (nm === 'X-WR-CALNAME') name = un(val); return; }
+      if (nm === 'SUMMARY') cur.ti = un(val); else if (nm === 'DTSTART') cur.s = dt(val, prm); else if (nm === 'DTEND') cur.e = dt(val, prm); else if (nm === 'DURATION') cur.dur = val.trim();
+      else if (nm === 'UID') cur.uid = val.trim(); else if (nm === 'RRULE') cur.rr = val.trim(); else if (nm === 'STATUS') cur.st = val.trim().toUpperCase();
+      else if (nm === 'EXDATE') val.split(',').forEach(v => { const q = dt(v); if (q) cur.ex.push(iso(q.d)); }); else if (nm === 'RECURRENCE-ID') { const q = dt(val); if (q) cur.rid = iso(q.d); }
+    });
+    evs.forEach(e => { if (e.rid && e.uid) ovr.add(e.uid + '|' + e.rid); });
+    const now = day0(new Date()), lo = add(now, -400), hi = add(now, 365 * 5), out = [];
+    const tm = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
+    const push = (e, s0, len) => { const a = day0(s0), endD = e.s.all ? add(a, Math.max(1, len) - 1) : day0(new Date(+s0 + Math.max(0, len * 6e4 - 1)));
+      const isF = /ferien/i.test(e.ti || ''); if (+endD < +lo || +a > +(isF ? hi : add(now, 365 * 2))) return;
+      const o = { a: iso(a), b: iso(endD < a ? a : endD), ti: String(e.ti || '').slice(0, 220) }; if (!e.s.all) { o.tm = tm(s0); if (o.a === o.b && len) o.te = tm(new Date(+s0 + len * 6e4)); } if (e.uid) o.u = String(e.uid).slice(0, 120); out.push(o); };
+    evs.forEach(e => {
+      if (!e.s || !e.ti || e.st === 'CANCELLED') return;
+      let len; if (e.s.all) len = e.e ? Math.round((day0(e.e.d) - day0(e.s.d)) / 864e5) : 1; else { len = e.e ? Math.round((e.e.d - e.s.d) / 6e4) : 0; const m = /PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(e.dur || ''); if (!e.e && m) len = (+m[1] || 0) * 60 + (+m[2] || 0); }
+      if (!e.rr) { push(e, e.s.d, len); return; }
+      const R = {}; e.rr.split(';').forEach(kv => { const [k, v] = kv.split('='); R[k.toUpperCase()] = v; });
+      const iv = Math.max(1, +R.INTERVAL || 1), cnt = +R.COUNT || 0, until = R.UNTIL ? (dt(R.UNTIL) || {}).d : null, DAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+      const by = R.BYDAY ? R.BYDAY.split(',').map(x2 => DAYS.indexOf(x2.slice(-2))).filter(n => n >= 0) : null;
+      let n = 0, k = 0, guard = 0; const st = e.s.d;
+      const occ = d => { if (until && d > until) return false; if (cnt && n >= cnt) return false; n++; const key = iso(d); if (!e.ex.includes(key) && !(e.uid && ovr.has(e.uid + '|' + key))) push(e, d, len); return true; };
+      while (guard++ < 2000) {
+        let base; if (R.FREQ === 'DAILY') base = new Date(+st + k * iv * 864e5); else if (R.FREQ === 'WEEKLY') base = new Date(st.getFullYear(), st.getMonth(), st.getDate() + k * 7 * iv, st.getHours(), st.getMinutes());
+        else if (R.FREQ === 'MONTHLY') base = new Date(st.getFullYear(), st.getMonth() + k * iv, st.getDate(), st.getHours(), st.getMinutes()); else if (R.FREQ === 'YEARLY') base = new Date(st.getFullYear() + k * iv, st.getMonth(), st.getDate(), st.getHours(), st.getMinutes()); else { push(e, st, len); break; }
+        if (+base > +add(now, 365 * 5) || (until && base > until && !(R.FREQ === 'WEEKLY' && by))) break;
+        if (R.FREQ === 'WEEKLY' && by) { const mon = add(base, -((base.getDay() + 6) % 7)); let stop = false; for (let j = 0; j < 7 && !stop; j++) { const d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + j, st.getHours(), st.getMinutes()); if (d < st || !by.includes(d.getDay())) continue; if (!occ(d)) stop = true; } if (stop) break; }
+        else if (!occ(base)) break;
+        k++;
+      }
+    });
+    return { name, ev: out };
+  }
+  const FEED_COL = ['#0A84FF', '#30B94D', '#FF9F0A', '#AF52DE', '#FF375F', '#00A3BF'];
+  async function fetchIcs(url) {
+    if (window.gbNative && window.gbNative.ics) return window.gbNative.ics(url);
+    try { const r = await fetch(String(url).trim().replace(/^webcals?:\/\//i, 'https://'), { cache: 'no-store' }); if (!r.ok) return { err: 'http' }; return { text: await r.text() }; } catch (e) { return { err: 'cors' }; }
+  }
+  const canFetch = () => !!(window.gbNative && window.gbNative.ics);
+  let busyF = {};
+  async function refreshFeed(id, manual) {
+    if (busyF[id]) return; const f0 = getObj().feeds.find(f => f.id === id); if (!f0) return; busyF[id] = 1; try { evLab(); } catch (e) {}
+    const r = await fetchIcs(f0.url); busyF[id] = 0;
+    const o = getObj(), f = o.feeds.find(q => q.id === id); if (!f) return;
+    if (r && r.text && /BEGIN:VCALENDAR/i.test(r.text)) {
+      const p = parseIcs(r.text), mine = p.ev.map(e => Object.assign(e, { s: 'f:' + id }));
+      const ev = o.ev.filter(e => srcOf(e) !== 'f:' + id).concat(mine).sort((a, b) => a.a < b.a ? -1 : a.a > b.a ? 1 : 0);
+      Object.assign(f, { at: Date.now(), n: mine.length, err: '' }); if (!f.name && p.name) f.name = p.name.slice(0, 60);
+      saveObj({ ev, feeds: o.feeds }); if (manual) toast(x('fdOk').split('{0}').join(mine.length), 2200);
+    } else if (canFetch()) { f.err = (r && r.err) || 'fmt'; f.errAt = Date.now(); saveObj(o); if (manual) toast(x('fdErr'), 3200); }
+    else if (manual) toast(x('fdPhone'), 3600);
+    try { evLab(); } catch (e) {} redo();
+  }
+  function addFeed(url) {
+    url = String(url || '').trim(); if (!/^(https?|webcals?):\/\/\S+$/i.test(url)) { toast(x('fdBadUrl'), 2600); return false; }
+    const o = getObj(); if (o.feeds.some(f => f.url === url)) { toast(x('fdDup'), 2200); return false; }
+    const id = Date.now().toString(36); o.feeds.push({ id, url, name: '', col: FEED_COL[o.feeds.length % FEED_COL.length] }); saveObj(o); refreshFeed(id, true); return true;
+  }
+  function delFeed(id) { const o = getObj(); saveObj({ ev: o.ev.filter(e => srcOf(e) !== 'f:' + id), feeds: o.feeds.filter(f => f.id !== id) }); try { evLab(); } catch (e) {} redo(); }
+  function autoRefresh() { if (!canFetch() || cfg().fdAuto === false) return; getObj().feeds.forEach(f => { if (!f.at || Date.now() - f.at > 2.5 * 36e5) refreshFeed(f.id); }); }
+  setTimeout(autoRefresh, 6000); setInterval(autoRefresh, 30 * 6e4);
+  window._calIcs = parseIcs;
+  window._cal = { feeds: () => getObj().feeds, refreshFeed, addFeed, delFeed, autoRefresh, ferien: () => ferAll(cfg().land).map(r => ({ key: r.key || fkey(cfg().land, r.k), a: r.a, b: r.b, kind: r.k === 'B' ? 'frei' : 'ferien' })), land: () => cfg().land, mineAll: v => { if (v === undefined) return !!cfg().evAll; cfg().evAll = !!v; saveTool(); }, evOn, evNext, evCount: () => evView().length, csvCount: () => getEv().filter(e => srcOf(e) === 'c').length, info, free, backDay, upcoming, obs, show, holidays: (y) => holidays(y, cfg().land), LANDS };
 
   /* ===== Einstellungen ===== */
   const gen = document.querySelector('[data-pane="gen"]'), q = id => document.getElementById(id);
@@ -5611,15 +6044,41 @@ Object.assign(X, {
   const redo = () => { saveTool(); try { window._renderDash && window._renderDash(); } catch (e) {} };
   sel.onchange = () => { cfg().land = sel.value; redo(); }; rj.i.onchange = () => { cfg().jew = rj.i.checked; redo(); }; rm.i.onchange = () => { cfg().mus = rm.i.checked; redo(); };
 
-  const evSec = mk('div'); evSec.style.marginTop = '14px';
-  const evB = mk('button', 'ovtask'), evD = mk('button', 'ovtask'), evF = mk('input'), evR = mk('div'), evM = row('evMineSw'), evN = mk('p', 'note'), evC = mk('p', 'note');
-  evF.type = 'file'; evF.accept = '.csv,.txt,text/csv,text/plain'; evF.hidden = true; evB.type = evD.type = 'button'; evR.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:6px 0'; evN.style.margin = '0'; evC.style.margin = '4px 0';
-  evR.append(evB, evD, evF); evSec.append(evR, evC, evM.l, evN); gen.appendChild(evSec);
-  const evLab = () => { evB.textContent = x('evImp'); evD.textContent = x('evDel'); evM.s.textContent = x('evMine'); evN.textContent = x('evNote'); const n = window._cal.evCount(); evC.textContent = n ? x('evCount').split('{0}').join(n) : x('evNone'); evD.hidden = !n; evM.i.checked = !cfg().evAll; };
-  evB.onclick = () => evF.click(); window._cal.importPick = () => evF.click();
-  evF.onchange = () => { const f = evF.files && evF.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const n = evImport(String(rd.result || '')); if (n < 0) toast(x('evBad'), 2600); else { saveTool(); toast(x('evCount').split('{0}').join(n), 2200); } evF.value = ''; evLab(); redo(); }; rd.onerror = () => toast(x('evBad'), 2600); rd.readAsText(f, 'utf-8'); };
-  evD.onclick = () => { setEv([]); evLab(); redo(); };
-  evM.i.onchange = () => { cfg().evAll = !evM.i.checked; saveTool(); redo(); };
+  /* Blöcke für die Einstellungen (47d legt jeden in eine eigene Karte): Abos, Datei, Anzeige */
+  const blk = k => { const d = mk('div', 'calblk'); d.dataset.k = k; gen.appendChild(d); return d; };
+  const fBlk = blk('scFeeds'), cBlk = blk('scCsv'), vBlk = blk('scCalView');
+  const evF = mk('input'); evF.type = 'file'; evF.accept = '.csv,.txt,text/csv,text/plain'; evF.hidden = true; cBlk.appendChild(evF);
+  const ago = t => { const m = Math.round((Date.now() - t) / 6e4); if (m < 1) return x('fdNow'); if (m < 60) return x('fdMin').split('{0}').join(m); const d0 = new Date(t); return d0.toLocaleDateString(LOC[lx()], { day: 'numeric', month: 'short' }) + ' ' + d0.toLocaleTimeString(LOC[lx()], { hour: '2-digit', minute: '2-digit' }); };
+  const host = u => { try { return new URL(String(u).replace(/^webcals?:/i, 'https:')).host; } catch (e) { return u; } };
+  function evLab() {
+    const F = getObj().feeds, cc = getEv().filter(e => srcOf(e) === 'c').length;
+    fBlk.innerHTML = `<div class="fdlist">${F.map(f => `<div class="fdrow"><i style="background:${f.col || '#0A84FF'}"></i><div class="fdt"><b>${esc(f.name || host(f.url))}</b><small>${busyF[f.id] ? esc(x('fdBusy')) : f.err ? '<em>' + esc(x('fdErrShort')) + '</em>' : f.at ? esc(x('fdStat').split('{0}').join(f.n || 0).split('{1}').join(ago(f.at))) : '–'}</small><small class="u">${esc(f.url)}</small></div><button type="button" class="sbtn" data-r="${f.id}" title="${esc(x('fdRefresh'))}">↻</button><button type="button" class="sbtn ghost" data-d="${f.id}" title="${esc(x('evDel'))}">×</button></div>`).join('')}</div>
+      <div class="fdadd"><input class="sinput" id="fdUrl" type="url" placeholder="https://… oder webcal://…" autocomplete="off" spellcheck="false"><button type="button" class="sbtn pri" id="fdAdd">${esc(x('fdAdd'))}</button></div>
+      <p class="snote2">${esc(x('fdHelp'))}${canFetch() ? '' : ' ' + esc(x('fdPhone'))}</p>
+      ${F.length && cc ? `<div class="fdmix"><span>${esc(x('fdMix').split('{0}').join(cc))}</span><button type="button" class="sbtn" id="fdDropCsv">${esc(x('fdDropCsv'))}</button></div>` : ''}`;
+    cBlk.querySelectorAll('.cbody').forEach(e => e.remove());
+    const cb = mk('div', 'cbody'); cb.innerHTML = `<div class="fdrow"><i style="background:#8E8E93"></i><div class="fdt"><b>${esc(x('csvTitle'))}</b><small>${cc ? esc(x('evCount').split('{0}').join(cc)) : esc(x('evNone'))}</small></div><button type="button" class="sbtn" id="csvImp">${esc(x('csvImp'))}</button>${cc ? `<button type="button" class="sbtn ghost" id="csvDel" title="${esc(x('evDel'))}">×</button>` : ''}</div><p class="snote2">${esc(x('evNote'))}</p>`;
+    cBlk.appendChild(cb);
+    [fBlk, cb].forEach(el => { el.innerHTML = el.innerHTML.replace(/\b1 (Termine|events|eventi|événements|eventos)\b/g, (m0, w) => '1 ' + ({ Termine: 'Termin', events: 'event', eventi: 'evento', 'événements': 'événement', eventos: 'evento' })[w]); });
+    const c = cfg(); vBlk.innerHTML = `<label class="srow"><span class="sl"><b>${esc(x('evMine'))}</b><small>${esc(x('evMineNote'))}</small></span><input type="checkbox" class="sw" id="evMineSw"${c.evAll ? '' : ' checked'}></label>
+      <label class="srow"><span class="sl"><b>${esc(x('kwShow'))}</b></span><input type="checkbox" class="sw" id="kwSw"${wt.kaNoKW ? '' : ' checked'}></label>
+      <label class="srow"><span class="sl"><b>${esc(x('fdAuto'))}</b><small>${esc(x('fdAutoNote'))}</small></span><input type="checkbox" class="sw" id="fdAutoSw"${c.fdAuto === false ? '' : ' checked'}></label>
+      <div class="srow"><span class="sl"><b>${esc(x('kaStartV'))}</b></span><div class="seg sseg" id="kaStartSeg">${[['month', 'kaMonth'], ['year', 'kaYear'], ['list', 'kaList']].map(([k, l]) => `<button type="button" data-v="${k}" aria-pressed="${(wt.kaStart || 'month') === k}">${esc(x(l))}</button>`).join('')}</div></div>
+      <p class="snote2">${esc(x('fdDedupe'))}</p>`;
+    fBlk.querySelectorAll('[data-r]').forEach(b => b.onclick = () => refreshFeed(b.dataset.r, true));
+    fBlk.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (confirm(x('fdDelQ'))) delFeed(b.dataset.d); });
+    const inp = fBlk.querySelector('#fdUrl'), go = () => { if (addFeed(inp.value)) inp.value = ''; };
+    fBlk.querySelector('#fdAdd').onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') go(); e.stopPropagation(); };
+    const dc = fBlk.querySelector('#fdDropCsv'); if (dc) dc.onclick = () => { const o = getObj(); saveObj({ ev: o.ev.filter(e => srcOf(e) !== 'c'), feeds: o.feeds }); evLab(); redo(); };
+    cb.querySelector('#csvImp').onclick = () => evF.click(); const cd = cb.querySelector('#csvDel'); if (cd) cd.onclick = () => { if (!confirm(x('csvDelQ'))) return; const o = getObj(); saveObj({ ev: o.ev.filter(e => srcOf(e) !== 'c'), feeds: o.feeds }); evLab(); redo(); };
+    vBlk.querySelector('#evMineSw').onchange = e => { cfg().evAll = !e.target.checked; saveTool(); redo(); };
+    vBlk.querySelector('#kwSw').onchange = e => { wt.kaNoKW = !e.target.checked; saveTool(); };
+    vBlk.querySelector('#fdAutoSw').onchange = e => { cfg().fdAuto = e.target.checked; saveTool(); };
+    vBlk.querySelectorAll('#kaStartSeg [data-v]').forEach(b => b.onclick = () => { wt.kaStart = b.dataset.v; saveTool(); evLab(); });
+  }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, q => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[q]));
+  window._cal.importPick = () => evF.click();
+  evF.onchange = () => { const f = evF.files && evF.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const n = evImport(String(rd.result || '')); if (n < 0) toast(x('evBad'), 2600); else { saveTool(); toast(x('evCount').split('{0}').join(n), 2200); } evF.value = ''; evLab(); redo(); }; rd.readAsText(f); };
   const setBtn = q('setBtn'); if (setBtn) setBtn.addEventListener('click', sync); const _os = window._openSet; window._openSet = t => { sync(); _os && _os(t); };
   const _ax = applyX; applyX = function () { _ax(); lab(); evLab(); }; lab(); sync(); evLab();
 })();
@@ -5726,9 +6185,9 @@ function planPrintHtml(m, preview) {
     return (await r.json()).content.sha;
   }
   /* Was abgeglichen wird: nur echte Daten. Einstellungen, Aussehen, Ansicht und Sicherungskopien bleiben je Gerät. */
-  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine|gb_events)$/.test(k);
+  const SYNC = k => /^(gb_classes|gb_seen|gb_sitz|gb_hist_.+|orario_v1|orario_me|orario_mine|gb_events|gb_work|gb_stat)$/.test(k);
   /* Große Datenbestände werden nie durch einen Abgleich gelöscht – Löschen geht nur am jeweiligen Gerät. */
-  const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1 };
+  const NODEL = { gb_classes: 1, gb_seen: 1, gb_sitz: 1, orario_v1: 1, gb_work: 1, gb_stat: 1 };
   const parse = s => { try { return JSON.parse(s); } catch (e) { return undefined; } };
   /* Inhalt prüfen, bevor er irgendwo übernommen wird */
   function valid(k, v) {
@@ -5740,7 +6199,9 @@ function planPrintHtml(m, preview) {
     if (k === 'gb_seen') return Array.isArray(d);
     if (/^gb_hist_/.test(k)) return Array.isArray(d);
     if (k === 'gb_sitz') return !!(d && typeof d === 'object');
-    if (k === 'gb_events') return !!(d && typeof d === 'object' && Array.isArray(d.ev) && d.ev.length <= 3000 && d.ev.every(e => e && typeof e.a === 'string' && typeof e.b === 'string' && typeof e.ti === 'string'));
+    if (k === 'gb_work') return !!(d && typeof d === 'object' && Array.isArray(d.e));
+    if (k === 'gb_stat') return !!(d && typeof d === 'object' && !Array.isArray(d));
+    if (k === 'gb_events') return !!(d && typeof d === 'object' && Array.isArray(d.ev) && d.ev.length <= 6000 && d.ev.every(e => e && typeof e.a === 'string' && typeof e.b === 'string' && typeof e.ti === 'string'));
     return true;
   }
   /* Nur gültige Einträge {v, t} der abgeglichenen Schlüssel behalten */
@@ -5753,10 +6214,24 @@ function planPrintHtml(m, preview) {
   function payload(o) { if (!o || o.fmt !== FMT || !o.data) { const e = new Error('Die Daten auf GitHub stammen von einer älteren Version. Bitte am Mac Aula (früher Gruppo) öffnen und „Jetzt abgleichen“ tippen.'); e.user = true; e.fmt = true; throw e; } return clean(o.data); }
   const wrap = data => ({ fmt: FMT, data: clean(data) });
   /* Zusammenführen: je Eintrag {v, t}; der neuere gewinnt (gleich alt: lokal). */
+  const UNION = { gb_work: 1, gb_stat: 1 };
+  function deep(a, b, aNew) { /* Zahlen: größerer Wert; Objekte: zusammen; sonst der neuere Stand */
+    if (typeof a === 'number' && typeof b === 'number') return Math.max(a, b);
+    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) { const o = {}; new Set(Object.keys(a).concat(Object.keys(b))).forEach(k => { o[k] = !(k in a) ? b[k] : !(k in b) ? a[k] : deep(a[k], b[k], aNew); }); return o; }
+    return aNew ? a : b;
+  }
+  function unite(k, l, r) {
+    const a = parse(l.v), b = parse(r.v), lNew = l.t >= r.t; if (!a || !b) return null;
+    if (k === 'gb_work') { const m = new Map(); (b.e || []).concat(a.e || []).forEach(e => { if (!e || !e.id) return; const o = m.get(e.id); if (!o || (e.u || 0) >= (o.u || 0)) m.set(e.id, e); });
+      const o = Object.assign({}, lNew ? b : a, lNew ? a : b); o.e = [...m.values()].sort((p, q) => (p.d < q.d ? -1 : p.d > q.d ? 1 : (p.u || 0) - (q.u || 0))); return JSON.stringify(o); }
+    return JSON.stringify(deep(a, b, lNew));
+  }
   function merge(local, remote) {
     local = clean(local); remote = clean(remote);
     const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local).concat(Object.keys(remote)));
     ks.forEach(k => { const l = local[k], r = remote[k];
+      /* Arbeitszeit und Statistik: Einträge beider Geräte zusammenführen statt überschreiben */
+      if (l && r && l.v && r.v && l.v !== r.v && UNION[k]) { const m = unite(k, l, r); if (m) { out[k] = { v: m, t: Math.max(l.t, r.t) }; if (m !== l.v) remoteWon.push(k); if (m !== r.v) localWon.push(k); return; } }
       if (l && (!r || l.t >= r.t)) { out[k] = l; if (!r || r.v !== l.v) localWon.push(k); } else { out[k] = r; if (!l || l.v !== r.v) remoteWon.push(k); } });
     return { merged: out, remoteWon, localWon };
   }
@@ -5883,7 +6358,7 @@ Object.assign(X, {
   const fill = (k, o) => x(k).replace(/\{(\w)\}/g, (_, q) => o[q]);
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
   const SITE = 'https://theisapps.de/', SUPPORT = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-  const ICON = '<svg viewBox="100 100 824 824" aria-hidden="true"><defs><linearGradient id="abBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7092"/><stop offset="1" stop-color="#d9264f"/></linearGradient><radialGradient id="abSh" cx=".3" cy=".1" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient><linearGradient id="abGl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".98"/><stop offset="1" stop-color="#fff" stop-opacity=".78"/></linearGradient><filter id="abDs" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#6b0b22" flood-opacity=".35"/></filter><filter id="abOs" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".28"/></filter></defs><g><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#abBg)"/></g><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#abSh)"/><rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="3"/><g filter="url(#abDs)"><circle cx="512" cy="430" r="170" fill="#fff" fill-opacity=".88"/><circle cx="406" cy="610" r="170" fill="#fff" fill-opacity=".55"/><circle cx="618" cy="610" r="170" fill="#fff" fill-opacity=".42"/></g><rect x="312" y="812" width="400" height="22" rx="11" fill="#fff" fill-opacity=".7"/></svg>';
+  const ICON = '<svg viewBox="100 100 824 824" aria-hidden="true"><defs><linearGradient id="abBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7092"/><stop offset="1" stop-color="#d9264f"/></linearGradient><radialGradient id="abSh" cx=".3" cy=".1" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient><linearGradient id="abGl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".98"/><stop offset="1" stop-color="#fff" stop-opacity=".78"/></linearGradient><filter id="abDs" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#6b0b22" flood-opacity=".35"/></filter><filter id="abOs" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".28"/></filter></defs><g><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#abBg)"/></g><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#abSh)"/><rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="3"/><g filter="url(#abDs)"><circle cx="512" cy="418" r="176" fill="#fff" fill-opacity=".88"/><circle cx="402" cy="604" r="176" fill="#fff" fill-opacity=".55"/><circle cx="622" cy="604" r="176" fill="#fff" fill-opacity=".42"/></g></svg>';
   const openLink = u => { try { if (window.native && window.native.openExternal) return window.native.openExternal(u); } catch (e) {} window.open(u, '_blank', 'noopener'); };
 
   /* ---------- Über Gruppo ---------- */
@@ -5932,7 +6407,7 @@ Object.assign(X, {
     add(x('vDash') || 'Übersicht', 'vDashBtn', () => window._view && window._view('dash'));
     add(x('vGroups') || 'Gruppen', 'vGroupsBtn', () => window._view && window._view('groups'));
     add(x('lsStart'), null, () => window._lesson && window._lesson());
-    add(x('tm'), 'tmBtn'); add(x('cl'), 'clBtn'); add(x('pk'), 'pkBtn'); add(x('sp'), 'spBtn'); add(x('stOn'), 'stBtn');
+    add(x('tm'), 'tmBtn'); add(x('cl'), 'clBtn'); add(x('pk'), 'pkBtn'); add(x('sp'), 'spBtn'); add(x('stOn'), 'stBtn'); add(x('kaOn'), 'kaBtn'); add(x('saOn'), 'statBtn');
     add(x('set') || 'Einstellungen', 'setBtn'); add(x('abTitle'), null, openAbout);
     return T.filter(t => t.ok);
   }
@@ -5996,11 +6471,11 @@ Object.assign(X, {
     if (!C) { ls.append(E('p', 'note', x('lsNoCls'))); const a = E('button', 'go', x('lsAdd')); a.type = 'button'; a.onclick = () => { ls.close(); $('addBtn').click(); }; ls.append(a); ls.showModal(); (document.activeElement && document.activeElement.classList.contains('abx')) && document.activeElement.blur(); return; }
     const sec = E('div', 'lssec'); const sh = E('div', 'lssh'); const cnt = E('span', 'lscnt'); sh.append(E('h3', '', x('lsWho')), cnt); sec.appendChild(sh);
     const box = E('div', 'roster lsroster'); sec.appendChild(box); sec.appendChild(E('p', 'note', x('lsWhoNote')));
-    const all = E('button', 'linkbtn', x('lsAll')); all.type = 'button'; all.onclick = () => { absent.clear(); drawR(); renderRoster(); }; sec.appendChild(all);
+    const all = E('button', 'linkbtn', x('lsAll')); all.type = 'button'; all.onclick = () => { absent.clear(); drawR(); renderRoster(); try { window._statAbs && window._statAbs(); } catch (e) {} }; sec.appendChild(all);
     function drawR() {
       box.textContent = '';
       C.students.forEach((s, i) => { const b = E('button', 'chip'); b.type = 'button'; b.setAttribute('aria-pressed', !absent.has(i)); b.innerHTML = '<span class="dot ' + s.g + '"></span>'; b.append(s.first + (s.last && C.students.some((o, j) => j !== i && o.first === s.first) ? ' ' + s.last[0] + '.' : ''));
-        b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); drawR(); renderRoster(); try { $('preview').textContent = describe(present().length); } catch (e) {} }; box.appendChild(b); });
+        b.onclick = () => { absent.has(i) ? absent.delete(i) : absent.add(i); drawR(); renderRoster(); try { window._statAbs && window._statAbs(); } catch (e) {} try { $('preview').textContent = describe(present().length); } catch (e) {} }; box.appendChild(b); });
       cnt.textContent = fill('lsPresent', { n: C.students.length - absent.size, t: C.students.length });
     }
     drawR();
@@ -6266,6 +6741,11 @@ Object.assign(X, {
   scExtras: ['Extras', 'Extras', 'Extra', 'Extras', 'Extras'],
   scHol: ['Feiertage und Ferien', 'Holidays', 'Festività e vacanze', 'Jours fériés et vacances', 'Festivos y vacaciones'],
   scSchool: ['Schulkalender', 'School calendar', 'Calendario scolastico', 'Calendrier scolaire', 'Calendario escolar'],
+  snStat: ['Statistik', 'Statistics', 'Statistiche', 'Statistiques', 'Estadísticas'],
+  ssStat: ['Was Aula mitzählt und dein Wochenziel.', 'What Aula counts and your weekly target.', 'Cosa conta Aula e il tuo obiettivo.', 'Ce qu’Aula compte et ton objectif.', 'Qué cuenta Aula y tu objetivo.'],
+  scFeeds: ['Kalender-Abos (ICS)', 'Calendar subscriptions (ICS)', 'Abbonamenti calendario (ICS)', 'Abonnements de calendrier (ICS)', 'Suscripciones de calendario (ICS)'],
+  scCsv: ['Kalender aus Datei', 'Calendar from file', 'Calendario da file', 'Calendrier depuis un fichier', 'Calendario desde archivo'],
+  scCalView: ['Anzeige', 'Display', 'Visualizzazione', 'Affichage', 'Visualización'],
   scTimer: ['Timer', 'Timer', 'Timer', 'Minuteur', 'Temporizador'],
   scClock: ['Uhr', 'Clock', 'Orologio', 'Horloge', 'Reloj'],
   stStart: ['Beim Start öffnen', 'Open at start', 'All’avvio apri', 'Ouvrir au démarrage', 'Abrir al iniciar'],
@@ -6297,7 +6777,7 @@ Object.assign(X, {
   const lyRow = g.find(k => k.querySelector && k.querySelector('option[value="aurora"]'));
   const nwRow = lyRow && lyRow.nextElementSibling, pdRow = nwRow && nwRow.nextElementSibling;
   const calSec = g.find(k => k.querySelector && k.querySelector('#calJewSw'));
-  const evSec = g.find(k => k.querySelector && k.querySelector('#evMineSw'));
+  const calBlks = g.filter(k => k.classList && k.classList.contains('calblk'));
   const abBtn = old.gen.querySelector('.abopen'); if (abBtn) abBtn.hidden = true;
 
   /* ---------- neues Gerüst ---------- */
@@ -6311,6 +6791,7 @@ Object.assign(X, {
   sheet.insertBefore(nav, head); sheet.insertBefore(main, head); body.hidden = true;
 
   const IC = {
+    stat: ['#FF9F0A', '<path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6.5" rx="1"/><rect x="10.5" y="6.5" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8.5" rx="1"/>'],
     gen: ['#8E8E93', '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.9-1.5-2-3.4-2.3.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5a7.6 7.6 0 0 0-2.6 1.5l-2.3-.9-2 3.4 1.9 1.5a7.6 7.6 0 0 0 0 3L2.7 15l2 3.4 2.3-.9a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>'],
     look: ['#0A84FF', '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.3-1-1.6-1-2.6 0-.9.7-1.5 1.7-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.6" r="1.2" fill="currentColor"/>'],
     dash: ['#FF9F0A', '<rect x="3.5" y="3.5" width="7" height="8" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.8"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.8"/>'],
@@ -6320,7 +6801,7 @@ Object.assign(X, {
     data: ['#5856D6', '<ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6"/>'],
     about: ['#E0342B', '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="1.1" fill="currentColor"/>'],
   };
-  const SECS = [['gen', 'snGen', 'ssGen'], ['look', 'snLook', 'ssLook'], ['dash', 'snDash', 'ssDash'], ['cal', 'snCal', 'ssCal'], ['timer', 'snTimer', 'ssTimer'], ['fx', 'snFx', 'ssFx'], ['data', 'snData', 'ssData']];
+  const SECS = [['gen', 'snGen', 'ssGen'], ['look', 'snLook', 'ssLook'], ['dash', 'snDash', 'ssDash'], ['cal', 'snCal', 'ssCal'], ['timer', 'snTimer', 'ssTimer'], ['stat', 'snStat', 'ssStat'], ['fx', 'snFx', 'ssFx'], ['data', 'snData', 'ssData']];
   const panes = {}, navBtns = {};
   const navItem = (k, lab, fn) => { const b = E('button', 'snitem'); b.type = 'button'; b.innerHTML = `<i style="--c:${IC[k][0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[k][1]}</svg></i><span></span>`; b.dataset.k = lab; b.onclick = fn; nav.appendChild(b); return b; };
   SECS.forEach(([k, l]) => { panes[k] = E('div', 'spane'); panes[k].hidden = true; sbody.appendChild(panes[k]); navBtns[k] = navItem(k, l, () => show(k)); });
@@ -6378,7 +6859,7 @@ Object.assign(X, {
     [h3, sel, note, note2].forEach(clean); sel.classList.add('ssel'); [rj, rm].forEach(r => { clean(r); r.classList.add('srow'); });
     panes.cal.append(card('scHol', ctlRow(h3, sel, note), rj, rm, note2)); calSec.remove();
   }
-  if (evSec) { clean(evSec); [...evSec.querySelectorAll('[style]')].forEach(e => { if (e.tagName !== 'DIV') e.removeAttribute('style'); }); const r = evSec.querySelector('label.row'); if (r) { clean(r); r.classList.add('srow'); } evSec.classList.add('sev'); evSec.querySelectorAll('button.ovtask').forEach(b => { b.classList.remove('ovtask'); b.classList.add('sbtn'); }); panes.cal.append(card('scSchool', evSec)); }
+  calBlks.forEach(b => panes.cal.append(card(b.dataset.k, b)));
 
   /* ---------- Timer & Uhr (neu) ---------- */
   const tmSel = E('select', 'ssel'), clSel = E('select', 'ssel'), sndSel = E('select', 'ssel'), sndTest = E('button', 'sbtn'), sndOn = E('input', 'sw');
@@ -6404,7 +6885,7 @@ Object.assign(X, {
     if (!panes[k]) k = 'gen'; cur = k; wt.setTab2 = k; saveTool();
     Object.keys(panes).forEach(p => { panes[p].hidden = p !== k; navBtns[p].setAttribute('aria-current', p === k ? 'page' : 'false'); });
     const s = SECS.find(z => z[0] === k); h2.textContent = x(s[1]); sub.textContent = x(s[2]);
-    if (k === 'gen') drawGen(); if (k === 'timer') drawTimer();
+    if (k === 'gen') drawGen(); if (k === 'timer') drawTimer(); if (k === 'stat' && window._statSettings) window._statSettings(panes.stat, card);
     if (k === 'look') renderLook(); if (k === 'fx') renderFx();
     sbody.scrollTop = 0; try { if (nav.scrollWidth > nav.clientWidth) navBtns[k].scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {}
   }
@@ -6424,6 +6905,635 @@ Object.assign(X, {
   const _axS = applyX; applyX = function () { _axS(); labels(); };
   labels(); applyCalm(); applyZoom();
   if (wt.startView === 'groups') setTimeout(() => { try { window._view && window._view('groups'); } catch (e) {} }, 0);
+})();
+
+/* ===== 1.4: Kalender-Ansicht – Monat, Schuljahr, Liste: Ferien, Feiertage, Schultermine ===== */
+Object.assign(X, {
+  kaOn: ['Kalender', 'Calendar', 'Calendario', 'Calendrier', 'Calendario'],
+  kaMonth: ['Monat', 'Month', 'Mese', 'Mois', 'Mes'],
+  kaYear: ['Schuljahr', 'School year', 'Anno scolastico', 'Année scolaire', 'Curso escolar'],
+  kaList: ['Liste', 'List', 'Elenco', 'Liste', 'Lista'],
+  kaToday: ['Heute', 'Today', 'Oggi', 'Aujourd’hui', 'Hoy'],
+  kaKW: ['KW', 'Wk', 'Sett.', 'Sem.', 'Sem.'],
+  kaFerien: ['Ferien', 'School holidays', 'Vacanze', 'Vacances', 'Vacaciones'],
+  kaHol: ['Feiertag', 'Public holiday', 'Festivo', 'Jour férié', 'Festivo'],
+  kaEv: ['Schultermin', 'School event', 'Evento scolastico', 'Événement scolaire', 'Evento escolar'],
+  kaRel: ['Fest / Gedenktag', 'Festival', 'Festa / ricorrenza', 'Fête', 'Fiesta'],
+  kaAllEv: ['Alle Termine', 'All events', 'Tutti gli eventi', 'Tous les événements', 'Todos los eventos'],
+  kaMineEv: ['Meine Klassen', 'My classes', 'Le mie classi', 'Mes classes', 'Mis clases'],
+  kaNothing: ['Nichts eingetragen – ein ganz normaler Schultag.', 'Nothing scheduled – a regular school day.', 'Niente in programma – una normale giornata di scuola.', 'Rien de prévu – une journée de classe normale.', 'Nada previsto: un día de clase normal.'],
+  kaWeekend: ['Wochenende', 'Weekend', 'Fine settimana', 'Week-end', 'Fin de semana'],
+  kaDays: ['{0} Tage', '{0} days', '{0} giorni', '{0} jours', '{0} días'],
+  kaDay1: ['1 Tag', '1 day', '1 giorno', '1 jour', '1 día'],
+  kaSchoolDays: ['{0} Schultage bis {1}', '{0} school days until {1}', '{0} giorni di scuola fino a {1}', '{0} jours de classe jusqu’à {1}', '{0} días de clase hasta {1}'],
+  kaAllDay: ['ganztägig', 'all day', 'tutto il giorno', 'toute la journée', 'todo el día'],
+  kaImport: ['Schulkalender importieren', 'Import school calendar', 'Importa calendario scolastico', 'Importer le calendrier scolaire', 'Importar calendario escolar'],
+  kaNoEv: ['Termine deiner Schule fehlen noch: Kalender als CSV importieren (z. B. aus Outlook oder der Schulwebsite).', 'Your school’s events are missing: import the calendar as CSV (e.g. from Outlook or the school website).', 'Mancano gli eventi della scuola: importa il calendario in CSV.', 'Il manque les événements de l’école : importe le calendrier en CSV.', 'Faltan los eventos del centro: importa el calendario en CSV.'],
+  kaFerienList: ['Ferien und freie Tage', 'Holidays and days off', 'Vacanze e giorni liberi', 'Vacances et jours de congé', 'Vacaciones y días libres'],
+  kaNow: ['jetzt', 'now', 'adesso', 'maintenant', 'ahora'],
+  kaDate: ['Datum', 'Date', 'Data', 'Date', 'Fecha'],
+  kaTime: ['Uhrzeit', 'Time', 'Ora', 'Heure', 'Hora'],
+  kaNoFer: ['Für dieses Schuljahr liegen noch keine Ferientermine vor. Ein Ferien-Abo (ICS) in den Einstellungen ergänzt sie.', 'No holiday dates yet for this school year. A holiday subscription (ICS) adds them.', 'Nessuna data di vacanza per quest’anno. Un abbonamento ICS le aggiunge.', 'Pas encore de dates de vacances. Un abonnement ICS les ajoute.', 'Aún no hay fechas de vacaciones. Una suscripción ICS las añade.'],
+  kaMore: ['+{0} weitere', '+{0} more', '+{0} altri', '+{0} autres', '+{0} más'],
+});
+(function () {
+  const C = window._cal; if (!C) return;
+  const E = (t, c, tx) => { const e = document.createElement(t); if (c) e.className = c; if (tx != null) e.textContent = tx; return e; };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, q => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[q]));
+  const pad = n => (n < 10 ? '0' : '') + n, iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()), add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const wd = d => (d.getDay() + 6) % 7, L = () => LOC[lx()];
+  const fmt = (d, o) => { try { return d.toLocaleDateString(L(), o); } catch (e) { return iso(d); } };
+  const kw = d => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); };
+  const syStart = d => new Date(d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1, 7, 1); /* Schuljahr ab 1. August */
+  const S = { mode: wt.kaStart || 'month', cur: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: day0(new Date()) };
+
+  /* ---------- Daten eines Tages ---------- */
+  const ferRange = d => C.ferien().find(r => d >= r.a && d <= r.b);
+  function dayData(d) {
+    const i = C.info(d), out = { d, fer: null, hol: null, ev: C.evOn(d), rel: [], we: wd(d) > 4 };
+    if (i && (i.kind === 'ferien' || i.kind === 'frei')) out.fer = ferRange(d) || { key: i.key, a: d, b: i.until || d, kind: i.kind };
+    if (i && i.kind === 'feiertag') { out.hol = i; const f = ferRange(d); if (f) out.fer = f; }
+    C.obs(d).forEach(o => { if (!out.hol || o.key !== out.hol.key) out.rel.push(o); });
+    return out;
+  }
+
+  /* ---------- Gerüst ---------- */
+  const ov = E('div', 'ov'); ov.id = 'kaOv'; ov.hidden = true; ov.setAttribute('role', 'dialog');
+  ov.innerHTML = `<div class="ovbar kabar"><span class="ovtitle" id="kaTitle"></span><span class="grow"></span><button class="ovbtn sq" id="kaClose" type="button" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="kawrap"><div class="kahead"><div class="kanav"><button class="kab ki" id="kaPrev" type="button" aria-label="‹"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button class="kab" id="kaToday" type="button"></button><button class="kab ki" id="kaNext" type="button" aria-label="›"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button><h2 id="kaLabel"></h2></div>
+    <div class="kactl"><div class="seg" id="kaMode"></div><div class="seg" id="kaFilt"></div></div></div>
+    <div class="kabody" id="kaBody"></div><div class="kalegend" id="kaLeg"></div></div>`;
+  document.body.appendChild(ov);
+  const $k = id => ov.querySelector('#' + id);
+
+  /* Knopf in der Seitenleiste (nach dem Stundenplan) */
+  const ref = $('stBtn'), btn = E('button', 'tbtn ib'); btn.type = 'button'; btn.id = 'kaBtn';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="8.5" cy="14.5" r=".9" fill="currentColor"/><circle cx="12" cy="14.5" r=".9" fill="currentColor"/><circle cx="15.5" cy="14.5" r=".9" fill="currentColor"/></svg><span></span>';
+  ref.parentNode.insertBefore(btn, ref.nextSibling);
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  btn.dataset.kbd = (isMac ? '⌘' : 'Ctrl+') + '3';
+  addEventListener('keydown', e => { if (e.key === 'Escape' && openOv === ov && !document.querySelector('dialog[open]')) close(); });
+
+  const _so = showOv, _co = closeOv;
+  showOv = function (id) { _so(id); const on = openOv === ov; btn.classList.toggle('on', on); if (on && !window._phoneMode) document.body.classList.add('ov-inline'); };
+  closeOv = function () { _co(); btn.classList.remove('on'); };
+  function open(d) { if (!openOv || openOv !== ov) S.mode = wt.kaStart || 'month'; if (d) { S.sel = day0(d); S.cur = new Date(d.getFullYear(), d.getMonth(), 1); } showOv('kaOv'); draw(); }
+  function close() { closeOv(); if (window._phoneMode) { try { top._phTab && top._phTab('g'); } catch (e) {} } }
+  btn.onclick = () => open(); $k('kaClose').onclick = close;
+  window._kalOpen = open;
+  /* iPhone-App: eigener Reiter „Kalender“ */
+  window._phoneKal = on => { if (on) { if (openOv !== ov) open(); } else if (openOv === ov) closeOv(); };
+  window._kalHome = () => { S.cur = new Date(new Date().getFullYear(), new Date().getMonth(), 1); S.sel = day0(new Date()); draw(); };
+
+  $k('kaPrev').onclick = () => step(-1); $k('kaNext').onclick = () => step(1);
+  $k('kaToday').onclick = () => { S.cur = new Date(new Date().getFullYear(), new Date().getMonth(), 1); S.sel = day0(new Date()); draw(); };
+  function step(n) {
+    if (S.mode === 'year' && S.jumpY) { S.jumpY(syStart(S.cur).getFullYear() + n); return; }
+    if (S.mode === 'year') S.cur = new Date(S.cur.getFullYear() + n, S.cur.getMonth(), 1);
+    else S.cur = new Date(S.cur.getFullYear(), S.cur.getMonth() + n, 1);
+    draw();
+  }
+  /* Wischen auf dem iPhone/iPad */
+  { let x0 = null, y0 = 0; ov.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+    ov.addEventListener('touchend', e => { if (x0 == null || S.mode === 'list') return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 1.6 * Math.abs(dy)) step(dx < 0 ? 1 : -1); }, { passive: true }); }
+
+  /* ---------- Zeichnen ---------- */
+  function seg(host, items, cur, fn) { host.textContent = ''; items.forEach(([v, t]) => { const b = E('button', '', t); b.type = 'button'; b.setAttribute('aria-pressed', v === cur); b.onclick = () => fn(v); host.appendChild(b); }); }
+  function draw() {
+    if (ov.hidden) return;
+    $k('kaTitle').textContent = x('kaOn'); $k('kaToday').textContent = x('kaToday');
+    seg($k('kaMode'), [['month', x('kaMonth')], ['year', x('kaYear')], ['list', x('kaList')]], S.mode, v => { S.mode = v; draw(); });
+    const hasEv = C.evCount() > 0; $k('kaFilt').hidden = !hasEv;
+    if (hasEv) seg($k('kaFilt'), [[false, x('kaMineEv')], [true, x('kaAllEv')]], C.mineAll(), v => { C.mineAll(v); draw(); try { window._renderDash && window._renderDash(); } catch (e) {} });
+    $k('kaPrev').hidden = $k('kaNext').hidden = S.mode === 'list';
+    const body = $k('kaBody'); body.onscroll = null; S.jumpY = null; if (yObs) { yObs.disconnect(); yObs = null; } body.textContent = ''; body.className = 'kabody ka-' + S.mode;
+    if (S.mode === 'month') drawMonth(body); else if (S.mode === 'year') drawYear(body); else drawList(body);
+    $k('kaLeg').innerHTML = `<span><i class="lg fer"></i>${esc(x('kaFerien'))}</span><span><i class="lg hol"></i>${esc(x('kaHol'))}</span><span><i class="lg ev"></i>${esc(x('kaEv'))}</span><span><i class="lg rel"></i>${esc(x('kaRel'))}</span>`;
+  }
+  function revealSide() { if (!matchMedia('(max-width:980px)').matches) return; const sd = ov.querySelector('.kaside'); if (sd) setTimeout(() => { try { sd.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 30); }
+  function evShow(e) {
+    if (!e) return; let dlg = document.getElementById('kaEvDlg'); if (dlg) dlg.remove();
+    dlg = document.createElement('dialog'); dlg.id = 'kaEvDlg'; dlg.className = 'lookdlg kaevdlg';
+    const one = +e.a === +e.b, dt = one ? fmt(e.a, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : fmt(e.a, { weekday: 'short', day: 'numeric', month: 'long' }) + ' – ' + fmt(e.b, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+    dlg.innerHTML = `<div class="sheet"><div class="kaevh"><i></i><span>${esc(x('kaEv'))}</span><button type="button" class="kab" id="kaEvX">${esc(x('fin'))}</button></div><h2>${esc(e.ti)}</h2><div class="kaevm"><div><small>${esc(x('kaDate'))}</small><b>${esc(dt)}</b></div><div><small>${esc(x('kaTime'))}</small><b>${esc(e.tm ? e.tm + (e.te ? ' – ' + e.te : '') : x('kaAllDay'))}</b></div></div><button type="button" class="kab" id="kaEvCp">${esc(x('calCopy'))}</button></div>`;
+    document.body.appendChild(dlg); dlg.showModal();
+    dlg.querySelector('#kaEvX').onclick = () => dlg.close(); dlg.addEventListener('close', () => dlg.remove());
+    dlg.addEventListener('click', ev => { if (ev.target === dlg) dlg.close(); });
+    dlg.querySelector('#kaEvCp').onclick = () => copyText(e.ti + ' – ' + dt + (e.tm ? ', ' + e.tm + (e.te ? '–' + e.te : '') : '')).then(ok => toast(ok ? x('calCopied') : t('tCopyFail'), 1500));
+  }
+  const evLine = e => (e.tm ? e.tm + (e.te ? '–' + e.te : '') + ' ' : '') + e.ti;
+
+  function drawMonth(body) {
+    const m0 = S.cur, today = day0(new Date());
+    $k('kaLabel').textContent = fmt(m0, { month: 'long', year: 'numeric' });
+    const wrap = E('div', 'kamonth'), grid = E('div', 'kagrid'), side = E('aside', 'kaside');
+    const kwOn = !wt.kaNoKW; if (!kwOn) grid.classList.add('nokw'); if (kwOn) grid.appendChild(E('div', 'kakw h', x('kaKW')));
+    for (let i = 0; i < 7; i++) grid.appendChild(E('div', 'kawd' + (i > 4 ? ' we' : ''), fmt(add(new Date(2024, 0, 1), i), { weekday: 'short' }).replace('.', '')));
+    let d = add(m0, -wd(m0)); const weeks = Math.ceil((wd(m0) + new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate()) / 7);
+    for (let w = 0; w < weeks; w++) {
+      if (kwOn) grid.appendChild(E('div', 'kakw', String(kw(d))));
+      for (let i = 0; i < 7; i++, d = add(d, 1)) {
+        const D = dayData(d), c = E('button', 'kaday'); c.type = 'button'; const dd = d;
+        if (d.getMonth() !== m0.getMonth()) c.classList.add('out'); if (D.we) c.classList.add('we'); if (D.fer) c.classList.add('fer'); if (D.hol) c.classList.add('hol');
+        if (+d === +today) c.classList.add('today'); if (+d === +S.sel) c.classList.add('sel');
+        const fr = D.fer, startBand = fr && (+d === +fr.a || i === 0 || d.getDate() === 1);
+        let h = `<span class="dn">${d.getDate()}</span>`;
+        if (startBand) h += `<span class="fl">${esc(x(fr.key))}</span>`;
+        if (D.hol) h += `<span class="hl">${esc(x(D.hol.key))}</span>`;
+        const items = D.ev.map((e, ei) => `<span class="el" data-ei="${ei}">${e.tm ? '<i>' + esc(e.tm) + '</i> ' : ''}${esc(e.ti)}</span>`).concat(D.rel.filter(r => r.c !== 'chr' || !D.hol).map(r => `<span class="rl c-${r.c}">${esc(x(r.key))}</span>`));
+        h += items.slice(0, 3).join('') + (items.length > 3 ? `<span class="mo">${esc(x('kaMore').replace('{0}', items.length - 3))}</span>` : '');
+        c.innerHTML = h; c.onclick = ev => { const t = ev.target.closest('[data-ei]'); S.sel = dd; if (dd.getMonth() !== m0.getMonth()) S.cur = new Date(dd.getFullYear(), dd.getMonth(), 1); draw(); if (t && !matchMedia('(max-width:980px)').matches) evShow(D.ev[+t.dataset.ei]); else revealSide(); };
+        grid.appendChild(c);
+      }
+    }
+    wrap.append(grid, side); body.appendChild(wrap); drawDay(side, S.sel);
+  }
+  function drawDay(side, d) {
+    const D = dayData(d), today = day0(new Date()), diff = Math.round((d - today) / 864e5);
+    let h = `<div class="kadh"><b>${esc(fmt(d, { weekday: 'long' }))}</b><span>${esc(fmt(d, { day: 'numeric', month: 'long', year: 'numeric' }))}</span>${diff ? `<small>${esc(diff === 1 ? x('calTom') : diff > 0 ? x('calIn').replace('{0}', diff) : '')}</small>` : `<small class="now">${esc(x('kaToday'))}</small>`}</div>`;
+    const rows = [];
+    if (D.fer) { const n = Math.round((D.fer.b - D.fer.a) / 864e5) + 1; rows.push(`<div class="kar fer"><i></i><div><b>${esc(x(D.fer.key))}</b><small>${esc(fmt(D.fer.a, { day: 'numeric', month: 'short' }))} – ${esc(fmt(D.fer.b, { day: 'numeric', month: 'short', year: 'numeric' }))} · ${esc(n === 1 ? x('kaDay1') : x('kaDays').replace('{0}', n))}</small></div></div>`); }
+    if (D.hol) rows.push(`<button type="button" class="kar hol" data-k="${esc(D.hol.key)}" data-c="chr"><i></i><div><b>${esc(x(D.hol.key))}</b><small>${esc(x('kaHol'))}</small></div><span class="kgo">›</span></button>`);
+    D.rel.forEach(r => rows.push(`<button type="button" class="kar rel c-${r.c}" data-k="${esc(r.key)}" data-c="${r.c}"><i></i><div><b>${esc(x(r.key))}</b><small>${esc(x('kaRel'))}</small></div><span class="kgo">›</span></button>`));
+    D.ev.forEach((e, ei) => rows.push(`<button type="button" class="kar ev" data-ei="${ei}"><i></i><div><b>${esc(e.ti)}</b><small>${esc(e.tm ? e.tm + (e.te ? ' – ' + e.te : '') : x('kaAllDay'))}${+e.a !== +e.b ? ' · ' + esc(fmt(e.a, { day: 'numeric', month: 'short' })) + ' – ' + esc(fmt(e.b, { day: 'numeric', month: 'short' })) : ''}</small></div><span class="kgo">›</span></button>`));
+    if (!rows.length) rows.push(`<p class="kanone">${esc(D.we ? x('kaWeekend') : x('kaNothing'))}</p>`);
+    h += rows.join('');
+    if (!C.evCount()) h += `<div class="kahint"><p>${esc(x('kaNoEv'))}</p><button type="button" class="kab" id="kaImp">${esc(x('kaImport'))}</button></div>`;
+    side.innerHTML = h;
+    side.querySelectorAll('[data-k]').forEach(b => b.onclick = () => C.show(b.dataset.k, d, d, b.dataset.c));
+    side.querySelectorAll('[data-ei]').forEach(b => b.onclick = () => evShow(D.ev[+b.dataset.ei]));
+    const im = side.querySelector('#kaImp'); if (im) im.onclick = () => { C.importPick && C.importPick(); };
+  }
+  /* Schuljahr: rechtlich 1. August bis 31. Juli (BayEUG Art. 5; ebenso in den anderen Ländern). Endlos weiterscrollen, je Schuljahr ein Abschnitt. */
+  let yObs = null;
+  function syLabel(y) { return x('kaYear') + ' ' + y + '/' + String(y + 1).slice(2); }
+  function yearSection(y) {
+    const y0 = new Date(y, 7, 1), today = day0(new Date()), sec = E('section', 'kasy'); sec.dataset.y = y;
+    sec.innerHTML = `<h3><span>${esc(syLabel(y))}</span><small>${esc(fmt(y0, { day: 'numeric', month: 'long', year: 'numeric' }))} – ${esc(fmt(new Date(y + 1, 6, 31), { day: 'numeric', month: 'long', year: 'numeric' }))}</small></h3>`;
+    const grid = E('div', 'kamgrid');
+    for (let m = 0; m < 12; m++) {
+      const m0 = new Date(y, 7 + m, 1), box = E('button', 'kamini'); box.type = 'button';
+      let h = `<b>${esc(fmt(m0, { month: 'long' }))} <small>${m0.getFullYear()}</small></b><div class="mg">`;
+      for (let i = 0; i < 7; i++) h += `<span class="w">${esc(fmt(add(new Date(2024, 0, 1), i), { weekday: 'narrow' }))}</span>`;
+      for (let i = 0; i < wd(m0); i++) h += '<span></span>';
+      const n = new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate();
+      for (let k = 1; k <= n; k++) { const d = new Date(m0.getFullYear(), m0.getMonth(), k), D = dayData(d);
+        const cls = [D.we ? 'we' : '', D.fer ? 'fer' : '', D.hol ? 'hol' : '', D.ev.length ? 'ev' : '', +d === +today ? 'today' : ''].join(' ');
+        h += `<span class="${cls}">${k}</span>`; }
+      box.innerHTML = h + '</div>'; box.onclick = () => { S.mode = 'month'; S.cur = m0; S.sel = m0; draw(); };
+      grid.appendChild(box);
+    }
+    sec.appendChild(grid); return sec;
+  }
+  function yearSide(side, y) {
+    const today = day0(new Date()), y0 = new Date(y, 7, 1), y1 = new Date(y + 1, 7, 1), F = C.ferien().filter(r => r.b >= y0 && r.a < y1).sort((a, b) => a.a - b.a);
+    const hol = []; for (let d = new Date(y0); d < y1; d = add(d, 1)) { const i = C.info(d); if (i && i.kind === 'feiertag' && wd(d) < 5 && !ferRange(d)) hol.push({ key: i.key, a: new Date(d), b: new Date(d), kind: 'feiertag' }); }
+    const all = F.concat(hol).sort((a, b) => a.a - b.a), nextF = F.find(r => r.b >= today && r.kind === 'ferien');
+    let h = `<div class="kadh"><b>${esc(x('kaFerienList'))}</b><span>${esc(syLabel(y))}</span></div>`;
+    if (nextF && nextF.a > today && today >= y0 && today < y1) { let n = 0; for (let d = add(today, 1); d < nextF.a; d = add(d, 1)) { if (!C.info(d)) n++; } h += `<p class="kacount">${esc(x('kaSchoolDays').replace('{0}', n).replace('{1}', x(nextF.key)))}</p>`; }
+    if (!F.length) h += `<p class="kanone">${esc(x('kaNoFer'))}</p>`;
+    all.forEach(r => { const n = Math.round((r.b - r.a) / 864e5) + 1, past = r.b < today, now = r.a <= today && r.b >= today, cut = r.a < y0 || r.b >= y1;
+      h += `<div class="kar ${r.kind === 'feiertag' ? 'hol' : 'fer'}${past ? ' past' : ''}"><i></i><div><b>${esc(x(r.key))}${now ? ` <em>${esc(x('kaNow'))}</em>` : ''}</b><small>${esc(fmt(r.a, { weekday: 'short', day: 'numeric', month: 'short', year: cut ? 'numeric' : undefined }))}${n > 1 ? ' – ' + esc(fmt(r.b, { weekday: 'short', day: 'numeric', month: 'short', year: cut ? 'numeric' : undefined })) + ' · ' + esc(x('kaDays').replace('{0}', n)) : ''}</small></div></div>`; });
+    side.innerHTML = h;
+  }
+  function drawYear(body) {
+    const yStart = syStart(S.cur).getFullYear(), wrap = E('div', 'kayear'), list = E('div', 'kaylist'), side = E('aside', 'kaside kayside'), sent = E('div', 'kasent');
+    let lo = yStart, hi = yStart + 1, curY = yStart;
+    const narrow = matchMedia('(max-width:980px)').matches;
+    if (narrow) { list.append(yearSection(yStart), yearSection(yStart + 1), sent); lo = yStart; } else { list.append(yearSection(yStart - 1), yearSection(yStart), yearSection(yStart + 1), sent); lo = yStart - 1; }
+    wrap.append(list, side); body.appendChild(wrap);
+    const setY = y => { if (y === curY && side.innerHTML) return; curY = y; S.cur = new Date(y, 7, 1); $k('kaLabel').textContent = syLabel(y); yearSide(side, y); };
+    setY(yStart); curY = yStart; yearSide(side, yStart);
+    if (!narrow) requestAnimationFrame(() => { const t = list.querySelector(`[data-y="${yStart}"]`); if (t) body.scrollTop += t.getBoundingClientRect().top - body.getBoundingClientRect().top - 2; });
+    if (yObs) yObs.disconnect();
+    yObs = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.target === sent && e.isIntersecting && hi < yStart + 12) { hi++; list.insertBefore(yearSection(hi), sent); yObs.observe(list.querySelector(`[data-y="${hi}"]`)); } });
+      const secs = [...list.querySelectorAll('.kasy')], top = body.getBoundingClientRect().top + 80; let best = secs[0];
+      secs.forEach(sc => { if (sc.getBoundingClientRect().top <= top) best = sc; }); if (best && !narrow) setY(+best.dataset.y);
+    }, { root: body, threshold: [0, .25, .5, .75, 1] });
+    list.querySelectorAll('.kasy').forEach(sc => yObs.observe(sc)); yObs.observe(sent);
+    body.onscroll = () => { const secs = [...list.querySelectorAll('.kasy')], top = body.getBoundingClientRect().top + 80; let best = secs[0]; secs.forEach(sc => { if (sc.getBoundingClientRect().top <= top) best = sc; }); if (best) setY(+best.dataset.y);
+      if (!narrow && body.scrollTop < 40 && lo > yStart - 6) { const h0 = body.scrollHeight; lo--; list.insertBefore(yearSection(lo), list.firstChild); body.scrollTop += body.scrollHeight - h0; } };
+    S.jumpY = y => { let t = list.querySelector(`[data-y="${y}"]`); while (!t && y > hi && hi < yStart + 12) { hi++; list.insertBefore(yearSection(hi), sent); t = list.querySelector(`[data-y="${y}"]`); } while (!t && y < lo && lo > yStart - 6) { lo--; list.insertBefore(yearSection(lo), list.firstChild); t = list.querySelector(`[data-y="${y}"]`); } if (t) body.scrollTo({ top: body.scrollTop + t.getBoundingClientRect().top - body.getBoundingClientRect().top - 2, behavior: 'smooth' }); };
+  }
+  function drawList(body) {
+    const today = day0(new Date()), end = add(today, 120);
+    $k('kaLabel').textContent = fmt(today, { day: 'numeric', month: 'long' }) + ' – ' + fmt(end, { day: 'numeric', month: 'long', year: 'numeric' });
+    const list = E('div', 'kalist'); let lastW = null, seenF = new Set(), any = false;
+    for (let d = today; d <= end; d = add(d, 1)) {
+      const D = dayData(d), rows = [];
+      if (D.fer && !seenF.has(+D.fer.a)) { seenF.add(+D.fer.a); const n = Math.round((D.fer.b - D.fer.a) / 864e5) + 1; rows.push(`<div class="kar fer"><i></i><div><b>${esc(x(D.fer.key))}</b><small>${esc(fmt(D.fer.a, { day: 'numeric', month: 'short' }))} – ${esc(fmt(D.fer.b, { day: 'numeric', month: 'short' }))} · ${esc(n === 1 ? x('kaDay1') : x('kaDays').replace('{0}', n))}</small></div></div>`); }
+      if (D.hol) rows.push(`<button type="button" class="kar hol" data-k="${esc(D.hol.key)}" data-c="chr" data-d="${iso(d)}"><i></i><div><b>${esc(x(D.hol.key))}</b><small>${esc(x('kaHol'))}</small></div><span class="kgo">›</span></button>`);
+      D.rel.forEach(r => { if (+r.a === +d || +d === +today) rows.push(`<button type="button" class="kar rel c-${r.c}" data-k="${esc(r.key)}" data-c="${r.c}" data-d="${iso(d)}"><i></i><div><b>${esc(x(r.key))}</b><small>${esc(x('kaRel'))}</small></div><span class="kgo">›</span></button>`); });
+      D.ev.forEach((e, ei) => { if (+e.a === +d || +d === +today) rows.push(`<button type="button" class="kar ev" data-ei="${ei}"><i></i><div><b>${esc(e.ti)}</b><small>${esc(e.tm ? e.tm + (e.te ? ' – ' + e.te : '') : x('kaAllDay'))}</small></div><span class="kgo">›</span></button>`); });
+      if (!rows.length) continue; any = true;
+      const w = kw(d); if (w !== lastW) { lastW = w; list.appendChild(E('div', 'kawk', x('kaKW') + ' ' + w)); }
+      const g = E('div', 'kald' + (+d === +today ? ' today' : '')); g.innerHTML = `<div class="kaldd"><b>${d.getDate()}</b><span>${esc(fmt(d, { weekday: 'short', month: 'short' }))}</span></div><div class="kalr">${rows.join('')}</div>`;
+      const dd = d, DD = D; g.querySelectorAll('[data-k]').forEach(b => b.onclick = () => C.show(b.dataset.k, dd, dd, b.dataset.c));
+      g.querySelectorAll('[data-ei]').forEach(b => b.onclick = () => evShow(DD.ev[+b.dataset.ei]));
+      list.appendChild(g);
+    }
+    if (!any) list.appendChild(E('p', 'kanone', x('kaNothing')));
+    if (!C.evCount()) { const hn = E('div', 'kahint'); hn.innerHTML = `<p>${esc(x('kaNoEv'))}</p><button type="button" class="kab">${esc(x('kaImport'))}</button>`; hn.querySelector('button').onclick = () => C.importPick && C.importPick(); list.appendChild(hn); }
+    body.appendChild(list);
+  }
+  const lab = () => { btn.querySelector('span').textContent = x('kaOn'); btn.title = x('kaOn') + '  ' + btn.dataset.kbd; if (!ov.hidden) draw(); };
+  const _ax = applyX; applyX = function () { _ax(); lab(); }; lab();
+  /* nach Mitternacht oder neuem Import neu zeichnen */
+  let lastDay = iso(new Date()); setInterval(() => { const t = iso(new Date()); if (t !== lastDay && !ov.hidden && !document.hidden) { lastDay = t; draw(); } }, 60000);
+  const _rd = window._renderDash; if (_rd) window._renderDash = function () { _rd.apply(this, arguments); if (!ov.hidden && S.mode !== 'year') draw(); };
+})();
+
+/* ===== 1.4: Statistik – Unterricht, Schuljahr, Klassen, Arbeitszeit ===== */
+Object.assign(X, {
+  saOn: ['Statistik', 'Statistics', 'Statistiche', 'Statistiques', 'Estadísticas'],
+  saT1: ['Unterricht', 'Teaching', 'Lezioni', 'Cours', 'Clases'],
+  saT2: ['Schuljahr', 'School year', 'Anno scolastico', 'Année scolaire', 'Curso'],
+  saT3: ['Klassen', 'Classes', 'Classi', 'Classes', 'Clases'],
+  saT4: ['Arbeitszeit', 'Working time', 'Orario di lavoro', 'Temps de travail', 'Horas de trabajo'],
+  saNoPlan: ['Für diese Werte braucht Aula deinen Stundenplan: Stundenplan einlesen und dort festlegen, wer du bist.', 'Aula needs your timetable for this: import the timetable and set who you are.', 'Serve il tuo orario: importalo e indica chi sei.', 'Il faut ton emploi du temps : importe-le et indique qui tu es.', 'Hace falta tu horario: impórtalo e indica quién eres.'],
+  saOpenPlan: ['Stundenplan öffnen', 'Open timetable', 'Apri orario', 'Ouvrir l’emploi du temps', 'Abrir horario'],
+  saLes: ['Stunden pro Woche', 'Lessons per week', 'Ore a settimana', 'Heures par semaine', 'Horas por semana'],
+  saClock: ['Zeitstunden im Unterricht', 'Clock hours teaching', 'Ore effettive in classe', 'Heures réelles en classe', 'Horas reales en clase'],
+  saDays: ['Unterrichtstage', 'Teaching days', 'Giorni di lezione', 'Jours de cours', 'Días de clase'],
+  saGaps: ['Freistunden dazwischen', 'Free periods in between', 'Ore buche', 'Heures creuses', 'Horas libres intermedias'],
+  saDuty: ['Pausenaufsichten', 'Break duties', 'Sorveglianze', 'Surveillances', 'Guardias de recreo'],
+  saAfter: ['Nachmittage', 'Afternoons', 'Pomeriggi', 'Après-midis', 'Tardes'],
+  saWeekTyp: ['Typische Woche', 'Typical week', 'Settimana tipo', 'Semaine type', 'Semana tipo'],
+  saMonth: ['Dieser Monat', 'This month', 'Questo mese', 'Ce mois-ci', 'Este mes'],
+  saYear: ['Schuljahr', 'School year', 'Anno scolastico', 'Année scolaire', 'Curso'],
+  saWeekNote: ['Eine normale Unterrichtswoche laut Stundenplan – nur gehaltener Unterricht, ohne Verfügung, Aufsichten und Anrechnungsstunden.', 'A normal week per timetable – only lessons taught.', 'Una settimana normale secondo l’orario – solo lezioni.', 'Une semaine normale selon l’emploi du temps – cours seulement.', 'Una semana normal según el horario – solo clases.'],
+  saMonthNote: ['Alle Schultage dieses Monats, Ferien und Feiertage abgezogen.', 'All school days this month, minus holidays.', 'Tutti i giorni di scuola del mese, senza vacanze.', 'Tous les jours de classe du mois, sans vacances.', 'Todos los días lectivos del mes, sin vacaciones.'],
+  saYearNote: ['Vom ersten Schultag bis zu den Sommerferien, Ferien und Feiertage abgezogen.', 'From the first school day to the summer break, minus holidays.', 'Dal primo giorno alle vacanze estive.', 'Du premier jour aux vacances d’été.', 'Del primer día a las vacaciones de verano.'],
+  saOther: ['({0} weitere Stunden wie Verfügung sind nicht mitgezählt.)', '({0} other periods such as stand-by are not counted.)', '({0} altre ore non conteggiate.)', '({0} autres heures non comptées.)', '({0} horas más no contadas.)'],
+  saLesW: ['Unterrichtsstunden pro Woche', 'Lessons per week', 'Ore di lezione a settimana', 'Heures de cours par semaine', 'Clases por semana'],
+  saClockW: ['Zeit im Unterricht pro Woche', 'Time teaching per week', 'Tempo in classe a settimana', 'Temps en classe par semaine', 'Tiempo en clase por semana'],
+  saDaysW: ['Tage mit Unterricht', 'Days with lessons', 'Giorni con lezioni', 'Jours avec cours', 'Días con clase'],
+  saGapsW: ['Freistunden zwischen Stunden', 'Free periods in between', 'Ore buche', 'Heures creuses', 'Horas libres intermedias'],
+  saDutyW: ['Pausenaufsichten pro Woche', 'Break duties per week', 'Sorveglianze a settimana', 'Surveillances par semaine', 'Guardias por semana'],
+  saAfterW: ['Nachmittage pro Woche', 'Afternoons per week', 'Pomeriggi a settimana', 'Après-midis par semaine', 'Tardes por semana'],
+  saGrid: ['Mein Stundenplan', 'My timetable', 'Il mio orario', 'Mon emploi du temps', 'Mi horario'],
+  saPerWeek: ['Std./Woche', 'per week', 'ore/sett.', 'h/sem.', 'h/sem.'],
+  saLesIn: ['Unterrichtsstunden {0}', 'Lessons {0}', 'Lezioni {0}', 'Cours {0}', 'Clases {0}'],
+  saHeld: ['schon gehalten', 'already taught', 'già tenute', 'déjà données', 'ya dadas'],
+  saToGo: ['noch offen', 'still to come', 'ancora da fare', 'encore à venir', 'por dar'],
+  saClockIn: ['Zeit im Unterricht', 'Time teaching', 'Tempo in classe', 'Temps en classe', 'Tiempo en clase'],
+  saWeeks2: ['Stunden je Woche', 'Lessons per week', 'Ore per settimana', 'Heures par semaine', 'Horas por semana'],
+  saSubj: ['Fach', 'Subject', 'Materia', 'Matière', 'Asignatura'],
+  saSum: ['gesamt', 'total', 'totale', 'total', 'total'],
+  saPerDay: ['Nach Wochentag', 'By weekday', 'Per giorno', 'Par jour', 'Por día'],
+  saPerCls: ['Nach Klasse', 'By class', 'Per classe', 'Par classe', 'Por clase'],
+  saPerSub: ['Nach Fach', 'By subject', 'Per materia', 'Par matière', 'Por asignatura'],
+  saFree: ['frei', 'free', 'libero', 'libre', 'libre'],
+  saSyDone: ['Schuljahr geschafft', 'School year done', 'Anno completato', 'Année accomplie', 'Curso completado'],
+  saSyLeft: ['Schultage übrig', 'School days left', 'Giorni di scuola rimasti', 'Jours de classe restants', 'Días de clase restantes'],
+  saSyTotal: ['Schultage insgesamt', 'School days in total', 'Giorni di scuola in totale', 'Jours de classe au total', 'Días de clase en total'],
+  saSyNext: ['bis {0}', 'until {0}', 'fino a {0}', 'jusqu’à {0}', 'hasta {0}'],
+  saSyEnd: ['Schuljahresende', 'End of school year', 'Fine dell’anno', 'Fin de l’année', 'Fin de curso'],
+  saRemain: ['Noch zu haltende Stunden', 'Lessons still to teach', 'Lezioni ancora da tenere', 'Cours encore à donner', 'Clases que quedan'],
+  saRemainNote: ['Laut Stundenplan, Ferien und Feiertage abgezogen. Wandertage und Sondertermine sind nicht berücksichtigt.', 'Per the timetable, minus holidays. Trips and special events are not included.', 'Secondo l’orario, senza vacanze e festività. Gite ed eventi speciali non considerati.', 'Selon l’emploi du temps, sans vacances ni jours fériés. Sorties et événements spéciaux non compris.', 'Según el horario, sin vacaciones ni festivos. Excursiones y eventos especiales no incluidos.'],
+  saCls: ['Klasse', 'Class', 'Classe', 'Classe', 'Clase'],
+  saPupils: ['Schüler/innen', 'Students', 'Alunni', 'Élèves', 'Alumnos'],
+  saGroups: ['Gruppen gebildet', 'Groupings made', 'Gruppi formati', 'Groupes formés', 'Grupos formados'],
+  saLast: ['zuletzt {0}', 'last {0}', 'ultima {0}', 'dernière {0}', 'última {0}'],
+  saPick: ['Wer ist dran? – wer wie oft', 'Who’s next? – how often', 'Chi tocca? – quante volte', 'À qui le tour ? – combien de fois', '¿A quién le toca? – cuántas veces'],
+  ssCount: ['Mitzählen', 'Counting', 'Conteggio', 'Comptage', 'Recuento'],
+  ssPick: ['„Wer ist dran?“ mitzählen', 'Count “Who’s next?”', 'Conta “Chi tocca?”', 'Compter « À qui le tour ? »', 'Contar «¿A quién le toca?»'],
+  ssPickN: ['Zeigt in der Statistik, wer wie oft drankam.', 'Shows who was picked how often.', 'Mostra chi è stato estratto quante volte.', 'Montre qui a été tiré combien de fois.', 'Muestra a quién le tocó cuántas veces.'],
+  ssAbs: ['Fehltage mitzählen', 'Count absences', 'Conta le assenze', 'Compter les absences', 'Contar ausencias'],
+  ssAbsN: ['Wenn du antippst, wer fehlt, merkt sich Aula den Tag.', 'When you tap who is absent, Aula remembers the day.', 'Quando tocchi chi è assente, Aula registra il giorno.', 'Quand tu touches les absents, Aula note le jour.', 'Al tocar quién falta, Aula guarda el día.'],
+  ssBadge: ['Laufende Zeit in der Seitenleiste', 'Running time in the sidebar', 'Tempo in corso nella barra', 'Temps en cours dans la barre', 'Tiempo en curso en la barra'],
+  ssBadgeN: ['Kleine Anzeige neben „Statistik“, solange die Arbeitszeit läuft.', 'Small badge next to “Statistics” while time is running.', 'Piccolo indicatore accanto a “Statistiche”.', 'Petit badge à côté de « Statistiques ».', 'Pequeño indicador junto a «Estadísticas».'],
+  ssCat: ['Bereich beim Start', 'Default area', 'Ambito predefinito', 'Domaine par défaut', 'Ámbito por defecto'],
+  ssData: ['Zähler', 'Counters', 'Contatori', 'Compteurs', 'Contadores'],
+  ssReset: ['Alle Zähler zurücksetzen', 'Reset all counters', 'Azzera tutti i contatori', 'Tout remettre à zéro', 'Reiniciar todos los contadores'],
+  ssResetN: ['„Wer ist dran?“ und Fehltage aller Klassen. Arbeitszeit bleibt.', '“Who’s next?” and absences of all classes. Working time stays.', '“Chi tocca?” e assenze di tutte le classi.', '« À qui le tour ? » et absences de toutes les classes.', '«¿A quién le toca?» y ausencias de todas las clases.'],
+  ssResetQ: ['Wirklich alle Zähler aller Klassen zurücksetzen?', 'Really reset all counters?', 'Azzerare davvero tutti i contatori?', 'Vraiment tout remettre à zéro ?', '¿Reiniciar de verdad todos los contadores?'],
+  ssResetDone: ['Zähler zurückgesetzt', 'Counters reset', 'Contatori azzerati', 'Compteurs remis à zéro', 'Contadores reiniciados'],
+  saPickTot: ['Mal aufgerufen', 'Times picked', 'Volte estratti', 'Fois tirés', 'Veces elegidos'],
+  saNever: ['Noch nie dran', 'Never picked', 'Mai estratti', 'Jamais tirés', 'Nunca elegidos'],
+  saPickNone: ['Noch nichts gezählt. Ab jetzt zählt Aula mit, wer bei „Wer ist dran?“ drankommt.', 'Nothing counted yet. From now on Aula counts who gets picked.', 'Ancora niente. D’ora in poi Aula conta chi viene estratto.', 'Rien encore. Aula compte désormais qui est tiré.', 'Aún nada. Desde ahora Aula cuenta a quién le toca.'],
+  saAbs: ['Fehltage', 'Days absent', 'Giorni di assenza', 'Jours d’absence', 'Días de ausencia'],
+  saAbsNone: ['Noch nichts erfasst. Aula zählt mit, sobald du antippst, wer fehlt (Gruppen oder „Stunde starten“).', 'Nothing recorded yet. Aula counts as soon as you tap who is absent.', 'Niente ancora. Aula conta quando tocchi chi è assente.', 'Rien encore. Aula compte dès que tu touches les absents.', 'Aún nada. Aula cuenta cuando tocas quién falta.'],
+  saAbsDays: ['an {0} Tagen erfasst', 'recorded on {0} days', 'registrato in {0} giorni', 'saisi sur {0} jours', 'registrado en {0} días'],
+  saReset: ['Zähler zurücksetzen', 'Reset counters', 'Azzera contatori', 'Remettre à zéro', 'Reiniciar contadores'],
+  saResetQ: ['Zähler für {0} wirklich zurücksetzen?', 'Really reset counters for {0}?', 'Azzerare davvero i contatori di {0}?', 'Vraiment remettre à zéro pour {0} ?', '¿Reiniciar de verdad los contadores de {0}?'],
+  saPriv: ['Bleibt auf deinen Geräten (verschlüsselt abgeglichen).', 'Stays on your devices (synced encrypted).', 'Resta sui tuoi dispositivi.', 'Reste sur tes appareils.', 'Se queda en tus dispositivos.'],
+  waStart: ['Start', 'Start', 'Avvia', 'Démarrer', 'Iniciar'],
+  waStop: ['Stopp', 'Stop', 'Stop', 'Arrêter', 'Parar'],
+  waRun: ['läuft seit {0}', 'running since {0}', 'in corso dalle {0}', 'en cours depuis {0}', 'en marcha desde {0}'],
+  waAdd: ['Nachtragen', 'Add entry', 'Aggiungi', 'Ajouter', 'Añadir'],
+  waDate: ['Datum', 'Date', 'Data', 'Date', 'Fecha'],
+  waDur: ['Dauer', 'Duration', 'Durata', 'Durée', 'Duración'],
+  waNote: ['Notiz (optional)', 'Note (optional)', 'Nota (facoltativa)', 'Note (facultatif)', 'Nota (opcional)'],
+  waSave: ['Speichern', 'Save', 'Salva', 'Enregistrer', 'Guardar'],
+  waWeek: ['Diese Woche', 'This week', 'Questa settimana', 'Cette semaine', 'Esta semana'],
+  waTeach: ['Unterricht laut Plan', 'Teaching (timetable)', 'Lezioni (orario)', 'Cours (emploi du temps)', 'Clases (horario)'],
+  waLogged: ['Erfasst', 'Logged', 'Registrato', 'Saisi', 'Registrado'],
+  waGoal: ['Wochenziel', 'Weekly target', 'Obiettivo settimanale', 'Objectif hebdo', 'Objetivo semanal'],
+  waGoalNote: ['z. B. 40 Stunden – nur zum Vergleich.', 'e.g. 40 hours – just for comparison.', 'es. 40 ore – solo per confronto.', 'p. ex. 40 heures – pour comparer.', 'p. ej. 40 horas – solo para comparar.'],
+  waWeeks: ['Letzte Wochen', 'Recent weeks', 'Ultime settimane', 'Dernières semaines', 'Últimas semanas'],
+  waCats: ['Nach Bereich (dieser Monat)', 'By area (this month)', 'Per ambito (questo mese)', 'Par domaine (ce mois)', 'Por ámbito (este mes)'],
+  waList: ['Einträge', 'Entries', 'Voci', 'Entrées', 'Entradas'],
+  waNone: ['Noch keine Einträge. Tippe auf „Start“, wenn du mit Korrigieren, Vorbereiten o. Ä. beginnst.', 'No entries yet. Tap “Start” when you begin marking, preparing etc.', 'Nessuna voce. Tocca “Avvia” quando inizi a correggere o preparare.', 'Aucune entrée. Touche « Démarrer » quand tu commences.', 'Sin entradas. Toca “Iniciar” cuando empieces.'],
+  waAvg: ['Ø pro Schulwoche', 'Avg. per school week', 'Media per settimana', 'Moy. par semaine', 'Media por semana'],
+  waTotal: ['Schuljahr bisher', 'School year so far', 'Anno finora', 'Année jusqu’ici', 'Curso hasta ahora'],
+  waDel: ['Löschen', 'Delete', 'Elimina', 'Supprimer', 'Eliminar'],
+  wc1: ['Vorbereitung', 'Preparation', 'Preparazione', 'Préparation', 'Preparación'],
+  wc2: ['Korrektur', 'Marking', 'Correzione', 'Correction', 'Corrección'],
+  wc3: ['Konferenz & Sitzung', 'Meetings', 'Riunioni', 'Réunions', 'Reuniones'],
+  wc4: ['Eltern & Schüler', 'Parents & students', 'Genitori e alunni', 'Parents et élèves', 'Familias y alumnos'],
+  wc5: ['Organisation', 'Admin', 'Organizzazione', 'Organisation', 'Organización'],
+  wc6: ['Fortbildung', 'Training', 'Formazione', 'Formation', 'Formación'],
+  wc7: ['Sonstiges', 'Other', 'Altro', 'Autre', 'Otros'],
+});
+(function () {
+  const E = (t, c, tx) => { const e = document.createElement(t); if (c) e.className = c; if (tx != null) e.textContent = tx; return e; };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, q => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[q]));
+  const jget = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const jset = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const pad = n => (n < 10 ? '0' : '') + n, iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const pd = s => { const p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()), add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const wd = d => (d.getDay() + 6) % 7, monday = d => add(day0(d), -wd(d));
+  const mins = t => { const m = /^(\d+):(\d+)/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : null; };
+  const hm = m => { m = Math.round(m); const h = Math.floor(m / 60); return h + ':' + pad(m % 60); };
+  const hNum = m => (Math.round(m / 6) / 10).toLocaleString(LOC[lx()]);
+  const fmt = (d, o) => { try { return d.toLocaleDateString(LOC[lx()], o); } catch (e) { return iso(d); } };
+  const fx = (k, ...a) => { let s = x(k); a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; };
+  const C = window._cal;
+  const CATS = ['wc1', 'wc2', 'wc3', 'wc4', 'wc5', 'wc6', 'wc7'], CCOL = ['#0A84FF', '#FF9F0A', '#AF52DE', '#30B94D', '#5E5CE6', '#FF375F', '#8E8E93'];
+
+  /* ---------- Zählen: „Wer ist dran?“ und Fehlzeiten ---------- */
+  const ST = () => { const s = jget('gb_stat'); return s && typeof s === 'object' ? s : {}; };
+  window._statPick = pick => { if (wt.saNoPick) return; const s = ST(), c = settings.cls; s.pk = s.pk || {}; const o = s.pk[c] = s.pk[c] || {}; pick.forEach(p => { const k = skey(p); o[k] = (o[k] || 0) + 1; }); jset('gb_stat', s); };
+  window._statAbs = () => { if (wt.saNoAbs) return; const s = ST(), c = settings.cls, Cc = classes[c]; if (!Cc) return; s.abs = s.abs || {}; const o = s.abs[c] = s.abs[c] || {}, d = iso(new Date());
+    const list = [...absent].map(i => Cc.students[i]).filter(Boolean).map(skey); o[d] = list; jset('gb_stat', s); };
+
+  /* ---------- Arbeitszeit ---------- */
+  const WK = 'gb_work';
+  const W = () => { const w = jget(WK); return w && Array.isArray(w.e) ? w : { e: [], run: null }; };
+  const saveW = w => jset(WK, w);
+  const live = w => (w.e || []).filter(e => !e.del);
+  const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function stopRun() { const w = W(); if (!w.run) return; const t0 = new Date(w.run.t0), t1 = new Date(); let m = Math.round((t1 - t0) / 6e4);
+    if (m >= 1) { /* über Mitternacht: dem Starttag zuordnen */ w.e.push({ id: nid(), d: iso(t0), min: Math.min(m, 16 * 60), cat: w.run.cat || 'wc7', u: Date.now() }); }
+    w.run = null; saveW(w); }
+
+  /* ---------- Stundenplan ---------- */
+  /* Fächer aus Untis-Kürzeln erkennen: „It“, „2ita1“ (Oberstufenkurs), „EBr“ (Englisch-Brückenkurs) … */
+  const SUBJ = { it: 'Italienisch', ita: 'Italienisch', i: 'Italienisch', e: 'Englisch', en: 'Englisch', eng: 'Englisch', ebr: 'Englisch-Brückenkurs', d: 'Deutsch', de: 'Deutsch', deu: 'Deutsch', dbr: 'Deutsch-Brückenkurs', m: 'Mathematik', ma: 'Mathematik', mat: 'Mathematik', mbr: 'Mathematik-Brückenkurs', f: 'Französisch', fr: 'Französisch', fra: 'Französisch', l: 'Latein', la: 'Latein', lat: 'Latein', sp: 'Spanisch', spa: 'Spanisch', s: 'Spanisch', gr: 'Griechisch', ph: 'Physik', phy: 'Physik', c: 'Chemie', ch: 'Chemie', che: 'Chemie', b: 'Biologie', bio: 'Biologie', g: 'Geschichte', ge: 'Geschichte', ges: 'Geschichte', geo: 'Geographie', ek: 'Geographie', wr: 'Wirtschaft und Recht', w: 'Wirtschaft und Recht', pug: 'Politik und Gesellschaft', sk: 'Sozialkunde', inf: 'Informatik', in: 'Informatik', ku: 'Kunst', k: 'Kunst', mu: 'Musik', sm: 'Sport', sw: 'Sport', spo: 'Sport', kr: 'Kath. Religion', kath: 'Kath. Religion', er: 'Ev. Religion', ev: 'Ev. Religion', eth: 'Ethik', nut: 'Natur und Technik', psem: 'P-Seminar', wsem: 'W-Seminar', ps: 'P-Seminar', ws: 'W-Seminar', int: 'Intensivierung', wu: 'Wahlunterricht' };
+  const NOTEACH = /^(verf(ü|ue)?g(ung)?\.?|vfg|v|bereitschaft|bs|präsenz|praesenz|aufsicht|sprechst(unde)?|vertr(etung)?|frei|kl?ls?|klassenleiter(stunde)?)$/i;
+  function subj(l) {
+    const raw = String(l.fach || '').trim(), m = /^\d*([A-Za-zÄÖÜäöü]+)\d*$/.exec(raw.replace(/\s+/g, ''));
+    const k = m ? m[1].toLowerCase() : raw.toLowerCase();
+    return { raw, name: SUBJ[k] || SUBJ[raw.toLowerCase()] || raw || '–', known: !!(SUBJ[k] || SUBJ[raw.toLowerCase()]) };
+  }
+  const teaches = l => { if (l.mentor || l.d > 4) return false; const f = String(l.fach || '').trim(); if (NOTEACH.test(f.replace(/\s+/g, ''))) return false; return !!(l.cls && String(l.cls).trim()) || subj(l).known; };
+  const PAL = ['#0A84FF', '#FF9F0A', '#30B94D', '#AF52DE', '#FF375F', '#5E5CE6', '#00A3BF', '#A2845E'];
+  function myPlan() {
+    const D = jget('orario_v1'); let me = null; try { const r = localStorage.getItem('orario_me'); me = r ? (r[0] === '"' ? JSON.parse(r) : r) : null; } catch (e) {}
+    if (!D || !D.teachers || !me || !D.teachers[me]) return null;
+    const T = D.teachers[me], per = {}; (D.periods || []).forEach(p => per[p.n] = p);
+    const L = (T.lessons || []).filter(teaches).map(l => Object.assign({}, l, { sub: subj(l).name, key: (l.cls || '').trim() || subj(l).name }));
+    const other = (T.lessons || []).filter(l => !l.mentor && l.d <= 4 && !teaches(l));
+    const lm = l => { let m = 0; for (let p = l.p0; p <= l.p1; p++) { const q = per[p]; const a = q && mins(q.from), b = q && mins(q.to); m += a != null && b != null ? b - a : 45; } return m; };
+    const days = [0, 1, 2, 3, 4].map(d => { const ls = L.filter(l => l.d === d).sort((a, b) => a.p0 - b.p0); const n = ls.reduce((s, l) => s + l.p1 - l.p0 + 1, 0), m = ls.reduce((s, l) => s + lm(l), 0);
+      let gaps = 0; for (let i = 1; i < ls.length; i++) { const g = ls[i].p0 - ls[i - 1].p1 - 1; if (g > 0) gaps += g; }
+      const first = ls[0] && per[ls[0].p0], last = ls.length && per[ls[ls.length - 1].p1];
+      const aft = ls.some(l => { const q = per[l.p1]; const e = q && mins(q.to); return e != null && e > 13 * 60 + 30; });
+      return { d, n, m, gaps, from: first && first.from, to: last && last.to, aft, ls }; });
+    const by = f => { const o = {}; L.forEach(l => { const k = f(l) || '–'; o[k] = (o[k] || 0) + l.p1 - l.p0 + 1; }); return Object.entries(o).sort((a, b) => b[1] - a[1]); };
+    const sub = by(l => l.sub), col = {}; sub.forEach(([k], i) => col[k] = PAL[i % PAL.length]);
+    const clsSub = {}; L.forEach(l => { clsSub[l.key] = clsSub[l.key] || l.sub; });
+    return { me, days, per: D.periods || [], L, other, n: days.reduce((s, d) => s + d.n, 0), m: days.reduce((s, d) => s + d.m, 0), gaps: days.reduce((s, d) => s + d.gaps, 0), duty: (T.duties || []).length, aft: days.filter(d => d.aft).length, tdays: days.filter(d => d.n).length,
+      cls: by(l => l.key), sub, col, clsSub, otherN: other.reduce((s, l) => s + l.p1 - l.p0 + 1, 0) };
+  }
+  const schoolDay = d => wd(d) < 5 && !(C && C.info(d));
+
+  /* ---------- Gerüst ---------- */
+  const ov = E('div', 'ov'); ov.id = 'saOv'; ov.hidden = true; ov.setAttribute('role', 'dialog');
+  ov.innerHTML = `<div class="ovbar"><span class="ovtitle" id="saTitle"></span><span class="grow"></span><button class="ovbtn sq" id="saClose" type="button" aria-label="×"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="kawrap sawrap"><div class="kahead"><div class="kanav"><h2 id="saH"></h2></div><div class="kactl"><div class="seg" id="saTabs"></div></div></div><div class="kabody" id="saBody"></div></div>`;
+  document.body.appendChild(ov);
+  const $s = id => ov.querySelector('#' + id);
+  const btn = E('button', 'tbtn ib'); btn.type = 'button'; btn.id = 'statBtn';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6.5" rx="1"/><rect x="10.5" y="6.5" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8.5" rx="1"/></svg><span></span><em class="sarun" hidden></em>';
+  const kb = $('kaBtn') || $('stBtn'); kb.parentNode.insertBefore(btn, kb.nextSibling);
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  btn.dataset.kbd = (isMac ? '⌘' : 'Ctrl+') + '4';
+  const _so = showOv, _co = closeOv;
+  showOv = function (id) { _so(id); const on = openOv === ov; btn.classList.toggle('on', on); if (on && !window._phoneMode) document.body.classList.add('ov-inline'); };
+  closeOv = function () { _co(); btn.classList.remove('on'); };
+  let tab = wt.saTab || 'les';
+  function open(t) { if (t) tab = t; showOv('saOv'); draw(); }
+  btn.onclick = () => open(); $s('saClose').onclick = () => closeOv();
+  addEventListener('keydown', e => { if (e.key === 'Escape' && openOv === ov && !document.querySelector('dialog[open]')) closeOv(); });
+  window._statOpen = open;
+
+  const tile = (v, l, sub) => `<div class="satile"><b>${esc(v)}</b><span>${esc(l)}</span>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
+  const bars = (rows, max, unit, col) => rows.map(([k, v, extra]) => `<div class="sabar"><span class="k">${esc(k)}</span><span class="t"><i style="width:${max ? Math.max(2, 100 * v / max) : 0}%;${col ? 'background:' + col : ''}"></i></span><span class="v">${esc(v)}${unit || ''}${extra ? ' <small>' + esc(extra) + '</small>' : ''}</span></div>`).join('');
+  const card = (title, inner, cls) => `<section class="sacard ${cls || ''}">${title ? `<h3>${esc(title)}</h3>` : ''}${inner}</section>`;
+
+  function draw() {
+    if (ov.hidden) return;
+    $s('saTitle').textContent = x('saOn');
+    const T = [['les', 'saT1'], ['sy', 'saT2'], ['cls', 'saT3'], ['work', 'saT4']];
+    const tb = $s('saTabs'); tb.textContent = ''; T.forEach(([k, l]) => { const b = E('button', '', x(l)); b.type = 'button'; b.setAttribute('aria-pressed', k === tab); b.onclick = () => { tab = k; wt.saTab = k; saveTool(); draw(); }; tb.appendChild(b); });
+    $s('saH').textContent = x(T.find(t => t[0] === tab)[1]);
+    const body = $s('saBody'); body.className = 'kabody sabody';
+    if (tab === 'les') { body.innerHTML = drawLes(); body.querySelectorAll('[data-lm]').forEach(b => b.onclick = () => { lesMode = b.dataset.lm; wt.saLes = lesMode; saveTool(); draw(); }); } else if (tab === 'sy') body.innerHTML = drawSy(); else if (tab === 'cls') { body.innerHTML = ''; drawCls(body); } else { body.innerHTML = ''; drawWork(body); }
+    const op = body.querySelector('[data-openplan]'); if (op) op.onclick = () => { closeOv(); $('stBtn').click(); };
+  }
+  const noPlan = () => card('', `<p class="sanote">${esc(x('saNoPlan'))}</p><button type="button" class="kab" data-openplan>${esc(x('saOpenPlan'))}</button>`, 'wide');
+
+  /* Unterricht: typische Woche, dieser Monat oder das ganze Schuljahr */
+  let lesMode = wt.saLes || 'week';
+  const lessonsBetween = (P, a, b) => { const o = {}; let n = 0, m = 0; for (let d = new Date(a); d <= b; d = add(d, 1)) { if (!schoolDay(d)) continue; P.days[wd(d)].ls.forEach(l => { const k = l.p1 - l.p0 + 1; o[l.key] = (o[l.key] || 0) + k; n += k; }); m += P.days[wd(d)].m; } return { o, n, m }; };
+  function donut(rows, col, total, label) {
+    let a0 = -Math.PI / 2; const R = 70, r = 46, segs = rows.map(([k, v]) => { const a1 = a0 + 2 * Math.PI * v / total, la = a1 - a0 > Math.PI ? 1 : 0, p = (x, y) => (80 + x).toFixed(2) + ' ' + (80 + y).toFixed(2);
+      const d = rows.length === 1 ? `M80 10 A70 70 0 1 1 79.99 10 L79.99 34 A46 46 0 1 0 80 34 Z` : `M${p(R * Math.cos(a0), R * Math.sin(a0))} A${R} ${R} 0 ${la} 1 ${p(R * Math.cos(a1), R * Math.sin(a1))} L${p(r * Math.cos(a1), r * Math.sin(a1))} A${r} ${r} 0 ${la} 0 ${p(r * Math.cos(a0), r * Math.sin(a0))} Z`;
+      a0 = a1; return `<path d="${d}" fill="${col[k]}"><title>${esc(k)}: ${v}</title></path>`; }).join('');
+    return `<div class="sadonut"><svg viewBox="0 0 160 160">${segs}<text x="80" y="78" text-anchor="middle" class="dn1">${total}</text><text x="80" y="97" text-anchor="middle" class="dn2">${esc(label)}</text></svg>
+      <div class="salegend">${rows.map(([k, v]) => `<div><i style="background:${col[k]}"></i><span>${esc(k)}</span><b>${v}</b><small>${Math.round(100 * v / total)} %</small></div>`).join('')}</div></div>`;
+  }
+  function grid(P) {
+    const per = P.per.filter(q => q.n <= Math.max(...P.L.map(l => l.p1), 6)), DN = i => fmt(add(new Date(2024, 0, 1), i), { weekday: 'short' }).replace('.', '');
+    let h = `<div class="sagrid5" style="grid-template-rows:auto repeat(${per.length},1fr)"><span></span>${[0, 1, 2, 3, 4].map(d => `<b>${esc(DN(d))}</b>`).join('')}`;
+    per.forEach((q, i) => { h += `<small>${q.n}<em>${esc(q.from || '')}</em></small>`; for (let d = 0; d < 5; d++) { const l = P.days[d].ls.find(z => z.p0 <= q.n && q.n <= z.p1), o = !l && P.other.find(z => z.d === d && z.p0 <= q.n && q.n <= z.p1);
+      if (l && l.p0 !== q.n) continue;
+      h += l ? `<div class="gl" style="grid-row:span ${l.p1 - l.p0 + 1};--c:${P.col[l.sub]}" title="${esc(l.key + ' · ' + l.sub)}"><b>${esc(l.key)}</b><span>${esc(l.room || '')}</span></div>` : o ? `<div class="go" title="${esc(o.fach || '')}">${esc(o.fach || '')}</div>` : '<div class="ge"></div>'; } });
+    return h + '</div>';
+  }
+  function drawLes() {
+    const P = myPlan(); if (!P) return `<div class="sagrid">${noPlan()}</div>`;
+    const modes = [['week', 'saWeekTyp'], ['month', 'saMonth'], ['year', 'saYear']];
+    const seg = `<div class="seg salesmode">${modes.map(([k, l]) => `<button type="button" data-lm="${k}" aria-pressed="${k === lesMode}">${esc(x(l))}</button>`).join('')}</div>`;
+    const DN = i => fmt(add(new Date(2024, 0, 1), i), { weekday: 'short' }).replace('.', '');
+    let h = `<div class="sagrid"><div class="wide salhead">${seg}<span class="sanote">${esc(x(lesMode === 'week' ? 'saWeekNote' : lesMode === 'month' ? 'saMonthNote' : 'saYearNote'))}${P.otherN ? ' ' + esc(fx('saOther', P.otherN)) : ''}</span></div>`;
+    if (lesMode === 'week') {
+      const maxD = Math.max(1, ...P.days.map(d => d.n));
+      const dayRows = P.days.map(d => `<div class="saday${d.n ? '' : ' off'}"><span class="k">${esc(DN(d.d))}</span><span class="t">${d.ls.map(l => `<i style="width:${100 * (l.p1 - l.p0 + 1) / maxD}%;background:${P.col[l.sub]}" title="${esc(l.key)}"></i>`).join('')}</span><span class="v">${d.n ? `${d.n} <small>${esc(d.from || '')}–${esc(d.to || '')}</small>` : `<small>${esc(x('saFree'))}</small>`}</span></div>`).join('');
+      h += `<div class="satiles wide">${tile(P.n, x('saLesW'))}${tile(hm(P.m) + ' h', x('saClockW'))}${tile(P.tdays, x('saDaysW'))}${tile(P.gaps, x('saGapsW'))}${tile(P.duty, x('saDutyW'))}${tile(P.aft, x('saAfterW'))}</div>
+        ${card(x('saGrid'), grid(P), 'sagridcard')}${card(x('saPerSub'), donut(P.sub, P.col, P.n, x('saPerWeek')))}
+        ${card(x('saPerDay'), `<div class="sadays">${dayRows}</div>`)}${card(x('saPerCls'), P.cls.map(([k, v]) => `<div class="sabar"><span class="k">${esc(k)}</span><span class="t"><i style="width:${100 * v / P.cls[0][1]}%;background:${P.col[P.clsSub[k]]}"></i></span><span class="v">${v} <small>${esc(P.clsSub[k] || '')}</small></span></div>`).join(''))}`;
+    } else {
+      const today = day0(new Date()); let a, b, title;
+      if (lesMode === 'month') { a = new Date(today.getFullYear(), today.getMonth(), 1); b = new Date(today.getFullYear(), today.getMonth() + 1, 0); title = fmt(a, { month: 'long', year: 'numeric' }); }
+      else { const Y = schoolYear(); if (!Y) return h + '</div>'; a = Y.start; b = Y.end; title = x('saYear'); }
+      const all = lessonsBetween(P, a, b), done = lessonsBetween(P, a, add(today, -1)), cols = Object.keys(all.o).sort((p, q) => all.o[q] - all.o[p]);
+      const weeks = []; for (let mon = monday(a); mon <= b; mon = add(mon, 7)) { const e = add(mon, 6); const r = lessonsBetween(P, mon < a ? a : mon, e > b ? b : e); weeks.push({ mon, n: r.n, past: e < today, cur: mon <= today && today <= e }); }
+      const maxW = Math.max(1, ...weeks.map(q => q.n)), pct = Math.round(100 * done.n / Math.max(1, all.n));
+      h += `<div class="satiles wide">${tile(all.n, fx('saLesIn', title))}${tile(done.n, x('saHeld'), pct + ' %')}${tile(all.n - done.n, x('saToGo'))}${tile(hNum(all.m) + ' h', x('saClockIn'))}</div>
+        ${card(x('saWeeks2'), `<div class="sawk">${weeks.map(q => `<div class="${q.past ? 'p' : ''}${q.cur ? ' c' : ''}" title="${esc(x('kaKW'))} ${kwOf(q.mon)}: ${q.n}"><b>${q.n || ''}</b><i style="height:${100 * q.n / maxW}%"></i><small>${weeks.length > 20 ? (kwOf(q.mon) % 4 === 0 ? kwOf(q.mon) : '') : esc(x('kaKW')) + ' ' + kwOf(q.mon)}</small></div>`).join('')}</div>`, 'wide')}
+        ${card(x('saPerCls'), `<table class="satab"><thead><tr><th>${esc(x('saCls'))}</th><th>${esc(x('saSubj'))}</th><th>${esc(x('saHeld'))}</th><th>${esc(x('saToGo'))}</th><th>${esc(x('saSum'))}</th></tr></thead><tbody>${cols.map(k => { const d0 = done.o[k] || 0, t0 = all.o[k]; return `<tr><th><i class="dot" style="background:${P.col[P.clsSub[k]]}"></i>${esc(k)}</th><td class="l">${esc(P.clsSub[k] || '')}</td><td>${d0}</td><td>${t0 - d0}</td><td>${t0}<span class="mini"><i style="width:${100 * d0 / t0}%"></i></span></td></tr>`; }).join('')}</tbody></table><p class="sanote">${esc(x('saRemainNote'))}</p>`, 'wide')}`;
+    }
+    return h + '</div>';
+  }
+  /* Schuljahr: 1. Schultag nach den Sommerferien bis zum Beginn der nächsten Sommerferien */
+  function schoolYear() {
+    const F = C ? C.ferien() : [], today = day0(new Date()), sommer = F.filter(r => r.key === 'fSommer').sort((a, b) => a.a - b.a);
+    const prevS = sommer.filter(r => r.b < today).pop() || sommer.filter(r => r.a <= today && r.b >= today).pop(), nextS = sommer.find(r => r.a > today);
+    if (!nextS) return null;
+    const start = prevS ? add(prevS.b, 1) : new Date(today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1, 8, 1), end = add(nextS.a, -1); let total = 0, done = 0;
+    for (let d = new Date(start); d <= end; d = add(d, 1)) if (schoolDay(d)) { total++; if (d < today) done++; }
+    const nextF = F.filter(r => r.kind === 'ferien' && r.a > today).sort((a, b) => a.a - b.a)[0];
+    let toF = 0; if (nextF) for (let d = new Date(today); d < nextF.a; d = add(d, 1)) if (schoolDay(d)) toF++;
+    return { start, end, total, done, left: total - done, nextF, toF, endF: nextS };
+  }
+  function drawSy() {
+    const Y = schoolYear(); if (!Y) return `<div class="sagrid">${card('', `<p class="sanote">–</p>`, 'wide')}</div>`;
+    const pct = Math.round(100 * Y.done / Math.max(1, Y.total));
+    let h = `<div class="sagrid"><section class="sacard wide sasy"><div class="sasyh"><div><b>${pct} %</b><span>${esc(x('saSyDone'))}</span></div><small>${esc(fmt(Y.start, { day: 'numeric', month: 'short', year: 'numeric' }))} – ${esc(fmt(Y.end, { day: 'numeric', month: 'short', year: 'numeric' }))}</small></div><div class="saprog"><i style="width:${pct}%"></i></div>
+      <div class="satiles">${tile(Y.left, x('saSyLeft'))}${Y.nextF ? tile(Y.toF, fx('saSyNext', x(Y.nextF.key)), fmt(Y.nextF.a, { day: 'numeric', month: 'short' })) : ''}${tile(Y.total, x('saSyTotal'))}</div></section>`;
+    const P = myPlan();
+    if (!P) h += noPlan();
+    else {
+      const today = day0(new Date()), cnt = (end, cls) => { let n = 0; for (let d = new Date(today); d <= end; d = add(d, 1)) { if (!schoolDay(d)) continue; P.days[wd(d)].ls.forEach(l => { if ((l.cls || l.fach) === cls) n += l.p1 - l.p0 + 1; }); } return n; };
+      const keys = [...new Set(P.days.flatMap(d => d.ls.map(l => l.cls || l.fach)))].sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
+      const e1 = Y.nextF ? add(Y.nextF.a, -1) : null;
+      const rows = keys.map(k => `<tr><th>${esc(k)}</th>${e1 ? `<td>${cnt(e1, k)}</td>` : ''}<td>${cnt(Y.end, k)}</td></tr>`).join('');
+      h += card(x('saRemain'), `<table class="satab"><thead><tr><th>${esc(x('saCls'))}</th>${e1 ? `<th>${esc(fx('saSyNext', x(Y.nextF.key)))}</th>` : ''}<th>${esc(fx('saSyNext', x('saSyEnd')))}</th></tr></thead><tbody>${rows}</tbody></table><p class="sanote">${esc(x('saRemainNote'))}</p>`, 'wide');
+    }
+    return h + '</div>';
+  }
+
+  let clsSel = null;
+  function drawCls(body) {
+    const names = Object.keys(classes).sort((a, b) => a.localeCompare(b, 'de', { numeric: true })); if (!names.length) { body.innerHTML = '<p class="sanote">–</p>'; return; }
+    const c = clsSel && classes[clsSel] ? clsSel : (classes[settings.cls] ? settings.cls : names[0]), Cc = classes[c], s = ST();
+    const sel = `<select class="ssel" id="saCls">${names.map(n => `<option${n === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
+    const hist = getHist(c), lastD = hist.length && hist[hist.length - 1].date ? new Date(hist[hist.length - 1].date) : null;
+    const nm = k => { const st = Cc.students.find(q => skey(q) === k); return st ? (st.first + (st.last ? ' ' + st.last : '')) : k.split('|').reverse().join(' '); };
+    const pk = (s.pk && s.pk[c]) || {}, keys = Cc.students.map(skey), tot = keys.reduce((a, k) => a + (pk[k] || 0), 0);
+    const pr = keys.map(k => [nm(k), pk[k] || 0]).filter(r => r[1]).sort((a, b) => b[1] - a[1]), never = keys.filter(k => !pk[k]).map(nm);
+    const ab = (s.abs && s.abs[c]) || {}, adays = Object.keys(ab), ac = {}; adays.forEach(d => (ab[d] || []).forEach(k => ac[k] = (ac[k] || 0) + 1));
+    const ar = Object.entries(ac).filter(([k]) => keys.includes(k)).map(([k, v]) => [nm(k), v]).sort((a, b) => b[1] - a[1]);
+    body.innerHTML = `<div class="sagrid"><div class="sactl wide">${sel}<span class="sanote">${esc(x('saPriv'))}</span></div>
+      <div class="satiles wide">${tile(Cc.students.length, x('saPupils'))}${tile(hist.length, x('saGroups'), lastD ? fx('saLast', fmt(lastD, { day: 'numeric', month: 'short' })) : '')}${tile(tot, x('saPickTot'))}${tile(adays.length, x('saAbs'), adays.length ? fx('saAbsDays', adays.length) : '')}</div>
+      ${card(x('saPick'), tot ? bars(pr.slice(0, 40), pr[0][1]) + (never.length ? `<div class="sanever"><b>${esc(x('saNever'))}</b> ${never.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '') : `<p class="sanote">${esc(x('saPickNone'))}</p>`)}
+      ${card(x('saAbs'), ar.length ? bars(ar, ar[0][1], '', 'var(--ka-hol)') : `<p class="sanote">${esc(x('saAbsNone'))}</p>`)}
+      <div class="wide"><button type="button" class="kab" id="saRst">${esc(x('saReset'))}</button></div></div>`;
+    body.querySelector('#saCls').onchange = e => { clsSel = e.target.value; draw(); };
+    body.querySelector('#saRst').onclick = () => { if (!confirm(fx('saResetQ', c))) return; const s2 = ST(); if (s2.pk) s2.pk[c] = {}; if (s2.abs) s2.abs[c] = {}; jset('gb_stat', s2); draw(); };
+  }
+
+  /* Unterrichtsminuten laut Plan für einen Tag (nur Schultage) */
+  function teachMin(d, P) { if (!P || !schoolDay(d)) return 0; return P.days[wd(d)] ? P.days[wd(d)].m : 0; }
+  function drawWork(body) {
+    const w = W(), P = myPlan(), today = day0(new Date()), m0 = monday(today), E2 = live(w);
+    const weekSum = (mon) => { let t = 0, l = 0; for (let i = 0; i < 7; i++) { const d = add(mon, i); t += teachMin(d, P); } const a = iso(mon), b = iso(add(mon, 6)); E2.forEach(e => { if (e.d >= a && e.d <= b) l += e.min; }); return { t, l }; };
+    const cw = weekSum(m0), goal = +w.goal || 0;
+    const run = w.run, runMin = run ? Math.round((Date.now() - run.t0) / 6e4) : 0;
+    const catSel = run ? run.cat : (wt.waCat || 'wc1');
+    const weeks = []; for (let i = 7; i >= 0; i--) { const mon = add(m0, -7 * i); weeks.push({ mon, ...weekSum(mon) }); }
+    const maxW = Math.max(goal * 60, ...weeks.map(q => q.t + q.l), 60);
+    const mStart = iso(new Date(today.getFullYear(), today.getMonth(), 1)), cats = {}; E2.forEach(e => { if (e.d >= mStart) cats[e.cat] = (cats[e.cat] || 0) + e.min; });
+    const cr = CATS.filter(k => cats[k]).map(k => [x(k), hm(cats[k]), null, k]); const maxCat = Math.max(1, ...Object.values(cats));
+    const Y = schoolYear(); let syL = 0, syT = 0, syW = 0; if (Y) { const a = iso(Y.start); E2.forEach(e => { if (e.d >= a) syL += e.min; }); for (let d = new Date(Y.start); d <= today; d = add(d, 1)) { syT += teachMin(d, P); } for (let mon = monday(Y.start); mon <= m0; mon = add(mon, 7)) { let sd = 0; for (let i = 0; i < 5; i++) if (schoolDay(add(mon, i))) sd++; if (sd >= 3) syW++; } }
+    const recent = E2.filter(e => e.d >= iso(add(m0, -7))).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : (b.u || 0) - (a.u || 0)));
+    body.innerHTML = `<div class="sagrid">
+      <section class="sacard wide sawork"><div class="sarunbox${run ? ' on' : ''}"><div class="sartime"><b id="waClock">${run ? hm(runMin) : '0:00'}</b><span>${run ? esc(fx('waRun', new Date(run.t0).toLocaleTimeString(LOC[lx()], { hour: '2-digit', minute: '2-digit' }))) : '&nbsp;'}</span></div>
+        <div class="sacats">${CATS.map((k, i) => `<button type="button" data-cat="${k}" aria-pressed="${k === catSel}" style="--c:${CCOL[i]}"><i></i>${esc(x(k))}</button>`).join('')}</div>
+        <button type="button" class="sago" id="waGo">${esc(run ? x('waStop') : x('waStart'))}</button></div>
+        <details class="saadd"><summary>${esc(x('waAdd'))}</summary><div class="saform"><label><span>${esc(x('waDate'))}</span><input type="date" id="waD" value="${iso(today)}"></label><label><span>${esc(x('waDur'))}</span><input type="text" id="waM" placeholder="1:30" inputmode="numeric" maxlength="5"></label><label class="w"><span>${esc(x('waNote'))}</span><input type="text" id="waN" maxlength="80"></label><button type="button" class="kab" id="waSave">${esc(x('waSave'))}</button></div></details></section>
+      <div class="satiles wide">${tile(hm(cw.t + cw.l), x('waWeek'), hm(cw.t) + ' ' + x('waTeach') + ' · ' + hm(cw.l) + ' ' + x('waLogged'))}${Y ? tile(hm(syW ? (syT + syL) / syW : 0), x('waAvg')) : ''}${Y ? tile(hNum(syT + syL) + ' h', x('waTotal')) : ''}<div class="satile sagoal"><label><span>${esc(x('waGoal'))}</span><input type="number" id="waGoal" min="0" max="80" step="0.5" value="${goal || ''}" placeholder="40"> h</label><small>${esc(x('waGoalNote'))}</small></div></div>
+      ${card(x('waWeeks'), `<div class="sachart"><div class="saplot">${goal ? `<span class="sagl" style="bottom:${100 * goal * 60 / maxW}%"><em>${esc(goal)} h</em></span>` : ''}${weeks.map(q => `<div class="sacol" title="${esc(fmt(q.mon, { day: 'numeric', month: 'short' }))}: ${hm(q.t + q.l)}"><b>${q.t + q.l ? hNum(q.t + q.l) : ''}</b><div class="sastack" style="height:${100 * (q.t + q.l) / maxW}%"><i class="l" style="flex:${q.l}"></i><i class="t" style="flex:${q.t}"></i></div></div>`).join('')}</div><div class="saxl">${weeks.map(q => `<small>${esc(x('kaKW'))} ${kwOf(q.mon)}</small>`).join('')}</div></div><div class="kalegend"><span><i class="lg" style="background:var(--blue)"></i>${esc(x('waTeach'))}</span><span><i class="lg" style="background:#FF9F0A"></i>${esc(x('waLogged'))}</span></div>`)}
+      ${card(x('waCats'), cr.length ? cr.map(([k, v, , kk]) => `<div class="sabar"><span class="k">${esc(k)}</span><span class="t"><i style="width:${100 * cats[kk] / maxCat}%;background:${CCOL[CATS.indexOf(kk)]}"></i></span><span class="v">${esc(v)}</span></div>`).join('') : `<p class="sanote">${esc(x('waNone'))}</p>`)}
+      ${card(x('waList'), recent.length ? `<div class="salist">${recent.map(e => `<div class="saent"><i style="background:${CCOL[CATS.indexOf(e.cat)] || '#8E8E93'}"></i><div><b>${esc(x(e.cat) || e.cat)}${e.note ? ' · ' + esc(e.note) : ''}</b><small>${esc(fmt(pd(e.d), { weekday: 'short', day: 'numeric', month: 'short' }))}</small></div><span>${hm(e.min)}</span><button type="button" class="sadel" data-del="${esc(e.id)}" aria-label="${esc(x('waDel'))}">×</button></div>`).join('')}</div>` : `<p class="sanote">${esc(x('waNone'))}</p>`, 'wide')}
+    </div>`;
+    body.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { wt.waCat = b.dataset.cat; saveTool(); const w2 = W(); if (w2.run) { w2.run.cat = b.dataset.cat; saveW(w2); } draw(); });
+    body.querySelector('#waGo').onclick = () => { const w2 = W(); if (w2.run) stopRun(); else { w2.run = { t0: Date.now(), cat: wt.waCat || 'wc1' }; saveW(w2); } draw(); runBadge(); };
+    body.querySelector('#waSave').onclick = () => { const d = body.querySelector('#waD').value, raw = body.querySelector('#waM').value.trim(); const m = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(raw) ; if (!d || !m) { body.querySelector('#waM').focus(); return; }
+      const min = raw.includes(':') ? +m[1] * 60 + +(m[2] || 0) : (+m[1] <= 12 ? +m[1] * 60 : +m[1]); if (!min) return; const w2 = W(); w2.e.push({ id: nid(), d, min, cat: wt.waCat || 'wc1', note: body.querySelector('#waN').value.trim().slice(0, 80), u: Date.now() }); saveW(w2); draw(); };
+    body.querySelector('#waGoal').onchange = e => { const w2 = W(); w2.goal = Math.max(0, Math.min(80, +e.target.value || 0)); saveW(w2); draw(); };
+    body.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const w2 = W(); const e = w2.e.find(q => q.id === b.dataset.del); if (e) { e.del = 1; e.u = Date.now(); } saveW(w2); draw(); });
+  }
+  const kwOf = d => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); };
+  /* Laufende Arbeitszeit: kleine Anzeige in der Seitenleiste */
+  function runBadge() { const w = W(), em = btn.querySelector('.sarun'); if (w.run && !wt.saNoBadge) { em.hidden = false; em.textContent = hm((Date.now() - w.run.t0) / 6e4); } else em.hidden = true;
+    const c = ov.querySelector('#waClock'); if (c && w.run) c.textContent = hm((Date.now() - w.run.t0) / 6e4); }
+  setInterval(runBadge, 20000); runBadge();
+  /* Einstellungen → Statistik */
+  window._statSettings = (pane, card) => {
+    const w = W(); pane.textContent = '';
+    const sw = (id, on, t, n) => `<label class="srow"><span class="sl"><b>${esc(x(t))}</b>${n ? `<small>${esc(x(n))}</small>` : ''}</span><input type="checkbox" class="sw" id="${id}"${on ? ' checked' : ''}></label>`;
+    const box1 = document.createElement('div'); box1.innerHTML = sw('ssPick', !wt.saNoPick, 'ssPick', 'ssPickN') + sw('ssAbs', !wt.saNoAbs, 'ssAbs', 'ssAbsN') + `<p class="snote2">${esc(x('saPriv'))}</p>`;
+    const box2 = document.createElement('div'); box2.innerHTML = `<div class="srow"><span class="sl"><b>${esc(x('waGoal'))}</b><small>${esc(x('waGoalNote'))}</small></span><span class="sctl"><input class="sinput" id="ssGoal" type="number" min="0" max="80" step="0.5" style="width:90px;text-align:right" value="${w.goal || ''}" placeholder="40"> h</span></div>` + sw('ssBadge', !wt.saNoBadge, 'ssBadge', 'ssBadgeN') + `<div class="srow"><span class="sl"><b>${esc(x('ssCat'))}</b></span><select class="ssel" id="ssCat">${CATS.map(k => `<option value="${k}"${(wt.waCat || 'wc1') === k ? ' selected' : ''}>${esc(x(k))}</option>`).join('')}</select></div>`;
+    const box3 = document.createElement('div'); box3.innerHTML = `<div class="srow"><span class="sl"><b>${esc(x('ssReset'))}</b><small>${esc(x('ssResetN'))}</small></span><button type="button" class="sbtn" id="ssRst">${esc(x('saReset'))}</button></div>`;
+    pane.append(card('ssCount', box1), card('saT4', box2), card('ssData', box3));
+    box1.querySelector('#ssPick').onchange = e => { wt.saNoPick = !e.target.checked; saveTool(); };
+    box1.querySelector('#ssAbs').onchange = e => { wt.saNoAbs = !e.target.checked; saveTool(); };
+    box2.querySelector('#ssGoal').onchange = e => { const w2 = W(); w2.goal = Math.max(0, Math.min(80, +e.target.value || 0)); saveW(w2); };
+    box2.querySelector('#ssBadge').onchange = e => { wt.saNoBadge = !e.target.checked; saveTool(); runBadge(); };
+    box2.querySelector('#ssCat').onchange = e => { wt.waCat = e.target.value; saveTool(); };
+    box3.querySelector('#ssRst').onclick = () => { if (!confirm(x('ssResetQ'))) return; const s2 = ST(); s2.pk = {}; s2.abs = {}; jset('gb_stat', s2); toast(x('ssResetDone'), 2000); };
+    pane.querySelectorAll('h4.sgt[data-k]').forEach(h => h.textContent = x(h.dataset.k));
+  };
+  const lab = () => { btn.querySelector('span').textContent = x('saOn'); btn.title = x('saOn') + '  ' + btn.dataset.kbd; if (!ov.hidden) draw(); };
+  const _ax = applyX; applyX = function () { _ax(); lab(); }; lab();
+})();
+
+/* ===== 1.4: Seitenleiste – Bereiche „Planen“ / „Im Unterricht“, ruhiges Einheits-Design, schmale Fenster als Symbolleiste ===== */
+(function () {
+  const nav = $('navGrp'), tools = $('tmBtn') && $('tmBtn').parentNode; if (!nav || !tools) return;
+  ['vDashBtn', 'stBtn', 'kaBtn', 'statBtn'].forEach(id => { const b = $(id); if (b) nav.appendChild(b); });
+  ['vGroupsBtn', 'tmBtn', 'pkBtn', 'spBtn', 'clBtn', 'ampBtn', 'fxBtn', 'lookBtn'].forEach(id => { const b = $(id); if (b) tools.appendChild(b); });
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  [['vDashBtn', '1'], ['stBtn', '2'], ['kaBtn', '3'], ['statBtn', '4'], ['vGroupsBtn', '5'], ['tmBtn', '6'], ['pkBtn', '7'], ['spBtn', '8'], ['clBtn', '9']].forEach(([id, k]) => { const b = $(id); if (b) b.dataset.kbd = (isMac ? '⌘' : 'Ctrl+') + k; });
+
+  /* Klasse: Info + kleine Knöpfe „+“ und „✎“ in einer Zeile unter der Auswahl */
+  const info = $('sbInfo'), add = $('addBtn'), edit = $('editBtn');
+  if (info && add && edit) {
+    const row = document.createElement('div'); row.className = 'sbcls'; info.parentNode.insertBefore(row, info); row.append(info, add, edit);
+    const ICO = { addBtn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>', editBtn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>' };
+    [add, edit].forEach(b => { b.dataset.k2 = b.dataset.t; b.removeAttribute('data-t'); b.classList.add('sbico'); b.innerHTML = ICO[b.id]; });
+  }
+  /* Fuß: Profil und Einstellungen nebeneinander */
+  const prof = $('sbProf'), set = $('setBtn');
+  if (prof && set) { const f = document.createElement('div'); f.className = 'sbfoot'; prof.parentNode.insertBefore(f, prof); f.append(prof, set); }
+  const lab = () => { [add, edit].forEach(b => { if (!b) return; const s = t(b.dataset.k2); const v = typeof s === 'function' ? '' : s; b.title = v; b.setAttribute('aria-label', v); }); if (set) { const sp = set.querySelector('span'); set.title = sp ? sp.textContent : ''; } };
+  const _ax = applyX; applyX = function () { _ax(); lab(); }; lab();
+  { const _al = applyLang; applyLang = function () { _al.apply(this, arguments); lab(); }; }
+
+  /* Schmale Fenster (z. B. halber Bildschirm): Seitenleiste nur mit Symbolen */
+  const mq = matchMedia('(min-width:701px) and (max-width:980px)');
+  const sb = () => { document.body.dataset.sb = (mq.matches || wt.sb === 'min') ? 'min' : ''; try { fitBoard(); } catch (e) {} };
+  try { mq.addEventListener('change', sb); } catch (e) { mq.addListener(sb); } sb();
+
+  /* Mac: im Vollbild gibt es keine Fensterknöpfe – oben Platz sparen und einen eigenen „Vollbild beenden“-Knopf zeigen */
+  const nb = window.gbNative;
+  if (nb && nb.onFullscreen && document.documentElement.classList.contains('macapp')) {
+    const ex = document.createElement('button'); ex.type = 'button'; ex.className = 'sbfsx'; ex.hidden = true;
+    ex.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+    const T = ['Vollbild beenden', 'Exit full screen', 'Esci da schermo intero', 'Quitter le plein écran', 'Salir de pantalla completa'];
+    const lx2 = () => { ex.title = T[lx()] || T[0]; ex.setAttribute('aria-label', ex.title); };
+    ex.onclick = () => { try { nb.setFullscreen(false); } catch (e) {} };
+    const h1 = document.querySelector('.toolbar h1'); h1.parentNode.insertBefore(ex, h1); lx2();
+    nb.onFullscreen(on => { document.documentElement.classList.toggle('macfs', !!on); ex.hidden = !on || document.body.classList.contains('pfs-on'); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && document.documentElement.classList.contains('macfs') && !openOv && !document.querySelector('dialog[open]') && !document.body.classList.contains('pfs-on')) { try { nb.setFullscreen(false); } catch (x) {} } });
+  }
 })();
 
 /* Start (Ende des Werkzeuge-Blocks) */
