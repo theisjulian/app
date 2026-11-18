@@ -19,7 +19,7 @@
   window.docx = new Proxy({}, { get: () => dummy });
 
   let mem = null; const t0 = Date.now(), MIN = 60000, DAY = 864e5;
-  const X = window.__voceDemo = { version: '1.10.0', locked: () => {} };
+  const X = window.__voceDemo = { version: '2.0.0', locked: () => {} };
   const never = () => new Promise(() => {});
   const lock = (what, ret) => { X.locked(what); return ret; };
   const backups = () => [[4 * MIN, 'Dieser Computer'], [4 * MIN, 'Sicherungsordner'], [26 * 60 * MIN, 'Dieser Computer'], [3 * DAY, 'Dieser Computer'], [3 * DAY, 'Sicherungsordner']]
@@ -42,7 +42,7 @@
     pdfFromHtml: async () => lock('Das Speichern als PDF', null),
     printHtml: async () => lock('Das Drucken', { ok: false, reason: 'cancelled' }),
     printViaPdf: async () => ({ ok: false }),
-    openDoc: async which => { const os = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? 'mac' : 'win'; if (which === 'help' || which === 'sources') window.open('help.html?os=' + os + '&v=1.10.0' + (which === 'sources' ? '#quellen' : ''), '_blank', 'noopener'); return true; },
+    openDoc: async which => { const os = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? 'mac' : 'win'; if (which === 'help' || which === 'sources') window.open('help.html?os=' + os + '&v=2.0.0' + (which === 'sources' ? '#quellen' : ''), '_blank', 'noopener'); return true; },
     helpPdf: async () => lock('Das Handbuch als PDF'),
     licenses: async () => 'Voce verwendet Open-Source-Software (u. a. docx, pdf.js, SheetJS, Electron/Chromium). Die vollständigen Lizenztexte stehen in der installierten App.',
     onMenu: () => {},

@@ -797,7 +797,15 @@ dialog.setDlg .sheetbody{flex:1;min-height:0;padding:0;display:flex}
 .ldoRow .late { color: var(--red, #b91c1c); }
 .ldoBtns { display: flex; gap: 6px; flex: none; }
 /* Zwischensumme Schreiben/Sprachmittlung im Aufgabenblatt: rechts in der letzten Zelle der Gruppe */
-.tkTbl td.tkInG.gE{position:relative;padding-right:46px}
+.tkTbl td.tkInG.gE{position:relative;padding-left:46px;padding-right:46px}   /* symmetrisch: Feld bleibt genau unter dem Spaltenkopf, rechts Platz für die Zwischensumme */
 .tkTbl .gTot{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12.5px;font-weight:650;color:var(--blue);white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
 .tkTbl .gMax{font-size:11px;color:var(--muted,#8a93a6);margin-left:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .setBtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+/* Punkte-Spalten in der Notentabelle: Note groß, Punkte klein darunter; beim Eintippen wieder Punkte groß */
+table.grid td.pvc{position:relative}
+table.grid td.pvc .cell.pv:not(:focus){font-size:10.5px;font-weight:500;color:var(--label-3);padding-top:24px}
+table.grid td.pvc .rawpts{position:absolute;left:0;right:0;top:50%;transform:translateY(-15px);margin:0;padding:0;font-size:15px;font-weight:650;color:var(--label);line-height:20px;pointer-events:none;font-variant-numeric:tabular-nums}
+table.grid td.pvc .cell.pv:focus + .rawpts{display:none}
+body.dense table.grid td.pvc .cell.pv:not(:focus){padding-top:20px}
+body.dense table.grid td.pvc .rawpts{transform:translateY(-13px);font-size:14px}
+table.grid thead th:has(> .colhead){vertical-align:top}

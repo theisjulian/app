@@ -133,7 +133,8 @@ const klass = ex => (ex && S.classes[ex.cls]) || { students: [] };
 const studentsOf = ex => isRef(ex) ? refStudents(ex) : klass(ex).students.filter(s => !s.off && (!ex.only || ex.only.includes(s.id)));
 /* Referat: Prüfungsart mit monologischem ISB-Raster; dazu gehören nur die eingetragenen Personen (in der Reihenfolge der Liste) */
 const isRef = ex => !!ex && ex.kind === 'ref';
-const refStudents = ex => ex.groups.flatMap(g => g.members).map(id => klass(ex).students.find(s => s.id === id)).filter(s => s && !s.off);
+/* Wer ein Referat hält – in der Reihenfolge der Klassenliste (Ergebnisse, Bögen und Listen alphabetisch wie bei Prüfungen) */
+const refStudents = ex => { const inList = new Set(ex.groups.flatMap(g => g.members)); return klass(ex).students.filter(s => !s.off && inList.has(s.id)); };
 const refOf = (ex, id) => ex.groups.find(g => g.members.includes(id)) || null;
 /* Datum und Thema eines Referats für Bogen und Liste (bei anderen Prüfungen: leer, Ausgaben bleiben wie bisher) */
 const refInfo = (ex, id) => { if (!isRef(ex)) return {}; const g = refOf(ex, id); const o = { date: (g && g.date) || ex.date || '', topic: (g && g.topic) || '' }; const w = g ? g.members.filter(x => x !== id).map(x => stById(ex, x)).filter(Boolean) : []; if (w.length) o.with = w.map(fullName); return o; };
