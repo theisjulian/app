@@ -69,7 +69,7 @@
 
   /* ---------- Daten laden ---------- */
   F.load = async () => {
-    await F.flush();
+    F.adoptOld(); await F.flush();
     const sb = F.sb, S = F.S;
     const since = F.addDays(F.today(), -400);
     const q = (t, f) => f(sb.from(t)).then((r) => { if (r.error) throw r.error; return r.data; });
@@ -87,7 +87,7 @@
       q('activities', (t) => t.select('*').is('deleted_at', null).gte('start_at', since).order('start_at', { ascending: false }).limit(1500)),
       F.sb.functions.invoke('strava', { body: { action: 'status' } }).then((r) => r.data).catch(() => null)
     ]);
-    Object.assign(S, { exercises: ex, userEx: Object.fromEntries(ux.map((u) => [u.exercise_id, u])), splits, profile: prof, weights, priorities: prios, equipment: eqp, paramRows: params, sessions: sess, absences: abs, activities: acts, strava: link });
+    Object.assign(S, { _freq: null, exercises: ex, userEx: Object.fromEntries(ux.map((u) => [u.exercise_id, u])), splits, profile: prof, weights, priorities: prios, equipment: eqp, paramRows: params, sessions: sess, absences: abs, activities: acts, strava: link });
     S.exById = Object.fromEntries(ex.map((e) => [e.id, e]));
     S.params = Object.fromEntries(params.map((p) => [p.key, p.value]));
     for (const s of S.sessions) { s.session_exercises = (s.session_exercises || []).sort((a, b) => a.position - b.position); s.session_exercises.forEach((se) => (se.sets = (se.sets || []).sort((a, b) => a.set_no - b.set_no))); }
@@ -116,7 +116,10 @@
     return set;
   };
   /* Übungen, die du in den letzten 90 Tagen in mindestens zwei Einheiten gemacht hast */
-  F.tried = () => { const cut = F.addDays(F.today(), -90), n = {}; for (const s of F.S.sessions) if (s.session_date >= cut) for (const se of s.session_exercises) if (se.sets.some((x) => x.done)) n[se.exercise_id] = (n[se.exercise_id] || 0) + 1; return new Set(Object.keys(n).filter((k) => n[k] >= 2)); };
+  /* Wie oft eine Übung in den letzten Tagen gemacht wurde (Einheiten mit erledigten Sätzen); zwischengespeichert bis zum nächsten Laden */
+  F.exFreq = (days = 60, skipId = null) => { const k = days + ':' + skipId, c = (F.S._freq = F.S._freq || {}); if (c[k]) return c[k];
+    const cut = F.addDays(F.today(), -days), n = {}; for (const s of F.S.sessions) if (s.session_date >= cut && s.id !== skipId) for (const se of s.session_exercises) if (se.sets.some((x) => x.done)) n[se.exercise_id] = (n[se.exercise_id] || 0) + 1; return (c[k] = n); };
+  F.tried = () => { const n = F.exFreq(90); return new Set(Object.keys(n).filter((k) => n[k] >= 2)); };
   F.suggestion = () => {
     const S = F.S, form = F.ls.get('form-' + F.today(), 'normal'), minutes = F.ls.get('minutes', null);
     const acts = S.activities.filter((a) => ['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'EBikeRide'].includes(a.sport));
@@ -157,7 +160,9 @@
     F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
     m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m);
     const sh = m.firstElementChild; let y0 = null, dy = 0;
-    sh.addEventListener('touchstart', (e) => { if (sh.scrollTop > 0 || (e.target.closest && e.target.closest('input,textarea,select,[data-noswipe]'))) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; sh.style.transition = 'none'; }, { passive: true });
+    // Nur ziehen, wenn nichts darüber gescrollt ist (auch keine innere Liste wie die Übungssuche)
+    const scrolled = (el) => { for (let n = el; n && n !== m; n = n.parentElement) if (n.scrollTop > 0) return true; return false; };
+    sh.addEventListener('touchstart', (e) => { if (scrolled(e.target) || (e.target.closest && e.target.closest('input,textarea,select,[data-noswipe]'))) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; sh.style.animation = 'none'; sh.style.transition = 'none'; }, { passive: true });
     sh.addEventListener('touchmove', (e) => { if (y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); if (dy > 0) sh.style.transform = `translateY(${dy}px)`; }, { passive: true });
     sh.addEventListener('touchend', () => { if (y0 === null) return; y0 = null; sh.style.transition = ''; if (dy > 110) { sh.style.transform = 'translateY(110%)'; setTimeout(F.closeModal, 180); } else sh.style.transform = ''; });
   };
@@ -183,23 +188,55 @@
      Sätze und das Beenden gehen nie verloren: Klappt das Speichern nicht, merkt sich forza die Änderung
      auf dem Gerät und reicht sie nach, sobald wieder Netz da ist. */
   const isNet = (e) => !navigator.onLine || /fetch|network|load failed|timed? ?out|abort/i.test(String((e && (e.message || e.details)) || e));
-  const box = () => F.ls.get('outbox', []), boxSet = (b) => F.ls.set('outbox', b);
+  const isAuth = (e) => /jwt|token|401|PGRST301|not authenticated/i.test(String((e && (e.code + ' ' + e.message)) || e));
+  // je Konto getrennt, damit nie Änderungen eines anderen Kontos auf diesem Gerät gesendet werden
+  const bkey = () => 'outbox-' + (F.user ? F.user.id : 'x');
+  const box = () => F.ls.get(bkey(), []), boxSet = (b) => F.ls.set(bkey(), b);
   F.pending = () => box().length;
+  // Speichern mit Zeitlimit: schwaches WLAN soll nichts blockieren; nach 8 s gilt es als „kein Netz“
+  const updT = async (t, id, row, ms = 8000) => {
+    const ac = new AbortController(), tm = setTimeout(() => ac.abort(), ms);
+    try { const r = await F.sb.from(t).update(row).eq('id', id).select().single().abortSignal(ac.signal); if (r.error) throw r.error; return r.data; } finally { clearTimeout(tm); }
+  };
   F.save = async (t, id, row) => {
-    if (!F.pending()) { try { return await F.update(t, id, row); } catch (e) { if (!isNet(e)) throw e; } }
+    if (!F.pending()) { try { return await updT(t, id, row); } catch (e) { if (!isNet(e) && !isAuth(e)) throw e; } }
     const b = box(), hit = b.find((x) => x.t === t && x.id === id);
-    if (hit) Object.assign(hit.row, row); else b.push({ t, id, row });
+    if (hit) { Object.assign(hit.row, row); hit.v = (hit.v || 0) + 1; } else b.push({ t, id, row, v: 1, n: 0 });
     boxSet(b); F.netBadge();
     if (b.length === 1) F.toast('Kein Netz: gespeichert auf dem Gerät, wird automatisch nachgereicht.', 3500);
     F.flush();
     return Object.assign({ id }, row);
   };
-  let flushing = false;
-  F.flush = async () => {
-    if (flushing || !F.pending() || !navigator.onLine || !F.user) return; flushing = true;
-    try { let b = box(); while (b.length) { const x = b[0]; try { await F.update(x.t, x.id, x.row); } catch (e) { if (isNet(e)) break; console.error('Nachreichen', e); } b.shift(); boxSet(b); }
-      if (!b.length) F.toast('Alles nachgetragen.'); } finally { flushing = false; F.netBadge(); }
+  /* Nachreichen: liest die Warteschlange bei jedem Schritt neu (es kann parallel abgehakt werden) und entfernt
+     einen Eintrag nur, wenn genau diese Fassung gespeichert wurde. Anmeldefehler: Sitzung erneuern, später nochmal. */
+  let flushP = null;
+  F.flush = () => {
+    if (flushP) return flushP;
+    if (!F.pending() || !navigator.onLine || !F.user) return Promise.resolve();
+    flushP = (async () => {
+      try {
+        for (;;) {
+          const x = box()[0]; if (!x) break;
+          let gone = false;
+          try { await updT(x.t, x.id, x.row); gone = true; } catch (e) {
+            if (isNet(e)) break;
+            if (isAuth(e)) { await F.sb.auth.refreshSession().catch(() => null); break; }
+            console.error('Nachreichen', e); x.n = (x.n || 0) + 1;
+            if (x.n >= 5) { gone = true; F.toast('Eine Änderung ließ sich nicht speichern und wurde verworfen.', 4500); }
+            else { const b = box(); const k = b.findIndex((y) => y.t === x.t && y.id === x.id); if (k >= 0) { b[k].n = x.n; boxSet(b); } break; }
+          }
+          if (gone) { const b = box(), k = b.findIndex((y) => y.t === x.t && y.id === x.id && (y.v || 0) === (x.v || 0)); if (k >= 0) { b.splice(k, 1); boxSet(b); } }
+        }
+        if (!F.pending()) F.toast('Alles nachgetragen.');
+      } finally { flushP = null; F.netBadge(); }
+    })();
+    return flushP;
   };
+  // Falls das Netz „da“ ist, aber nichts durchkommt: alle 30 s erneut versuchen, solange etwas aussteht
+  setInterval(() => { if (F.pending()) F.flush(); }, 30000);
+  // Alte, kontoübergreifende Warteschlange aus der ersten Fassung übernehmen
+  try { const old = localStorage.getItem('forza-outbox'); if (old) { localStorage.setItem('forza-outbox-pending', old); localStorage.removeItem('forza-outbox'); } } catch (e) { /* ignorieren */ }
+  F.adoptOld = () => { try { const old = JSON.parse(localStorage.getItem('forza-outbox-pending') || '[]'); if (old.length && F.user) { boxSet(box().concat(old)); localStorage.removeItem('forza-outbox-pending'); } } catch (e) { /* ignorieren */ } };
   // noch ausstehende Änderungen auf frisch geladene Daten legen
   F.applyBox = () => { for (const x of box()) { if (x.t === 'sessions') { const o = F.S.sessions.find((q) => q.id === x.id); if (o) Object.assign(o, x.row); }
     else if (x.t === 'sets') for (const q of F.S.sessions) for (const se of q.session_exercises) { const st = se.sets.find((y) => y.id === x.id); if (st) Object.assign(st, x.row); } } };

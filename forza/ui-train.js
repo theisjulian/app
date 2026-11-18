@@ -306,9 +306,7 @@
     const ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
     const used = new Set(s.session_exercises.map((x) => x.exercise_id));
     // Alle passenden Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet): gleiches Muster, dann was du oft machst
-    const cut = F.addDays(F.today(), -60), freq = {};
-    for (const q of F.S.sessions) if (q.session_date >= cut) for (const x of q.session_exercises) if (x.sets.some((y) => y.done)) freq[x.exercise_id] = (freq[x.exercise_id] || 0) + 1;
-    const ok = (e) => e.active && e.dosage_profile !== 'M' && !(F.S.userEx[e.id] || {}).hidden && !ctx.painEx.has(e.id) && E.available(e, ctx.items).ok;
+    const freq = F.exFreq(60), ok = (e) => e.dosage_profile !== 'M' && E.eligible(e, Object.assign({ allowDraft: true }, ctx));
     const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && ok(e))
       .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 20);
     F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}${freq[e.id] ? ' · ' + freq[e.id] + '× gemacht' : ''}${e.tier !== 'geprueft' && !(F.S.userEx[e.id] || {}).released ? ' · Entwurf' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
@@ -337,12 +335,21 @@
   };
 
   /* Beenden */
+  /* Ende einer Einheit: normalerweise jetzt. War seit über einer Stunde nichts mehr los (Beenden vergessen),
+     zählt die letzte Aktivität plus 2 Minuten, damit Dauer und Statistik stimmen. */
+  F.sessEnd = (s) => {
+    const ts = s.session_exercises.flatMap((e) => e.sets.filter((x) => x.done && x.done_at).map((x) => new Date(x.done_at).getTime())), start = new Date(s.started_at).getTime();
+    // nur Aktivität im zeitlichen Zusammenhang mit dem Start: Abhaken am nächsten Tag zählt nicht als Trainingszeit
+    const near = ts.filter((t) => t - start < 4 * 3600000), last = Math.max(start, ...(near.length ? near : ts));
+    const stale = Date.now() - last > 3600000, end = stale ? last + 120000 : Date.now();
+    return { end, stale, last, mins: Math.max(1, Math.round((end - start) / 60000)) };
+  };
   F.acts.finishAsk = () => {
-    const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000)), n = s.session_exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
-    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div><label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button>${postureOffer(s)}<button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
+    const s = F.openSession(), se0 = F.sessEnd(s), mins = se0.mins, n = s.session_exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
+    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div>${se0.stale ? `<div class="small mute" style="margin:-6px 0 12px">Zuletzt aktiv ${F.WD[new Date(se0.last).getDay()]} ${new Date(se0.last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}: die Dauer zählt bis dahin, nicht bis jetzt.</div>` : ''}<label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button>${postureOffer(s)}<button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
   };
   F.acts.finish = async () => {
-    const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000));
+    const s = F.openSession(), se0 = F.sessEnd(s), mins = se0.mins;
     // Kennzahlen vor dem Speichern: Sätze, Volumen, neue Bestwerte (nur wenn frühere Werte bekannt sind)
     let sets = 0, vol = 0; const prs = [];
     for (const se of s.session_exercises) {
@@ -355,7 +362,7 @@
       if (prev > 0 && best > prev + 0.01) prs.push(`${ex.name}: ca. ${F.fmt(Math.round(best * 10) / 10)} kg Maximalkraft (vorher ${F.fmt(Math.round(prev * 10) / 10)})`);
     }
     const wk = F.S.sessions.filter((o) => o.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(o.status) && o.session_date >= F.addDays(F.today(), -6)).length + 1;
-    Object.assign(s, await F.save('sessions', s.id, { status: 'bestaetigt', finished_at: new Date().toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null }));
+    Object.assign(s, await F.save('sessions', s.id, { status: 'bestaetigt', finished_at: new Date(se0.end).toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null }));
     F.rest = null; F.ui.tr.skip = []; F.ui.tr.last = null; F.closeModal(); await F.load().catch(() => null);
     if (F.celebrate) F.celebrate({ title: s.title || 'Training', sets, minutes: mins, volume: Math.round(vol), prs, week: s.kind === 'kraft' ? wk : 0 }); else F.go('heute');
   };

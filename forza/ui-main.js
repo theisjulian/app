@@ -47,7 +47,10 @@
     const sg = F.suggestion(), open = F.openSession(), form = F.ls.get('form-' + today, 'normal'), place = F.items(), mins = F.ls.get('minutes', null);
     const d = F.dparse(today);
     let h = `<div class="row between" style="margin-bottom:14px"><div><div class="eyebrow">${F.WD[d.getDay()]}, ${d.getDate()}. ${F.MON[d.getMonth()]}</div><div class="h1">${greet}${name ? ', ' + esc(name) : ''}</div></div></div>`;
-    if (open) h += `<div class="card" style="border-color:var(--a)"><div class="row between"><div><div class="eyebrow">Läuft gerade</div><b>${esc(open.title || 'Training')}</b></div><button class="btn pri sm" data-act="resume">Fortsetzen</button></div></div>`;
+    if (open) { const se0 = F.sessEnd ? F.sessEnd(open) : { stale: false }, st = new Date(open.started_at);
+      h += se0.stale && Date.now() - se0.last > 3 * 3600000
+        ? `<div class="card" style="border-color:var(--warn)"><div class="eyebrow">Noch nicht beendet</div><b>${esc(open.title || 'Training')} vom ${F.WD[st.getDay()]}, ${st.getDate()}.${st.getMonth() + 1}.</b><div class="small mute" style="margin:4px 0 12px">Zuletzt aktiv um ${new Date(se0.last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}. Beim Abschließen zählt die Dauer bis dahin (${se0.mins} min).</div><div class="row gap"><button class="btn pri grow" data-act="finishAsk">Abschließen</button><button class="btn ghost grow" data-act="resume">Weitermachen</button></div></div>`
+        : `<div class="card" style="border-color:var(--a)"><div class="row between"><div><div class="eyebrow">Läuft gerade</div><b>${esc(open.title || 'Training')}</b></div><button class="btn pri sm" data-act="resume">Fortsetzen</button></div></div>`; }
     // Beinfrage nach Fahrt
     const ride = S.activities.find((a) => RIDE.includes(a.sport) && (Date.now() - new Date(a.start_at).getTime()) < 30 * 3600000 && ((a.kilojoules || 0) > 600 || (a.moving_s || 0) > 5400));
     if (ride && !F.ls.get('legs-' + today, null)) h += `<div class="card"><div class="eyebrow">Nach der Radfahrt</div><div style="margin:4px 0 10px"><b>Wie fühlen sich deine Beine an?</b></div><div class="row wrap gap">${[['frisch', 'Frisch'], ['mued', 'Etwas müde'], ['schwer', 'Schwer']].map(([k, l]) => `<button class="chip" data-act="legs" data-v="${k}">${l}</button>`).join('')}</div></div>`;

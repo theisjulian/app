@@ -73,7 +73,7 @@
     const st = (ctx.userEx || {})[ex.id] || {};
     if (st.hidden) return false;
     // Entwürfe nur mit Freigabe, oder wenn du die Übung schon mindestens zweimal gemacht hast (dann ist das deine Wahl)
-    if (ex.tier !== 'geprueft' && !st.released && ex.dosage_profile !== 'M' && !(ctx.tried && ctx.tried.has(ex.id))) return false;
+    if (ex.tier !== 'geprueft' && !st.released && ex.dosage_profile !== 'M' && !(ctx.tried && ctx.tried.has(ex.id)) && !ctx.allowDraft) return false;
     // Neutrale Vorgabe: keine Langhantel-Bankdrücken-Automatik (Vorliebe Kurzhantel)
     if (ex.name === 'Langhantel Bankdrücken') return false;
     if ((ctx.painEx || new Set()).has(ex.id)) return false;
