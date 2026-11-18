@@ -222,7 +222,7 @@ footer{border-top:1px solid var(--line);padding-top:18px}
 
 <section class="tab" id="t-versionen">
   <section class="card" style="margin-bottom:14px"><h2>Veröffentlichungsstand <span class="pill" id="vs-hint"></span></h2><div class="apps" id="apps"></div>
-    <p class="note" style="margin-top:8px">Verglichen werden die Version in <b>versions.json</b> (das, was die Apps als „neueste Version“ sehen), das neueste Release bei GitHub und die erwarteten Dateien. Die Versionsnummer wird aus dem Release-Namen gelesen (z. B. „Libretto 0.9.4“).</p></section>
+    <p class="note" style="margin-top:8px">Verglichen werden die Version in <b>versions.json</b> (das, was die Apps als „neueste Version“ sehen), das neueste Release bei GitHub und die erwarteten Dateien. Die Versionsnummer wird aus dem Release-Namen oder Tag gelesen (z. B. „Libretto 1.1“ = 1.1.0); als neuestes Release zählt die höchste Version, nicht das zuletzt hochgeladene.</p></section>
   <section class="card"><h2>Seiten erreichbar? <span class="pill" id="pg-hint"></span></h2><div class="pg" id="pages"></div></section>
 </section>
 
@@ -319,9 +319,9 @@ function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()
 function fd(s){if(!s)return '';var d=new Date(s);return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
 function fdm(s){var p=s.split('-');return p[2]+'.'+p[1]+'.'}
 var APPS=[
- {id:'gruppo',name:'Aula',vkey:'gruppen',c:['#ff5f7e','#d6204a'],img:'data:image/png;base64,'+ICONS.gruppi,re:/^(aula|gruppen|gruppo|gruppi)/i,files:[['Mac','Aula-Mac.zip'],['Mac Intel','Aula-Mac-Intel.zip'],['Windows','Aula-Windows-Setup.exe']],page:'/aula/'},
- {id:'libretto',name:'Libretto',vkey:'libretto',c:['#22cf78','#0a8a4a'],img:'data:image/png;base64,'+ICONS.libretto,re:/^libretto/i,files:[['Mac','Libretto-Mac.zip'],['Mac Intel','Libretto-Mac-Intel.zip'],['Windows','Libretto-Windows-Setup.exe']],page:'/libretto/'},
- {id:'voce',name:'Voce',vkey:'viva',c:['#3a86ff','#1245d6'],img:'data:image/png;base64,'+ICONS.viva,re:/^(voce|viva)/i,files:[['Mac','Voce-Mac.zip'],['Mac Intel','Voce-Mac-Intel.zip'],['Windows','Voce-Windows-Setup.exe']],page:'/voce/'},
+ {id:'gruppo',name:'Aula',vkey:'gruppen',c:['#ff5f7e','#d6204a'],img:'data:image/png;base64,'+ICONS.gruppi,re:/^(aula|gruppen|gruppo|gruppi)/i,files:[['Mac','Aula-Mac.dmg|Aula-Mac.zip'],['Mac Intel','Aula-Mac-Intel.dmg|Aula-Mac-Intel.zip'],['Windows','Aula-Windows-Setup.exe']],page:'/aula/'},
+ {id:'libretto',name:'Libretto',vkey:'libretto',c:['#22cf78','#0a8a4a'],img:'data:image/png;base64,'+ICONS.libretto,re:/^libretto/i,files:[['Mac','Libretto-Mac.dmg|Libretto-Mac.zip'],['Mac Intel','Libretto-Mac-Intel.dmg|Libretto-Mac-Intel.zip'],['Windows','Libretto-Windows-Setup.exe']],page:'/libretto/'},
+ {id:'voce',name:'Voce',vkey:'viva',c:['#3a86ff','#1245d6'],img:'data:image/png;base64,'+ICONS.viva,re:/^(voce|viva)/i,files:[['Mac','Voce-Mac.dmg|Voce-Mac.zip'],['Mac Intel','Voce-Mac-Intel.dmg|Voce-Mac-Intel.zip'],['Windows','Voce-Windows-Setup.exe']],page:'/voce/'},
  {id:'foliva',name:'Foliva',vkey:'foliva',c:['#9b7bf2','#5b3cc4'],img:'data:image/png;base64,'+ICONS.foliva,re:/^foliva/i,files:[['Mac','Foliva-Mac.zip'],['Mac Intel','Foliva-Mac-Intel.zip'],['Windows','Foliva-Windows-Setup.exe']],page:'/foliva/',test:true}
 ];
 var PLATS=['Mac (Apple Silicon)','Mac (Intel)','Windows','Android'];
@@ -329,8 +329,12 @@ function platOf(n){n=n.toLowerCase();if(/\.apk$/.test(n))return 'Android';if(/wi
 function appOf(n){for(var i=0;i<APPS.length;i++)if(APPS[i].re.test(n))return APPS[i];return null}
 function cmpV(a,b){var x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(var i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0)}return 0}
 /* Release-Name mit Version, auch wenn die Version nur im Tag steht (z. B. Name „Voce“, Tag „1.8.1“) */
-function relName(r){var n=r.name||r.tag_name,v=verOf(r);return v&&n.indexOf(v)<0?n+' '+v:n}
-function verOf(r){var m=/(\d+\.\d+\.\d+)/.exec((r.name||'')+' '+(r.tag_name||''));return m?m[1]:null}
+function relName(r){var n=r.name||r.tag_name,v=verOf(r),k=v&&v.replace(/\.0$/,'');return v&&n.indexOf(v)<0&&n.indexOf(k)<0?n+' '+v:n}
+/* Version aus Name oder Tag, auch zweiteilig („Libretto 1.1“, Tag „2.0“) → 1.1.0 */
+function verOf(r){var m=/(?:^|[^\d.])(\d+\.\d+(?:\.\d+)?)(?![\d.])/.exec(' '+(r.name||'')+' '+(r.tag_name||''));if(!m)return null;var v=m[1].split('.');while(v.length<3)v.push('0');return v.join('.')}
+/* Dateien einer App: je Plattform mehrere erlaubte Namen (DMG oder ZIP), getrennt durch | */
+function alts(f){return f[1].split('|')}
+function hasFile(r,f){return (r.assets||[]).some(function(a){return alts(f).indexOf(a.name)>=0})}
 
 /* ---------- Tabs ---------- */
 var TABS=[['uebersicht','Übersicht','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],['analyse','Analyse','<path d="M21 12a9 9 0 1 1-9-9v9z"/><path d="M15 3.2A9 9 0 0 1 20.8 9H15z"/>'],['versionen','Versionen','<path d="M5 12l4 4 10-10"/><rect x="3" y="3" width="18" height="18" rx="4"/>'],['veroeffentlichen','Update','<path d="M12 16V4M7 9l5-5 5 5M5 20h14"/>'],['vorlagen','Mehr','<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>']];
@@ -366,14 +370,14 @@ function isAppPage(p){return APPS.some(function(a){return a.page===p})}
 var DAJE='https://daje.theisapps.de/';
 function getDaje(){if(DEMO)return Promise.resolve({ok:true,ms:84});var t=Date.now();return fetch(DAJE+'?c='+t,{cache:'no-store',mode:'no-cors'}).then(function(){return {ok:true,ms:Date.now()-t}},function(){return {ok:false,ms:Date.now()-t}})}
 function getPages(){if(DEMO)return Promise.resolve(PAGES.map(function(p,i){var a=APPS.find(function(x){return x.page===p}),html='';
-  if(a&&!a.test){var r=demoRel().filter(function(x){return x.assets.some(function(y){return y.name===a.files[0][1]})})[0];html=a.files.map(function(f){return 'https://github.com/'+REPO+'/releases/download/'+r.tag_name+'/'+f[1]}).join(' ')}
+  if(a&&!a.test){var r=demoRel().filter(function(x){return hasFile(x,a.files[0])})[0];html=a.files.map(function(f){var n=alts(f).filter(function(k){return r.assets.some(function(y){return y.name===k})})[0]||alts(f)[0];return 'https://github.com/'+REPO+'/releases/download/'+r.tag_name+'/'+n}).join(' ')}
   return {p:p,ok:true,ms:60+i*13,html:html}}));
  return Promise.all(PAGES.map(function(p){var t=Date.now();return fetch(SITE+p+(p.indexOf('?')<0?'?':'&')+'c='+t,{cache:'no-store'}).then(function(r){var o={p:p,ok:r.ok,ms:Date.now()-t,code:r.status};
   if(!r.ok||!isAppPage(p))return o;return r.text().then(function(tx){o.html=tx;return o},function(){return o})},function(){return {p:p,ok:false,ms:Date.now()-t,code:0}})}))}
 /* Download-Links einer Programmseite: Release-Tag je Datei (latest = das „Latest“-Release) */
 function siteLinks(a){var pg=(S.pages||[]).find(function(x){return x.p===a.page});if(!pg||pg.html==null)return null;
  var re=/github\.com\/[^\/"'\s]+\/[^\/"'\s]+\/releases\/(?:latest\/download|download\/([^\/"'\s]+))\/([A-Za-z0-9._-]+)/g,m,out=[];
- while((m=re.exec(pg.html)))if(a.files.some(function(f){return f[1]===m[2]}))out.push({tag:m[1]||'latest',file:m[2]});return out}
+ while((m=re.exec(pg.html))){var nm=m[2],f=a.files.filter(function(x){return alts(x).indexOf(nm)>=0})[0];if(f)out.push({tag:m[1]||'latest',file:nm,plat:f[0]})}return out}
 
 /* ---------- Auswertung ---------- */
 function analyse(rels){var tot={},plat={},ver=[];APPS.forEach(function(a){tot[a.id]=0;plat[a.id]={};PLATS.forEach(function(p){plat[a.id][p]=0})});
@@ -412,12 +416,13 @@ function verlauf(snaps){var ks=Object.keys(snaps).sort(),el=$('verlauf');
  el.innerHTML=s}
 
 /* ---------- Versionen ---------- */
-function newestWith(rels,file){var best=null;rels.forEach(function(r){if((r.assets||[]).some(function(a){return a.name===file})){if(!best||(r.published_at||'')>(best.published_at||''))best=r}});return best}
+/* Neuestes Release einer App: höchste Versionsnummer (nicht das zuletzt hochgeladene – z. B. Libretto 1.0.12 für ältere Macs kam nach 1.1) */
+function newestWith(rels,f){var best=null;rels.forEach(function(r){if(!hasFile(r,f))return;if(!best){best=r;return}var a=verOf(r),b=verOf(best),c=a&&b?cmpV(a,b):0;if(c>0||(c===0&&(r.published_at||'')>(best.published_at||'')))best=r});return best}
 function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;ISSUES=[];
- APPS.forEach(function(a){var r=newestWith(rels,a.files[0][1]),vv=vj[a.vkey]&&vj[a.vkey].version,rv=r?verOf(r):null,st=[],cls='ok';
+ APPS.forEach(function(a){var r=newestWith(rels,a.files[0]),vv=vj[a.vkey]&&vj[a.vkey].version,rv=r?verOf(r):null,st=[],cls='ok';
   var have={};if(r)(r.assets||[]).forEach(function(x){have[x.name]=1});
-  var miss=a.files.filter(function(f){return !have[f[1]]}).map(function(f){return f[0]});
-  if(!r){cls='bad';st.push('Kein Release mit '+a.files[0][1]+' gefunden.')}
+  var hv=function(f){return alts(f).some(function(n){return have[n]})};var miss=a.files.filter(function(f){return !hv(f)}).map(function(f){return f[0]});
+  if(!r){cls='bad';st.push('Kein Release mit '+alts(a.files[0]).join(' oder ')+' gefunden.')}
   else{
    if(miss.length){cls='bad';st.push('Dateien fehlen: '+miss.join(', ')+'.')}
    if(vv&&rv){var c=cmpV(vv,rv);if(c>0){cls='bad';st.push('Die Website meldet '+vv+', das Release hat nur '+rv+': Apps würden ein Update ohne Download melden.')}else if(c<0){if(cls!=='bad')cls='warn';st.push('Das Release ist neuer ('+rv+') als versions.json ('+vv+'). Website noch nicht aktualisiert?')}}
@@ -425,17 +430,17 @@ function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;ISSUES=[];
   }
   /* Verlinkt die Website das neueste Release? */
   var L=r&&!a.test?siteLinks(a):null,lk=null;
-  if(L){var latestTag=S.latest&&S.latest.tag_name,wrong=L.filter(function(x){return (x.tag==='latest'?latestTag:x.tag)!==r.tag_name});
+  if(L){var latestTag=S.latest&&S.latest.tag_name,tg=function(x){return x.tag==='latest'?latestTag:x.tag},good=L.filter(function(x){return tg(x)===r.tag_name}),wrong=a.files.filter(function(f){return !good.some(function(x){return x.plat===f[0]})}).map(function(f){var o=L.filter(function(x){return x.plat===f[0]})[0];return o||{tag:'–',plat:f[0]}}),older=L.filter(function(x){return tg(x)!==r.tag_name&&good.some(function(g){return g.plat===x.plat})}).map(tg).filter(function(t,i,a){return a.indexOf(t)===i});
    if(!L.length){if(cls==='ok')cls='warn';lk='bad';st.push('Die Programmseite bietet keinen Download an.')}
    else if(wrong.length){cls='bad';lk='bad';var w=wrong[0];st.push(w.tag==='latest'?'Die Website lädt über „latest“, GitHub führt als „Latest“ aber gerade '+(latestTag||'ein anderes Release')+': Downloads gehen ins Leere. Links fest auf „'+r.tag_name+'“ setzen.':'Die Website verlinkt noch das Release „'+w.tag+'“, neu ist „'+r.tag_name+'“. Links auf der Programmseite anpassen.')}
-   else lk='ok'}
+   else{lk='ok';if(older.length)st.push('Zusätzlich verlinkt (ältere Version, z. B. für ältere Macs): „'+older.join('“, „')+'“.')}}
   if(cls==='ok')st.push(a.test?'Alles da. Testversion für Kollegen, nicht auf der Website verlinkt.':'Alles in Ordnung'+(lk==='ok'?', die Website verlinkt das neueste Release.':'.'));
   if(cls!=='ok')ISSUES.push({cls:cls,t:a.name+': '+st.join(' ')});
   if(cls==='bad')bad++;if(cls==='warn')warn++;
   h+='<div class="arow"><div class="nm"><img src="'+a.img+'" alt="">'+a.name+(a.test?' <span class="pill warn">Test</span>':'')+'</div>'+
    '<div><span class="k">Version laut Website</span><b>'+(vv||'–')+'</b></div>'+
    '<div><span class="k">Neuestes Release bei GitHub</span><b>'+(r?esc(relName(r)):'–')+'</b>'+(r?'<div class="small muted">'+fd(r.published_at)+(r.prerelease?' · Pre-Release':'')+'</div>':'')+'</div>'+
-   '<div><span class="k">Dateien</span><div class="chips">'+a.files.map(function(f){return '<span class="chip '+(have[f[1]]?'ok':'bad')+'">'+(have[f[1]]?'✓ ':'✗ ')+f[0]+'</span>'}).join('')+(lk?'<span class="chip '+lk+'">'+(lk==='ok'?'✓ ':'✗ ')+'Website-Links</span>':'')+'</div><div class="stat"><span class="pill '+cls+'">'+(cls==='ok'?'OK':cls==='warn'?'Prüfen':'Achtung')+'</span> <span class="muted">'+esc(st.join(' '))+'</span></div></div></div>'});
+   '<div><span class="k">Dateien</span><div class="chips">'+a.files.map(function(f){return '<span class="chip '+(hv(f)?'ok':'bad')+'">'+(hv(f)?'✓ ':'✗ ')+f[0]+'</span>'}).join('')+(lk?'<span class="chip '+lk+'">'+(lk==='ok'?'✓ ':'✗ ')+'Website-Links</span>':'')+'</div><div class="stat"><span class="pill '+cls+'">'+(cls==='ok'?'OK':cls==='warn'?'Prüfen':'Achtung')+'</span> <span class="muted">'+esc(st.join(' '))+'</span></div></div></div>'});
  var sv=vj.sportwahl&&vj.sportwahl.version;
  h+='<div class="arow"><div class="nm"><img src="data:image/svg+xml;base64,'+ICONS.sportivo+'" alt="">Sportivo</div><div><span class="k">Version laut Website</span><b>'+(sv||'–')+'</b></div><div><span class="k">Art</span><b>Web-App</b><div class="small muted">kein Download</div></div><div><span class="k">Seite</span><div class="stat"><span class="pill ok">OK</span> <span class="muted">Läuft direkt aus der Website.</span></div></div></div>';
  h+='<div class="arow"><div class="nm"><img src="data:image/png;base64,'+ICONS.namo+'" alt="">’namo.</div><div><span class="k">Art</span><b>Web-App mit Anmeldung</b><div class="small muted">auf Anfrage, kein Download</div></div><div><span class="k">Server (Supabase)</span><b id="nm-srv">wird geprüft …</b><div class="small muted">Gratiszugang pausiert nach 7 Tagen ohne Nutzung</div></div><div><span class="k">Links</span><div class="chips"><a class="chip" href="'+SITE+'/studienfahrt/" target="_blank" rel="noopener">App</a><a class="chip" href="'+SITE+'/namo/demo/" target="_blank" rel="noopener">Demo</a><a class="chip" href="https://supabase.com/dashboard/project/ipkiijqypkhhqaraphty" target="_blank" rel="noopener">Supabase</a></div></div></div>';
@@ -595,9 +600,9 @@ function webMore(){var st=load()||{},c=st.gc||window.THEIS_PRESET||{};var ids=['
 
 /* ---------- Checkliste und Links ---------- */
 var CL=[
- ['Libretto veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (normales Release, kein Pre-Release) mit Libretto-Mac.zip, Libretto-Mac-Intel.zip, Libretto-Windows-Setup.exe. Tag und Name nach dem Schema <b>libretto-&lt;Version&gt;</b>, z. B. „libretto-1.0.3“ und „Libretto 1.0.3“. Erst die Dateien, dann versions.json.'],
- ['Aula veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Aula-Mac.zip, Aula-Mac-Intel.zip, Aula-Windows-Setup.exe. Tag <b>aula-&lt;Version&gt;</b>, z. B. „aula-1.4.0“, Name „Aula 1.4.0“. Im Website-Update die Links auf der Aula-Seite auf den neuen Tag setzen.'],
- ['Voce veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Voce-Mac.zip, Voce-Mac-Intel.zip, Voce-Windows-Setup.exe. Tag <b>voce-&lt;Version&gt;</b>, z. B. „voce-1.9.2“, Name „Voce 1.9.2“. Im Website-Update die Links auf der Voce-Seite auf den neuen Tag setzen.'],
+ ['Libretto veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (normales Release, kein Pre-Release) mit Libretto-Mac.dmg, Libretto-Mac-Intel.dmg, Libretto-Windows-Setup.exe (ZIPs als Reserve). Version im Namen, z. B. Tag „1.1“, Name „Libretto 1.1“. Eine ältere Version für ältere Macs ohne „Latest“ anlegen. Erst die Dateien, dann versions.json.'],
+ ['Aula veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Aula-Mac.zip, Aula-Mac-Intel.zip, Aula-Windows-Setup.exe. Version im Namen, z. B. Tag „1.4“, Name „Aula 1.4“. Im Website-Update die Links auf der Aula-Seite auf den neuen Tag setzen.'],
+ ['Voce veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Voce-Mac.dmg, Voce-Mac-Intel.dmg, Voce-Windows-Setup.exe. Version im Namen, z. B. Tag „2.0“, Name „Voce 2.0“. Im Website-Update die Links auf der Voce-Seite auf den neuen Tag setzen.'],
  ['Foliva-Testversion tauschen','Pre-Release <a href="https://github.com/'+REPO+'/releases/tag/foliva-beta" target="_blank" rel="noopener">foliva-beta</a> (beim ersten Mal neu anlegen, Haken „Set as a pre-release“): Foliva-Mac.zip, Foliva-Mac-Intel.zip, Foliva-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name z. B. „Foliva 0.9.11 (Test)“. Nicht auf der Website verlinken.'],
  ['Reiter „Versionen“ prüfen','Erst wenn alle Dateien da sind (✓), geht es weiter. „Website-Links“ zeigt noch ✗, bis das Website-Update hochgeladen ist.'],
  ['Website-Update hochladen','<a href="https://github.com/'+REPO+'/upload/main" target="_blank" rel="noopener">Upload-Seite</a>: Inhalt des Ordners „website“ aus dem Zip hineinziehen (Unterordner mitziehen), „Commit changes“. Danach 1 bis 2 Minuten warten.'],
