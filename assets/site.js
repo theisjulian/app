@@ -15,12 +15,25 @@
     r.classList.add('vt-circle');var t=document.startViewTransition(fn);t.finished.then(function(){r.classList.remove('vt-circle')},function(){r.classList.remove('vt-circle')});
     t.ready.then(function(){document.documentElement.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+R+'px at '+x+'px '+y+'px)']},{duration:620,easing:'cubic-bezier(.2,.7,.2,1)',pseudoElement:'::view-transition-new(root)'})}).catch(function(){});
   }
+  /* Hell/Dunkel: automatisch (Gerät), hell oder dunkel – gemerkt in theis-hell */
+  var HELL='theis-hell',MODI=['auto','hell','dunkel'],
+      ICON={auto:'<circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/>',
+            hell:'<circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 1.8v2.2M10 16v2.2M1.8 10H4M16 10h2.2M4.2 4.2l1.6 1.6M14.2 14.2l1.6 1.6M4.2 15.8l1.6-1.6M14.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+            dunkel:'<path d="M16.2 12.6A7 7 0 0 1 7.4 3.8a7 7 0 1 0 8.8 8.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'},
+      NAME={auto:'Auto',hell:'Hell',dunkel:'Dunkel'},
+      LANG={auto:'Darstellung: automatisch wie das Gerät',hell:'Darstellung: immer hell',dunkel:'Darstellung: immer dunkel'};
+  function modus(){var m=get(HELL);return m==='hell'||m==='dunkel'?m:'auto'}
+  function leiste(){var c=LEISTE[current()],m=modus();document.querySelectorAll('meta[name=theme-color]').forEach(function(x){x.content=c[m==='hell'?0:m==='dunkel'?1:/dark/.test(x.media)?1:0]})}
+  function zeigeModus(){var m=modus(),b=document.getElementById('modeBtn');if(!b)return;
+    b.querySelector('svg').innerHTML=ICON[m];b.querySelector('span').textContent=NAME[m];b.setAttribute('aria-label',LANG[m]+' – zum Wechseln klicken');b.title=LANG[m]}
+  function setzeModus(m,ev){reveal(function(){if(m==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',m==='hell'?'light':'dark');zeigeModus();leiste()},ev);
+    if(m==='auto'){try{localStorage.removeItem(HELL)}catch(e){}}else put(HELL,m)}
   function current(){var s=r.getAttribute('data-style');return STILE.indexOf(s)>=0?s:'normal'}
   function apply(st){
     r.setAttribute('data-style',st);
-    document.querySelectorAll('.pick button').forEach(function(b){var on=b.dataset.s===st;b.setAttribute('aria-checked',on?'true':'false');b.tabIndex=on?0:-1});
+    document.querySelectorAll('.pick button[data-s]').forEach(function(b){var on=b.dataset.s===st;b.setAttribute('aria-checked',on?'true':'false');b.tabIndex=on?0:-1});
     if(st==='term'){boot();if(boot.ready)typer()}
-    var c=LEISTE[st];document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c[/dark/.test(m.media)?1:0]});
+    leiste();
   }
   function choose(st,ev){if(st===current()){put(KEY,st);return}
     reveal(function(){apply(st)},ev);put(KEY,st);put(SEEN,'1');var t=document.getElementById('tip');if(t)t.remove()}
@@ -204,7 +217,7 @@
   function ready(){
     var g=get(KEY);if(g==='salbei'||g==='atelier'||g==='plakat'||g==='studio'){g='normal';put(KEY,g)}apply(STILE.indexOf(g)>=0?g:'normal');
     /* Stil-Auswahl: Klick oder Pfeiltasten wie bei Optionsfeldern */
-    document.querySelectorAll('.pick').forEach(function(p){
+    document.querySelectorAll('.pick:not(.mode)').forEach(function(p){
       var bs=[].slice.call(p.querySelectorAll('button'));
       bs.forEach(function(b,n){
         b.addEventListener('click',function(e){choose(b.dataset.s,e)});
@@ -276,5 +289,7 @@
       addEventListener('scroll',show,{passive:true});
     }
   }
+  function modusStart(){zeigeModus();leiste();var b=document.getElementById('modeBtn');if(b)b.addEventListener('click',function(ev){var m=modus();setzeModus(MODI[(MODI.indexOf(m)+1)%3],ev)})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',modusStart);else modusStart();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
 })();
