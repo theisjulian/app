@@ -1,0 +1,75 @@
+/* Präsentationsmappe: Übersicht und Logo-Seite */
+:root {
+  --tinte: #141414; --grau: #5b5b5b; --hellgrau: #8a8a8a; --linie: #e4e0d8; --papier: #f3f1ec; --weiss: #ffffff;
+  --titel: 'Jost', 'Futura', system-ui, sans-serif; --text: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --breite: 1240px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--text); color: var(--tinte); background: var(--weiss); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+[id] { scroll-margin-top: 90px; }
+:focus-visible { outline: 2px solid var(--tinte); outline-offset: 3px; }
+.wrap { width: 100%; max-width: var(--breite); margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
+.titel { font-family: var(--titel); font-weight: 500; letter-spacing: -0.015em; line-height: 1.06; margin: 0; text-wrap: balance; }
+.ueber { margin: 0 0 18px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--grau); }
+.lead { font-size: clamp(18px, 1.6vw, 21px); color: #3c3c3c; margin: 0; max-width: 36em; text-wrap: pretty; }
+.knopf { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 24px; border-radius: 999px; border: 1.5px solid var(--tinte); background: var(--tinte); color: #ffffff; font: 600 15.5px/1 var(--text); text-decoration: none; cursor: pointer; transition: transform .2s, background .2s, color .2s; white-space: nowrap; }
+.knopf:hover { transform: translateY(-1px); background: #333333; border-color: #333333; }
+.knopf.rand { background: transparent; color: var(--tinte); }
+.knopf.rand:hover { background: var(--tinte); color: #ffffff; }
+.knopf svg { width: 17px; height: 17px; flex: none; }
+.pfeil-link { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none; }
+.pfeil-link svg { width: 16px; height: 16px; transition: transform .2s; }
+.pfeil-link:hover svg { transform: translateX(3px); }
+.chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 999px; background: var(--papier); color: #333333; white-space: nowrap; }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); }
+
+/* Kopf */
+.m-kopf { position: sticky; top: 0; z-index: 40; transition: box-shadow .3s; background: rgba(255,255,255,0.88); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border-bottom: 1px solid var(--linie); }
+.m-kopf .wrap { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 72px; }
+.m-marke { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+.m-marke img { height: 40px; width: auto; }
+.m-marke span { display: flex; flex-direction: column; line-height: 1.2; }
+.m-marke strong { font-family: var(--titel); font-weight: 500; font-size: 17px; }
+.m-marke small { font-size: 12.5px; color: var(--grau); }
+.m-nav { display: flex; align-items: center; gap: 4px 26px; font-size: 15px; font-weight: 500; }
+.m-nav a { text-decoration: none; }
+.m-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.m-nav button { font: inherit; background: none; border: 1px solid var(--linie); border-radius: 999px; padding: 8px 14px; cursor: pointer; color: var(--grau); }
+.m-nav button:hover { color: var(--tinte); border-color: var(--tinte); }
+@media (max-width: 900px) { .m-nav a.optional { display: none; } }
+@media (max-width: 600px) { .m-nav a:not(.optional) { font-size: 0; display: inline-flex; width: 38px; height: 38px; align-items: center; justify-content: center; border: 1px solid var(--linie); border-radius: 50%; } .m-nav a:not(.optional)::before { content: "←"; font-size: 17px; } .m-marke small { display: none; } .m-marke strong { font-size: 15px; white-space: nowrap; } .m-marke img { height: 34px; } .m-nav { gap: 4px 14px; font-size: 14px; } .m-nav button { padding: 7px 11px; font-size: 13px; } }
+
+/* Abschnitte */
+.m-abschnitt { padding: clamp(80px, 10vw, 140px) 0; }
+.m-abschnitt.papier { background: var(--papier); }
+.m-abschnitt.dunkel { background: var(--tinte); color: #ffffff; }
+.m-abschnitt.dunkel .ueber, .m-abschnitt.dunkel .lead { color: rgba(255,255,255,0.7); }
+.m-kopfzeile { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 64px; align-items: end; margin-bottom: clamp(48px, 6vw, 80px); }
+.m-kopfzeile .titel { font-size: clamp(36px, 4.6vw, 60px); }
+@media (max-width: 860px) { .m-kopfzeile { grid-template-columns: 1fr; } }
+
+/* Geräte-Rahmen */
+.geraet { position: relative; }
+.desktop { border-radius: 14px; background: #ffffff; box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 30px 60px -20px rgba(20,20,20,0.25), 0 0 0 1px rgba(20,20,20,0.08); overflow: hidden; }
+.desktop .leiste { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #f1efea; border-bottom: 1px solid #e3dfd6; }
+.desktop .leiste i { width: 10px; height: 10px; border-radius: 50%; background: #d6d1c7; }
+.desktop .leiste span { margin: 0 auto; font-size: 11.5px; color: #8a857b; background: #ffffff; border-radius: 6px; padding: 3px 40px; }
+.desktop .schirm { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #fafafa; }
+.handy { width: 100%; max-width: 270px; border-radius: 40px; padding: 10px; background: #141414; box-shadow: 0 30px 60px -20px rgba(20,20,20,0.35); }
+.handy .schirm { position: relative; aspect-ratio: 390 / 800; border-radius: 31px; overflow: hidden; background: #ffffff; }
+.schirm iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.schirm .klick { position: absolute; inset: 0; z-index: 2; }
+
+/* Fuß */
+.m-fuss { background: var(--tinte); color: rgba(255,255,255,0.65); font-size: 14px; }
+.m-fuss .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-top: 36px; padding-bottom: 36px; }
+.m-fuss img { height: 34px; }
+.m-fuss a { color: #ffffff; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .einblenden { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .8s ease; }
+  .einblenden.sichtbar { opacity: 1; transform: none; }
+}

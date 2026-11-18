@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Entwurfsmappe · Neue Website der Freunde des OvMG e.V.</title>
+<script src="assets/zugang.js"></script>
+<link rel="icon" href="assets/logos/icon-schwarz.svg" type="image/svg+xml">
+<link rel="preload" href="assets/schriften/jost-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/schriften/schriften.css">
+<link rel="stylesheet" href="assets/mappe.css">
+<style>
+  html.zugang-ok #anmelden { display: none; }
+  html:not(.zugang-ok) #inhalt { display: none; }
+
+  /* Anmeldung */
+  #anmelden { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
+  .anm-bild { position: relative; background: #141414; overflow: hidden; }
+  .anm-bild img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: 0.92; }
+  .anm-bild p { position: absolute; left: 32px; bottom: 28px; margin: 0; color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 0.04em; }
+  .anm-form { display: flex; flex-direction: column; justify-content: center; padding: clamp(32px, 6vw, 88px); background: #ffffff; }
+  .anm-form .siegel { width: 96px; height: 96px; margin-bottom: 36px; }
+  .anm-form h1 { font-size: clamp(32px, 3.2vw, 44px); margin-bottom: 12px; }
+  .anm-form > p { color: var(--grau); margin: 0 0 36px; max-width: 26em; }
+  .anm-form form { display: grid; gap: 14px; max-width: 380px; }
+  .anm-form label { font-size: 14px; font-weight: 600; }
+  .anm-form input[type=password] { font: inherit; font-size: 17px; padding: 14px 16px; border: 1px solid #cfcac0; border-radius: 12px; width: 100%; }
+  .anm-form input[type=password]:focus { outline: 2px solid var(--tinte); outline-offset: 1px; border-color: var(--tinte); }
+  .merken { display: flex; gap: 10px; align-items: center; font-weight: 400 !important; color: var(--grau); }
+  .merken input { width: 17px; height: 17px; accent-color: var(--tinte); }
+  .fehler { color: #b42318; font-size: 14px; min-height: 21px; margin: 0; }
+  .anm-form .knopf { justify-self: start; }
+  .anm-form > p.vertraulich { margin: 48px 0 0; font-size: 13px; color: var(--hellgrau); }
+  @media (max-width: 860px) { #anmelden { grid-template-columns: 1fr; } .anm-bild { height: 34vh; } }
+
+  /* Titel */
+  .m-held { padding: clamp(56px, 8vw, 112px) 0 clamp(64px, 8vw, 104px); overflow: hidden; }
+  .m-held .wrap { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(40px, 6vw, 80px); align-items: center; }
+  .m-held h1 { font-size: clamp(42px, 5.2vw, 74px); letter-spacing: -0.025em; }
+  .m-held .lead { margin: 28px 0 36px; }
+  .m-held .knoepfe { display: flex; flex-wrap: wrap; gap: 12px; }
+  .buehne { position: relative; padding-right: clamp(40px, 8vw, 110px); padding-bottom: 40px; }
+  .buehne .handy { position: absolute; right: 0; bottom: 0; width: 32%; max-width: 210px; padding: 8px; border-radius: 30px; }
+  .buehne .handy .schirm { border-radius: 23px; }
+  @media (max-width: 960px) { .m-held .wrap { grid-template-columns: 1fr; } }
+
+  .fakten { border-top: 1px solid var(--linie); border-bottom: 1px solid var(--linie); }
+  .fakten ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fakten li { padding: 28px 0; display: flex; flex-direction: column; gap: 2px; }
+  .fakten li + li { padding-left: clamp(16px, 3vw, 40px); border-left: 1px solid var(--linie); }
+  .fakten strong { font-family: var(--titel); font-weight: 500; font-size: clamp(28px, 3vw, 40px); line-height: 1.1; }
+  .fakten span { font-size: 14.5px; color: var(--grau); }
+  @media (max-width: 760px) { .fakten ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fakten li:nth-child(3) { padding-left: 0; border-left: 0; } .fakten li:nth-child(n+3) { border-top: 1px solid var(--linie); } }
+
+  /* Ausgangslage */
+  .drei { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .drei article { background: #ffffff; border-radius: 20px; padding: clamp(28px, 3vw, 40px); }
+  .drei .nr { font-family: var(--titel); font-size: 15px; color: var(--hellgrau); }
+  .drei h3 { font-family: var(--titel); font-weight: 500; font-size: 26px; margin: 10px 0 12px; }
+  .drei ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; color: #444444; }
+  .drei li { padding-left: 22px; position: relative; }
+  .drei li::before { content: ''; position: absolute; left: 0; top: 0.72em; width: 10px; height: 1.5px; background: currentColor; }
+  @media (max-width: 860px) { .drei { grid-template-columns: 1fr; } }
+
+  /* Konzepte */
+  .konzepte { display: grid; gap: clamp(88px, 10vw, 140px); }
+  .konzept { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .konzept:nth-child(even) { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); }
+  .konzept:nth-child(even) .geraete { order: 2; }
+  .geraete { position: relative; }
+  .geraete.mit-handy { padding-right: clamp(36px, 7vw, 96px); padding-bottom: 36px; }
+  .geraete.mit-handy .handy { position: absolute; right: 0; bottom: 0; width: 28%; max-width: 190px; padding: 7px; border-radius: 28px; }
+  .geraete.mit-handy .handy .schirm { border-radius: 22px; }
+  .konzept .nummer { font-family: var(--titel); font-weight: 400; font-size: 15px; color: var(--hellgrau); display: flex; align-items: center; gap: 12px; }
+  .konzept .marker { font-family: var(--text); font-size: 11.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; background: var(--tinte); color: #ffffff; padding: 5px 10px; border-radius: 999px; }
+  .konzept h3 { font-family: var(--titel); font-weight: 500; font-size: clamp(34px, 3.6vw, 48px); letter-spacing: -0.015em; margin: 12px 0 14px; line-height: 1.05; }
+  .konzept p { margin: 0 0 18px; color: #444444; }
+  .konzept .passt { border-left: 2px solid var(--tinte); padding-left: 16px; color: var(--tinte); }
+  .konzept .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 28px; }
+  .konzept .knoepfe { display: flex; flex-wrap: wrap; gap: 12px; }
+  @media (max-width: 960px) {
+    .konzept, .konzept:nth-child(even) { grid-template-columns: 1fr; }
+    .konzept:nth-child(even) .geraete { order: 0; }
+  }
+
+  /* Logo-Vorschau */
+  .logo-raster { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
+  .logo-kachel { background: #ffffff; border-radius: 20px; display: flex; flex-direction: column; text-decoration: none; overflow: hidden; transition: transform .25s; }
+  .logo-kachel:hover { transform: translateY(-3px); }
+  .logo-kachel .flaeche { flex: 1; min-height: 260px; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .logo-kachel img { max-height: 110px; width: auto; max-width: 100%; }
+  .logo-kachel.hoch img { max-height: 200px; }
+  .logo-kachel .unten { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 24px; border-top: 1px solid var(--linie); color: var(--tinte); font-size: 15px; }
+  .logo-kachel .unten span { color: var(--grau); font-size: 14px; }
+  .k3 { grid-column: span 3; } .k2 { grid-column: span 2; }
+  @media (max-width: 960px) { .logo-raster { grid-template-columns: 1fr; } .k3, .k2 { grid-column: auto; } }
+
+  /* Nächste Schritte */
+  .schritte { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; counter-reset: s; }
+  .schritte li { counter-increment: s; padding: 30px 28px 0 0; border-top: 2px solid var(--tinte); position: relative; }
+  .schritte li::before { content: '0' counter(s); display: block; font-family: var(--titel); font-size: 15px; color: var(--hellgrau); margin-bottom: 10px; }
+  .schritte h3 { font-family: var(--titel); font-weight: 500; font-size: 24px; margin: 0 0 8px; }
+  .schritte p { margin: 0; color: #444444; font-size: 16px; }
+  @media (max-width: 860px) { .schritte { grid-template-columns: 1fr; gap: 28px; } }
+  .offen { margin-top: clamp(64px, 8vw, 96px); display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 32px 64px; }
+  .offen h3 { font-family: var(--titel); font-weight: 500; font-size: 30px; margin: 0; }
+  .offen ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+  .offen li { padding: 16px 0; border-top: 1px solid var(--linie); }
+  .offen li strong { display: block; font-weight: 600; }
+  .offen li span { color: var(--grau); font-size: 15px; }
+  @media (max-width: 860px) { .offen, .offen ul { grid-template-columns: 1fr; } }
+
+  /* Zugänge */
+  .zugaenge { margin-top: clamp(72px, 9vw, 120px); }
+  .zugaenge-kopf { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 16px 64px; align-items: end; margin-bottom: 36px; }
+  .zugaenge-kopf h3 { font-family: var(--titel); font-weight: 500; font-size: clamp(30px, 3.2vw, 40px); margin: 0; line-height: 1.1; }
+  .zugaenge-kopf p { margin: 0; color: var(--grau); }
+  .zugang-raster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .zugang { border: 1px solid var(--linie); border-radius: 22px; padding: 30px; display: flex; flex-direction: column; gap: 12px; background: #ffffff; transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
+  .zugang:hover { transform: translateY(-4px); box-shadow: 0 24px 44px -26px rgba(0,0,0,0.3); }
+  .zugang .ico { width: 48px; height: 48px; border-radius: 14px; background: var(--papier); display: flex; align-items: center; justify-content: center; }
+  .zugang .ico svg { width: 24px; height: 24px; }
+  .zugang h4 { font-family: var(--titel); font-weight: 500; font-size: 23px; margin: 6px 0 0; }
+  .zugang p { margin: 0; color: #444444; font-size: 16px; }
+  .zugang code { font-size: 14px; background: var(--papier); padding: 2px 7px; border-radius: 6px; }
+  .zugang .wichtig { margin-top: auto; padding-top: 8px; font-size: 14px; color: var(--grau); }
+  .sicher { margin-top: 16px; display: flex; gap: 18px; align-items: flex-start; background: var(--tinte); color: #ffffff; border-radius: 22px; padding: 26px 30px; }
+  .sicher svg { width: 28px; height: 28px; flex: none; margin-top: 2px; }
+  .sicher p { margin: 0; color: rgba(255,255,255,0.78); }
+  .sicher strong { color: #ffffff; display: block; font-size: 17px; margin-bottom: 4px; }
+  @media (max-width: 960px) { .zugang-raster, .zugaenge-kopf { grid-template-columns: 1fr; } }
+
+  /* kleine Effekte */
+  .geraet.desktop { transition: transform .5s cubic-bezier(.2,.7,.2,1), box-shadow .5s; }
+  .geraete:hover .geraet.desktop, .buehne:hover .geraet.desktop { transform: translateY(-6px); box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 44px 80px -28px rgba(20,20,20,0.35), 0 0 0 1px rgba(20,20,20,0.08); }
+  @media (prefers-reduced-motion: no-preference) {
+    .buehne .handy { animation: schweben 7s ease-in-out infinite; }
+    @keyframes schweben { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  }
+  .fortschritt { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--tinte); transform-origin: 0 50%; transform: scaleX(0); z-index: 60; pointer-events: none; }
+
+  /* Ideen */
+  .ideen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .idee { background: #ffffff; border-radius: 24px; padding: clamp(28px, 3.4vw, 44px); display: flex; flex-direction: column; gap: 12px; transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
+  .idee:hover { transform: translateY(-4px); box-shadow: 0 24px 44px -26px rgba(0,0,0,0.3); }
+  .idee .nr { font-family: var(--titel); font-size: 15px; color: var(--hellgrau); }
+  .idee h3 { font-family: var(--titel); font-weight: 500; font-size: 26px; margin: 0; line-height: 1.2; }
+  .idee p { margin: 0; color: #444444; }
+  .idee .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 8px; }
+  .chip.gruen { background: #e7f2ea; color: #1f5a33; }
+  .idee .qr-vorschau { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+  .idee .qr-vorschau img { width: 92px; height: 92px; border: 1px solid var(--linie); border-radius: 10px; padding: 7px; flex: none; }
+  .idee .qr-vorschau span { font-size: 14px; color: var(--grau); }
+  @media (max-width: 860px) { .ideen { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<main id="anmelden">
+  <div class="anm-bild"><img src="assets/bilder/schulhaus-sw.jpg" alt=""><p>Oskar-von-Miller-Gymnasium · Siegfriedstraße 22, München</p></div>
+  <div class="anm-form">
+    <img class="siegel" src="assets/logos/siegel-schwarz.svg" alt="">
+    <p class="ueber" style="margin-bottom: 12px">Freunde des OvMG e.V.</p>
+    <h1 class="titel">Entwürfe für die neue Website</h1>
+    <p>Bitte geben Sie das Passwort ein, das Sie per E-Mail erhalten haben.</p>
+    <form id="login-form" novalidate>
+      <label for="pw">Passwort</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <label class="merken"><input id="merken" type="checkbox"> Auf diesem Gerät angemeldet bleiben</label>
+      <p class="fehler" id="fehler" role="alert"></p>
+      <button class="knopf" type="submit">Entwürfe ansehen
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </form>
+    <p class="vertraulich">Vertraulich · nur zur Abstimmung im Vorstand</p>
+  </div>
+</main>
+
+<div id="inhalt">
+  <header class="m-kopf">
+    <div class="wrap">
+      <a class="m-marke" href="#"><img src="assets/logos/siegel-schwarz.svg" alt=""><span><strong>Freunde des OvMG e.V.</strong><small>Entwurfsmappe Website</small></span></a>
+      <nav class="m-nav" aria-label="Abschnitte">
+        <a class="optional" href="#konzepte">Konzepte</a>
+        <a class="optional" href="logos.html">Logos</a>
+        <a class="optional" href="#ideen">Ideen</a>
+        <a class="optional" href="#weiter">Nächste Schritte</a>
+        <a class="optional" href="#zugaenge">Zugänge</a>
+        <button type="button" data-abmelden>Abmelden</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="m-held">
+    <div class="wrap">
+      <div class="einblenden">
+        <p class="ueber">Entwurfsmappe · November 2026</p>
+        <h1 class="titel">Ein neuer Auftritt für die Freunde des OvMG.</h1>
+        <p class="lead">Fünf Konzepte für die neue Website des Fördervereins, dazu eine Logofamilie auf Grundlage des historischen Turmzeichens der Schule. Alle Entwürfe lassen sich durchklicken – am Computer und auf dem Handy.</p>
+        <div class="knoepfe">
+          <a class="knopf" href="#konzepte">Konzepte ansehen</a>
+          <a class="knopf rand" href="logos.html">Logo-Vorschläge</a>
+        </div>
+      </div>
+      <div class="buehne einblenden">
+        <div class="geraet desktop">
+          <div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div>
+          <div class="schirm"><iframe data-src="konzepte/one-pager.html?vorschau=1" data-breite="1440" title="Vorschau One-Pager am Computer" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/one-pager.html" aria-label="One-Pager öffnen"></a></div>
+        </div>
+        <div class="geraet handy">
+          <div class="schirm"><iframe data-src="konzepte/one-pager.html?vorschau=1" data-breite="390" title="Vorschau One-Pager auf dem Handy" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/one-pager.html" aria-label="One-Pager öffnen"></a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="fakten"><div class="wrap"><ul>
+    <li><strong>5</strong><span>Website-Konzepte</span></li>
+    <li><strong>5</strong><span>Logo-Varianten</span></li>
+    <li><strong>WordPress</strong><span>direkt umsetzbar</span></li>
+    <li><strong>mobil</strong><span>für Handy und Tablet gestaltet</span></li>
+  </ul></div></div>
+
+  <section class="m-abschnitt papier">
+    <div class="wrap">
+      <div class="m-kopfzeile einblenden">
+        <div><p class="ueber">Ausgangslage</p><h2 class="titel">Weniger ist mehr.</h2></div>
+        <p class="lead">Die bisherige Website ist über die Jahre gewachsen und in weiten Teilen veraltet. Die neue Seite soll kurz und klar sagen, wer der Verein ist – und es leicht machen, ihn zu unterstützen.</p>
+      </div>
+      <div class="drei">
+        <article class="einblenden"><span class="nr">01</span><h3>Bisher</h3><ul><li>viele Seiten mit veralteten Inhalten</li><li>Aktuelles seit Jahren nicht gepflegt</li><li>Logo fehlt, Gestaltung nicht mehr zeitgemäß</li></ul></article>
+        <article class="einblenden"><span class="nr">02</span><h3>Ziel</h3><ul><li>wer wir sind – in wenigen Sätzen</li><li>Mitglied werden ohne Umwege</li><li>Bankverbindung immer sofort sichtbar</li></ul></article>
+        <article class="einblenden"><span class="nr">03</span><h3>Umsetzung</h3><ul><li>WordPress, vom Verein selbst pflegbar</li><li>Schriften lokal eingebunden, datenschutzfreundlich</li><li>für Handy, Tablet und Computer gestaltet</li></ul></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="m-abschnitt" id="konzepte">
+    <div class="wrap">
+      <div class="m-kopfzeile einblenden">
+        <div><p class="ueber">Website-Konzepte</p><h2 class="titel">Fünf Richtungen zur Auswahl</h2></div>
+        <p class="lead">Ein Klick auf eine Vorschau öffnet das Konzept. Unten am Bildschirm blättern Sie weiter und können das Logo wechseln.</p>
+      </div>
+
+      <div class="konzepte">
+        <article class="konzept">
+          <div class="geraete mit-handy einblenden">
+            <div class="geraet desktop"><div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div><div class="schirm"><iframe data-src="konzepte/one-pager.html?vorschau=1" data-breite="1440" title="Vorschau One-Pager" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/one-pager.html" aria-label="One-Pager öffnen"></a></div></div>
+            <div class="geraet handy"><div class="schirm"><iframe data-src="konzepte/one-pager.html?vorschau=1" data-breite="390" title="Vorschau One-Pager mobil" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/one-pager.html" aria-label="One-Pager öffnen"></a></div></div>
+          </div>
+          <div class="einblenden">
+            <span class="nummer">01 <span class="marker">Empfehlung</span></span>
+            <h3>One-Pager</h3>
+            <p>Alles Wichtige auf einer einzigen Seite: wer wir sind, Mitglied werden, Spenden, Kontakt. Schwarz-weiß, ruhig, mit dem klassischen Schulhaus-Foto im Rundbogen.</p>
+            <p class="passt">Passt, wenn die Seite vor allem informieren und kaum Pflege brauchen soll.</p>
+            <div class="chips"><span class="chip">Jost · Inter</span><span class="chip"><i style="background:#141414"></i>Schwarz</span><span class="chip"><i style="background:#f3f1ec"></i>Papier</span></div>
+            <div class="knoepfe"><a class="knopf" href="konzepte/one-pager.html">Konzept öffnen</a></div>
+          </div>
+        </article>
+
+        <article class="konzept">
+          <div class="geraete einblenden">
+            <div class="geraet desktop"><div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div><div class="schirm"><iframe data-src="konzepte/klassisch.html?vorschau=1" data-breite="1440" title="Vorschau Klassisch" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/klassisch.html" aria-label="Konzept Klassisch öffnen"></a></div></div>
+          </div>
+          <div class="einblenden">
+            <span class="nummer">02</span>
+            <h3>Klassisch</h3>
+            <p>Serifenschrift und Dunkelblau, mit dem Portal als Titelbild, „Damals und heute“, dem Spruch unter der Wölfin und einem Bereich für Förderprojekte.</p>
+            <p class="passt">Passt, wenn der Verein seine Tradition betonen und Projekte zeigen möchte.</p>
+            <div class="chips"><span class="chip">Source Serif · Inter</span><span class="chip"><i style="background:#1c3d6e"></i>Dunkelblau</span><span class="chip"><i style="background:#9a4a26"></i>Ziegelrot</span></div>
+            <div class="knoepfe"><a class="knopf" href="konzepte/klassisch.html">Konzept öffnen</a></div>
+          </div>
+        </article>
+
+        <article class="konzept">
+          <div class="geraete einblenden">
+            <div class="geraet desktop"><div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div><div class="schirm"><iframe data-src="konzepte/mitmachen.html?vorschau=1" data-breite="1440" title="Vorschau Mitmachen" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/mitmachen.html" aria-label="Konzept Mitmachen öffnen"></a></div></div>
+          </div>
+          <div class="einblenden">
+            <span class="nummer">03</span>
+            <h3>Mitmachen</h3>
+            <p>Beitreten und Spenden stehen ganz oben. Mit Online-Beitrittsformular, „So einfach geht's“ und häufigen Fragen.</p>
+            <p class="passt">Passt, wenn möglichst viele neue Mitglieder gewonnen werden sollen.</p>
+            <div class="chips"><span class="chip">Jost · Inter</span><span class="chip"><i style="background:#1c3d6e"></i>Dunkelblau</span><span class="chip"><i style="background:#b4532a"></i>Ziegelrot</span></div>
+            <div class="knoepfe"><a class="knopf" href="konzepte/mitmachen.html">Konzept öffnen</a></div>
+          </div>
+        </article>
+
+        <article class="konzept">
+          <div class="geraete einblenden">
+            <div class="geraet desktop"><div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div><div class="schirm"><iframe data-src="konzepte/bildstark.html?vorschau=1" data-breite="1440" title="Vorschau Bildstark" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/bildstark.html" aria-label="Konzept Bildstark öffnen"></a></div></div>
+          </div>
+          <div class="einblenden">
+            <span class="nummer">04</span>
+            <h3>Bildstark</h3>
+            <p>Große Fotos aus dem sanierten Haus: Gewölbehalle, Wendeltreppe, Inschriften. Ein ruhiges, magazinartiges Layout in Schwarz-Weiß.</p>
+            <p class="passt">Passt, wenn die Fotos von Britta Mangold genutzt werden dürfen.</p>
+            <div class="chips"><span class="chip">Source Serif · Inter</span><span class="chip"><i style="background:#111111"></i>Schwarz</span><span class="chip"><i style="background:#f2f0eb"></i>Stein</span></div>
+            <div class="knoepfe"><a class="knopf" href="konzepte/bildstark.html">Konzept öffnen</a></div>
+          </div>
+        </article>
+
+        <article class="konzept">
+          <div class="geraete einblenden">
+            <div class="geraet desktop"><div class="leiste"><i></i><i></i><i></i><span>freunde-ovmg.de</span></div><div class="schirm"><iframe data-src="konzepte/geschichte.html?vorschau=1" data-breite="1440" title="Vorschau Damals und heute" tabindex="-1" aria-hidden="true"></iframe><a class="klick" href="konzepte/geschichte.html" aria-label="Konzept Damals und heute öffnen"></a></div></div>
+          </div>
+          <div class="einblenden">
+            <span class="nummer">05</span>
+            <h3>Damals &amp; heute</h3>
+            <p>Erzählt die Geschichte des Hauses: Umschalten zwischen vor und nach der Sanierung, eine kurze Chronik seit 1912 und Details, die geblieben sind.</p>
+            <p class="passt">Passt, wenn Ehemalige und Tradition im Mittelpunkt stehen sollen.</p>
+            <div class="chips"><span class="chip">Source Serif · Inter</span><span class="chip"><i style="background:#1c3d6e"></i>Dunkelblau</span><span class="chip"><i style="background:#fbfaf6"></i>Creme</span></div>
+            <div class="knoepfe"><a class="knopf" href="konzepte/geschichte.html">Konzept öffnen</a></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="m-abschnitt papier" id="logos">
+    <div class="wrap">
+      <div class="m-kopfzeile einblenden">
+        <div><p class="ueber">Logo-Vorschläge</p><h2 class="titel">Eine Logofamilie aus dem Turmzeichen</h2></div>
+        <p class="lead">Grundlage ist das historische Turmzeichen der Schule – kombiniert mit einer klaren, geometrischen Schrift. Vier Varianten mit Turm, eine reine Wortmarke als Alternative.</p>
+      </div>
+      <div class="logo-raster">
+        <a class="logo-kachel k3 einblenden" href="logos.html#modern"><div class="flaeche"><img src="assets/logos/modern-schwarz.svg" alt="Logo-Variante Modern"></div><div class="unten">01 · Modern <span>Ansehen →</span></div></a>
+        <a class="logo-kachel k3 einblenden" href="logos.html#familie"><div class="flaeche"><img src="assets/logos/familie-schwarz.svg" alt="Logo-Variante Familie"></div><div class="unten">02 · Familie <span>Ansehen →</span></div></a>
+        <a class="logo-kachel k2 hoch einblenden" href="logos.html#siegel"><div class="flaeche"><img src="assets/logos/siegel-schwarz.svg" alt="Logo-Variante Siegel"></div><div class="unten">03 · Siegel <span>Ansehen →</span></div></a>
+        <a class="logo-kachel k2 hoch einblenden" href="logos.html#hochformat"><div class="flaeche"><img src="assets/logos/hochformat-schwarz.svg" alt="Logo-Variante Hochformat" style="max-height: 170px"></div><div class="unten">04 · Hochformat <span>Ansehen →</span></div></a>
+        <a class="logo-kachel k2 einblenden" href="logos.html#wortmarke"><div class="flaeche"><img src="assets/logos/wortmarke-schwarz.svg" alt="Logo-Variante Wortmarke" style="max-height: 80px"></div><div class="unten">05 · Wortmarke <span>Ansehen →</span></div></a>
+      </div>
+      <div style="margin-top: 40px" class="einblenden"><a class="knopf" href="logos.html">Ausführliche Logo-Präsentation öffnen</a></div>
+    </div>
+  </section>
+
+  <section class="m-abschnitt papier" id="ideen" style="border-top: 1px solid var(--linie)">
+    <div class="wrap">
+      <div class="m-kopfzeile einblenden">
+        <div><p class="ueber">Vorschläge</p><h2 class="titel">Vier kleine Ideen mit Wirkung</h2></div>
+        <p class="lead">Keine Pflicht, aber jede davon macht das Unterstützen leichter oder spart dem Vorstand Arbeit – und keine braucht laufende Pflege.</p>
+      </div>
+      <div class="ideen">
+        <article class="idee einblenden"><span class="nr">01</span><h3>Spenden per QR-Code</h3><p>Ein GiroCode neben der Bankverbindung: mit der Banking-App scannen, Empfänger und IBAN sind sofort ausgefüllt. In allen Konzepten schon eingebaut – auch für Flyer und Elternbriefe nutzbar.</p>
+          <div class="qr-vorschau"><img src="assets/bilder/girocode.svg" alt="GiroCode des Fördervereins"><span>Funktioniert mit allen gängigen Banking-Apps. Auf dem Handy selbst wird er ausgeblendet.</span></div>
+          <div class="chips"><span class="chip gruen">bereits umgesetzt</span></div></article>
+        <article class="idee einblenden"><span class="nr">02</span><h3>Spendennachweis bis 300 € zum Herunterladen</h3><p>Bei Spenden bis 300 € genügt dem Finanzamt der Kontoauszug zusammen mit einem vereinfachten Nachweis des Vereins. Liegt dieser als PDF auf der Seite, entfallen viele einzelne Bestätigungen.</p>
+          <div class="chips"><span class="chip">einmal erstellen</span><span class="chip">spart Arbeit</span></div></article>
+        <article class="idee einblenden"><span class="nr">03</span><h3>Jahresrückblick statt „Aktuelles“</h3><p>Einmal im Jahr drei, vier Sätze mit Foto: „Das haben wir 2025/26 gefördert“. Zeigt, was mit dem Geld passiert – ohne laufenden Pflegeaufwand.</p>
+          <div class="chips"><span class="chip">1× pro Jahr</span><span class="chip">macht Spenden greifbar</span></div></article>
+        <article class="idee einblenden"><span class="nr">04</span><h3>Beitrag per Lastschrift</h3><p>Die bisherige Beitrittserklärung sieht keine Lastschrift vor. Mit einem SEPA-Mandat im Formular kommen die Beiträge zuverlässig und ohne Erinnerungen herein.</p>
+          <div class="chips"><span class="chip">braucht Gläubiger-ID</span><span class="chip">weniger Nachhalten</span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="m-abschnitt" id="weiter">
+    <div class="wrap">
+      <div class="m-kopfzeile einblenden">
+        <div><p class="ueber">Nächste Schritte</p><h2 class="titel">Vom Entwurf zur fertigen Seite</h2></div>
+        <p class="lead">Sobald Konzept und Logo feststehen, kann die Seite in wenigen Wochen online gehen.</p>
+      </div>
+      <ol class="schritte">
+        <li class="einblenden"><h3>Auswählen</h3><p>Der Vorstand entscheidet sich für ein Konzept und ein Logo.</p></li>
+        <li class="einblenden"><h3>Bestätigen</h3><p>Inhalte prüfen: Vorstand, Beiträge, Bankverbindung, Texte.</p></li>
+        <li class="einblenden"><h3>Umsetzen</h3><p>Aufbau in WordPress, inklusive Impressum und Datenschutz.</p></li>
+        <li class="einblenden"><h3>Starten</h3><p>Die neue Seite geht unter freunde-ovmg.de online.</p></li>
+      </ol>
+
+      <div class="zugaenge" id="zugaenge">
+        <div class="zugaenge-kopf einblenden">
+          <h3>Zugänge für die Umsetzung</h3>
+          <p>Damit ich die neue Seite in der bestehenden WordPress-Installation aufbauen kann, brauche ich folgende Zugänge. Die bisherige Seite sichere ich vor dem Umbau vollständig.</p>
+        </div>
+        <div class="zugang-raster">
+          <article class="zugang einblenden"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h4"/></svg></span><h4>WordPress</h4>
+            <p>Ein eigenes Benutzerkonto mit der Rolle <strong>Administrator</strong> – am einfachsten im Dashboard unter <code>Benutzer → Neu hinzufügen</code>.</p>
+            <p class="wichtig">Anmeldung meist unter freunde-ovmg.de/wp-admin</p></article>
+          <article class="zugang einblenden"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h4>Hosting</h4>
+            <p>Name des Anbieters, bei dem die Seite liegt, und ein Zugang zum Kundenbereich – für Sicherung, Updates und technische Einstellungen.</p>
+            <p class="wichtig">alternativ: FTP- und Datenbankzugang</p></article>
+          <article class="zugang einblenden"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><h4>Domain</h4>
+            <p>Wer verwaltet freunde-ovmg.de? Nur nötig, falls an Domain oder Weiterleitungen etwas geändert werden muss.</p>
+            <p class="wichtig">E-Mail-Adressen bleiben unverändert</p></article>
+        </div>
+        <div class="sicher einblenden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><div><strong>Zugangsdaten bitte nicht per E-Mail schicken</strong><p>Am besten persönlich oder telefonisch übergeben. Für WordPress ist ein eigenes Konto besser als ein geteiltes Passwort – es lässt sich nach dem Projekt einfach wieder entfernen.</p></div></div>
+      </div>
+      <div class="offen einblenden">
+        <h3>Inhalte zum Bestätigen</h3>
+        <ul>
+          <li><strong>Vorstand und Kontakt</strong><span>aktuelle Besetzung, Schreibweise „Stephan/Stefan Ring“</span></li>
+          <li><strong>Beiträge und Konto</strong><span>30 € / 10 €, IBAN bei der Stadtsparkasse noch aktuell?</span></li>
+          <li><strong>Impressum und Datenschutz</strong><span>Vereinsangaben, u. a. Registereintrag VR 13730</span></li>
+          <li><strong>Satzung und Beitrittserklärung</strong><span>aktuelle Fassungen als PDF</span></li>
+          <li><strong>Bildrechte</strong><span>Erlaubt Britta Mangold die Nutzung einzelner Fotos?</span></li>
+          <li><strong>Turmzeichen</strong><span>Darf der Verein das historische Zeichen der Schule nutzen?</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="m-fuss">
+    <div class="wrap">
+      <img src="assets/logos/modern-weiss.svg" alt="Freunde des OvMG e.V.">
+      <span>Entwurfsmappe · Stand November 2026 · nur zur internen Abstimmung</span>
+    </div>
+  </footer>
+</div>
+
+<script src="assets/mappe.js"></script>
+</body>
+</html>

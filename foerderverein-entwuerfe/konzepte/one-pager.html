@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>One-Pager · Entwurf · Freunde des OvMG e.V.</title>
+<script src="../assets/zugang.js"></script>
+<link rel="icon" href="../assets/logos/icon-schwarz.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/schriften/jost-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/schriften/schriften.css">
+<link rel="stylesheet" href="../assets/konzepte.css">
+<link rel="stylesheet" href="../assets/praesentation.css">
+<style>
+:root { --k-titel: 'Jost', sans-serif; --k-titel-gewicht: 500; --k-flaeche: #f3f1ec; --k-linie: #e2ded5; --k-radius: 8px; }
+.held { padding: clamp(48px, 7vw, 96px) 0 clamp(56px, 8vw, 112px); }
+.held .k-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(40px, 6vw, 96px); align-items: center; }
+.held .k-h1 { font-size: clamp(44px, 6.4vw, 84px); letter-spacing: -0.02em; }
+.held .k-lead { margin: 28px 0 36px; }
+.bogen { margin: 0; }
+.bogen img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: 52% 30%; border-radius: 999px 999px 0 0; }
+.bogen figcaption { margin-top: 14px; font-size: 14px; color: var(--k-text-2); display: flex; justify-content: space-between; gap: 12px; }
+.fakten { border-top: 1px solid var(--k-linie); border-bottom: 1px solid var(--k-linie); }
+.fakten ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fakten li { padding: 30px 0; display: flex; flex-direction: column; gap: 4px; }
+.fakten li + li { padding-left: clamp(20px, 4vw, 48px); border-left: 1px solid var(--k-linie); }
+.fakten strong { font-family: var(--k-titel); font-weight: 500; font-size: clamp(26px, 3vw, 38px); line-height: 1.1; }
+.fakten span { color: var(--k-text-2); font-size: 15px; }
+.ueber .k-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 7vw, 110px); align-items: center; }
+.ueber .k-h2 { margin-bottom: 26px; }
+.oval { width: min(100%, 360px); aspect-ratio: 3 / 3.8; justify-self: center; border-radius: 50%; overflow: hidden; }
+.oval img { width: 100%; height: 100%; object-fit: cover; scale: 1.16; }
+.zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
+.karte { border: 1px solid var(--k-linie); border-radius: 14px; padding: clamp(28px, 4vw, 44px); display: flex; flex-direction: column; gap: 26px; }
+.karte .k-h3 { margin: 0; }
+.karte .k-btn { align-self: flex-start; margin-top: auto; }
+.spenden { display: flex; flex-direction: column; gap: 22px; }
+.spenden .k-konto { flex: 1; }
+@media (max-width: 860px) {
+  .held .k-wrap { grid-template-columns: 1fr; }
+  .held .k-start:first-child { text-align: left; }
+  .bogen { max-width: 440px; width: 100%; justify-self: center; }
+}
+@media (max-width: 960px) { .zwei { grid-template-columns: 1fr; } }
+@media (max-width: 720px) {
+  .ueber .k-wrap { grid-template-columns: 1fr; }
+  .oval { width: min(100%, 300px); }
+}
+@media (max-width: 600px) {
+  .fakten ul { grid-template-columns: 1fr; }
+  .fakten li + li { padding-left: 0; border-left: 0; border-top: 1px solid var(--k-linie); }
+  .fakten li { padding: 20px 0; }
+}
+</style>
+</head>
+<body>
+<header class="k-kopf">
+  <div class="k-wrap">
+    <a class="k-marke" href="#" aria-label="Freunde des OvMG – Startseite"><img class="k-logo" data-logo data-ton="schwarz" src="../assets/logos/modern-schwarz.svg" alt="Freunde des OvMG e.V."></a>
+    <button class="k-menue-knopf" type="button" aria-expanded="false" aria-controls="menue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menü</button>
+    <nav class="k-menue" id="menue" aria-label="Hauptmenü"><a href="#verein">Über uns</a><a href="#mitglied">Mitglied werden</a><a href="#spenden">Spenden</a><a href="#kontakt">Kontakt</a><a class="k-btn" href="#spenden">Spenden</a></nav>
+  </div>
+</header>
+
+<main>
+<section class="held">
+  <div class="k-wrap">
+    <div class="k-start">
+      <p class="k-ueber">Förderverein des Oskar-von-Miller-Gymnasiums</p>
+      <h1 class="k-titel k-h1">Wir unterstützen unsere Schule.</h1>
+      <p class="k-lead">Seit 1991 fördern die Freunde des OvMG e.V. Bildung und Erziehung am Oskar-von-Miller-Gymnasium in München – mit Mitgliedsbeiträgen und Spenden.</p>
+      <div class="k-knoepfe"><a class="k-btn" href="#mitglied">Mitglied werden</a><a class="k-btn k-btn--rand" href="#spenden">Spenden</a></div>
+    </div>
+    <figure class="bogen k-start k-start-bild">
+      <img src="../assets/bilder/schulhaus-sw.jpg" alt="Das Stammgebäude des Oskar-von-Miller-Gymnasiums mit Uhrturm, schwarz-weiß" width="1317" height="969">
+      <figcaption><span>Das Stammgebäude an der Siegfriedstraße</span><span>eingeweiht 1912</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<div class="fakten"><div class="k-wrap"><ul>
+  <li><strong>seit 1991</strong><span>für das OvMG im Einsatz</span></li>
+  <li><strong>ab 10 €</strong><span>im Jahr Mitglied werden</span></li>
+  <li><strong>gemeinnützig</strong><span>Beiträge und Spenden absetzbar</span></li>
+</ul></div></div>
+
+<section class="k-abschnitt ueber" id="verein">
+  <div class="k-wrap">
+    <div class="k-einblenden">
+      <p class="k-ueber">Über uns</p>
+      <h2 class="k-titel k-h2">Was der Schuletat nicht schafft, machen wir möglich.</h2>
+      <p class="k-text">Die Freunde des OvMG e.V. sind der Förderverein des Oskar-von-Miller-Gymnasiums in München – des früheren Alten Realgymnasiums. Seit 1991 unterstützen wir Schülerinnen, Schüler und Lehrkräfte ideell und materiell: dort, wo der Schuletat nicht ausreicht.</p>
+<p class="k-text">Der Verein ist als gemeinnützig anerkannt. Mitgliedsbeiträge und Spenden sind steuerlich absetzbar.</p>
+    </div>
+    <div class="oval k-einblenden k-zoom"><img src="../assets/bilder/carpe-diem-sw.jpg" alt="Bodenmosaik „Carpe Diem“ im Eingang des Schulgebäudes" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="k-abschnitt k-abschnitt--flaeche">
+  <div class="k-wrap zwei">
+    <div class="karte k-einblenden k-hebt" id="mitglied" style="background: #ffffff">
+      <div><p class="k-ueber">Mitglied werden</p><h2 class="k-titel k-h2">Dabei sein ab 10 € im Jahr</h2></div>
+      <ul class="k-beitraege">
+  <li><span>Jahresbeitrag</span><strong>30 €</strong></li>
+  <li><span>Schüler, Studierende, Auszubildende</span><strong>10 €</strong></li>
+</ul>
+      <ol class="k-schritte">
+  <li><div><strong>Beitrittserklärung ausfüllen</strong>und im Sekretariat abgeben oder per Post schicken.</div></li>
+  <li><div><strong>Bestätigung erhalten</strong>mit Ihrer persönlichen Mitgliedsnummer.</div></li>
+  <li><div><strong>Steuerlich absetzen</strong>– die Zuwendungsbestätigung kommt zu Jahresbeginn.</div></li>
+</ol>
+      <a class="k-btn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Beitrittserklärung (PDF)</a>
+    </div>
+    <div class="spenden k-einblenden" id="spenden">
+      <div class="karte" style="border: 0; padding: 0; gap: 12px"><p class="k-ueber" style="margin: 0">Spenden</p><h2 class="k-titel k-h2">Jede Spende kommt direkt an.</h2></div>
+      <div class="k-konto">
+  <dl>
+    <dt>Empfänger</dt><dd>Freunde des OvMG e.V.</dd>
+    <dt>IBAN</dt><dd class="k-iban">DE69 7015 0000 0111 1418 18</dd>
+    <dt>BIC</dt><dd>SSKMDEMM</dd>
+    <dt>Bank</dt><dd>Stadtsparkasse München</dd>
+  </dl>
+  <div class="k-konto-unten">
+    <div>
+      <button class="k-btn k-kopieren" type="button" data-iban-kopieren><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>IBAN kopieren</span></button>
+      <small>Zuwendungsbestätigung zu Beginn des Folgejahres. Für ein bestimmtes Projekt bitte das Kennwort im Verwendungszweck angeben.</small>
+    </div>
+    <figure class="k-qr"><img src="../assets/bilder/girocode.svg" alt="GiroCode mit der Bankverbindung des Vereins" width="120" height="120"><figcaption>Mit der Banking-App scannen</figcaption></figure>
+  </div>
+</div>
+    </div>
+  </div>
+</section>
+
+<section class="k-abschnitt" id="kontakt">
+  <div class="k-wrap">
+    <div class="k-kopfzeile"><h2 class="k-titel k-h2">Kontakt</h2><p class="k-lead">Fragen zur Mitgliedschaft, zu Spenden oder eine Idee für ein Projekt? Schreiben Sie uns.</p></div>
+    <div class="k-kontakt">
+  <div>
+    <h3>Vorstand</h3>
+    <ul>
+      <li>Christian J. Hartmann<span>1. Vorsitzender</span></li>
+      <li>Dr. Stephan Ring<span>2. Vorsitzender</span></li>
+      <li>Moritz Pöllath<span>Kassenführung</span></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Anschrift</h3>
+    <p>Freunde des OvMG e.V.<br>c/o Oskar-von-Miller-Gymnasium<br>Siegfriedstraße 22<br>80803 München</p>
+  </div>
+  <div>
+    <h3>E-Mail</h3>
+    <p><a class="k-link" href="#">vorstand@freunde-ovmg.de</a></p>
+  </div>
+</div>
+  </div>
+</section>
+</main>
+<footer class="k-fuss">
+  <div class="k-wrap">
+    <div class="k-fuss-oben">
+      <img class="k-logo" data-logo data-ton="weiss" src="../assets/logos/modern-weiss.svg" alt="Freunde des OvMG e.V.">
+      <nav aria-label="Rechtliches"><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">Satzung (PDF)</a><a href="#">Beitrittserklärung (PDF)</a></nav>
+    </div>
+    <div class="k-fuss-unten"><span>© 2026 Freunde des OvMG e.V. · Förderverein des Oskar-von-Miller-Gymnasiums München</span><span></span></div>
+  </div>
+</footer>
+<script src="../assets/praesentation.js" data-konzept="one-pager"></script>
+</body>
+</html>
