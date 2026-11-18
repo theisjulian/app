@@ -25,7 +25,7 @@
   function modus(){var m=get(HELL);return m==='hell'||m==='dunkel'?m:'auto'}
   function leiste(){var c=LEISTE[current()],m=modus();document.querySelectorAll('meta[name=theme-color]').forEach(function(x){x.content=c[m==='hell'?0:m==='dunkel'?1:/dark/.test(x.media)?1:0]})}
   function zeigeModus(){var m=modus(),b=document.getElementById('modeBtn');if(!b)return;
-    b.querySelector('svg').innerHTML=ICON[m];b.querySelector('span').textContent=NAME[m];b.setAttribute('aria-label',LANG[m]+' – zum Wechseln klicken');b.title=LANG[m]}
+    b.setAttribute('aria-label',LANG[m]+' – zum Wechseln klicken');b.title=LANG[m]}
   function setzeModus(m,ev){reveal(function(){if(m==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',m==='hell'?'light':'dark');zeigeModus();leiste()},ev);
     if(m==='auto'){try{localStorage.removeItem(HELL)}catch(e){}}else put(HELL,m)}
   function current(){var s=r.getAttribute('data-style');return STILE.indexOf(s)>=0?s:'normal'}

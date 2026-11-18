@@ -1091,3 +1091,8 @@ p,li,figcaption{text-wrap:pretty}
  :root .bar nav>.btn{padding-left:13px;padding-right:13px;font-size:14.5px}
 }
 @media(max-width:379px){:root .bar nav>.btn{display:none}}
+/* Symbole und Text des Hell/Dunkel-Knopfs stehen fest in der Seite; sichtbar ist der zur Wahl passende */
+.pick.mode .mi,.pick.mode .mt{display:none}
+:root:not([data-theme]) .pick.mode .mi-auto,:root[data-theme=light] .pick.mode .mi-hell,:root[data-theme=dark] .pick.mode .mi-dunkel{display:block}
+:root:not([data-theme]) .pick.mode .mt-auto,:root[data-theme=light] .pick.mode .mt-hell,:root[data-theme=dark] .pick.mode .mt-dunkel{display:inline}
+@media(max-width:1180px){.pick.mode .mt{display:none!important}}
