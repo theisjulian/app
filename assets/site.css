@@ -1103,3 +1103,17 @@ p,li,figcaption{text-wrap:pretty}
 :root[data-theme=dark] .pick.mode .mo-i{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.2 12.6A7 7 0 0 1 7.4 3.8a7 7 0 1 0 8.8 8.8z' fill='none' stroke='%23000' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.2 12.6A7 7 0 0 1 7.4 3.8a7 7 0 1 0 8.8 8.8z' fill='none' stroke='%23000' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E")}
 .pick.mode button:hover .mo-i{transform:rotate(-20deg) scale(1.1)}
 :root[data-style=blatt] .pick.mode .mo-i,:root[data-style=term] .pick.mode .mo-i{border-radius:0;box-shadow:none}
+
+/* Startseite: Symbol, Name und Bildschirmfoto einer Programmkarte führen auch zur Programmseite */
+.panel .nm a{display:inline-flex;align-items:center;gap:inherit;color:inherit;text-decoration:none;border-radius:12px}
+.panel .nm a:hover{color:var(--app,var(--blue))}
+.panel .nm a:hover img{transform:scale(1.06)}
+.panel .nm img{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+.panel .nm a:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+.panel .pic a.pl{display:block;cursor:pointer}
+.panel .pic a.pl img{transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.panel .pic a.pl:hover img{transform:translate(-4px,-4px)}
+:root[data-style=term] .panel .nm a:hover,:root[data-style=blatt] .panel .nm a:hover{text-decoration:underline;text-underline-offset:4px}
+/* PDF-Plaketten „Zum Nachlesen“: im hellen Glas-Stil etwas dunkler, damit „PDF“ gut lesbar ist */
+@media(prefers-color-scheme:light){:where(:root:not([data-theme=dark])):not([data-style=neon]):not([data-style=heft]):not([data-style=blatt]):not([data-style=term]) .reads .ft{background:color-mix(in srgb,var(--app,var(--blue)) 78%,#000)}}
+:where(:root[data-theme=light]):not([data-style=neon]):not([data-style=heft]):not([data-style=blatt]):not([data-style=term]) .reads .ft{background:color-mix(in srgb,var(--app,var(--blue)) 78%,#000)}
