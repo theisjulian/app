@@ -179,7 +179,7 @@ const qrToken = ADM ? null : (() => { const m = location.hash.match(/^#zugang=([
   if (!key) { busyOff(); setFlag(false); if (await isCached()) startMain().catch(() => { }); return }
   if (await isCached()) load.dataset.cached = '1';
   busyOn(T.back + ' ' + T.open + ' …'); keep.checked = true;
-  try { await show(key, null) } catch (e) { await keyDrop(); setFlag(false); viewer.hidden = true; busyOff(); status.textContent = e.message === 'network' ? errText(e) : ''; }
+  try { if (await show(key, null)) setFlag(true) } catch (e) { await keyDrop(); setFlag(false); viewer.hidden = true; busyOff(); status.textContent = e.message === 'network' ? errText(e) : ''; }
 })();
 
 /* Am Handy: Ist ein Entwurf geöffnet, entfällt diese Leiste – der Entwurf hat seine eigene mit „Zur Übersicht“. */
