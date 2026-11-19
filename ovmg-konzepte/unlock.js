@@ -115,7 +115,7 @@ async function show(key, cred) {
   gate.classList.add('is-out'); await new Promise(r => setTimeout(r, 260));
   gate.hidden = true; gate.classList.remove('is-out'); busyOff(); status.textContent = '';
   try { frame.focus() } catch (e) { }
-  tidyCache(); return true;
+  tidyCache(); goZiel(); return true;
 }
 
 /* ---------- Anmelden ---------- */
@@ -163,7 +163,9 @@ addEventListener('message', e => {
 addEventListener('message', e => { if (ADM && e.source === frame.contentWindow && e.data && e.data.type === 'ovmg-logout') lock(e.data.fail ? 'Bitte erneut anmelden.' : ''); });
 
 /* QR-Zugang: Schlüssel steht hinter „#zugang=“ (wird nie an den Server geschickt) und wird sofort aus der Adresse entfernt */
-const qrToken = ADM ? null : (() => { const m = location.hash.match(/^#zugang=([A-Za-z0-9_-]{16,})$/); if (m) history.replaceState(null, '', location.pathname + location.search); return m ? m[1] : null; })();
+let ZIEL = null;
+const qrToken = ADM ? null : (() => { const m = location.hash.match(/^#(?:zugang=([A-Za-z0-9_-]{16,}))?(?:&?ziel=([a-z0-9-]{1,40}))?$/); if (!m || (!m[1] && !m[2])) return null; ZIEL = m[2] || null; history.replaceState(null, '', location.pathname + location.search); return m[1] || null; })();
+const goZiel = () => { if (ZIEL) { try { frame.contentWindow.postMessage({ type: 'ovmg-goto-sec', id: ZIEL }, '*') } catch (e) { } ZIEL = null } };
 
 /* Beim Öffnen: QR-Zugang oder gemerkte Anmeldung direkt öffnen – ohne Formular dazwischen */
 (async () => {
