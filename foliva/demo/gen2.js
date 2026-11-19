@@ -254,7 +254,7 @@
 
   /* ---------- Rechenpäckchen Sekundarstufe ---------- */
   function sekpacket(o) {
-    const kind = o.kind || 'ganz', range = clampN(o.range, 5, 100000, 20), count = clampN(o.count, 1, 30, 10); const r = rng(o.seed || 1);
+    const kind = o.kind || 'ganz', range = clampN(o.range, 5, 1000000, 20), count = clampN(o.count, 1, 30, 10); const r = rng(o.seed || 1);
     const tasks = uniq(r, count, () => {
       if (kind === 'ganz') {
         const op = pick(r, String(o.ops || '+−·:').split('').filter(c => '+−·:'.includes(c)) || ['+']); const a = int(r, -range, range), b = int(r, -range, range); if (!a || !b) return null;
@@ -279,8 +279,9 @@
         const a = int(r, 2, 20); return { q: `√${a * a}`, a: String(a) };
       }
       if (kind === 'runden') {
-        const places = [['Zehner', 10], ['Hunderter', 100], ['Tausender', 1000], ['Zehntausender', 10000]].filter(([, p]) => p * 10 <= Math.max(100, range * 10));
-        const n = int(r, 11, Math.max(120, range * 10)); const [name, p] = pick(r, places.length ? places : [['Zehner', 10]]); if (n < p) return null;
+        /* Zahlen höchstens bis zum eingestellten Zahlenraum; gerundet wird auf Stellen, die kleiner als die Zahl sind */
+        const places = [['Zehner', 10], ['Hunderter', 100], ['Tausender', 1000], ['Zehntausender', 10000], ['Hunderttausender', 100000]].filter(([, p]) => p * 10 <= Math.max(100, range));
+        const n = int(r, 11, Math.max(100, range)); const [name, p] = pick(r, places.length ? places : [['Zehner', 10]]); if (n < p) return null;
         return { q: `${n.toLocaleString('de-DE')} auf ${name}`, a: (Math.round(n / p) * p).toLocaleString('de-DE') };
       }
       if (kind === 'klammer') {

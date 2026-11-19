@@ -71,7 +71,7 @@
   const singleWord = x => /^[A-Za-zÄÖÜäöüß]+$/.test(x.wort);
   const wrap = (type, fn) => { const base = G.FILL[type]; G.FILL[type] = (it, r) => it.source === 'lernwoerter' ? fn(it, r) : base && base(it, r); };
   wrap('wordlist', (it, r) => { const L = lwList(it); it.words = pickN(r, L, clampN(it.n, 3, 20, 8)).map(x => it.article === false || !x.art ? x.wort : x.w).join('\n'); });
-  wrap('wordsearch', (it, r) => { const size = clampN(it.size, 6, 20, 10); it.words = pickN(r, lwList(it).filter(x => singleWord(x) && x.wort.length <= size && x.wort.length >= 3), clampN(it.n, 2, 20, 6)).map(x => x.wort).join(', '); });
+  wrap('wordsearch', (it, r) => { const size = clampN(it.size, 6, 20, 10); it.words = pickN(r, lwList(it).filter(x => singleWord(x) && x.wort.toUpperCase().length <= size && x.wort.length >= 3), clampN(it.n, 2, 20, 6)).map(x => x.wort).join(', '); });
   wrap('abc', (it, r) => { const L = lwList(it).filter(x => singleWord(x)); const seen = new Set(); it.words = pickN(r, L, 40).filter(x => { const k = x.wort.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, clampN(it.n, 3, 16, 6)).map(x => x.wort).join('\n'); });
   wrap('scramble', (it, r) => { if (it.mode === 'saetze') return; const max = clampN(it.maxLen, 3, 15, 8); it.words = pickN(r, lwList(it).filter(x => singleWord(x) && x.wort.length <= max && x.wort.length >= 3), clampN(it.n, 1, 20, 5)).map(x => x.wort).join('\n'); });
 

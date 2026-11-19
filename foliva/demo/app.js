@@ -175,7 +175,7 @@ async function paginate0(d, opts = {}) {
     if (e.classList.contains('free') || bm.length !== bl.length) return; const ib = e.querySelector(':scope > section.it > .ib'); if (!ib) return;
     if (ib.scrollWidth - ib.clientWidth < 2) return;
     let z = 1;
-    for (let k = 0; k < 6 && ib.scrollWidth - ib.clientWidth >= 1 && z > .5; k++) { z = Math.max(.5, Math.floor(z * ib.clientWidth / ib.scrollWidth * 1000) / 1000 - .005); ib.style.zoom = z; }
+    for (let k = 0; k < 6 && ib.scrollWidth - ib.clientWidth >= 1 && z > .5; k++) { z = Math.max(.5, Math.floor(z * ib.clientWidth / ib.scrollWidth * 1000) / 1000 - .005); ib.style.zoom = z; } z = Math.max(.5, Math.floor(z * 980) / 1000); ib.style.zoom = z; /* etwas Reserve: Messbereich und Seite runden verschieden */
     bl[i].html = bl[i].html.replace('<div class="ib">', `<div class="ib" style="zoom:${z}">`); bl[i].zoomW = z;
   });
   const hs = blks.map(e => e.getBoundingClientRect().height);
@@ -261,7 +261,7 @@ function splitTall(b, el, room, max, M) {
   });
   const measure = out => {
     M2.innerHTML = `<div class="${M.firstElementChild ? M.firstElementChild.className : 'page'}" style="${M.dataset.pv || ''};height:auto;position:static"><div class="pc" style="position:static;width:${M.dataset.cw}mm">${out.map(RD.wrap).join('')}</div></div>`;
-    const hs = $$('.blk', M2).map(e => e.getBoundingClientRect().height); M2.innerHTML = ''; return hs;
+    const hs = $$('.blk', M2).map(e => e.getBoundingClientRect().height); M2.innerHTML = ''; if (out[0] && +out[0].dy) hs[0] = Math.max(0, hs[0] - out[0].dy * MM); /* Verschieben zählt nicht mit */ return hs;
   };
   /* Zeilen gierig auf Seiten verteilen; passt ein Teil gemessen nicht, mit mehr Reserve neu verteilen */
   const firstCap = room >= rows[0].b + tail + 2 * MM ? room : max;
@@ -326,7 +326,7 @@ function flowText(b, el, room, max) {
   let M2 = $('#measure2'); if (!M2) { M2 = document.createElement('div'); M2.id = 'measure2'; document.body.appendChild(M2); }
   const M = $('#measure');
   M2.innerHTML = `<div class="${M.firstElementChild ? M.firstElementChild.className : 'page'}" style="${M.dataset.pv || ''};height:auto;position:static"><div class="pc" style="position:static;width:${M.dataset.cw}mm">${out.map(RD.wrap).join('')}</div></div>`;
-  const hs = $$('.blk', M2).map(e => e.getBoundingClientRect().height); M2.innerHTML = '';
+  const hs = $$('.blk', M2).map(e => e.getBoundingClientRect().height); M2.innerHTML = ''; if (out[0] && +out[0].dy) hs[0] = Math.max(0, hs[0] - out[0].dy * MM); /* Verschieben zählt nicht mit */
   const over = Math.max(...hs.map((v, k) => v - (k ? max : firstRoom)));
   if (over <= 0 || tries === 4) result = out.map((x, k) => [x, hs[k]]); else safety += over + 1 * MM;
   }
@@ -1430,8 +1430,11 @@ async function outputDialog(mode) {
   await flush();
   const abOk = canAB(cur); let ab = abOk && !!UI.ab;
   /* Hinweis auf Bausteine, denen noch das Bild fehlt (auf dem Blatt bleibt sonst nur der leere Rahmen) */
-  const noImg = []; { let n = 0; const s = cur.settings || {}; cur.items.forEach(it => { const ty = T(it.type); const num = RD.TASK && RD.TASK.has ? (RD.TASK.has(it.type) && s.numbering !== false && it.numbered !== false && !(it.type === 'image' && !(it.title || '').trim()) ? ++n : 0) : 0; if ((it.type === 'image' || it.type === 'label') && !it.src) noImg.push(num ? 'Aufgabe ' + num : (ty ? ty.name : it.type)); }); }
-  const which = await dialog({ title: mode === 'pdf' ? 'Als PDF speichern' : 'Drucken', html: `<p>Was soll ${mode === 'pdf' ? 'ins PDF' : 'gedruckt werden'}?</p>${noImg.length ? `<p class="hint warnHint">Noch ohne Bild: ${esc(noImg.join(', '))}. Dort erscheint nur ein leerer Rahmen.</p>` : ''}${abOk ? `<label class="abRow"><input type="checkbox" id="abChk" ${ab ? 'checked' : ''}><span><b>Gruppe A und B</b><small>Zwei Fassungen mit anderen Zahlen – gleiche Aufgaben, gleiche Schwierigkeit. Oben rechts steht A bzw. B; jede Fassung bekommt ihre eigene Lösung.</small></span></label>` : ''}`,
+  /* Hinweise vor dem Druck: fehlende Bilder und Bausteine, die statt Aufgaben eine Meldung zeigen */
+  const noImg = [], warn = [];
+  try { RD.blocks(cur, {}).forEach(b => { if (b.head || !b.html) return; const it = cur.items.find(x => x.id === b.id); if (!it) return; const m = b.html.match(/class="inum">([^<]*)</); const lab = m ? 'Aufgabe ' + m[1].replace(/\.$/, '') : ((T(it.type) || {}).name || it.type);
+    if ((it.type === 'image' || it.type === 'label') && !it.src) noImg.push(lab); else if (b.html.includes('class="gerr"')) warn.push(lab); }); } catch (e) { }
+  const which = await dialog({ title: mode === 'pdf' ? 'Als PDF speichern' : 'Drucken', html: `<p>Was soll ${mode === 'pdf' ? 'ins PDF' : 'gedruckt werden'}?</p>${noImg.length ? `<p class="hint warnHint">Noch ohne Bild: ${esc(noImg.join(', '))}. Dort erscheint nur ein leerer Rahmen.</p>` : ''}${warn.length ? `<p class="hint warnHint">${esc(warn.join(', '))}: Hier stehen noch keine Aufgaben, nur ein Hinweis zu den Einstellungen. Bitte vorher im Feld rechts anpassen.</p>` : ''}${abOk ? `<label class="abRow"><input type="checkbox" id="abChk" ${ab ? 'checked' : ''}><span><b>Gruppe A und B</b><small>Zwei Fassungen mit anderen Zahlen – gleiche Aufgaben, gleiche Schwierigkeit. Oben rechts steht A bzw. B; jede Fassung bekommt ihre eigene Lösung.</small></span></label>` : ''}`,
     buttons: [{ label: 'Arbeitsblatt', value: 'blatt', primary: true }, { label: 'Lösungsblatt', value: 'loesung' }, { label: 'Beides', value: 'beides' }],
     onOpen: dl => { const c = $('#abChk', dl); if (c) c.onchange = () => { ab = c.checked; UI.ab = ab; saveUI(); }; } });
   if (!which) return;

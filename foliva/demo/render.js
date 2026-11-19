@@ -301,8 +301,9 @@
       const W = ctx.dim.iw, gap = 40, colW = (W - gap) / 2;
       /* Zeilenhöhe: mindestens so hoch, dass der längste Text (z. B. Rätselfragen) ganz hineinpasst */
       const fs = (+((ctx.doc || {}).settings || {}).size || 14) * .3528, plain = t => /^img:/.test(t || '') ? '' : String(t || '').replace(/[*_]/g, '');
-      const need = Math.max(...pairs.map(p => Math.max(plain(p.l).length, plain(p.r).length)).map(n => Math.ceil(n * .55 * fs / Math.max(10, colW - 6)) * 1.15 * fs + 2.5), 0);
-      const rh = Math.max(8, Math.min(30, +it.rowH || 11), Math.min(40, need)), H = pairs.length * rh;
+      const lh = it.syl && it.syl !== 'aus' ? 1.75 : 1.2; /* Silbenbögen brauchen mehr Zeilenabstand */
+      const need = Math.max(...pairs.map(p => Math.max(plain(p.l).length, plain(p.r).length)).map(n => Math.ceil(n * .6 * fs / Math.max(10, colW - 6)) * lh * fs + 3), 0);
+      const rh = Math.max(8, Math.min(30, +it.rowH || 11), Math.min(60, need)), H = pairs.length * rh;
       let lines = '';
       order.forEach((li, j) => { lines += `<line x1="${colW - 1.3}" y1="${li * rh + rh / 2}" x2="${colW + gap + 1.3}" y2="${j * rh + rh / 2}"/>`; });
       const cellT = t => /^img:/.test(t || '') ? `<img class="mimg" src="${esc(imgSrc(/^(lib:|data:)/.test(t.slice(4)) ? t.slice(4) : "lib:" + t.slice(4)))}" alt="">` : `<span>${md(t)}</span>`;
@@ -317,7 +318,7 @@
     },
 
     table(it) {
-      const cells = it.cells || [[]], h = Math.max(6, Math.min(40, +it.rowH || 9));
+      let cells = it.cells || [[]]; if (typeof cells === 'string') { try { cells = JSON.parse(cells); } catch (e) { cells = [[cells]]; } } if (!Array.isArray(cells)) cells = [[]]; cells = cells.map(r => Array.isArray(r) ? r : [r]); const h = Math.max(6, Math.min(40, +it.rowH || 9));
       const cell = (c, tag) => `<${tag} style="height:${h}mm">${md(c || '').replace(/\[([^\]]+)\]/g, (m, w) => S(w))}</${tag}>`;
       return `<table class="tbl" style="${it.small ? 'font-size:.88em' : ''}">${cells.map((row, ri) => `<tr>${row.map(c => cell(c, ri === 0 && it.headRow ? 'th' : 'td')).join('')}</tr>`).join('')}</table>`;
     },

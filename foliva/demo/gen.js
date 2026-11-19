@@ -217,20 +217,29 @@
 
   /* ---------- Wortsuchgitter (S09) ---------- */
   function wordsearch(o) {
-    const n = clampN(o.size, 6, 20, 10); const r = rng(o.seed || 1);
-    const words = String(o.words || '').split(/[,;\n]+/).map(w => w.trim().toUpperCase().replace(/\s+/g, '')).filter(Boolean);
+    const n = clampN(o.size, 6, 20, 10); let r = rng(o.seed || 1);
+    const words = String(o.words || '').split(/[,;\n]+/).map(w => w.trim().toUpperCase().replace(/\s+/g, '')).filter(Boolean).slice(0, 30);
     const dirs = [[0, 1], [1, 0]]; if (o.diagonal) dirs.push([1, 1], [-1, 1]); if (o.backwards) dirs.push(...dirs.map(([a, b]) => [-a, -b]));
-    const grid = Array.from({ length: n }, () => Array(n).fill('')); const placed = [], missing = [];
-    for (const w of words.slice(0, 30)) {
-      const ch = [...w]; let ok = false;
-      if (ch.length <= n) for (let tries = 0; tries < 400 && !ok; tries++) {
-        const [dr, dc] = pick(r, dirs); const r0 = int(r, 0, n - 1), c0 = int(r, 0, n - 1);
-        const er = r0 + dr * (ch.length - 1), ec = c0 + dc * (ch.length - 1); if (er < 0 || er >= n || ec < 0 || ec >= n) continue;
-        if (ch.every((x, i) => { const g = grid[r0 + dr * i][c0 + dc * i]; return !g || g === x; })) { ch.forEach((x, i) => { grid[r0 + dr * i][c0 + dc * i] = x; }); placed.push({ w, r: r0, c: c0, dr, dc, len: ch.length }); ok = true; }
+    /* lange Wörter zuerst; klappt es nicht mit allen, mehrere Anläufe und den besten nehmen (gleicher Startwert → gleiches Rätsel) */
+    const order = words.map((w, i) => i).sort((a, b) => [...words[b]].length - [...words[a]].length);
+    let best = null;
+    for (let attempt = 0; attempt < 25; attempt++) {
+      if (attempt) r = rng((o.seed || 1) * 31 + attempt * 7919);
+      const grid = Array.from({ length: n }, () => Array(n).fill('')); const placedAt = new Array(words.length).fill(null), missing = [];
+      for (const wi of order) {
+        const w = words[wi]; const ch = [...w]; let ok = false;
+        if (ch.length <= n) for (let tries = 0; tries < 400 && !ok; tries++) {
+          const [dr, dc] = pick(r, dirs); const r0 = int(r, 0, n - 1), c0 = int(r, 0, n - 1);
+          const er = r0 + dr * (ch.length - 1), ec = c0 + dc * (ch.length - 1); if (er < 0 || er >= n || ec < 0 || ec >= n) continue;
+          if (ch.every((x, i) => { const g = grid[r0 + dr * i][c0 + dc * i]; return !g || g === x; })) { ch.forEach((x, i) => { grid[r0 + dr * i][c0 + dc * i] = x; }); placedAt[wi] = { w, r: r0, c: c0, dr, dc, len: ch.length }; ok = true; }
+        }
+        if (!ok) missing.push(w);
       }
-      if (!ok) missing.push(w);
+      if (!best || missing.length < best.missing.length) best = { grid, placed: placedAt.filter(Boolean), missing: words.filter((w, i) => !placedAt[i]) };
+      if (!best.missing.length) break;
     }
-    const fill = o.umlaut ? 'ABCDEFGHIJKLMNOPRSTUVWZÄÖÜEEINRST' : 'ABCDEFGHIJKLMNOPRSTUVWZEEINRST';
+    const { grid, placed, missing } = best;
+    const fill = o.umlaut || words.some(w => /[ÄÖÜ]/.test(w)) ? 'ABCDEFGHIJKLMNOPRSTUVWZÄÖÜEEINRST' /* Umlaute in den Wörtern: auch als Füllbuchstaben, sonst fallen sie auf */ : 'ABCDEFGHIJKLMNOPRSTUVWZEEINRST';
     for (const row of grid) for (let i = 0; i < n; i++) if (!row[i]) row[i] = fill[Math.floor(r() * fill.length)];
     return { rules: RULES, n, grid, placed, missing };
   }
@@ -240,7 +249,7 @@
     const r = rng(o.seed || 1);
     const items = String(o.words || '').split(/\n|;|(?<=[^.!?]),(?=\s*\S)/).map(s => s.trim()).filter(Boolean).slice(0, 30);
     const out = items.map(w => {
-      if (o.mode === 'saetze') { const parts = w.split(/\s+/); if (parts.length < 2) return { src: w, mix: w }; let m, k = 0; do { m = shuffle(r, parts); k++; } while (m.join(' ') === parts.join(' ') && k < 20); return { src: w, mix: m.join(' / ') }; }
+      if (o.mode === 'saetze') { const parts = w.includes('|') ? w.split('|').map(x => x.trim().replace(/[.!?]$/, '')).filter(Boolean) : w.split(/\s+/); /* „|“ trennt Satzglieder */ const sw = w.replace(/\s*\|\s*/g, ' ').trim(); if (parts.length < 2) return { src: sw, mix: sw }; let m, k = 0; do { m = shuffle(r, parts); k++; } while (m.join(' ') === parts.join(' ') && k < 20); return { src: sw, mix: m.join(' / ') }; }
       const letters = [...w]; if (letters.length < 2) return { src: w, mix: w };
       const keepFirst = !!o.keepFirst; const head = keepFirst ? letters.slice(0, 1) : [], body = keepFirst ? letters.slice(1) : letters;
       let m, k = 0; do { m = head.concat(shuffle(r, body)); k++; } while (m.join('') === letters.join('') && k < 20);
@@ -307,7 +316,7 @@
       if (it.mode === 'saetze') it.words = pickN(r, themeList('SENTENCES', it.theme in P().SENTENCES ? it.theme : 'tiere'), n).map(x => x.replace(/[\[\]]/g, '').replace(/[.!?]$/, '')).join('\n');
       else { const max = clampN(it.maxLen, 3, 15, 8); it.words = pickN(r, themeList('NOUNS', it.theme in P().NOUNS ? it.theme : 'tiere').filter(x => x.w.length <= max && /^[A-Za-zÄÖÜäöüß]+$/.test(x.w)), n).map(x => x.w).join('\n'); }
     },
-    wordsearch(it, r) { const n = clampN(it.n, 2, 20, 6), size = clampN(it.size, 6, 20, 10); it.words = pickN(r, themeList('NOUNS', it.theme).filter(x => x.w.length <= size && /^[A-Za-zÄÖÜäöüß]+$/.test(x.w)), n).map(x => x.w).join(', '); },
+    wordsearch(it, r) { const n = clampN(it.n, 2, 20, 6), size = clampN(it.size, 6, 20, 10); it.words = pickN(r, themeList('NOUNS', it.theme).filter(x => x.w.toUpperCase().length <= size && /^[A-Za-zÄÖÜäöüß]+$/.test(x.w)), n).map(x => x.w).join(', '); },
     vocab(it, r) { const L = P().VOCAB[it.lang] || P().VOCAB.en; const th = L.themes[it.theme] || Object.values(L.themes)[0]; it.pairs = pickN(r, th.list, clampN(it.n, 1, 20, 6)).map(x => ({ ...x })); it.left = 'Deutsch'; it.right = L.name; },
     match(it, r) {
       const n = clampN(it.n, 2, 12, 5), pp = P();
