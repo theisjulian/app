@@ -8,6 +8,8 @@ const CATS = {
   inter:   { label: 'Gesprächsfähigkeit / Strategie', short: 'Gespräch' },
   content: { label: 'Aufgabenerfüllung / Inhalt', short: 'Inhalt' },
   npLang:  { label: 'Sprachliche Leistung', short: 'Sprache' },
+  /* nur monologische Raster (Referat): Aussprache mit Flüssigkeit, ohne Gesprächsfähigkeit */
+  flu:     { label: 'Aussprache / Intonation / Flüssigkeit', short: 'Aussprache' },
 };
 
 /* Notenschlüssel = Mindest-BE für Note 1..5 (darunter 6), exakt aus den ISB-Rechentabellen */
@@ -25,10 +27,24 @@ const SCHEMES = {
   'OSB1':   { label: 'B1 fortgeführt (Notenpunkte)', type: 'np', desc: 'NP', w: { npLang: 4, inter: 2, content: 4 }, cap4: true },
 };
 const SCHEME_ORDER = ['A1', 'A1+', 'A2', 'A2+', 'B1', 'B1+', 'B1+/B2', 'OS', 'OSB1', 'B1spb'];
-const MAXBE = { pron: 6, lang: 6, inter: 6, content: 4 };
+/* Monologische Raster (ISB „Sprechen (monologisch)“, A1–B1+) – nur für die Prüfungsart Referat.
+   Notenschlüssel exakt aus den ISB-Bewertungsbögen: A1–A2+ 26 BE (26–23 | 22,5–19,5 | 19–16 | 15,5–13 | 12,5–8,5 | 8–0),
+   B1/B1+ 30 BE (30–26,5 | 26–22,5 | 22–18,5 | 18–15 | 14,5–10 | 9,5–0). Getrennt von SCHEME_ORDER, damit Prüfungen unverändert bleiben. */
+const MONO = (label, desc, content, key) => ({ label: label + ' · monologisch', badge: label, type: 'be', mono: true, desc, f: { flu: 1, lang: 2, content }, key });
+Object.assign(SCHEMES, {
+  'A1m':  MONO('A1', 'A1M', 2, [23, 19.5, 16, 13, 8.5]),
+  'A1+m': MONO('A1+', 'A1M', 2, [23, 19.5, 16, 13, 8.5]),
+  'A2m':  MONO('A2', 'A2M', 2, [23, 19.5, 16, 13, 8.5]),
+  'A2+m': MONO('A2+', 'A2M', 2, [23, 19.5, 16, 13, 8.5]),
+  'B1m':  MONO('B1', 'B1M', 3, [26.5, 22.5, 18.5, 15, 10]),
+  'B1+m': MONO('B1+', 'B1M', 3, [26.5, 22.5, 18.5, 15, 10]),
+});
+const MONO_ORDER = ['A1m', 'A1+m', 'A2m', 'A2+m', 'B1m', 'B1+m'];
+const MAXBE = { pron: 6, lang: 6, inter: 6, content: 4, flu: 6 };
 
 function catsOf(scheme) {
   const s = SCHEMES[scheme];
+  if (s.mono) return ['flu', 'lang', 'content'];
   return s.type === 'np' ? ['npLang', 'inter', 'content'] : ['pron', 'lang', 'inter', 'content'];
 }
 function maxOf(scheme, cat) { return SCHEMES[scheme].type === 'np' ? 15 : MAXBE[cat]; }
@@ -133,6 +149,14 @@ const OPEN = {
   it: g => `Nella prova orale {N} ha fornito una prestazione complessivamente ${GRADE_WORD.it[g - 1]}.`,
   fr: g => `Dans l’ensemble, la prestation de {N} à l’épreuve orale est ${GRADE_WORD.fr[g - 1]}.`,
   es: g => `En la prueba oral, {N} ha ofrecido una prestación globalmente ${GRADE_WORD.es[g - 1]}.`,
+};
+/* Referat (monologisch): Einleitung ohne „Prüfung“ */
+const OPEN_REF = {
+  de: g => `{N} zeigt im Referat eine insgesamt ${GRADE_WORD.de[g - 1]} Leistung.`,
+  en: g => `In the presentation, {N} gave ${GRADE_WORD.en[g - 1]} performance overall.`,
+  it: g => `Nella presentazione orale {N} ha fornito una prestazione complessivamente ${GRADE_WORD.it[g - 1]}.`,
+  fr: g => `Dans l’ensemble, la prestation de {N} lors de l’exposé est ${GRADE_WORD.fr[g - 1]}.`,
+  es: g => `En la presentación oral, {N} ha ofrecido una prestación globalmente ${GRADE_WORD.es[g - 1]}.`,
 };
 const BANK = {
   de: {
@@ -332,7 +356,82 @@ const BANK = {
   },
 };
 
+/* Referat (monologisch): Aussprache / Intonation / Flüssigkeit – 7 Stufen wie Aussprache, eng an den ISB-Deskriptoren (inkl. Zögern/stockend) */
+const FLU = {
+  de: ['{S} spricht flüssig und sehr gut verständlich; Aussprache und Intonation sind durchweg korrekt.',
+    '{S} spricht meist flüssig und ist gut verständlich; kleinere Aussprache- und Intonationsfehler stören die Kommunikation nicht.',
+    '{S} ist in der Regel gut verständlich und spricht weitgehend flüssig, zögert aber gelegentlich; einzelne Aussprache- und Intonationsfehler treten auf.',
+    '{S} ist mit gewissen Einschränkungen verständlich; Schwächen in Aussprache und Intonation sowie wiederholtes Zögern beeinträchtigen den Vortrag.',
+    '{S} macht viele Aussprachefehler und zögert häufig, sodass die Verständlichkeit deutlich eingeschränkt ist.',
+    'Aufgrund sehr vieler Aussprachefehler und eines stockenden Vortrags ist {s} kaum mehr verständlich.',
+    'Aufgrund grob fehlerhafter Aussprache und eines sehr stockenden Vortrags ist {s} nicht mehr verständlich.'],
+  en: ['{S} speaks fluently and is very easy to understand; pronunciation and intonation are consistently accurate.',
+    '{S} speaks mostly fluently and is easy to understand; minor slips in pronunciation and intonation do not affect communication.',
+    '{S} is generally easy to understand and speaks largely fluently, but hesitates occasionally; some errors in pronunciation and intonation occur.',
+    '{S} can be understood with some limitations; weaknesses in pronunciation and intonation and repeated hesitation affect the presentation.',
+    '{S} makes many pronunciation errors and hesitates frequently, which clearly limits how well {s} can be understood.',
+    'Because of very many pronunciation errors and a halting delivery, {s} can hardly be understood.',
+    'Because of seriously flawed pronunciation and a very halting delivery, {s} can no longer be understood.'],
+  it: ['{S} parla in modo scorrevole e si fa capire molto bene; pronuncia e intonazione sono sempre corrette.',
+    '{S} parla in modo per lo più scorrevole e si fa capire bene; i piccoli errori di pronuncia e di intonazione non disturbano la comunicazione.',
+    '{S} si fa capire in genere bene e parla in modo abbastanza scorrevole, ma esita di tanto in tanto; compaiono alcuni errori di pronuncia e di intonazione.',
+    '{S} si fa capire con qualche difficoltà; debolezze nella pronuncia e nell’intonazione ed esitazioni ripetute compromettono l’esposizione.',
+    '{S} commette molti errori di pronuncia ed esita spesso, per cui la comprensibilità risulta chiaramente limitata.',
+    'A causa di moltissimi errori di pronuncia e di un eloquio stentato, {s} si fa capire a malapena.',
+    'A causa di una pronuncia gravemente scorretta e di un eloquio molto stentato, {s} non si fa più capire.'],
+  fr: ['{S} s’exprime avec aisance et se fait très bien comprendre ; la prononciation et l’intonation sont toujours correctes.',
+    '{S} s’exprime le plus souvent avec aisance et se fait bien comprendre ; les petites erreurs de prononciation et d’intonation ne gênent pas la communication.',
+    '{S} se fait en général bien comprendre et s’exprime de manière assez fluide, mais hésite parfois ; quelques erreurs de prononciation et d’intonation apparaissent.',
+    '{S} se fait comprendre avec certaines difficultés ; des faiblesses de prononciation et d’intonation ainsi que des hésitations répétées nuisent à l’exposé.',
+    '{S} fait beaucoup d’erreurs de prononciation et hésite souvent, ce qui limite nettement la compréhension.',
+    'En raison de très nombreuses erreurs de prononciation et d’un débit hésitant, {s} se fait à peine comprendre.',
+    'En raison d’une prononciation gravement fautive et d’un débit très hésitant, {s} ne se fait plus comprendre.'],
+  es: ['{S} habla con fluidez y se hace entender muy bien; la pronunciación y la entonación son siempre correctas.',
+    '{S} habla en general con fluidez y se hace entender bien; los pequeños errores de pronunciación y entonación no afectan a la comunicación.',
+    '{S} se hace entender por lo general bien y habla con bastante fluidez, aunque duda de vez en cuando; aparecen algunos errores de pronunciación y entonación.',
+    '{S} se hace entender con ciertas limitaciones; las debilidades en la pronunciación y la entonación y las vacilaciones repetidas afectan a la exposición.',
+    '{S} comete muchos errores de pronunciación y duda con frecuencia, por lo que la comprensibilidad queda claramente limitada.',
+    'A causa de muchísimos errores de pronunciación y de un discurso entrecortado, apenas se le entiende.',
+    'A causa de una pronunciación muy defectuosa y de un discurso muy entrecortado, ya no se le entiende.'],
+};
+const FLU_TIP = {
+  de: 'Für die Weiterarbeit empfiehlt sich gezieltes Training von Aussprache und flüssigem Sprechen, etwa durch lautes Lesen und mehrmaliges Üben des Vortrags.',
+  en: 'To improve further, focused practice of pronunciation and fluent speaking is recommended, for example by reading aloud and rehearsing the presentation several times.',
+  it: 'Per migliorare si consiglia un allenamento mirato della pronuncia e della scorrevolezza, ad esempio leggendo ad alta voce e provando più volte la presentazione.',
+  fr: 'Pour progresser, un entraînement ciblé de la prononciation et de l’aisance à l’oral est recommandé, par exemple en lisant à voix haute et en répétant plusieurs fois l’exposé.',
+  es: 'Para seguir mejorando se recomienda un entrenamiento específico de la pronunciación y la fluidez, por ejemplo leyendo en voz alta y ensayando varias veces la presentación.',
+};
+/* A1/A1+: das ISB-Raster nennt in den oberen Stufen „zusammenhängende“ statt „flüssige“ Äußerungen (Stufen 6–4 eigene Sätze, 3–0 wie oben) */
+const FLU_A1 = {
+  de: ['{S} äußert sich zusammenhängend und ist stets gut verständlich; bekannte Wörter spricht {s} korrekt aus.',
+    '{S} äußert sich meist zusammenhängend und ist meist gut verständlich; kleinere Aussprache- und Intonationsfehler stören die Kommunikation nicht.',
+    '{S} ist in der Regel verständlich, zögert aber gelegentlich; einzelne Aussprache- und Intonationsfehler treten auf.'],
+  en: ['{S} speaks coherently and is always easy to understand; familiar words are pronounced correctly.',
+    '{S} mostly speaks coherently and is mostly easy to understand; minor slips in pronunciation and intonation do not affect communication.',
+    '{S} is generally easy to understand but hesitates occasionally; some errors in pronunciation and intonation occur.'],
+  it: ['{S} si esprime in modo coerente e si fa sempre capire bene; pronuncia correttamente le parole note.',
+    '{S} si esprime per lo più in modo coerente e si fa capire bene; i piccoli errori di pronuncia e di intonazione non disturbano la comunicazione.',
+    '{S} si fa capire in genere bene, ma esita di tanto in tanto; compaiono alcuni errori di pronuncia e di intonazione.'],
+  fr: ['{S} s’exprime de manière cohérente et se fait toujours bien comprendre ; les mots connus sont prononcés correctement.',
+    '{S} s’exprime le plus souvent de manière cohérente et se fait bien comprendre ; les petites erreurs de prononciation et d’intonation ne gênent pas la communication.',
+    '{S} se fait en général bien comprendre, mais hésite parfois ; quelques erreurs de prononciation et d’intonation apparaissent.'],
+  es: ['{S} se expresa de forma coherente y se hace entender siempre bien; pronuncia correctamente las palabras conocidas.',
+    '{S} se expresa en general de forma coherente y se hace entender bien; los pequeños errores de pronunciación y entonación no afectan a la comunicación.',
+    '{S} se hace entender por lo general bien, aunque duda de vez en cuando; aparecen algunos errores de pronunciación y entonación.'],
+};
+for (const l of Object.keys(FLU)) { BANK[l].flu = FLU[l]; BANK[l].fluA1 = [...FLU_A1[l], ...FLU[l].slice(3)]; BANK[l].tip.flu = FLU_TIP[l]; }
+/* Referat A1–A2+ (monologisch): Das Raster beschreibt ein „einfaches“ bzw. „grundlegendes“ Spektrum – oberste Stufe daher ohne „breites Spektrum“ */
+const LANG_A12 = {
+  de: '{S} verwendet die der Lernstufe entsprechenden sprachlichen Mittel durchgehend sicher und nahezu fehlerfrei.',
+  en: '{S} uses the language appropriate to this level confidently and almost without errors throughout.',
+  it: '{S} usa con sicurezza e quasi senza errori i mezzi linguistici adeguati al livello.',
+  fr: '{S} utilise avec assurance et presque sans erreur les moyens linguistiques correspondant à son niveau.',
+  es: '{S} utiliza con seguridad y casi sin errores los recursos lingüísticos propios de su nivel.',
+};
+for (const l of Object.keys(LANG_A12)) BANK[l].langA12 = [LANG_A12[l], ...BANK[l].lang.slice(1)];
 function fillSubject(tpl, subj, name, lang) {
+  /* Französisch: Elision vor Vokal oder stummem h („la prestation d’Alex“) */
+  if (lang === 'fr' && /^[aeiouhàâäæéèêëîïôöœùûü]/i.test(name || '')) tpl = tpl.replace('de {N}', 'd’{N}');
   let s = tpl.replace('{N}', name);
   const pron = subj;                         // '' (it), Pronomen oder Name
   s = s.replace('{S}', pron ? cap(pron) : '').replace(/\{s\}/g, pron);
@@ -344,17 +443,18 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 /* student: {first, last, g}; scores: {cat: number}; lang: de|en|it|fr|es
    customKey: derselbe Notenschlüssel wie bei der Notenberechnung (eigene Prozentgrenze) – Note und Worturteil dürfen nie auseinanderfallen */
-function worturteil(scheme, student, scores, lang, notes, customKey) {
+function worturteil(scheme, student, scores, lang, notes, customKey, opts) {
   const ev = evaluate(scheme, scores, customKey);
   if (!ev.complete) return '';
   const B = BANK[lang]; const name = student.first;
   const known = student.g === 'w' || student.g === 'm';
   const later = known ? PRON[lang][student.g] : name;
   const cats = catsOf(scheme);
-  const order = cats.includes('pron') ? ['content', 'inter', 'lang', 'pron'] : ['content', 'inter', 'npLang'];
-  const parts = [fillSubject(OPEN[lang](ev.grade), '', name, lang)];
+  const order = SCHEMES[scheme].mono ? ['content', 'flu', 'lang'] : cats.includes('pron') ? ['content', 'inter', 'lang', 'pron'] : ['content', 'inter', 'npLang'];
+  const parts = [fillSubject((SCHEMES[scheme].mono || (opts && opts.ref) ? OPEN_REF : OPEN)[lang](ev.grade), '', name, lang)];
   order.forEach((c, i) => {
-    const bank = B[c === 'npLang' ? 'lang' : c];
+    const dsc = SCHEMES[scheme].desc;
+    const bank = c === 'flu' && dsc === 'A1M' ? B.fluA1 : c === 'lang' && (dsc === 'A1M' || dsc === 'A2M') ? B.langA12 : B[c === 'npLang' ? 'lang' : c];
     const b = step(scheme, c, scores[c]);
     // Name steht im ersten Satz; danach Pronomen (Italienisch: ohne Subjekt)
     const subj = later;
@@ -394,6 +494,6 @@ function titleIn(title, lang) {
 /* Quelle der Raster, Deskriptoren und Notenschlüssel – Nutzung vom ISB erlaubt (Okt. 2026) mit Quellenangabe und Link zur Fundstelle */
 const ISB = { name: 'Staatsinstitut für Schulqualität und Bildungsforschung München (ISB)',
   url: 'https://www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/' };
-const API = { ISB, CATS, SCHEMES, SCHEME_ORDER, MAXBE, GRADE_WORD, BANK, catsOf, maxOf, totalMax, evaluate, npToGrade, keyRanges, keyFromPercent, descriptor, band, step, worturteil, roundHalfUp, titleIn };
+const API = { ISB, CATS, SCHEMES, SCHEME_ORDER, MONO_ORDER, MAXBE, GRADE_WORD, BANK, catsOf, maxOf, totalMax, evaluate, npToGrade, keyRanges, keyFromPercent, descriptor, band, step, worturteil, roundHalfUp, titleIn };
 if (typeof module !== 'undefined') module.exports = API; else Object.assign(root, API);
 })(typeof window !== 'undefined' ? window : globalThis);

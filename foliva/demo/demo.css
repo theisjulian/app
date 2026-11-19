@@ -1,0 +1,25 @@
+/* Foliva-Web-Demo: Menüleiste und Hinweise · © 2026 theis */
+body{display:flex;flex-direction:column}
+#app{flex:1;min-height:0;height:auto!important}
+#demoBar{flex:none;display:flex;align-items:center;gap:2px;height:30px;padding:0 10px;background:var(--panel,#fff);border-bottom:1px solid var(--hairline,#dfe1e6);font:13px/1 var(--ui,system-ui,sans-serif);color:var(--label,#16171a);position:relative;z-index:1000;user-select:none}
+#demoBar .dmBrand{font-weight:650;margin-right:10px;letter-spacing:-.01em}
+#demoBar .dmBrand em{font-style:normal;font-weight:600;font-size:11px;color:#fff;background:#2F5BEA;border-radius:5px;padding:2px 6px;margin-left:4px;vertical-align:1px}
+#demoBar .dm{position:relative}
+#demoBar .dmTop{border:0;background:none;font:inherit;color:inherit;padding:6px 9px;border-radius:6px;cursor:default}
+#demoBar .dm.open>.dmTop,#demoBar .dmTop:hover{background:color-mix(in srgb,var(--label,#16171a) 8%,transparent)}
+#demoBar .dmList{display:none;position:absolute;left:0;top:100%;min-width:290px;padding:5px;background:var(--panel,#fff);border:1px solid var(--hairline,#dfe1e6);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+#demoBar .dm.open>.dmList{display:block}
+#demoBar .dmList button,#demoBar .dmSub{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left;padding:7px 10px;border-radius:6px;position:relative;cursor:default;box-sizing:border-box}
+#demoBar .dmList button:hover,#demoBar .dmSub:hover{background:#2F5BEA;color:#fff}
+#demoBar .dmList kbd{font:inherit;opacity:.55}
+#demoBar .dmList hr{border:0;border-top:1px solid var(--hairline,#dfe1e6);margin:4px 6px}
+#demoBar .dmSub>.dmList{left:100%;top:-6px;color:var(--label,#16171a)}
+#demoBar .dmSub:hover>.dmList{display:block}
+#demoBar .dmSp{flex:1}
+#demoBar .dmInfo{color:var(--label-2,#5b5f68);font-size:12px;margin-right:12px}
+#demoBar .dmGet{font-weight:600;color:#fff;background:#2F5BEA;border-radius:7px;padding:6px 11px;text-decoration:none;font-size:12.5px}
+#demoNote{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:.25s;background:#16171a;color:#fff;font:14px/1.4 var(--ui,system-ui,sans-serif);padding:11px 16px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.25);z-index:2000;max-width:560px}
+#demoNote.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#demoNote a{color:#9db3ff}
+@media (max-width:1100px){#demoBar .dmInfo{display:none}}
+#saveState{display:none!important}

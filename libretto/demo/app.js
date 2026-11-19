@@ -25,7 +25,7 @@ let lastAct = Date.now();
 
 /* ---------- Grundgerüst ---------- */
 function blankData() {
-  return { v: 1, settings: { teacher: '', school: '', year: R.schoolYearOf(), half1End: '', autoLock: 10 }, courses: [], classDates: [], events: [] };
+  return { v: 1, settings: { teacher: '', school: '', year: R.schoolYearOf(), half1End: '', autoLock: 10, dl: [] }, courses: [], classDates: [], events: [] };
 }
 let saveT = null;
 let READONLY = false, POLICY = null;
@@ -42,7 +42,19 @@ function saveState(err) {
 function doSave() { if (!D) return Promise.resolve(); const snap = D; return N.save(snap).then(r => { if (SAVE_ERR) saveState(null); return r; }, e => { saveState(e && e.message || String(e)); throw e; }); }
 function save() { if (READONLY) return; clearTimeout(saveT); saveT = setTimeout(() => { doSave().catch(() => {}); }, 400); }
 function flush() { clearTimeout(saveT); return doSave(); }
-addEventListener('beforeunload', () => { if (D) { clearTimeout(saveT); N.saveSync(D); } });
+/* Beim Schließen: erst speichern. Klappt das nicht, bleibt Libretto offen (es sei denn, man hat „Trotzdem beenden“ gewählt). */
+let PENDING = null, QUIT_ANYWAY = false;
+addEventListener('beforeunload', e => {
+  const data = D || PENDING; if (!data) return;
+  clearTimeout(saveT);
+  let ok = false; try { ok = N.saveSync(data) !== false; } catch (x) { ok = false; }
+  if (!ok && !QUIT_ANYWAY) { e.preventDefault(); e.returnValue = ''; saveState('Beim Beenden konnte nicht gespeichert werden'); quitAnywayOffer(); }
+});
+function quitAnywayOffer() {
+  const b = $('#saveErr'); if (!b || b.querySelector('.quitAny')) return;
+  b.insertAdjacentHTML('beforeend', ' <button type="button" class="mini quitAny" title="Die Änderungen seit dem letzten erfolgreichen Speichern gehen verloren">Trotzdem beenden</button>');
+  b.querySelector('.quitAny').onclick = () => { QUIT_ANYWAY = true; window.close(); };
+}
 
 function toast(msg, ms = 2600) { const t = $('#toast'); t.classList.remove('act'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
 function toastAction(msg, label, fn, ms = 6000) { const t = $('#toast'); t.innerHTML = `<span>${esc(msg)}</span><button type="button">${esc(label)}</button>`; t.classList.add('show', 'act'); t.querySelector('button').onclick = () => { t.classList.remove('show', 'act'); fn(); }; clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show', 'act'), ms); }
@@ -97,9 +109,9 @@ function sheet({ title, body, ok = 'Sichern', cancel = 'Abbrechen', wide, small,
   dlg.showModal(); if (onOpen) onOpen(dlg, close);
   return { dlg, close };
 }
-function ask(text, okLabel = 'OK', danger = false, title = 'Bitte bestätigen') {
+function ask(text, okLabel = 'OK', danger = false, title = 'Bitte bestätigen', noLabel = 'Abbrechen') {
   return new Promise(res => {
-    const { dlg, close } = sheet({ title, small: true, ok: '', cancel: 'Abbrechen', body: `<p class="prose" style="margin:0">${text}</p><div class="askBtns"><button type="button" class="mini" data-n>Abbrechen</button><button type="button" class="mini ${danger ? 'dangerFill' : 'accent'}" data-y>${esc(okLabel)}</button></div>`,
+    const { dlg, close } = sheet({ title, small: true, ok: '', cancel: 'Abbrechen', body: `<p class="prose" style="margin:0">${text}</p><div class="askBtns"><button type="button" class="mini" data-n>${esc(noLabel)}</button><button type="button" class="mini ${danger ? 'dangerFill' : 'accent'}" data-y>${esc(okLabel)}</button></div>`,
       onOpen: d => { d.querySelector('[data-n]').onclick = () => { close(); res(false); }; d.querySelector('[data-y]').onclick = () => { close(); res(true); }; d.querySelector('[data-x]').addEventListener('click', () => res(false)); } });
   });
 }
@@ -110,7 +122,8 @@ const sw = (id, on, label) => `<div class="row"><span>${label}</span><input type
    Einrichtung & Sperre
    ====================================================================== */
 const ICON = '<img class="appIcon" src="icon.png" alt="">';
-function gate(html) { $('#appRoot').hidden = true; $('#gate').hidden = false; $('#gateCard').innerHTML = html;
+let APPV = ''; try { N.version().then(v => { APPV = v || ''; }).catch(() => {}); } catch (e) {}
+function gate(html) { $('#appRoot').hidden = true; $('#gate').hidden = false; $('#gateCard').classList.remove('lockCard'); $('#gateCard').innerHTML = html;
   if (!$('#gateBrand') && window.THEISAPPS_LOGO) { const b = document.createElement('div'); b.id = 'gateBrand'; b.className = 'gateBrand'; b.innerHTML = window.THEISAPPS_LOGO; $('#gate').appendChild(b); } }
 
 let SETUP = {};
@@ -176,23 +189,47 @@ async function saveCodePdf(code) {
     blocks: [{ table: { head: ['Notfallschlüssel'], rows: [[code]], big: [0] } },
       { p: 'Mit diesem Schlüssel lassen sich deine Libretto-Daten und alle Sicherungen öffnen, wenn du das Passwort vergessen hast. Wer ihn besitzt, kann die Noten lesen – also wie einen Haustürschlüssel behandeln.' },
       { p: 'So geht es: Libretto öffnen → „Passwort vergessen? Mit Notfallschlüssel öffnen“ → Schlüssel eingeben → neues Passwort festlegen.' }] };
-  await N.savePdf('Libretto-Notfallschluessel.pdf', Print.html(m, {}), false);
+  await N.savePdf('Libretto-Notfallschluessel.pdf', Print.html(m, {}), false, Print.footer({}));
 }
 
+const SVG_LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const SVG_KEY = '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>';
+const SVG_EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const SVG_EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const SVG_SHIELD = '<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.6-3.4 8.4-8 9-4.6-.6-8-4.4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>';
+/* Passwortfeld mit Schloss, „anzeigen“ und Hinweis bei Feststelltaste */
+function pwWire(input) {
+  const wrap = input.closest('.pwField'); if (!wrap) return;
+  const eye = wrap.querySelector('.pwEye'), caps = wrap.parentNode.querySelector('.capsHint');
+  if (eye) eye.onclick = () => { const show = input.type === 'password'; input.type = show ? 'text' : 'password'; eye.innerHTML = show ? SVG_EYE_OFF : SVG_EYE; eye.setAttribute('aria-label', show ? 'Passwort verbergen' : 'Passwort anzeigen'); eye.title = eye.getAttribute('aria-label'); input.focus(); };
+  const cap = e => { if (caps && e.getModifierState) caps.hidden = !e.getModifierState('CapsLock'); };
+  input.addEventListener('keydown', cap); input.addEventListener('keyup', cap);
+}
 function renderLock(mode = 'pw', info = '') {
   const code = mode === 'code';
-  gate(`${ICON}<h2>${code ? 'Mit Notfallschlüssel öffnen' : 'Libretto ist gesperrt'}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : 'Deine Noten sind verschlüsselt. Gib dein Passwort ein.'}</p>
-    <input class="pwInput" id="pw" type="${code ? 'text' : 'password'}" placeholder="${code ? 'XXXXXX-XXXXXX-XXXXXX-XXXXXX' : 'Passwort'}" autocomplete="${code ? 'off' : 'current-password'}">
-    <p class="gateErr" id="err">${esc(info)}</p><button class="go" id="open">Öffnen</button>
-    <div class="gateLinks">${code ? '<button id="back">Zurück zum Passwort</button>' : '<button id="useCode">Passwort vergessen?</button>'}<button id="restore">Sicherung wiederherstellen …</button></div>`);
+  const now = new Date(), h = now.getHours();
+  const hello = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
+  gate(`<div class="lockTop"><span>${esc(now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }))}</span></div>
+    <div class="lockIcon">${ICON}</div>
+    <h2>${code ? 'Mit Notfallschlüssel öffnen' : esc(hello)}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : 'Libretto ist gesperrt. Gib dein Passwort ein, um deine Noten zu öffnen.'}</p>
+    <div class="pwField${code ? ' code' : ''}"><i class="pwIc">${code ? SVG_KEY : SVG_LOCK}</i>
+      <input class="pwInput" id="pw" type="${code ? 'text' : 'password'}" placeholder="${code ? 'XXXXXX-XXXXXX-XXXXXX-XXXXXX' : 'Passwort'}" autocomplete="${code ? 'off' : 'current-password'}" spellcheck="false" aria-label="${code ? 'Notfallschlüssel' : 'Passwort'}">
+      ${code ? '' : `<button type="button" class="pwEye" aria-label="Passwort anzeigen" title="Passwort anzeigen">${SVG_EYE}</button>`}</div>
+    <div class="capsHint" hidden>⇪ Feststelltaste ist an</div>
+    <p class="gateErr" id="err" role="alert">${esc(info)}</p><button class="go" id="open"><span>${code ? 'Öffnen' : 'Entsperren'}</span></button>
+    <div class="gateLinks">${code ? '<button id="back">Zurück zum Passwort</button>' : '<button id="useCode">Passwort vergessen?</button>'}<i></i><button id="restore">Sicherung wiederherstellen …</button></div>
+    <div class="lockSafe">${SVG_SHIELD}<span>Verschlüsselt mit AES-256 · Daten nur auf diesem Computer</span></div>`);
+  $('#gateCard').classList.add('lockCard');
+  pwWire($('#pw'));
   $('#gateCard').classList.remove('wide');
   $('#pw').focus();
   const go = async () => {
     const v = $('#pw').value; if (!v) return;
     $('#open').disabled = true; $('#open').textContent = 'Wird entschlüsselt …';
     const r = await N.unlock(v, code);
-    if (!r.ok) { $('#err').textContent = r.error; $('#open').disabled = false; $('#open').textContent = 'Öffnen'; $('#pw').select(); return; }
+    if (!r.ok) { $('#err').textContent = r.error; $('#open').disabled = false; $('#open').innerHTML = `<span>${code ? 'Öffnen' : 'Entsperren'}</span>`; $('#pw').select(); const f = $('.pwField'); if (f) { f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); } return; }
     D = r.data; migrate();
+    if (PENDING) { D = PENDING; PENDING = null; flush().catch(() => {}); }
     if (r.recovered) setTimeout(() => sheet({ title: 'Letzter Stand geöffnet', small: true, ok: '', cancel: 'Verstanden', body: `<p class="prose" style="margin:0">Die Datei mit deinen Daten war beim letzten Speichern beschädigt worden (z. B. durch einen Absturz oder Stromausfall). Libretto hat deshalb den <b>vorherigen gespeicherten Stand</b>${typeof r.recovered === 'string' ? ' vom ' + esc(new Date(r.recovered).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })) : ''} geöffnet. Die beschädigte Datei liegt bei den Sicherungen. Bitte prüfe die zuletzt eingetragenen Noten.</p>` }), 400);
     if (code) return newPasswordAfterCode();
     enterApp();
@@ -226,13 +263,19 @@ async function restoreFlow(fromLock) {
     onOk: async d => {
       const r = await N.restore(file, d.querySelector('#rsPw').value, d.querySelector('#rsCode').checked);
       if (!r.ok) { d.querySelector('#rsErr').textContent = r.error; return false; }
-      D = r.data; migrate(); toast('Sicherung wiederhergestellt'); enterApp(); return true;
+      D = r.data; migrate(); PENDING = null; toast(r.attFail ? `Noten wiederhergestellt – ${r.attFail === 1 ? 'ein Dateianhang konnte' : r.attFail + ' Dateianhänge konnten'} nicht kopiert werden` : 'Sicherung wiederhergestellt', r.attFail ? 8000 : 2600); enterApp(); return true;
     } });
   dlg.querySelector('#rsPw').focus();
 }
 async function lockNow() {
   if (!D) return;
-  try { await flush(); } catch (e) { toast('Nicht gesperrt: Die Daten konnten nicht gespeichert werden.', 5000); return; }
+  try { await flush(); } catch (e) {
+    /* Speichern klappt gerade nicht: trotzdem sperren (Sichtschutz), den ungespeicherten Stand im Speicher behalten und nach dem Entsperren erneut speichern */
+    PENDING = D; D = null;
+    $('#main').innerHTML = ''; $$('dialog').forEach(d => d.remove()); document.body.classList.remove('modal');
+    renderLock('pw', 'Gesperrt. Die letzten Änderungen konnten noch nicht gespeichert werden – sie bleiben erhalten und werden nach dem Entsperren erneut gespeichert.');
+    return;
+  }
   await N.lock(); D = null;
   $('#main').innerHTML = ''; $$('dialog').forEach(d => d.remove()); document.body.classList.remove('modal');
   renderLock();
@@ -246,6 +289,7 @@ function migrate() {
   D.courses = D.courses || []; D.classDates = D.classDates || []; D.events = D.events || []; D.settings.hues = D.settings.hues || {}; D.settings.lastTerm = D.settings.lastTerm || {};
   if (D.settings && !(+D.settings.autoLock > 0 && +D.settings.autoLock <= 15)) D.settings.autoLock = 15;   /* Mindestsicherheitsstandards des KM: Sperre spätestens nach 15 Minuten */
   D.courses.forEach(c => { c.students = sortList((c.students || []).slice()); c.away = c.away || {}; c.assessments = c.assessments || []; c.overrides = c.overrides || {}; c.notes = c.notes || {}; c.seminarPaper = c.seminarPaper || {}; c.xfer = c.xfer || {}; c.typeWeights = c.typeWeights || {}; c.areaWeights = c.areaWeights || { schriftlich: 1, 'mündlich': 1, praktisch: 1 }; if (c.seminar) semCfg(c); });
+  D.courses.forEach(c => c.assessments.forEach(a => R.markRawOrigin(a)));   /* 1.0.12: Herkunft der Gesamtpunkte ausdrücklich merken */
   D.attTrash = D.attTrash || {};
   D.trash = (D.trash || []).filter(x => x && x.when && Date.now() - new Date(x.when) < TRASH_DAYS * 864e5);
 }
@@ -272,6 +316,8 @@ async function enterApp() {
   if (!enterApp.tabSet) { enterApp.tabSet = true; if (D.courses.length && ST.startTab !== 'grades') UI.tab = 'start'; }   /* beim ersten Öffnen: Übersicht (abstellbar unter Einstellungen → Allgemein) */
   brandLine();
   render();
+  setTimeout(() => refreshFeed(false), 3500);
+  if (!ST.test) setTimeout(kmkMfsCheck, 1500);   /* in den automatischen Tests gezielt aufgerufen (e2e25) */   /* abonnierter Schulkalender: höchstens alle 6 Stunden still aktualisieren */
   applyPolicy(await N.policy());
   attHousekeeping();
   if (!enterApp.checked) { enterApp.checked = true; N.checkUpdate().then(r => { if (r && r.update) UPDATE = r.update; if (r && r.policy) applyPolicy(r.policy); render(); }).catch(() => {}); }
@@ -351,7 +397,13 @@ function defaultTerm(c) {
 function pickTerm(c) { const last = D.settings.lastTerm && D.settings.lastTerm[c.id]; return R.termsOf(c).includes(last) || (c.seminar && last === SEM_TAB) ? last : defaultTerm(c); }
 /* Abwesenheit (z. B. Auslandsaufenthalt): Zeitraum je Schüler */
 function awayOf(c, sid) { const a = c.away && c.away[sid]; return a && (a.from || a.to) ? a : null; }
-function isAway(c, sid, date) { const a = awayOf(c, sid); return !!(a && date && (!a.from || date >= a.from) && (!a.to || date <= a.to)); }
+function isAway(c, sid, date) { const a = awayOf(c, sid); if (a && date && (!a.from || date >= a.from) && (!a.to || date <= a.to)) return true;
+  /* Gast nur für einen Zeitraum da: außerhalb davon wie abwesend */
+  const g = guestOf(c, sid); return !!(g && date && ((g.from && date < g.from) || (g.to && date > g.to))); }
+function guestTag(c, s) { return s.guest ? `<span class="guestTag${s.guest.counts === false ? ' off' : ''}" title="${esc(guestText(s.guest))}">Gast</span>` : ''; }
+function awayLabel(c, sid) { const a = awayOf(c, sid); if (a) return awayText(a); const g = guestOf(c, sid); return g ? guestText(g) + ' – in diesem Zeitraum nicht da' : ''; }
+function guestOf(c, sid) { const s = (c.students || []).find(x => x.id === sid); return s && s.guest ? s.guest : null; }
+function guestText(g) { return `Gast${g.from || g.to ? ' ' + (g.from ? 'ab ' + fdate(g.from) : '') + (g.to ? ' bis ' + fdate(g.to) : '') : ''} · Noten ${g.counts === false ? 'zählen nicht (nur dokumentiert)' : 'zählen'}${g.note ? ' · ' + g.note : ''}`.replace(/\s+/g, ' '); }
 function awayText(a) { return `abwesend ${a.from ? 'ab ' + fdate(a.from) : ''}${a.to ? ' bis ' + fdate(a.to) : ''}${a.reason ? ' (' + a.reason + ')' : ''}`.replace(/\s+/g, ' '); }
 /* ---- Kursliste: drei Ansichten (nur Darstellung; gespeichert wird allein die Wahl) ---- */
 function courseViewMode() { const v = D.settings.courseView; return v === 'c' || v === 'e' ? v : 'b'; }
@@ -362,10 +414,16 @@ function courseFill(x) {
   const t = todayISO(); let have = 0, all = 0;
   x.assessments.forEach(a => {
     if (a.date && a.date > t) return;
-    x.students.forEach(s => { if (isAway(x, s.id, a.date)) return; all++; if (a.results && a.results[s.id]) have++; });
+    x.students.forEach(s => { if (isAway(x, s.id, a.date) || !R.counted(s)) return; all++; if (a.results && a.results[s.id]) have++; });
   });
   return { have, all };
 }
+/* Gruppen der Kursliste: Oberstufe = Jgst. 11–13 (G9); Seminare (W und P) eigens */
+const COURSE_GROUPS = [['u', 'Unter- und Mittelstufe'], ['o', 'Oberstufe'], ['s', 'Seminare']];
+const courseGroup = x => (x.seminar || isPSem(x) ? 's' : +x.grade >= 11 ? 'o' : 'u');
+const courseBadge = x => (x.seminar ? 'WS' : isPSem(x) ? 'PS' : upper(x) ? 'Q' + x.grade : String(x.grade));
+const courseSub = x => { const f = (x.seminar ? semLeit(x) : x.subject || '').trim() || 'Ohne Fach';
+  return x.seminar ? `${f} · Abitur ${semAbi(x)}` : `${f} · ${x.students.length} Schüler`; };
 function courseListHtml(cv) {
   const warnDot = x => R.courseWarnings(x).length > 0 ? '<span class="warnDot" title="Hinweis"></span>' : '';
   const hint = 'Doppelklick: Kurs bearbeiten · Rechtsklick: Menü';
@@ -385,10 +443,8 @@ function courseListHtml(cv) {
       return `<button class="citem card" ${attrs(x)}><span class="t">${esc(x.name)}${warnDot(x)}<small>${esc(subj(x))} · ${x.students.length} Schüler</small></span><span class="fill" title="${tip}"><i style="width:${p}%"></i></span></button>`;
     }).join('') + `</div>`;
   }
-  const grp = [['Unter- und Mittelstufe', x => !upper(x)], ['Oberstufe', x => upper(x) && !x.seminar], ['Seminare', x => !!x.seminar]];
-  return grp.map(([g, f]) => { const cs = D.courses.filter(f).sort(courseCmp); return cs.length ? `<div class="cgroup">${g}</div>` + cs.map(x => {
-    const b = x.seminar ? 'WS' : upper(x) ? 'Q' + x.grade : String(x.grade);
-    return `<button class="citem stripe" ${attrs(x)}><span class="badge neu">${esc(b)}</span><span class="t">${esc(x.name)}<small>${esc(subj(x))}${x.seminar ? ' · Abitur ' + semAbi(x) : ''} · ${x.students.length} Schüler</small></span>${warnDot(x)}</button>`;
+  return COURSE_GROUPS.map(([k, g]) => { const cs = D.courses.filter(x => courseGroup(x) === k).sort(courseCmp); return cs.length ? `<div class="cgroup">${g}</div>` + cs.map(x => {
+    return `<button class="citem stripe" ${attrs(x)}><span class="badge neu">${esc(courseBadge(x))}</span><span class="t">${esc(x.name)}<small>${esc(courseSub(x))}</small></span>${warnDot(x)}</button>`;
   }).join('') : ''; }).join('');
 }
 function renderGrades() {
@@ -439,6 +495,15 @@ function scopeOf(c) {
   if (UI.scope === 'until') return { until: UI.until || todayISO() };
   return null;
 }
+/* Festgelegte Zeugnisnote gilt für einen Zeitraum: Jahreszeugnis (c.overrides) oder Zwischenzeugnis/Notenbild (c.ovHalf).
+   Ältere Festlegungen ohne Zeitraum (bis 1.0.9) gelten wie bisher für beide; bei „bis heute“ zählt keine Festlegung. */
+const ovKind = () => UI.scope === 'half' ? 'half' : UI.scope === 'until' ? 'until' : 'year';
+function ovOf(c, sid) {
+  const k = ovKind(), y = c.overrides && c.overrides[sid];
+  if (k === 'until') return null;
+  if (k === 'half') return (c.ovHalf && c.ovHalf[sid]) || (y && !y.scope ? y : null);
+  return y || null;
+}
 function visibleAssessments(c) {
   const sc = scopeOf(c);
   const as = c.assessments.slice().sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
@@ -461,7 +526,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.g
 function courseView(c) {
   const sorted = c.students;
   /* Selten und wichtig bleibt als Balken (nicht unterstützte Version, Update, fehlgeschlagene Sicherung); alles andere wird zur kleinen Marke rechts über der Tabelle */
-  const notices = [betaNotice(), updateNotice(), ST.lastLocalError ? backupNotice0() : ''];
+  const notices = [betaNotice(), updateNotice(), ST.lastLocalError ? backupNotice0() : '', deadlineNotice(c)];
   const hints = [];
   const warns = R.courseWarnings(c);
   if (warns.length) hints.push({ cls: '', short: warns.length === 1 ? '1 Hinweis' : warns.length + ' Hinweise', html: warns.map(w => `<p style="margin:0 0 6px">${esc(w.text)}</p>`).join('') });
@@ -481,15 +546,16 @@ function courseView(c) {
       ${UI.scope === 'until' ? `<input type="date" id="untilDate" value="${UI.until || todayISO()}">` : ''}${UI.scope === 'half' && !D.settings.half1End ? '<span class="hint warnHint">Stichtag fürs Halbjahr in den Einstellungen festlegen</span>' : UI.scope === 'half' ? `<span class="hint">bis ${fdate(D.settings.half1End)}</span>` : ''}${chips}</div>`;
   }
   const semT = isSemTab(c);
-  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : (upper(c) ? 'Qualifikationsphase' : 'Jahrgangsstufe') + ' ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}</small></h2>
+  return `<div class="courseHead"><h2>${esc(c.name)} · ${esc(c.subject)}<small>${c.seminar ? 'W-Seminar 12/1–13/1 · Abitur ' + semAbi(c) : c.psem ? 'P-Seminar · Oberstufe, Jahrgangsstufe ' + c.grade : upper(c) ? 'Qualifikationsphase ' + c.grade : +c.grade === 11 ? 'Oberstufe · Jahrgangsstufe 11' : 'Jahrgangsstufe ' + c.grade} · ${c.students.length} Schüler${isMixed(c.students) ? ' aus ' + esc(groupsOf(c).filter(g => g.key).map(g => g.students[0].cls.trim()).join(', ')) : ''}${c.hours ? ' · ' + c.hours + ' Wochenstunden' : ''}${(() => { const L = courseDeadlines(c); if (!L.length) return ''; const x = nextDeadlines(c)[0]; return ` · <button type="button" class="dlChip ${x && dlDays(x) <= 7 ? 'soon' : ''}" data-act="courseDeadlines" title="Alle Fristen dieses Kurses">${x ? 'Nächste Frist: ' + esc(dlTitle(x)) + ', ' + sdate(dlDue(x)) : 'Fristen'}</button>`; })()}</small></h2>
       <div class="headBtns">${semT ? '' : '<button class="mini accent" data-act="newAssessment">+ Leistungsnachweis</button>'}<button class="mini" data-act="editCourse">Kurs &amp; Schüler</button>${semT ? '' : '<button class="mini" data-act="transfer" title="Welche Noten sind schon ins Notenprogramm der Schule übertragen?">Übertrag</button>'}<button class="mini" data-act="print">Drucken &amp; Export</button><button class="mini" data-act="rules" title="Regeln und Kürzel für diesen Kurs">Regeln</button></div></div>
     ${notices.some(Boolean) ? `<div class="notices">${notices.filter(Boolean).join('')}</div>` : ''}${scope}
     ${sorted.length && semT ? semView(c) : sorted.length ? `<div class="gridWrap glass">${upper(c) && !scopeOf(c).term ? upperOverview(c) : gridTable(c)}</div>
       <div class="legend"><span><b>Enter</b> / <b>Tab</b> nächste Zeile</span><span><b>←→↑↓</b> bewegen</span><span><b>E</b> Nachtermin</span><span><b>B</b> befreit</span><span><b>N</b> Note 6 (§ 26 Abs. 4)</span><span><b>U</b> Unterschleif</span><span>Spaltenkopf anklicken = bearbeiten, Notenspiegel, drucken</span></div>`
       : `<div class="empty glass" style="min-height:260px"><div><strong>Noch keine Schüler</strong><p>Füge die Namensliste ein oder übernimm sie aus Excel.</p><button class="go" data-act="editCourse">Schüler eintragen</button></div></div>`}`;
 }
+/* § 22 Abs. 4 Satz 2 GSO betrifft große schriftliche LN – mündliche Schulaufgaben (Titel „mündlich“) zählen hier nicht mit */
 function classBigDates(cls) {
-  const own = D.courses.filter(c => !upper(c) && classesOf(c).includes(cls)).flatMap(c => c.assessments.filter(a => R.isBig(a) && a.date).map(a => ({ date: a.date, label: `${c.subject} (${a.title || R.TYPES[a.type].label})` })));
+  const own = D.courses.filter(c => !upper(c) && classesOf(c).includes(cls)).flatMap(c => c.assessments.filter(a => R.isBig(a) && a.date && !/m(ü|ue)ndl/i.test(a.title || '')).map(a => ({ date: a.date, label: `${c.subject} (${a.title || R.TYPES[a.type].label})` })));
   const other = D.classDates.filter(x => x.cls === cls).map(x => ({ date: x.date, label: x.subject + ' (eingetragen)' }));
   return own.concat(other);
 }
@@ -516,19 +582,21 @@ function colHead(c, a, i) {
   const T = R.TYPES[a.type], up = upper(c);
   const big = R.isBig(a);
   const w = big ? (a.bigWeight && +a.bigWeight !== 1 ? wLabel(a.bigWeight) : '') : (R.weightOf(a, c) !== 1 ? '×' + String(R.weightOf(a, c)).replace('.', ',') : '');
-  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${R.byTask(a) ? '<i>Aufg.</i>' : R.byParts(a) ? '<i>Teile</i>' : a.usePoints ? '<i>Pkt.</i>' : ''}${xMarkHTML(xAssess(c, a))}</button></th>`;
+  return `<th class="${i === 0 ? 'sep' : ''}"><button class="colhead" data-edit="${a.id}" title="${esc((a.title || T.label) + (a.date ? ' · ' + fdate(a.date) : ''))}"><b>${esc(a.short || T.short)}</b><small>${a.date ? sdate(a.date) : '–'}${up && !UI.term ? ' ' + a.term : ''}</small>${w ? `<i>${w}</i>` : ''}${up && R.upperFormula(c) === 'sportlf' && !big && a.type !== 'prak' ? (R.sportPart(a) === 't' ? '<i title="Sporttheorie">Th</i>' : '<i title="Fach Sport">FS</i>') : ''}${R.byTask(a) ? '<i>Aufg.</i>' : R.byParts(a) ? '<i>Teile</i>' : a.usePoints ? '<i>Pkt.</i>' : ''}${xMarkHTML(xAssess(c, a))}</button></th>`;
 }
 function cellHTML(c, a, s) {
   const r = a.results && a.results[s.id], up = upper(c), tk = R.byTask(a) || R.byParts(a);
   let txt = a.usePoints && r && !r.status && r.raw != null ? String(r.raw).replace('.', ',') : R.cellText(r, up);
   if (tk && r && !r.status && r.raw == null && r.v == null && ((r.pts && Object.keys(r.pts).length) || (r.pp && Object.keys(r.pp).length))) txt = '…';   /* Aufgabenpunkte noch nicht vollständig */
   const cls = r && r.status ? (r.status === 'n6' || r.status === 'us' ? 'st n6' : 'st') : (r && r.nt ? 'nt' : '');
-  const sub = a.usePoints && r && !r.status && r.v != null ? `<span class="rawpts">${up ? r.v + ' P.' : 'Note ' + r.v + (r.tend || '')}</span>` : '';
+  /* Punkte-Spalten: groß die Note (bzw. Notenpunkte), klein darunter die erreichten Punkte; beim Bearbeiten wieder die Punkte groß (nur CSS, Wert bleibt die Punktzahl) */
+  const pv = a.usePoints && r && !r.status && r.v != null && txt !== '…';
+  const sub = pv ? `<span class="rawpts" aria-hidden="true">${up ? r.v : r.v + (r.tend || '')}</span>` : '';
   const aw = !r && isAway(c, s.id, a.date);
   const xs = xState(c, xKeyA(a, s.id), r);
   const ntAttr = r && r.nt && !r.status ? ' title="Nachtermin – zählt für die Person, nicht im Notenspiegel/Ø der Arbeit"' : '';
   const tkAttr = tk ? ` readonly data-tk="1" title="${R.byParts(a) ? (a.alt ? 'Übersetzung und Aufgabenteil' : 'Prüfungsteile') : 'Punkte je Aufgabe'} – Klick oder Enter zum Eintragen${r && r.exact != null && !r.status ? ' · genau ' + String(r.exact).replace('.', ',') : ''}"` : '';
-  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${tk ? 'tk' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}"${ntAttr} value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayText(awayOf(c, s.id))) + '"' : ''}${tkAttr} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
+  return `<td class="${xs === 'done' ? 'xd' : xs === 'changed' ? 'xc' : ''}${pv ? ' pvc' : ''}"${xs === 'done' ? ' title="übertragen"' : xs === 'changed' ? ' title="nach dem Übertrag geändert – Nachtrag nötig"' : ''}><input class="cell ${cls} ${a.usePoints ? 'pts' : ''} ${pv ? 'pv' : ''} ${tk ? 'tk' : ''} ${aw ? 'away' : ''}" data-a="${a.id}" data-s="${s.id}"${ntAttr} value="${esc(txt)}" ${aw ? 'placeholder="abw." title="' + esc(awayLabel(c, s.id)) + '"' : ''}${tkAttr} autocomplete="off" spellcheck="false" inputmode="${up ? 'numeric' : 'text'}">${sub}</td>`;
 }
 function gradeBadge(sug, ov) {
   if (ov) return `<span class="gb g${ov} ov" title="Von dir festgelegt">${ov}</span>`;
@@ -541,11 +609,13 @@ function summaryCells(c, s) {
   if (upper(c)) {
     const t = scopeOf(c).term; const r = R.computeTerm(c, s.id, t);
     const flag = r.zero ? '<span class="flag red" title="0 Punkte – Kurs gilt als nicht belegt"></span>' : r.under5 ? '<span class="flag warn" title="unter 5 Punkten"></span>' : '';
-    return `<td class="sum sep" data-sum="sa">${R.termHasSA(c, t) || r.formula === 'sport' ? fmt(r.sa, r.formula === 'sport' ? 2 : 1) : '·'}</td><td class="sum" data-sum="sm">${fmt(r.small, 2)}</td><td class="sum main">${fmt(r.raw, 2)}</td><td class="res">${pointsBadge(r.points)}${flag}${r.open.length ? '<span class="flag info" title="Nachtermin offen"></span>' : ''}</td>`;
+    if (r.formula === 'sportlf') return `<td class="sum sep" data-sum="sa" title="${r.fsRaw != null ? 'ungerundet ' + fmt(r.fsRaw, 2) : ''}">${r.fs ?? '–'}</td><td class="sum" data-sum="sm" title="${r.thRaw != null ? 'ungerundet ' + fmt(r.thRaw, 2) : ''}">${r.th ?? '–'}</td><td class="sum main">${fmt(r.raw, 1)}</td><td class="res">${R.counted(s) ? pointsBadge(r.points) + flag : '<span class="gb border" title="Gast – Noten zählen nicht">Gast</span>'}${r.note ? `<span class="flag warn" title="${esc(r.note)}"></span>` : ''}${r.open.length ? '<span class="flag warn" title="Nachtermin offen"></span>' : ''}</td>`;
+    return `<td class="sum sep" data-sum="sa">${R.termHasSA(c, t) || r.formula === 'sport' ? fmt(r.sa, r.formula === 'sport' ? 2 : 1) : '·'}</td><td class="sum" data-sum="sm">${fmt(r.small, 2)}</td><td class="sum main">${fmt(r.raw, 2)}</td><td class="res">${R.counted(s) ? pointsBadge(r.points) + flag : '<span class="gb border" title="Gast – Noten zählen nicht">Gast</span>'}${r.open.length ? '<span class="flag info" title="Nachtermin offen"></span>' : ''}</td>`;
   }
   const r = R.computeLower(c, s.id, scopeOf(c));
-  const ov = c.overrides[s.id] && c.overrides[s.id].grade;
+  const ov = ovOf(c, s.id) && ovOf(c, s.id).grade;
   const ng = c.noGrade && c.noGrade[s.id];
+  if (!R.counted(s)) return `${c.hasSA ? `<td class="sum">${fmt(r.saAvg)}</td>` : ''}<td class="sum">${fmt(r.smAvg)}</td><td class="sum main sep">${fmt(r.total)}</td><td class="res"><span class="gb border" title="Gast – Noten zählen nicht, keine Zeugnisnote">Gast</span></td>`;
   if (ng) return `${c.hasSA ? `<td class="sum">${fmt(r.saAvg)}</td>` : ''}<td class="sum">${fmt(r.smAvg)}</td><td class="sum main sep">${fmt(r.total)}</td><td class="res"><span class="gb border" title="${esc('Ohne Note' + (ng.reason ? ': ' + ng.reason : ''))}">o. N.</span></td>`;
   const ws = R.studentWarnings(c, s.id, r);
   const flag = ws.some(w => w.level === 'warn') ? `<span class="flag warn" title="${esc(ws.map(w => w.text).join(' · '))}"></span>` : r.open.length ? '<span class="flag info" title="Nachtermin offen"></span>' : '';
@@ -571,7 +641,7 @@ function gridTable(c) {
   let grp, sumHead;
   if (up) {
     grp = `<tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th>${showBig ? `<th class="gBig sep" colspan="${Math.max(1, big.length)}">Schulaufgabe</th>` : ''}<th class="gSmall sep" colspan="${small.length + 1}">Kleine Leistungsnachweise</th><th class="gSum sep" colspan="4">Halbjahresleistung ${esc(scopeOf(c).term)}</th></tr>`;
-    sumHead = R.upperFormula(c) === 'sport' ? `<th class="sep" title="Durchschnitt der praktischen Leistungen im Handlungsfeld – zählt doppelt (§ 29 Abs. 5 GSO)">Ø prakt. ×2</th><th>Ø klein</th><th>Ergebnis</th><th>Punkte</th>` : `<th class="sep">Ø SA</th><th>Ø klein</th><th>Ergebnis</th><th>Punkte</th>`;
+    sumHead = R.upperFormula(c) === 'sportlf' ? `<th class="sep" title="(2 × Ø praktische Leistungen + Ø kleine LN des Fachs Sport) ÷ 3, gerundet (KMBek Sport Q12/13 Nr. 1.2.1)">Fach Sport</th><th title="(Schulaufgabe + Ø kleine LN) ÷ 2, gerundet (§ 29 Abs. 2 GSO)">Sport&shy;theorie</th><th title="(Fach Sport + Sporttheorie) ÷ 2">Ergebnis</th><th>Punkte</th>` : R.upperFormula(c) === 'sport' ? `<th class="sep" title="Durchschnitt der praktischen Leistungen im Handlungsfeld – zählt doppelt (§ 29 Abs. 5 GSO)">Ø prakt. ×2</th><th>Ø klein</th><th>Ergebnis</th><th>Punkte</th>` : `<th class="sep">Ø SA</th><th>Ø klein</th><th>Ergebnis</th><th>Punkte</th>`;
   } else {
     grp = `<tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th>${showBig ? `<th class="gBig sep" colspan="${Math.max(1, big.length)}">Große LN</th>` : ''}<th class="gSmall sep" colspan="${small.length + 1}">Kleine LN</th><th class="gSum sep" colspan="${c.hasSA ? 4 : 3}">Ergebnis</th></tr>`;
     sumHead = `${c.hasSA ? '<th class="sep">Ø groß</th>' : ''}<th class="${c.hasSA ? '' : 'sep'}">Ø klein</th><th class="sep">Ø gesamt</th><th>Zeugnis</th>`;
@@ -580,7 +650,7 @@ function gridTable(c) {
   const head = `<thead>${grp}<tr class="cols">${showBig ? (hdrBig || emptyCol) : ''}${hdrSmall}${sumHead}</tr></thead>`;
   const nCols = (showBig ? Math.max(1, big.length) : 0) + small.length + 1 + (up || c.hasSA ? 4 : 3);
   let nr = 0;
-  const rows = groupsOf(c).map(g => clsRow(g, nCols) + g.students.map(s => `<tr data-row="${s.id}"><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}${awayOf(c, s.id) ? `<span class="awayTag" title="${esc(awayText(awayOf(c, s.id)))}">abw.</span>` : ''}${supTag(c, s.id)}</button></td>${showBig ? (big.length ? big.map(a => cellHTML(c, a, s)).join('') : '<td class="sep"></td>') : ''}${small.map(a => cellHTML(c, a, s)).join('')}${entCell(c, s)}${summaryCells(c, s)}</tr>`).join('')).join('');
+  const rows = groupsOf(c).map(g => clsRow(g, nCols) + g.students.map(s => `<tr data-row="${s.id}"><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}${awayOf(c, s.id) ? `<span class="awayTag" title="${esc(awayText(awayOf(c, s.id)))}">abw.</span>` : ''}${guestTag(c, s)}${supTag(c, s.id)}</button></td>${showBig ? (big.length ? big.map(a => cellHTML(c, a, s)).join('') : '<td class="sep"></td>') : ''}${small.map(a => cellHTML(c, a, s)).join('')}${entCell(c, s)}${summaryCells(c, s)}</tr>`).join('')).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody><tfoot>${gridFoot(c)}</tfoot></table>`;
 }
 /* Fußzeile der Notentabelle: Durchschnitt der Klasse je Spalte – bleibt beim Rollen unten stehen und rechnet beim Eintragen mit */
@@ -588,12 +658,12 @@ function gridFoot(c) {
   const as = visibleAssessments(c), up = upper(c);
   const big = as.filter(a => R.isBig(a)), small = as.filter(a => !R.isBig(a));
   const showBig = up ? R.termHasSA(c, scopeOf(c).term) || big.length : c.hasSA;
-  const col = a => { const d = R.distribution(a, c.students, up); return `<td title="${d.n} von ${c.students.length} mit ${up ? 'Punkten' : 'Note'}">${d.n ? fmt(d.avg, 2) : ''}</td>`; };
+  const col = a => { const d = R.distribution(a, c.students, up); return `<td title="${d.n} von ${c.students.filter(R.counted).length} mit ${up ? 'Punkten' : 'Note'}">${d.n ? fmt(d.avg, 2) : ''}</td>`; };
   const avg = (list, dg = 2) => { const v = list.filter(x => x != null); return v.length ? fmt(R.mean(v), dg) : ''; };
   let sum;
-  if (up) { const t = scopeOf(c).term, rs = c.students.map(s => R.computeTerm(c, s.id, t));
+  if (up) { const t = scopeOf(c).term, rs = c.students.filter(R.counted).map(s => R.computeTerm(c, s.id, t));
     sum = `<td class="sum sep">${R.termHasSA(c, t) || R.upperFormula(c) === 'sport' ? avg(rs.map(r => r.sa)) : ''}</td><td class="sum">${avg(rs.map(r => r.small))}</td><td class="sum main">${avg(rs.map(r => r.raw))}</td><td class="res" title="Durchschnitt der Halbjahresleistungen">${avg(rs.map(r => r.points), 1)}</td>`;
-  } else { const sc = scopeOf(c), rs = c.students.filter(s => !(c.noGrade && c.noGrade[s.id])).map(s => R.computeLower(c, s.id, sc));
+  } else { const sc = scopeOf(c), rs = c.students.filter(s => !(c.noGrade && c.noGrade[s.id]) && R.counted(s)).map(s => R.computeLower(c, s.id, sc));
     sum = `${c.hasSA ? `<td class="sum">${avg(rs.map(r => r.saAvg))}</td>` : ''}<td class="sum">${avg(rs.map(r => r.smAvg))}</td><td class="sum main sep">${avg(rs.map(r => r.total))}</td><td class="res"></td>`;
   }
   return `<tr class="avgRow"><td class="nm"><span>Ø Klasse</span></td>${showBig ? (big.length ? big.map(col).join('') : '<td></td>') : ''}${small.map(col).join('')}<td class="ent sep"></td>${sum}</tr>`;
@@ -603,11 +673,11 @@ function upperOverview(c) {
   const terms = R.termsOf(c);
   const sem = c.seminar;
   const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="gSum sep" colspan="${terms.length}">Halbjahresleistungen (Punkte)</th>${sem ? '<th class="gBig sep" colspan="3">Seminararbeit (§ 29 GSO)</th>' : ''}</tr>
-    <tr class="cols">${terms.map((t, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 14px">${t}</th>`).join('')}${sem ? '<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Präsentation/<br>Prüfungsgespräch</th><th style="padding:6px 10px">Gesamt (max. 30)</th>' : ''}</tr></thead>`;
+    <tr class="cols">${terms.map((t, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 14px">${t}</th>`).join('')}${sem ? '<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Prüfungs-<br>gespräch</th><th style="padding:6px 10px">Gesamt (max. 30)</th>' : ''}</tr></thead>`;
   let nr = 0;
   const rows = groupsOf(c).map(g => clsRow(g, terms.length + (sem ? 3 : 0)) + g.students.map(s => {
     const sp = c.seminarPaper[s.id] || {};
-    return `<tr><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}${supTag(c, s.id)}</button></td>${terms.map((t, j) => { const r = R.computeTerm(c, s.id, t); return `<td class="res ${j ? '' : 'sep'}">${pointsBadge(r.points)}${r.zero ? '<span class="flag red" title="0 Punkte – nicht belegt"></span>' : ''}</td>`; }).join('')}
+    return `<tr><td class="nm"><button data-stu="${s.id}"><span class="nr">${++nr}</span>${esc(s.name)}${supTag(c, s.id)}</button></td>${terms.map((t, j) => { const r = R.computeTerm(c, s.id, t); if (!R.counted(s)) return `<td class="res ${j ? '' : 'sep'}"><span class="gb border" title="Gast – Noten zählen nicht">Gast</span></td>`; return `<td class="res ${j ? '' : 'sep'}">${pointsBadge(r.points)}${r.zero ? '<span class="flag red" title="0 Punkte – nicht belegt"></span>' : ''}</td>`; }).join('')}
       ${sem ? `<td class="sep"><input class="cell" data-sp="arbeit" data-s="${s.id}" value="${esc(sp.arbeit ?? '')}"></td><td><input class="cell" data-sp="gespraech" data-s="${s.id}" value="${esc(sp.gespraech ?? '')}"></td><td class="sum main" data-spsum="${s.id}">${R.seminarPaper(sp.arbeit, sp.gespraech) ?? '–'}</td>` : ''}</tr>`;
   }).join('')).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
@@ -638,7 +708,7 @@ function bindGrid(c) {
       const r = R.parseCell(raw, upper(c)); if (r.error) { bad(el, r.error + ' · Kürzel: E, B, N, U'); return; }
       const s = c.students.find(x => x.id === el.dataset.eq);
       c.entries = c.entries || [];
-      const ne = { id: uid(), sid: s.id, type: c.entryType || 'ub', date: upper(c) ? todayISO() : (UI.scope === 'until' && UI.until ? UI.until : todayISO()), ...(upper(c) ? { term: scopeOf(c).term } : {}), ...r };
+      const ne = { id: uid(), sid: s.id, type: c.entryType || 'ub', ...(c.entrySt && c.entryType !== 'prak' && R.upperFormula(c) === 'sportlf' ? { st: c.entrySt } : {}), date: upper(c) ? todayISO() : (UI.scope === 'until' && UI.until ? UI.until : todayISO()), ...(upper(c) ? { term: scopeOf(c).term } : {}), ...r };
       c.entries.push(ne);
       el.value = ''; save();
       toastAction(`Einzelnote ${R.cellText(ne, upper(c))} für ${s.name} eingetragen`, 'Rückgängig', () => { c.entries = (c.entries || []).filter(x => x.id !== ne.id); save(); render(); });
@@ -657,10 +727,11 @@ function bindGrid(c) {
     else if (a.usePoints && /^[0-9]+([.,][0-9]+)?$/.test(raw)) {
       const p = +raw.replace(',', '.');
       if (a.key && a.key.max && p > a.key.max) { bad(el, `Höchstens ${a.key.max} Punkte`); return; }
+      if (a.key && a.key.preset === 'hv' && p !== Math.round(p)) { bad(el, 'Hörverstehen: nur ganze BE (ISB-Leitfaden 04/2025)'); return; }
       const kr = R.keyResult(p, a.key, up);
       if (kr == null) { bad(el, 'Erst Notenschlüssel festlegen (Spaltenkopf anklicken)'); return; }
       const keep = a.results[sid] && a.results[sid].pts ? { pts: a.results[sid].pts } : {};   /* Aufgabenpunkte bleiben erhalten */
-      a.results[sid] = { ...keep, raw: p, v: kr.v, ...(kr.tend ? { tend: kr.tend } : {}) };
+      a.results[sid] = { ...keep, raw: p, rawMan: true, v: kr.v, ...(kr.tend ? { tend: kr.tend } : {}) };
     } else {
       const r = R.parseCell(raw, up);
       if (r.error) { bad(el, r.error + ' · Kürzel: E, B, N, U'); return; }
@@ -684,20 +755,20 @@ function bindGrid(c) {
     const el = e.target; if (!el.classList || !el.classList.contains('cell')) return;
     const td = el.closest('td'), tr = td.closest('tr');
     const col = [...tr.children].indexOf(td);
-    const moveRow = d => { let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col])); const n = r && r.children[col] && r.children[col].querySelector('.cell'); if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); }, 0); } };
+    const moveRow = d => { let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col])); const n = r && r.children[col] && r.children[col].querySelector('.cell'); if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); } } };   /* sofort weiter, damit kein Tastendruck verloren geht */
     const moveCol = d => { const list = cells().filter(x => x.closest('tr') === tr); const i = list.indexOf(el); const n = list[i + d]; if (n) n.focus(); };
     /* Tab wie im Infoportal: Tab = eine Zeile nach unten, Shift+Tab = nach oben; am Spaltenende in die nächste (vorherige) Spalte; ganz am Ende verlässt Tab die Tabelle wie gewohnt */
     const tabMove = back => {
       const d = back ? -1 : 1;
       let r = tr; do { r = d > 0 ? r.nextElementSibling : r.previousElementSibling; } while (r && (r.classList.contains('clsRow') || !r.children[col]));
       const n = r && r.children[col] && r.children[col].querySelector('.cell:not(.entq)');
-      if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); t.select && t.select(); }, 0); return true; }
+      if (n) { el.dispatchEvent(new Event('change', { bubbles: true })); { const t = $(`.cell[data-a="${n.dataset.a}"][data-s="${n.dataset.s}"]`) || n; t.focus(); t.select && t.select(); } return true; }
       const all = cells().filter(x => !x.classList.contains('entq') && x.dataset.a);
       const keys = [...new Set(all.map(x => x.dataset.a))], k = keys.indexOf(el.dataset.a) + d;
       if (k < 0 || k >= keys.length) return false;
       const colCells = all.filter(x => x.dataset.a === keys[k]); const t0 = d > 0 ? colCells[0] : colCells[colCells.length - 1];
       if (!t0) return false;
-      el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { const t = $(`.cell[data-a="${t0.dataset.a}"][data-s="${t0.dataset.s}"]`) || t0; t.focus(); t.select && t.select(); }, 0); return true;
+      el.dispatchEvent(new Event('change', { bubbles: true })); { const t = $(`.cell[data-a="${t0.dataset.a}"][data-s="${t0.dataset.s}"]`) || t0; t.focus(); t.select && t.select(); } return true;
     };
     if (e.key === 'Enter' && el.classList.contains('tk')) { e.preventDefault(); taskSheet(c, c.assessments.find(x => x.id === el.dataset.a), el.dataset.s); }
     else if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey && !el.classList.contains('entq') && el.dataset.a) { if (tabMove(e.shiftKey)) e.preventDefault(); }
@@ -714,6 +785,7 @@ function bindGrid(c) {
   const ec = work.querySelector('[data-entcfg]'); if (ec) ec.onclick = () => entryCfgSheet(c);
   work.addEventListener('click', e => { const b = e.target.closest('[data-semcard]'); if (b) semCard(c, c.students.find(s => s.id === b.dataset.semcard)); });
   const sc = work.querySelector('[data-semcfg]'); if (sc) sc.onclick = () => courseSheet(c);
+  const spg = work.querySelector('[data-sempg]'); if (spg) spg.onclick = () => semPgSheet(c);
 }
 
 /* Allgemeine Aktionen */
@@ -722,6 +794,9 @@ document.addEventListener('click', async e => {
     const a = b.dataset.act;
     if (a === 'newCourse') courseSheet();
     if (a === 'klassen') klassenSheet();
+    if (a === 'deadlines') deadlineSheet();
+    if (a === 'ldo') ldoSheet();
+    if (a === 'courseDeadlines' && course()) courseDeadlineSheet(course());
     if (a === 'editCourse') courseSheet(course());
     if (a === 'newAssessment') assessmentSheet(course());
     if (a === 'transfer') transferSheet(course());
@@ -773,7 +848,7 @@ function courseSheet(c, pre) {
   const body = `
     <div class="grid3">
       ${field('Klasse / Kurs', `<input type="text" id="cName" value="${esc(c.name)}" placeholder="z. B. 9F oder Q13 E1" required>`)}
-      ${field('Fach', `<input type="text" id="cSubj" list="subjList" value="${esc(c.subject)}" placeholder="z. B. Englisch" required><datalist id="subjList">${R.SUBJECTS.map(s => `<option>${esc(s)}</option>`).join('')}</datalist>`)}
+      ${field(c.seminar || isPSem(c) ? 'Leitfach' : 'Fach', `<input type="text" id="cSubj" value="${esc(isWSemName(c.subject) ? ((c.sem && c.sem.leit) || '') : /^p[\s-]?seminar$/i.test(String(c.subject || '').trim()) ? '' : c.subject)}" placeholder="z. B. Englisch" autocomplete="off" required>`)}
       ${field('Jahrgangsstufe', `<select id="cGrade">${[5, 6, 7, 8, 9, 10, 11, 12, 13].map(g => `<option ${+c.grade === g ? 'selected' : ''}>${g}</option>`).join('')}</select>`)}
     </div>
     <div class="field"><span>Farbe des Fachs</span><div class="swatches" id="cHue"><button type="button" class="swAuto" data-hue="" aria-pressed="${!hueSel}">automatisch</button>${HUES.map(h => `<button type="button" class="swatch" data-hue="${h}" style="--hue:var(${h})" title="${HUE_NAMES[h]}" aria-label="${HUE_NAMES[h]}" aria-pressed="${hueSel === h}"></button>`).join('')}</div></div>
@@ -783,7 +858,7 @@ function courseSheet(c, pre) {
         ${field('Geplante Schulaufgaben', `<input type="number" min="0" max="8" id="cPlanned" value="${esc(c.saPlanned)}" placeholder="z. B. 3">`)}
         ${field('Verhältnis groß : klein', `<select id="cRatio"><option value="auto">automatisch (§ 28 GSO)</option><option value="1:1" ${c.ratio === '1:1' ? 'selected' : ''}>1 : 1</option><option value="2:1" ${c.ratio === '2:1' ? 'selected' : ''}>2 : 1</option></select>`)}
       </div>
-      <div class="rows">${sw('cHasSA', c.hasSA, 'Fach mit Schulaufgaben')}</div>
+      <div class="rows">${sw('cHasSA', c.hasSA, 'Fach mit Schulaufgaben')}<div id="psemRow">${sw('cPsem', isPSem(c), 'P-Seminar (Projektseminar) – oben das Leitfach eintragen')}</div></div>
       <p class="hint" id="pHint" hidden><b>P-Seminar (Jahrgangsstufe 11):</b> keine Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge (§ 21 Abs. 2 GSO). Die Note gilt als Jahresfortgangsnote (§ 20 GSO) – Libretto rechnet sie wie ein Fach ohne Schulaufgaben.</p>
       <p class="hint">§ 28 GSO: bei zwei Schulaufgaben zählen große und kleine Leistungsnachweise 1:1, bei mehr als zwei 2:1. Mindestzahlen nach § 22 Abs. 1 GSO: Deutsch 3, Mathematik 4 (Jgst. 5–7) bzw. 3, Fremdsprachen 3 bzw. 4 ab vier Wochenstunden, übrige Fächer mit Schulaufgaben 2.</p>
     </div>
@@ -791,11 +866,11 @@ function courseSheet(c, pre) {
     <div id="upperOpts">
       ${field('Art des Kurses', `<select id="cKind"><option value="n">Kurs auf grundlegendem Niveau (gA) – in 13/2 ohne Schulaufgabe</option><option value="lf" ${c.lf && !c.seminar ? 'selected' : ''}>Leistungsfach (eA) – Schulaufgabe auch in 13/2</option><option value="w" ${c.seminar ? 'selected' : ''}>W-Seminar (mit Seminararbeit)</option></select>`)}
       <p class="hint" id="kindHintN">§ 29 GSO: Halbjahresleistung = Durchschnitt aus Schulaufgabe und Schnitt der kleinen LN, gerundet; eine Aufrundung auf 1 Punkt ist nicht zulässig. In 13/2 schreiben nur Kurse auf erhöhtem Niveau (eA) eine Schulaufgabe (§ 22 Abs. 3 GSO): das Leistungsfach sowie Deutsch und Mathematik, die immer auf eA belegt werden – das berücksichtigt Libretto automatisch. Profilfächer wie fremdsprachige Konversation rechnen genauso – dort ist die „Schulaufgabe“ die Konversationsübung (§ 22 Abs. 3 GSO).</p>
+      <div id="sportThRow" hidden>${field('Sporttheorie im Leistungsfach Sport', `<select id="cSportTh"><option value="here">im selben Kurs – Libretto rechnet die Endpunktzahl (empfohlen)</option><option value="own" ${(c.sportTh || (isNew ? 'here' : 'own')) === 'own' ? 'selected' : ''}>in einem eigenen Kurs – Endpunktzahl selbst bilden</option></select>`)}</div>
       <p class="hint" id="fmHint" hidden></p>
       <div id="semOpts">
         <div class="grid3">
           ${field('Beginn der Jahrgangsstufe 12', `<select id="cSemStart">${[-2, -1, 0, 1].map(k => yearStart() + k).map(y => `<option value="${y}" ${+semStart0 === y ? 'selected' : ''}>Schuljahr ${y}/${String((y + 1) % 100).padStart(2, '0')} · Abitur ${y + 2}</option>`).join('')}</select>`)}
-          ${field('Leitfach (optional)', `<input type="text" id="cSemLeit" list="subjList" value="${esc(semC.leit || '')}" placeholder="z. B. Englisch">`)}
           ${field('Rahmenthema (optional)', `<input type="text" id="cSemRahmen" value="${esc(semC.rahmen || '')}">`)}
         </div>
         <div class="grid3">
@@ -815,7 +890,7 @@ function courseSheet(c, pre) {
     <div class="stTable" id="stRows" style="margin-top:10px"></div>
     <p class="hint" id="stClsHint" hidden>Kurs aus mehreren Klassen: Trage bei jedem Namen die Klasse ein (z. B. 8A) – Libretto unterteilt die Liste dann nach Klassen, auch auf der Übertragsliste fürs Infoportal. Steht die Klasse in der eingelesenen Liste, wird sie übernommen.</p>
     <div class="panelBtns"><button type="button" class="mini" id="stAdd">+ Schüler/in</button><button type="button" class="mini" id="stSwap">Vor- und Nachname tauschen</button><button type="button" class="mini" id="stCls" title="Für Kurse mit Schülern aus mehreren Klassen, z. B. Italienisch aus 8A und 8B">Klassen eintragen</button><button type="button" class="mini" id="stFill" hidden>Fehlende Klassen ausfüllen …</button>
-      ${others.length ? `<select class="mini" id="cFrom"><option value="">Aus anderem Kurs übernehmen …</option>${others.map(o => `<option value="${o.id}">${esc(o.name + ' ' + o.subject)} (${o.students.length})</option>`).join('')}</select>` : ''}</div>
+      ${others.length ? `<select class="mini" id="cFrom"><option value="">Aus anderem Kurs übernehmen …</option>${others.map(o => `<option value="${o.id}">${esc(o.name + ' ' + o.subject)} (${o.students.length})</option>`).join('')}</select>` : ''}<button type="button" class="mini" id="cGuest" title="Für Gastschülerinnen und -schüler, die nicht auf der Klassenliste stehen">+ Gast …</button></div>
     <details class="more" ${isNew ? '' : ''}><summary>Gewichtung der kleinen Leistungsnachweise</summary>
     ${field('Berechnung', `<select id="cSmall"><option value="flat">Gewichteter Durchschnitt aller kleinen LN</option><option value="areas" ${c.smallMode === 'areas' ? 'selected' : ''}>Erst je Bereich (schriftlich / mündlich / praktisch), dann Bereiche gewichten</option></select>`)}
     <div id="areaW" class="wgrid" style="margin-bottom:10px">${R.AREAS.map(a => `<label>${a}<input type="number" step="0.5" min="0" data-area="${a}" value="${c.areaWeights[a] ?? 1}"></label>`).join('')}</div>
@@ -825,29 +900,39 @@ function courseSheet(c, pre) {
     ${isNew ? '' : '<button type="button" class="danger" id="cDel">Kurs löschen</button>'}`;
   const { dlg, close } = sheet({ title: isNew ? 'Neuer Kurs' : 'Kurs bearbeiten', wide: true, body, onOk: d => {
     const g = +d.querySelector('#cGrade').value;
+    /* Wechsel zwischen Noten (5–11) und Notenpunkten (12/13) bei vorhandenen Noten: nie umdeuten – eine „1“ aus Klasse 11 ist nicht 1 Punkt */
+    if (!isNew && (+c.grade >= 12) !== (g >= 12) && (c.assessments.some(a => a.results && Object.keys(a.results).length) || (c.entries || []).length)) {
+      toast(`In diesem Kurs stehen schon ${+c.grade >= 12 ? 'Notenpunkte' : 'Noten'}. Für die ${g >= 12 ? 'Qualifikationsphase' : 'Jahrgangsstufe ' + g} bitte einen neuen Kurs anlegen („Aus anderem Kurs übernehmen“ holt die Namen).`, 8000);
+      return false;
+    }
     c.name = d.querySelector('#cName').value.trim(); c.subject = d.querySelector('#cSubj').value.trim(); c.grade = g;
-    if (!c.name || !c.subject) { toast('Bitte Klasse/Kurs und Fach angeben'); return false; }
+    if (!c.name || !c.subject) { toast(d.querySelector('#cKind').value === 'w' && g >= 12 || d.querySelector('#cPsem').checked ? 'Bitte Kurs und Leitfach angeben' : 'Bitte Klasse/Kurs und Fach angeben'); return false; }
     c.hours = d.querySelector('#cHours').value; c.saPlanned = d.querySelector('#cPlanned').value; c.ratio = d.querySelector('#cRatio').value;
     const kind = d.querySelector('#cKind').value;
     if (g >= 12) { c.lf = kind === 'lf'; c.seminar = kind === 'w'; } else c.seminar = false;
-    c.hasSA = g >= 12 ? !c.seminar : d.querySelector('#cHasSA').checked;
-    if (R.isModernLang(c.subject) && g >= 11 && d.querySelector('#cLate').checked) c.late = true; else delete c.late;
+    if (g >= 12 && c.lf && R.isSportPraxis(c.subject)) c.sportTh = d.querySelector('#cSportTh').value; else delete c.sportTh;
+    if (g === 11 && d.querySelector('#cPsem').checked) c.psem = true; else delete c.psem;
+    c.hasSA = g >= 12 ? !c.seminar : (c.psem || isPSem(c)) ? false : d.querySelector('#cHasSA').checked;
+    if (R.isModernLang(c.subject) && g >= 11 && !c.seminar && !c.psem && d.querySelector('#cLate').checked) c.late = true; else delete c.late;
     if (c.seminar) {   /* W-Seminar: Fristen und Angaben; vorhandene Betreuungsdaten (c.sem.st) bleiben unberührt */
       c.sem = c.sem || {}; c.sem.st = c.sem.st || {};
       c.sem.start = +d.querySelector('#cSemStart').value;
       const setS = (k, sel) => { const v = d.querySelector(sel).value.trim(); if (v) c.sem[k] = v; else delete c.sem[k]; };
-      setS('leit', '#cSemLeit'); setS('rahmen', '#cSemRahmen'); setS('themeDue', '#cSemThema'); setS('deadline', '#cSemDue'); setS('deadlineTime', '#cSemTime');
+      c.sem.leit = c.subject; setS('rahmen', '#cSemRahmen'); setS('themeDue', '#cSemThema'); setS('deadline', '#cSemDue'); setS('deadlineTime', '#cSemTime');
     }
     c.smallMode = d.querySelector('#cSmall').value;
     D.settings.hues = D.settings.hues || {}; if (hueSel) D.settings.hues[subjKey(c.subject)] = hueSel; else delete D.settings.hues[subjKey(c.subject)];
     $$('[data-area]', d).forEach(i => c.areaWeights[i.dataset.area] = +i.value || 0);
     $$('[data-tw]', d).forEach(i => { const v = i.value === '' ? 1 : +i.value; if (v === 1) delete c.typeWeights[i.dataset.tw]; else c.typeWeights[i.dataset.tw] = v; });
     /* Schüler übernehmen: bestehende behalten ihre ID und damit ihre Noten */
-    const seen = new Set(), next = [];
+    const seen = new Set(), next = [], dup = [];
     draft.filter(x => (x.last || '').trim() || (x.first || '').trim()).forEach(x => {
-      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st); const was = c.students.find(o => o.id === x.id); if (was) ['xid', 'ext', 'g'].forEach(k => { if (was[k] != null) st[k] = was[k]; }); const k = Importer.normCls(x.cls) || String(x.cls || '').trim(); if (k) st.cls = k;
-      if (seen.has(st.name.toLowerCase())) return; seen.add(st.name.toLowerCase()); next.push(st);
+      const st = { id: x.id, last: x.last.trim(), first: x.first.trim() }; st.name = fullName(st); const was = c.students.find(o => o.id === x.id); if (was) ['xid', 'ext', 'g', 'guest'].forEach(k => { if (was[k] != null) st[k] = was[k]; }); if (x.guest) st.guest = x.guest; else if (was && x.guest === null) delete st.guest; const k = Importer.normCls(x.cls) || String(x.cls || '').trim(); if (k) st.cls = k;
+      /* Doppelte nur bei neu eingefügten Zeilen weglassen (gleicher Name und gleiche Klasse). Wer schon im Kurs ist, bleibt immer – auch bei gleichem Namen. */
+      const key = st.name.toLowerCase() + '|' + (st.cls || '').toLowerCase();
+      if (!was && seen.has(key)) { dup.push(st); return; } seen.add(key); next.push(st);
     });
+    const go = () => {
     const ids = new Set(next.map(x => x.id));
     const removed = c.students.filter(s => !ids.has(s.id) && (c.assessments.some(a => a.results && a.results[s.id]) || (c.entries || []).some(e => e.sid === s.id) || semHasData(c, s.id)));
     const finish = () => {
@@ -859,35 +944,44 @@ function courseSheet(c, pre) {
       if (i >= 0) D.courses[i] = c; else D.courses.push(c);
       UI.course = c.id; rememberCourse(); save(); close(); render();
     };
-    if (removed.length) { ask(`${removed.length} Schüler mit eingetragenen Noten${c.seminar ? ' bzw. Seminar-Dokumentation' : ''} würden entfernt (${removed.map(s => esc(s.name)).join(', ')}). Ihre Noten gehen dabei verloren.`, 'Entfernen', true).then(ok => { if (ok) finish(); }); return false; }
-    finish(); return false;
+    if (removed.length) { ask(`${removed.length} Schüler mit eingetragenen Noten${c.seminar ? ' bzw. Seminar-Dokumentation' : ''} würden entfernt (${removed.map(s => esc(s.name)).join(', ')}). Ihre Noten gehen dabei verloren.`, 'Entfernen', true).then(ok => { if (ok) finish(); }); return; }
+    finish();
+    };
+    /* gleicher Name und gleiche Klasse: nicht still weglassen – es können zwei verschiedene Personen sein */
+    if (dup.length) { ask(`Diese Namen gibt es mit gleicher Klasse schon in der Liste: <b>${dup.map(x => esc(x.name) + (x.cls ? ' (' + esc(x.cls) + ')' : '')).join('; ')}</b>.<br>Sind das verschiedene Personen?`, 'Ja, zusätzlich anlegen', false, 'Gleicher Name', 'Nein, nur einmal').then(keep => { if (keep) next.push(...dup); go(); }); return false; }
+    go(); return false;
   } });
   if (pre && pre.next) dlg.addEventListener('close', pre.next, { once: true });
   const upd = () => { const g = +dlg.querySelector('#cGrade').value; dlg.querySelector('#lowerOpts').hidden = g >= 12; dlg.querySelector('#upperOpts').hidden = g < 12; dlg.querySelector('#areaW').hidden = dlg.querySelector('#cSmall').value !== 'areas';
     const w = dlg.querySelector('#cKind').value === 'w'; dlg.querySelector('#semOpts').hidden = !w; dlg.querySelector('#kindHintN').hidden = w;
-    dlg.querySelector('#pHint').hidden = !isPSem({ subject: dlg.querySelector('#cSubj').value });
+    const ps = g === 11 && dlg.querySelector('#cPsem').checked; dlg.querySelector('#psemRow').hidden = g !== 11;
+    dlg.querySelector('#pHint').hidden = !ps; if (ps) dlg.querySelector('#cHasSA').checked = false;
+    dlg.querySelector('#cSubj').closest('.field').querySelector('span').textContent = (w && g >= 12) || ps ? 'Leitfach' : 'Fach';
     const sj = dlg.querySelector('#cSubj').value.trim();
-    dlg.querySelector('#lateRow').hidden = !(R.isModernLang(sj) && g >= 11);
-    const fm = g >= 12 && !w ? R.upperFormula({ subject: sj, lf: dlg.querySelector('#cKind').value === 'lf' }) : null, fh = dlg.querySelector('#fmHint');
+    dlg.querySelector('#lateRow').hidden = !(R.isModernLang(sj) && g >= 11) || (w && g >= 12) || ps;
+    const fm = g >= 12 && !w ? R.upperFormula({ subject: sj, lf: dlg.querySelector('#cKind').value === 'lf', sportTh: dlg.querySelector('#cSportTh').value }) : null, fh = dlg.querySelector('#fmHint');
+    dlg.querySelector('#sportThRow').hidden = !(g >= 12 && !w && dlg.querySelector('#cKind').value === 'lf' && R.isSportPraxis(sj));
     fh.hidden = !fm;
-    fh.innerHTML = fm === 'sport' ? '<b>Sport (§ 29 Abs. 5 GSO):</b> Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3, gerundet. Praktische Leistungen trägst du als Art „Praktische Leistung“ ein. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an; beide Punktzahlen zählen dann 1 : 1.'
+    fh.innerHTML = fm === 'sport' ? '<b>Sport (§ 29 Abs. 5 GSO):</b> Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3, gerundet. Praktische Leistungen trägst du als Art „Praktische Leistung“ ein.' + (dlg.querySelector('#cKind').value === 'lf' ? ' Leistungsfach mit eigenem Theoriekurs: Die Endpunktzahl ist der Durchschnitt beider gerundeten Punktzahlen (§ 29 Abs. 5 Satz 2 GSO) – die bildest du selbst.' : '')
+      : fm === 'sportlf' ? '<b>Leistungsfach Sport (§ 29 Abs. 5 GSO, KMBek Sport Q12/13 Nr. 2.3.1):</b> Fach Sport = (2 × Ø praktische Leistungen im Handlungsfeld + Ø kleine LN des Fachs Sport) ÷ 3, gerundet. Sporttheorie = (Schulaufgabe + Ø kleine LN der Sporttheorie) ÷ 2, gerundet. Endpunktzahl = Durchschnitt beider, gerundet; keine Aufrundung auf 1 Punkt. Bei jedem kleinen LN wählst du, ob er zum Fach Sport oder zur Sporttheorie gehört.'
       : fm === 'kunst' ? '<b>Leistungsfach Kunst (§ 29 Abs. 3 GSO):</b> Halbjahresleistung = Durchschnitt aus Schulaufgabe, künstlerischem Projekt (eigene Art) und Durchschnitt der kleinen LN, gerundet.'
       : fm === 'musik' ? '<b>Leistungsfach Musik (§ 29 Abs. 4 GSO):</b> Halbjahresleistung = Durchschnitt aus Schulaufgabe, praktischer Prüfung (eigene Art) und Durchschnitt der kleinen LN, gerundet.' : ''; };
-  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; dlg.querySelector('#cKind').onchange = upd; dlg.querySelector('#cSubj').addEventListener('input', upd); upd();
+  dlg.querySelector('#cGrade').onchange = upd; dlg.querySelector('#cSmall').onchange = upd; dlg.querySelector('#cKind').onchange = upd; dlg.querySelector('#cSportTh').onchange = upd; dlg.querySelector('#cPsem').onchange = upd; dlg.querySelector('#cSubj').addEventListener('input', upd);
+  combo(dlg.querySelector('#cSubj'), () => R.SUBJECTS); upd();
   /* Fach „W-Seminar“ / „P-Seminar“: passende Einstellungen vorschlagen */
   dlg.querySelector('#cSubj').addEventListener('change', () => {
     const v = dlg.querySelector('#cSubj').value, gs = dlg.querySelector('#cGrade');
-    if (isWSemName(v)) { if (+gs.value < 12) gs.value = '12'; dlg.querySelector('#cKind').value = 'w'; }
-    if (isPSem({ subject: v })) { if (isNew && +gs.value !== 11) gs.value = '11'; dlg.querySelector('#cHasSA').checked = false; }
+    if (isWSemName(v)) { if (+gs.value < 12) gs.value = '12'; dlg.querySelector('#cKind').value = 'w'; dlg.querySelector('#cSubj').value = ''; toast('W-Seminar ist als „Art des Kurses“ eingestellt – bitte noch das Leitfach eintragen'); }
+    if (/^p[\s-]?seminar$/i.test(v.trim())) { gs.value = '11'; dlg.querySelector('#cPsem').checked = true; dlg.querySelector('#cSubj').value = ''; toast('P-Seminar ist eingestellt – bitte noch das Leitfach eintragen'); }
     upd();
   });
-  const sugTxt = () => { const x = semDeadlineSuggest(+dlg.querySelector('#cSemStart').value); dlg.querySelector('#cSemSugTxt').textContent = x ? 'laut Ferienkalender Bayern: ' + wdate(x) : ''; return x; };
+  const sugTxt = () => { const x = semDeadlineSuggest(+dlg.querySelector('#cSemStart').value); dlg.querySelector('#cSemSugTxt').textContent = x ? 'laut Ferienkalender Bayern: ' + wdate(x) : +dlg.querySelector('#cSemStart').value > 0 ? 'Ferienkalender nur bis 2029/30 hinterlegt – Abgabetag bitte selbst eintragen (§ 24 GSO).' : ''; return x; };
   dlg.querySelector('#cSemStart').onchange = sugTxt; sugTxt();
   dlg.querySelector('#cSemSug').onclick = () => { const x = sugTxt(); if (x) dlg.querySelector('#cSemDue').value = x; else toast('Für dieses Schuljahr kennt Libretto die Ferien noch nicht – bitte Termin selbst eintragen'); };
   $$('#cHue button', dlg).forEach(b => b.onclick = () => { hueSel = b.dataset.hue; $$('#cHue button', dlg).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
   if (isNew) dlg.querySelector('#cName').focus();
   /* Entwurf der Schülerliste (Tabelle wie in Viva/Gruppen) */
-  let draft = c.students.map(x => ({ id: x.id, ...splitName(x), cls: x.cls || '' }));
+  let draft = c.students.map(x => ({ id: x.id, ...splitName(x), cls: x.cls || '', ...(x.guest ? { guest: { ...x.guest } } : {}) }));
   const rowsEl = dlg.querySelector('#stRows');
   /* Spalte „Klasse“: sichtbar, sobald sie gebraucht wird (zwei Klassen im Kurs, Klasse nur bei einem Teil der Namen) oder auf Wunsch */
   let clsOn = false;
@@ -897,14 +991,14 @@ function courseSheet(c, pre) {
     const kc = showCls();
     dlg.querySelector('#stCount').textContent = draft.length ? draft.length + ' Namen' + (clsSet().size > 1 ? ' aus ' + clsSet().size + ' Klassen' : '') : '';
     dlg.querySelector('#stCls').hidden = kc; dlg.querySelector('#stClsHint').hidden = !kc; dlg.querySelector('#stFill').hidden = !(kc && draft.some(x => !clsKey(x)) && draft.length > 1);
-    rowsEl.innerHTML = draft.length ? draft.map((x, i) => `<div class="stRow lib ${kc ? 'withCls' : ''}" data-i="${i}"><span class="nr">${i + 1}</span><input type="text" data-f="last" value="${esc(x.last)}" placeholder="Nachname"><input type="text" data-f="first" value="${esc(x.first)}" placeholder="Vorname">${kc ? `<input type="text" data-f="cls" value="${esc(x.cls || '')}" placeholder="Klasse" maxlength="6" title="Klasse, z. B. 8A">` : ''}<button type="button" class="iconbtn" data-rm="${i}" title="Entfernen">✕</button></div>`).join('')
+    rowsEl.innerHTML = draft.length ? draft.map((x, i) => `<div class="stRow lib ${kc ? 'withCls' : ''}" data-i="${i}"><span class="nr" ${x.guest ? `title="${esc(guestText(x.guest))}"` : ''}>${x.guest ? '<i class="guestTag sm">G</i>' : i + 1}</span><input type="text" data-f="last" value="${esc(x.last)}" placeholder="Nachname"><input type="text" data-f="first" value="${esc(x.first)}" placeholder="Vorname">${kc ? `<input type="text" data-f="cls" value="${esc(x.cls || '')}" placeholder="Klasse" maxlength="6" title="Klasse, z. B. 8A">` : ''}<button type="button" class="iconbtn" data-rm="${i}" title="Entfernen">✕</button></div>`).join('')
       : '<div class="stEmpty">Noch keine Namen – Klassenliste einlesen oder Namen einfügen.</div>';
     $$('.stRow', rowsEl).forEach(r => $$('input', r).forEach(inp => inp.oninput = () => { draft[+r.dataset.i][inp.dataset.f] = inp.value; }));
     $$('[data-rm]', rowsEl).forEach(b => b.onclick = () => { draft.splice(+b.dataset.rm, 1); drawDraft(); });
   };
   const addDraft = (list, batchCls = '') => { const key = x => (x.last + '|' + x.first).toLowerCase(); const have = new Map(draft.map(x => [key(x), x])); let n = 0, k = 0;
     list.forEach(x => { const y = { id: uid(), last: (x.last || '').trim(), first: (x.first || '').trim(), cls: Importer.normCls(x.cls) || batchCls }; if (!y.last && !y.first) return;
-      const old = have.get(key(y)); if (old) { if (y.cls && !clsKey(old)) { old.cls = y.cls; k++; } return; } /* schon in der Liste: nur die fehlende Klasse ergänzen */
+      const old = have.get(key(y)); if (old && !(y.cls && clsKey(old) && clsKey(old).toUpperCase() !== String(y.cls).toUpperCase())) { if (y.cls && !clsKey(old)) { old.cls = y.cls; k++; } return; }   /* gleicher Name in anderer Klasse = andere Person */ /* schon in der Liste: nur die fehlende Klasse ergänzen */
       have.set(key(y), y); draft.push(y); n++; });
     sortList(draft); drawDraft();
     const kl = clsSet().size > 1 ? ` aus ${clsSet().size} Klassen` : '';
@@ -964,6 +1058,15 @@ function courseSheet(c, pre) {
   };
   dlg.querySelector('#stAdd').onclick = () => { draft.push({ id: uid(), last: '', first: '', cls: !showCls() && clsSet().size === 1 ? draft.find(clsKey).cls : '' }); drawDraft(); const ins = $$('input[data-f=last]', rowsEl); ins[ins.length - 1].focus(); };
   dlg.querySelector('#stSwap').onclick = () => { draft.forEach(x => { [x.first, x.last] = [x.last, x.first]; }); drawDraft(); };
+  dlg.querySelector('#cGuest').onclick = () => sheet({ title: 'Gast hinzufügen', small: true, ok: 'Hinzufügen', body: `<p class="prose" style="margin-top:0">Für Gastschülerinnen und -schüler, die nicht auf der Klassenliste stehen – z. B. aus dem Austausch, zur Probe oder aus einer anderen Klasse.</p>
+      <div class="grid2">${field('Nachname', '<input type="text" id="gL">')}${field('Vorname', '<input type="text" id="gF">')}</div>
+      <div class="grid3">${field('Klasse / Herkunft', '<input type="text" id="gC" maxlength="20" placeholder="z. B. Lyon">')}${field('Da von', '<input type="date" id="gA">')}${field('bis', '<input type="date" id="gB">')}</div>
+      ${field('Noten', '<select id="gN"><option value="1">zählen wie bei allen</option><option value="0">nur dokumentieren (zählen nicht)</option></select>')}
+      <p class="hint">Was gilt, ist Absprache mit der Schule. „Zählen nicht“: Die Noten stehen in der Tabelle, aber nicht im Durchschnitt und Notenspiegel der Klasse; es gibt keine Zeugnisnote. Außerhalb des Zeitraums gilt der Gast als abwesend. Ändern kannst du alles später im Schülerblatt.</p><p class="gateErr" id="gErr"></p>`,
+    onOk: g => { const l = g.querySelector('#gL').value.trim(), f = g.querySelector('#gF').value.trim(); if (!l && !f) { g.querySelector('#gErr').textContent = 'Bitte einen Namen eintragen'; return false; }
+      const a = g.querySelector('#gA').value, b = g.querySelector('#gB').value; if (a && b && b < a) { g.querySelector('#gErr').textContent = 'Das Ende liegt vor dem Beginn'; return false; }
+      draft.push({ id: uid(), last: l, first: f, cls: g.querySelector('#gC').value.trim(), guest: { counts: g.querySelector('#gN').value === '1', ...(a ? { from: a } : {}), ...(b ? { to: b } : {}) } });
+      drawDraft(); toast('Gast hinzugefügt – mit „Sichern“ übernehmen'); return true; } });
   const fr = dlg.querySelector('#cFrom'); if (fr) fr.onchange = () => { const o = D.courses.find(x => x.id === fr.value); if (o) addDraft(o.students.map(x => ({ ...splitName(x), cls: x.cls || '' }))); fr.value = ''; };
   const del = dlg.querySelector('#cDel'); if (del) del.onclick = async () => {
     if (await ask(`Kurs <b>${esc(c.name + ' ' + c.subject)}</b> mit allen Noten löschen? Du kannst ihn 60 Tage lang unter „Sicherung“ wiederherstellen.`, 'Löschen', true)) {
@@ -994,7 +1097,8 @@ function assessmentSheet(c, a) {
   D.settings.keyPresets = D.settings.keyPresets || {};
   /* Moderne Fremdsprachen: ISB-Leitfaden „Leistungsnachweise in der Profil- und Leistungsstufe“ (April 2025): bei BE-Bewertung Schwellenwert
      „ausreichend“ 50 %, „mangelhaft“ 33 % (spät beginnende FS und Jgst. 5–11: ausreichend zwischen 50 und 60 %, mangelhaft 33 %) */
-  const mfs = R.isModernLang(c.subject);
+  const mfs = R.isModernLang(ruleSubj(c));
+  const hvOK = up && mfs && !c.late;   /* fortgeführte moderne Fremdsprache Q12/Q13: Hörverstehen nach der ISB-Rechentabelle */
   const defPre = up ? (mfs ? { q4: 50, p1: 33, step: 0.5, preset: 'custom' } : { q4: 40, p1: 20, step: 0.5 }) : { p4: 50, p5: mfs ? 33 : 25, step: 0.5 };
   let pre = (a.key && a.key.anchors) || D.settings.keyPresets[pKey] || defPre;
   /* fehlende Anker (z. B. bei KMK-Schlüsseln) mit den Vorschlägen auffüllen – nie eine vorhandene Angabe ersetzen */
@@ -1002,7 +1106,10 @@ function assessmentSheet(c, a) {
   else { if (pre.p4 == null) pre = { ...pre, p4: defPre.p4 }; if (pre.p5 == null) pre = { ...pre, p5: defPre.p5 }; }
   /* Gespeicherte Vorgaben werden nie automatisch ersetzt – auch nicht die alte Standardvorgabe. Die ISB-Werte gibt es per Knopf (#mfsUse). */
   /* Vorgabe: „KMK-Raster“ (Prozentgrenzen der Abiturprüfung, auch für Noten 1–6) oder eigene Grenzen; Mathematik beginnt mit dem KMK-Raster */
-  const preset0 = (a.key && a.key.preset) || pre.preset || ((up && !mfs) || /^mathe/i.test(c.subject || '') ? 'kmk' : 'custom');   /* Oberstufe: das KMK-Raster ist die Tabelle der Abiturprüfung (BE → Notenpunkte) */
+  /* Moderne Fremdsprachen: kein KMK-Raster/keine Gesamt-BE-Tabelle (KMS 08.03.2023 V.6-BS4402.8/118/1: ausreichend 50–60 % je nach Aufgabe, ungenügend unter 33 %;
+     Q12/Q13: ISB-Leitfaden 04/2025 S. 4). Ein schon gespeicherter KMK-Schlüssel bleibt sichtbar, wird aber deutlich als unpassend markiert. */
+  const kmkBad = mfs, kmkStored = !!(a.key && a.key.preset === 'kmk');
+  const preset0 = (a.key && a.key.preset) || (kmkBad && pre.preset === 'kmk' ? 'custom' : pre.preset) || ((up && !mfs) || /^mathe/i.test(c.subject || '') ? 'kmk' : 'custom');   /* Oberstufe: das KMK-Raster ist die Tabelle der Abiturprüfung (BE → Notenpunkte) */
   const tend0 = a.key && a.key.preset ? a.key.tend !== false : pre.tend !== false;
   D.settings.taskDefaults = D.settings.taskDefaults || {};
   const tkDef = !!(isNew && D.settings.taskDefaults[pKey]);   /* „Punkte je Aufgabe“ als Standard für dieses Fach */
@@ -1010,8 +1117,8 @@ function assessmentSheet(c, a) {
   let tasks = (a.tasks || []).map(t => ({ ...t })), manualKey = false;
   /* Oberstufe: Bewertung nach Prüfungsteilen (ISB-Rechentabelle) – Vorlage je Fach gemerkt */
   D.settings.partDefaults = D.settings.partDefaults || {};
-  const ptDef = !!(up && isNew && R.isModernLang(c.subject) && !c.late && D.settings.partDefaults[pKey]);
-  const altR = R.altRule(c.subject, c.grade);
+  const ptDef = !!(up && isNew && R.isModernLang(ruleSubj(c)) && !c.late && D.settings.partDefaults[pKey]);
+  const altR = R.altRule(ruleSubj(c), c.grade);
   const altOn = !!altR && (R.byParts(a) ? !!a.alt : isNew && a.type === 'sa');
   let parts = (a.parts && a.parts.length ? a.parts : (D.settings.partDefaults[pKey] || R.PARTS_ABI())).map(p => ({ ...p, id: p.id || uid() }));
   let pctArr = up ? (a.key && a.key.pct15) || (pre.q4 == null && pre.p5 != null ? R.pct15Old(+pre.p5, +pre.p1 || 0) : R.pct15FromAnchors(R.anchor4(pre), pre.p1)) : (a.key && a.key.pct) || R.pctFromAnchors(pre.p4, pre.p5);
@@ -1027,6 +1134,7 @@ function assessmentSheet(c, a) {
       ${field('Kürzel', `<input type="text" id="aShort" maxlength="6" value="${esc(a.short || '')}" placeholder="automatisch">`)}
     </div>
     <div id="jstOpt">${field('Jahrgangsstufentest zählt als', `<select id="aCount"><option value="small">kleiner Leistungsnachweis</option><option value="big" ${a.countAs === 'big' ? 'selected' : ''}>großer Leistungsnachweis</option></select>`)}</div>
+    ${fmC === 'sportlf' ? `<div id="stOpt">${field('Gehört im Leistungsfach Sport zu', `<select id="aSt"><option value="f">Fach Sport (kleiner LN, z. B. Stundenteil, Demonstration, Kurzreferat)</option><option value="t" ${R.sportPart(a) === 't' ? 'selected' : ''}>Sporttheorie (kleiner LN)</option></select>`)}</div>` : ''}
     <div id="bigOpt">${field('Gewicht unter den großen Leistungsnachweisen', `<select id="aBigW">${WEIGHTS.map(([v, l]) => `<option value="${v}" ${String(+(a.bigWeight ?? 1)) === String(+v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
     <div id="smallOpt" class="grid2">
       ${field('Gewicht (leer = Standard der Art)', `<input type="number" step="0.5" min="0" id="aW" value="${esc(a.weight ?? '')}" placeholder="${R.weightOf({ ...a, weight: null }, c)}">`)}
@@ -1036,11 +1144,14 @@ function assessmentSheet(c, a) {
     ${altR ? `<div class="rows">${sw('aAlt', altOn, `Zweigeteilte Schulaufgabe: Übersetzung und Aufgabenteil (Gewichtung ${altR.w[0]} : ${altR.w[1]})`)}</div>
       <p class="hint" id="altHint" style="margin:4px 0 8px">Nach den Richtlinien des Kultusministeriums (KMS vom 31.07.2023, Anlagen 3 und 4): Beide Teile werden getrennt ${up ? 'in Notenpunkten' : 'mit ganzen Noten'} bewertet, die Gesamtnote ist der gewichtete Durchschnitt – bei n,5 die bessere Note.${altR.ue5 ? ' „Ausreichend“ gibt es nur, wenn die Übersetzung mindestens „mangelhaft“ ist.' : ''}${altR.g11 ? ' „Befriedigend“ gibt es nur, wenn kein Teil „ungenügend“ ist.' : ''}${altR.up ? ' Hat ein Teil 0 Punkte, gibt es höchstens 6 Punkte (Tabelle der Anlage 2).' : ''} Für eine Interpretationsschulaufgabe oder Ersatzform schaltest du das aus.</p>
       <div class="panelBtns" id="altBtns"><button type="button" class="mini accent" id="altEnter">Sichern und Teilnoten eintragen …</button></div>` : ''}
-    ${up && ((R.isModernLang(c.subject) && !c.late) || (R.byParts(a) && !a.alt)) ? `<div class="rows">${sw('aParts', R.byParts(a) || ptDef, 'Nach Prüfungsteilen bewerten (Oberstufe, moderne Fremdsprachen: Hörverstehen in BE, Schreiben und Sprachmittlung mit Inhalt und Sprache)')}</div>
+    ${up && ((R.isModernLang(ruleSubj(c)) && !c.late) || (R.byParts(a) && !a.alt)) ? `<div class="rows">${sw('aParts', R.byParts(a) || ptDef, 'Nach Prüfungsteilen bewerten (Q12/Q13, moderne Fremdsprachen: Hörverstehen in BE, Schreiben und Sprachmittlung mit Inhalt und Sprache)')}</div>
     <div id="partBox" hidden><p class="hint" style="margin:6px 0 8px">Wie in der Rechentabelle des ISB: Teile mit <b>BE</b> (z. B. Hörverstehen) werden über den Lösungsgrad in Notenpunkte umgerechnet (95 % = 15 … 20 % = 1). Bei <b>Inhalt + Sprache</b> trägst du je 0–15 Notenpunkte nach den Bewertungsrastern ein; gerechnet wird 40 % Inhalt + 60 % Sprache, und ist eins davon 0 Punkte, gibt es höchstens 3 Punkte (Sperrklausel). Das Ergebnis ist der nach den Anteilen gewichtete Durchschnitt, gerundet.</p>
       <div class="prowH"><span>Prüfungsteil</span><span>Bewertung</span><span>max. BE</span><span>Anteil</span><span></span></div><div id="partRows"></div>
-      <div class="panelBtns"><button type="button" class="mini" id="pAdd">+ Prüfungsteil</button><button type="button" class="mini" id="pAbi" title="Abitur: Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %">Wie im Abitur (20 / 55 / 25 %)</button><button type="button" class="mini accent" id="pEnter">Sichern und Teilnoten eintragen …</button></div>
+      <div class="panelBtns"><button type="button" class="mini" id="pAdd">+ Prüfungsteil</button><span class="pTplL">Vorlage:</span><button type="button" class="mini" data-ptpl="hvsm" title="ISB-Leitfaden 04/2025, S. 2: Hörverstehen 30–40 %, Sprachmittlung 60–70 %">Hörverstehen + Sprachmittlung (35 / 65 %)</button><button type="button" class="mini" data-ptpl="tvps" title="ISB-Leitfaden 04/2025, S. 2: Textverstehen/Textanalyse 60–70 %, persönliche Stellungnahme/gestaltendes Schreiben 30–40 %">Textaufgaben + Stellungnahme (65 / 35 %)</button><button type="button" class="mini" data-ptpl="abi" id="pAbi" title="Abitur: Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %">Wie im Abitur (20 / 55 / 25 %)</button></div>
+      <div class="panelBtns"><button type="button" class="mini accent" id="pEnter">Sichern und Teilnoten eintragen …</button></div>
       <p class="hint" id="pHint"></p>
+      <p class="hint"><b>Wichtig:</b> Laut ISB-Leitfaden (S. 4) wird die Gesamtnote in Q12/Q13 über die verpflichtende Excel-Rechentabelle des ISB berechnet. Libretto rechnet genauso (Lösungsgrad, 40 : 60, Sperrklausel, Runden am Ende – mit der Tabelle abgeglichen) und dient zum Eintragen, Prüfen und Dokumentieren.</p>
+      <p class="hint">Die zwei Vorlagen für Schulaufgaben stammen aus dem ISB-Leitfaden „Leistungsnachweise in der Profil- und Leistungsstufe“ (April 2025, S. 2) – es sind Vorschläge; den genauen Anteil legst du nach Anforderung und Zeitbedarf fest und gibst ihn auf dem Angabenblatt an. Hat ein Teil mehrere Schreibaufgaben (z. B. zwei Textaufgaben), leg für jede einen eigenen Teil an und teil den Anteil auf: Inhalt und Sprache und die Sperrklausel gelten <b>je Aufgabe</b> (ebd., S. 3–4; Rechentabelle: Schreiben 1, 2, 3).</p>
       <label class="check" style="margin:2px 0 6px"><input type="checkbox" id="pRemember" checked> <span>Prüfungsteile als Vorlage für ${esc(c.subject || 'dieses Fach')} merken</span></label></div>
     <div id="ptsRow">` : '<div>'}<div class="rows">${sw('aPts', a.usePoints && !R.byParts(a) && !ptDef, 'Rohpunkte eingeben, Libretto rechnet in ' + (up ? 'Notenpunkte' : 'Noten') + ' um')}</div>${/^deutsch/i.test((c.subject || '').trim()) ? '<p class="hint" style="margin:4px 0 0">Deutsch: Aufsätze werden ganzheitlich bewertet (KMS „Lernbereich Schreiben“ vom 28.09.2026) – trag die Note direkt ein und lass Rohpunkte aus. Rohpunkte nur für andere Formate, z. B. einen Grammatiktest.</p>' : ''}</div>
     <div id="keyBox" style="margin-top:10px">
@@ -1052,7 +1163,7 @@ function assessmentSheet(c, a) {
         <p class="hint" id="tHint"></p>
         <details class="sim tfSim" id="aTfSim" hidden><summary>Simulation: Was passiert, wenn eine Aufgabe anders zählt (z. B. halb oder doppelt)? – mit ganzer Klassenliste</summary><div id="aTfBody"></div></details></div>
       <div class="grid3 kGrid">${field('Erreichbare Punkte', `<input type="number" step="0.5" min="1" id="aMax" value="${esc(a.key && a.key.max || '')}">`)}
-        ${field('Schlüssel', `<select id="aPreset"><option value="custom" ${preset0 === 'custom' ? 'selected' : ''}>Eigene Grenzen</option><option value="kmk" ${preset0 === 'kmk' ? 'selected' : ''}>${up ? 'Amtliche BE-Tabelle (Abitur: 4 P. ab 40 %)' : 'KMK-Raster (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %)'}</option></select>`)}
+        ${field('Schlüssel', `<select id="aPreset"><option value="custom" ${preset0 === 'custom' ? 'selected' : ''}>Eigene Grenzen</option>${!kmkBad || kmkStored ? `<option value="kmk" ${preset0 === 'kmk' ? 'selected' : ''}>${up ? 'Amtliche BE-Tabelle (Abitur: 4 P. ab 40 %)' : 'KMK-Raster (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %)'}${kmkBad ? ' – passt nicht für moderne Fremdsprachen' : ''}</option>` : ''}${hvOK ? `<option value="hv" ${preset0 === 'hv' ? 'selected' : ''}>Hörverstehen – ISB-Rechentabelle (Lösungsgrad)</option>` : ''}</select>`)}
         <span id="anchorBox" style="display:contents">${up ? field('4 P. (Note 4–) ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${R.anchor4(pre)}">`) + field('1 P. (Note 5–) ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p1}">`)
              : field('Note 4 ab … %', `<input type="number" step="1" min="1" max="99" id="aA1" value="${pre.p4}">`) + field('Note 5 ab … %', `<input type="number" step="1" min="0" max="99" id="aA2" value="${pre.p5}">`)}</span></div>
       ${up ? '' : `<label class="check" id="tendBox" style="margin:6px 0" hidden><input type="checkbox" id="aTend" ${tend0 ? 'checked' : ''}> <span>Tendenzen (z. B. 2+, 3-) aus dem KMK-Raster mit anzeigen – gerechnet wird mit ganzen Noten</span></label>`}
@@ -1060,8 +1171,10 @@ function assessmentSheet(c, a) {
         <div class="field"><span>&nbsp;</span><button type="button" class="mini accent" id="aSuggest">Schlüssel berechnen</button></div>
         <label class="check" style="margin-top:22px"><input type="checkbox" id="aRemember" ${isNew ? 'checked' : ''}> <span>Schlüssel und Eingabeart als Standard für ${esc(c.subject || 'dieses Fach')} merken</span></label></div>
       ${keyInputs()}<div class="keyPct" id="keyPct"></div>
-      ${mfs ? `<p class="hint" id="mfsSrc">${up && !c.late ? 'ISB-Leitfaden (April 2025): Wo in Q12/13 mit BE bewertet wird (z. B. Wortschatz- und Grammatikaufgaben), beginnt „ausreichend“ bei 50 % (4 Punkte), „mangelhaft“ bei 33 % (1 Punkt). Eine vollständige Tabelle aller Notenpunktgrenzen legt der Leitfaden für dieses Aufgabenformat nicht fest – Libretto verteilt die übrigen Punkte gleichmäßig (15 Punkte dann ab rund 96 %); jede Grenze kannst du ändern. Das Verfahren richtet sich nach dem Aufgabenformat, nicht danach, ob es eine Klausur oder ein kleiner Test ist: <b>Hörverstehen</b> → amtliche BE-Tabelle (4 Punkte ab 40 %), in einer kombinierten Arbeit als eigener Prüfungsteil; <b>Schreiben und Sprachmittlung im Abiturformat</b> → nie über einen Prozentschlüssel, sondern mit dem Bewertungsraster (Inhalt und Sprache in Notenpunkten, 40 : 60) – also „Nach Prüfungsteilen bewerten“, auch wenn es die einzige Aufgabe ist; <b>Wortschatz- und Grammatiktest</b> ohne Abiturformat → eigener BE-Schlüssel mit diesen Schwellen. <button type="button" class="linkbtn" id="mfsUse">4 P. ab 50 % und 1 P. ab 33 % eintragen</button>' : 'ISB: Die Grenze zu „ausreichend“ liegt aufgabenbezogen zwischen 50 % und 60 %, die Grenze zu „mangelhaft“ bei 33 %. Den genauen Wert legt die Fachschaft fest.'}</p>` : ''}
-      <p class="hint" id="kmkSrc" hidden>${up ? 'Amtliche BE-Tabelle der Abiturprüfung ab 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4; KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 P. ab 95 %, 6 P. ab 50 %, 5 P. ab 45 %, 4 P. ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Die Grenzen sind ganze BE, kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). ' + (R.isAncient(c.subject) ? 'In Latein und Griechisch ist dieser KMK-Bewertungsschlüssel für BE-Bewertungen in der Qualifikationsphase verbindlich (KMS vom 31.07.2023, Anlage 3 Nr. 8 bzw. Anlage 4 Nr. 9); die Übersetzung wird getrennt nach Fehlern bewertet.' : 'Verbindlich für BE-bewertete Abiturprüfungen bzw. Prüfungsteile; für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht.') : 'KMK-Raster: die Prozentgrenzen der Abitur-Tabelle als Noten (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %). Bei ganzen Punkten kaufmännisch gerundet, bei halben Punkten aufgerundet. Eine Vorlage – keine Pflicht für die Unter- und Mittelstufe.'}</p>
+      ${mfs ? `<p class="hint" id="mfsSrc">${up && !c.late ? 'ISB-Leitfaden (April 2025): Wo in Q12/13 mit BE bewertet wird (z. B. Wortschatz- und Grammatikaufgaben), beginnt „ausreichend“ bei 50 % (4 Punkte), „mangelhaft“ bei 33 % (1 Punkt). Eine vollständige Tabelle aller Notenpunktgrenzen legt der Leitfaden für dieses Aufgabenformat nicht fest – Libretto verteilt die übrigen Punkte gleichmäßig (15 Punkte dann ab rund 96 %); jede Grenze kannst du ändern. Das Verfahren richtet sich nach dem Aufgabenformat, nicht danach, ob es eine Klausur oder ein kleiner Test ist: <b>Hörverstehen</b> → Schlüssel „Hörverstehen – ISB-Rechentabelle“ (Lösungsgrad, 4 Punkte ab 40 %, ganze BE), in einer kombinierten Arbeit als eigener Prüfungsteil; <b>Schreiben und Sprachmittlung im Abiturformat</b> → nie über einen Prozentschlüssel, sondern mit dem Bewertungsraster (Inhalt und Sprache in Notenpunkten, 40 : 60) – also „Nach Prüfungsteilen bewerten“, auch wenn es die einzige Aufgabe ist; <b>Wortschatz- und Grammatiktest</b> ohne Abiturformat → eigener BE-Schlüssel mit diesen Schwellen. <button type="button" class="linkbtn" id="mfsUse">4 P. ab 50 % und 1 P. ab 33 % eintragen</button>' : 'KMS vom 08.03.2023 (Jgst. 11, gilt wie in 5–10): „ausreichend“ je nach Aufgabe zwischen 50 % und 60 % – bei Aufgaben mit viel eigener Sprachproduktion 50 %, bei Multiple Choice oder Kurzantworten im Hör- und Leseverstehen eher höher; die Grenze zu „ungenügend“ liegt immer bei 33 %. Den Wert legt die Lehrkraft für die jeweilige Arbeit fest; ein pauschaler Fachschaftsbeschluss ohne Blick auf die Aufgabe wäre „nicht sachgerecht“. Ein KMK-Raster gibt es für moderne Fremdsprachen nicht. <button type="button" class="linkbtn" data-mfs4="50">4 ab 50 %</button> · <button type="button" class="linkbtn" data-mfs4="55">55 %</button> · <button type="button" class="linkbtn" data-mfs4="60">60 %</button> (Note 5 ab 33 %)'}</p>` : ''}
+      ${hvOK ? '<p class="hint" id="hvSrc" hidden>Hörverstehen wie die <b>ISB-Rechentabelle PuLSt</b> (Stand 12/2025): Teilnote über den Lösungsgrad – 15 P. ab 95 %, 4 P. ab 40 %, 1 P. ab 20 % –, die Grenzen werden <b>nicht</b> gerundet. Es zählen nur ganze BE (ISB-Leitfaden 04/2025, S. 3: keine halben BE im Hörverstehen). Empfohlen sind 20 bis 26 BE (ebd., S. 2). Für Schreiben und Sprachmittlung gibt es keinen Prozentschlüssel – dafür „Nach Prüfungsteilen bewerten“.</p>' : ''}
+      ${kmkBad && kmkStored ? `<div class="needMsg" id="kmkBadMsg" style="margin:8px 0">Dieser Leistungsnachweis nutzt noch das ${up ? 'Gesamt-BE-Raster (4 P. ab 40 %)' : 'KMK-Raster (4 ab 40 %, 6 unter 20 %)'}. Für moderne Fremdsprachen gilt das nicht: „ausreichend“ je nach Aufgabe ab 50–60 %, ${up ? '1 Punkt' : 'Note 5'} ab 33 % (${up ? 'ISB-Leitfaden 04/2025, S. 4' : 'KMS vom 08.03.2023'})${up ? ', Hörverstehen nach der ISB-Rechentabelle' : ''}. Libretto ändert gespeicherte Noten nie von selbst. <button type="button" class="linkbtn" id="kmkFix">${up ? '4 P. ab 50 % und 1 P. ab 33 %' : 'Note 4 ab 50 % und Note 5 ab 33 %'} einsetzen</button> – dann „Sichern“; wer sich dadurch ändert, siehst du vorher in der Simulation.</div>` : ''}
+      <p class="hint" id="kmkSrc" hidden>${up ? 'Amtliche BE-Tabelle der Abiturprüfung ab 2026 (ISB-Kontaktbrief Oberstufe 2025, S. 4; KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 P. ab 95 %, 6 P. ab 50 %, 5 P. ab 45 %, 4 P. ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Die Grenzen sind ganze BE, kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). Halbe BE bei den erreichten Punkten sind trotzdem möglich (nicht im Hörverstehen; in spät beginnenden Fremdsprachen ausdrücklich erwünscht, ISB-Leitfaden 04/2025) – die Grenze bleibt ganzzahlig, z. B. reichen 33,5 BE nicht für eine Grenze von 34. ' + (R.isAncient(c.subject) ? 'In Latein und Griechisch ist dieser KMK-Bewertungsschlüssel für BE-Bewertungen in der Qualifikationsphase verbindlich (KMS vom 31.07.2023, Anlage 3 Nr. 8 bzw. Anlage 4 Nr. 9); die Übersetzung wird getrennt nach Fehlern bewertet.' : 'Verbindlich für BE-bewertete Abiturprüfungen bzw. Prüfungsteile; für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht.') : 'KMK-Raster: die Prozentgrenzen der Abitur-Tabelle als Noten (1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %). Bei ganzen Punkten kaufmännisch gerundet, bei halben Punkten aufgerundet. Eine Vorlage – keine Pflicht für die Unter- und Mittelstufe.'}</p>
       <p class="hint" id="ownHint">${up ? 'Die Punkte 5–15 werden gleichmäßig zwischen der Grenze für 4 Punkte (unterste 4) und 100 % verteilt, 2 und 3 Punkte zwischen 1 und 4 Punkten.' : 'Die Noten 1–3 werden gleichmäßig zwischen der Grenze für die 4 und 100 % verteilt.'} Jede Grenze kannst du danach noch einzeln ändern.</p>
     </div>
     ${dist && dist.n ? `<div class="subhead">Notenspiegel <small class="hint" style="font-weight:400">– ändert sich live mit den Grenzen</small></div><div id="distLive">${distHTML(dist, null, up, countSpan(c, a, up))}</div>
@@ -1072,11 +1185,11 @@ function assessmentSheet(c, a) {
     ${field('Notiz (nur für dich)', `<textarea id="aNote" rows="2">${esc(a.note || '')}</textarea>`)}
     ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) || R.byParts(a) ? `<button type="button" class="mini accent" id="aPrintD" title="${a.alt && R.byParts(a) ? 'Mit den Teilnoten für Übersetzung und Aufgabenteil' : R.byParts(a) ? 'Mit Inhalt, Sprache und Teilnote je Prüfungsteil' : 'Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe'}">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">${R.byParts(a) ? 'Teilnoten eintragen …' : 'Aufgabenpunkte eintragen …'}</button>` : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
   const read = d => {
-    let autoSum = new Set();
     a.type = d.querySelector('#aType').value; a.title = d.querySelector('#aTitle').value.trim(); a.date = d.querySelector('#aDate').value; a.short = d.querySelector('#aShort').value.trim();
     if (up) a.term = d.querySelector('#aTerm').value;
     if (a.type === 'jst') a.countAs = d.querySelector('#aCount').value; else delete a.countAs;
     const bw = +d.querySelector('#aBigW').value; if (R.isBig(a) && bw !== 1) a.bigWeight = bw; else delete a.bigWeight;
+    { const st = d.querySelector('#aSt'); if (st && !R.isBig(a) && a.type !== 'prak') a.st = st.value; else delete a.st; }
     const w = d.querySelector('#aW').value; if (!R.isBig(a) && w !== '') a.weight = +w; else delete a.weight;
     const ar = d.querySelector('#aArea').value; if (!R.isBig(a) && ar !== R.TYPES[a.type].area) a.area = ar; else delete a.area;
     a.usePoints = d.querySelector('#aPts').checked;
@@ -1086,19 +1199,19 @@ function assessmentSheet(c, a) {
       const old = a.alt && a.parts ? a.parts : [];
       a.usePoints = false; a.byParts = true; a.alt = altR;
       a.parts = [{ id: (old[0] && old[0].id) || 'ue', label: 'Übersetzung', kind: 'n', w: altR.w[0] }, { id: (old[1] && old[1].id) || 'at', label: 'Aufgabenteil', kind: 'n', w: altR.w[1] }];
-      Object.values(a.results || {}).forEach(r => { if (r && r.pp && !r.status) R.applyParts(a, r); });
+      reParts(c, a);
     } else if (wantParts) {
       delete a.alt;
       syncParts();
       if (!parts.length) { toast('Bitte mindestens einen Prüfungsteil anlegen'); return false; }
-      if (parts.some(p => p.kind !== 'is' && !(+p.max > 0))) { toast('Bitte bei jedem BE-Teil die erreichbaren BE eintragen'); return false; }
+      if (parts.some(p => p.kind !== 'is' && !(+p.max > 0))) { partHint(); const m = d.querySelector('.prow [data-pm].need'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => m.focus(), 250); } toast('Erreichbare BE fehlen – das rot umrandete Feld ausfüllen', 4500); return false; }
       const W = parts.reduce((x, p) => x + (+p.w || 0), 0);
       if (Math.abs(W - 100) > 0.01) { toast(`Die Anteile ergeben zusammen ${String(Math.round(W * 10) / 10).replace('.', ',')} % – bitte auf 100 % bringen`); return false; }
       const over = parts.find(p => p.kind !== 'is' && Object.values(a.results || {}).some(r => r && r.pp && r.pp[p.id] != null && r.pp[p.id] !== '' && typeof r.pp[p.id] !== 'object' && +r.pp[p.id] > +p.max));
       if (over) { toast(`Bei „${over.label}“ sind schon mehr BE eingetragen, als die neue Höchstzahl zulässt`); return false; }
       a.usePoints = false; a.byParts = true;
-      a.parts = parts.map((p, i) => ({ id: p.id, label: p.label || 'Teil ' + (i + 1), kind: p.kind === 'is' ? 'is' : 'be', ...(p.kind === 'is' ? {} : { max: +p.max }), w: +p.w }));
-      Object.values(a.results || {}).forEach(r => { if (r && r.pp && !r.status) R.applyParts(a, r); });
+      a.parts = parts.map((p, i) => ({ id: p.id, label: p.label || 'Teil ' + (i + 1), kind: p.kind === 'is' ? 'is' : 'be', ...(p.kind === 'is' ? {} : { max: +p.max, fmt: R.isHVPart(p) ? 'hv' : 'be' }), w: +p.w }));
+      reParts(c, a);
       if (d.querySelector('#pRemember').checked) D.settings.partDefaults[pKey] = a.parts.map(({ id, ...p }) => p);
     } else if (a.byParts) a.byParts = false;   /* a.parts und die Teilnoten bleiben gespeichert */
     const wantTasks = a.usePoints && d.querySelector('#aTasks').checked;
@@ -1112,7 +1225,7 @@ function assessmentSheet(c, a) {
       const over = tasks.find(t => Object.values(a.results || {}).some(r => r && r.pts && r.pts[t.id] != null && r.pts[t.id] !== '' && +r.pts[t.id] > +t.max));
       if (over) { toast(`Bei Aufgabe ${over.label} sind schon mehr Punkte eingetragen, als die neue Höchstpunktzahl zulässt`); return false; }
       /* vor dem Übernehmen merken, wessen Summe genau aus den Aufgabenpunkten kam – die rechnet auch bei geändertem Faktor neu */
-      autoSum = new Set(Object.values(a.results || {}).filter(r => r && !r.status && r.pts && r.raw != null && (a.tasks || []).length && a.tasks.every(x => r.pts[x.id] != null && r.pts[x.id] !== '') && Math.abs(r.raw - R.tasksSum(a, r.pts)) < 1e-9));
+      R.markRawOrigin(a);
       a.tasks = tasks.map(t => ({ id: t.id, label: t.label, max: +t.max, ...(+t.f > 0 && +t.f !== 1 ? { f: +t.f } : {}), ...(t.g ? { g: t.g, gl: t.gl || 'Schreiben' } : {}) }));
     }
     a.byTask = !!wantTasks;   /* a.tasks und die Aufgabenpunkte bleiben auch dann gespeichert, wenn die Option ausgeschaltet wird */
@@ -1120,19 +1233,18 @@ function assessmentSheet(c, a) {
     const ks = $$('[data-k]', d).map(i => i.value === '' ? null : +i.value);
     if (a.usePoints) {
       if (!max || ks.some(x => x == null)) { toast('Bitte erreichbare Punkte und Notenschlüssel ausfüllen'); return false; }
-      const preset = d.querySelector('#aPreset').value, tend = !up && preset === 'kmk' && d.querySelector('#aTend').checked, step = +d.querySelector('#aStep').value;
+      { const err = R.keyProblem(max, ks); if (err) { toast(err); const kb = d.querySelector('#keyBox'); if (kb) kb.scrollIntoView({ block: 'center', behavior: 'smooth' }); return false; } }
+      const preset = d.querySelector('#aPreset').value, tend = !up && preset === 'kmk' && d.querySelector('#aTend').checked, step = d.querySelector('#aStep').value === 'tab' ? (+d.querySelector('#aStep').dataset.prev || 0.5) : +d.querySelector('#aStep').value;
       /* alte Vorgabe („5 P. ab …“) unverändert gelassen → in der alten Form speichern, damit der Fachstandard exakt gleich bleibt */
       const keepOld = up && pre.q4 == null && pre.p5 != null && +d.querySelector('#aA1').value === R.anchor4(pre) && +d.querySelector('#aA2').value === +pre.p1;
       const anchors = keepOld ? { p5: +pre.p5, p1: +pre.p1, step, preset } : up ? { q4: +d.querySelector('#aA1').value, p1: +d.querySelector('#aA2').value, step, preset } : { p4: +d.querySelector('#aA1').value, p5: +d.querySelector('#aA2').value, step, preset, tend: !up && d.querySelector('#aTend').checked };
       a.key = up ? { max, pointThresholds: ks, pct15: pctArr, anchors, preset } : { max, thresholds: ks, pct: pctArr, anchors, preset, tend, ...(tend ? { tendThresholds: R.suggestKeyKmk(max, false, step, true).tendThresholds } : {}) };
       if (d.querySelector('#aRemember').checked) { D.settings.keyPresets[pKey] = anchors; if (wantTasks) D.settings.taskDefaults[pKey] = true; else delete D.settings.taskDefaults[pKey]; }
+      R.markRawOrigin(a);
       Object.values(a.results || {}).forEach(r => {
         if (!r || r.status) return;
-        /* Ein von Hand eingetragener Gesamtwert bleibt stehen; Aufgabenpunkte rechnen nur dann neu, wenn sie vollständig sind und zur Summe passen (oder noch keine Summe da ist) */
-        const sumOf = () => R.tasksSum(a, r.pts);
-        const full = R.byTask(a) && r.pts && a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== '');
-        if (R.byTask(a) && r.pts && (r.raw == null || (full && (autoSum.has(r) || Math.abs(r.raw - sumOf()) < 1e-9)))) R.applyTasks(a, r, up);
-        else if (r.raw != null) { delete r.tend; const k = R.keyResult(r.raw, a.key, up); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; } }
+        /* Ein von Hand eingetragener Gesamtwert (r.rawMan) bleibt stehen; sonst kommt die Summe aus den Aufgabenpunkten */
+        R.regrade(a, r, up);
       });
       if (R.byTask(a) && Object.values(a.results || {}).some(r => r && !r.status && r.raw != null && r.pts && !a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== ''))) toast('Hinweis: Bei einigen Personen fehlen Punkte für neue Aufgaben – bitte im Eingabeblatt prüfen.', 4500);
     }
@@ -1149,9 +1261,13 @@ function assessmentSheet(c, a) {
     return true;
   };
   const { dlg, close } = sheet({ title: isNew ? 'Neuer Leistungsnachweis' : (a.title || R.TYPES[a.type].label), wide: true, body, onOk: d => commit(d) });
+  /* Seminare: übliche Formen kleiner Leistungsnachweise als Vorschläge (ISB-Leitfaden W-Seminar) */
+  if (c.seminar || isPSem(c)) combo(dlg.querySelector('#aTitle'), () => c.seminar ? LN_W : LN_P, { openOnFocus: false });
+  { const ast = dlg.querySelector('#aSt'); if (ast) { if (!isNew) ast.dataset.touched = 1; ast.onchange = () => { ast.dataset.touched = 1; }; } }   /* Leistungsfach Sport: Wahl der Lehrkraft bleibt beim Wechsel der Art */
   const upd = () => {
     const t = dlg.querySelector('#aType').value; const big = t === 'sa' || (t === 'jst' && dlg.querySelector('#aCount').value === 'big');
     dlg.querySelector('#jstOpt').hidden = t !== 'jst'; dlg.querySelector('#bigOpt').hidden = !big; dlg.querySelector('#smallOpt').hidden = big;
+    { const so = dlg.querySelector('#stOpt'); if (so) { so.hidden = big || t === 'prak'; if (!dlg.querySelector('#aSt').dataset.touched) dlg.querySelector('#aSt').value = R.sportPart({ type: t, st: a.type === t ? a.st : undefined }); } }
     const al = !!dlg.querySelector('#aAlt') && dlg.querySelector('#aAlt').checked;
     if (dlg.querySelector('#altHint')) { dlg.querySelector('#altHint').hidden = !al; dlg.querySelector('#altBtns').hidden = !al; }
     if (al && dlg.querySelector('#aParts')) dlg.querySelector('#aParts').checked = false;
@@ -1161,16 +1277,26 @@ function assessmentSheet(c, a) {
     dlg.querySelector('#keyBox').hidden = !dlg.querySelector('#aPts').checked || !!pt;
     const sb = dlg.querySelector('#simBox'); if (sb) sb.hidden = !!pt;
     if (!dlg.querySelector('#aArea').dataset.touched) dlg.querySelector('#aArea').value = R.TYPES[t].area;
-    const kmk = dlg.querySelector('#aPreset').value === 'kmk', tk = dlg.querySelector('#aTasks').checked;
-    dlg.querySelector('#anchorBox').hidden = kmk; dlg.querySelector('#kmkSrc').hidden = !kmk; if (dlg.querySelector('#mfsSrc')) dlg.querySelector('#mfsSrc').hidden = kmk; dlg.querySelector('#ownHint').hidden = kmk;
-    const tb = dlg.querySelector('#tendBox'); if (tb) tb.hidden = !kmk;
+    const pv = dlg.querySelector('#aPreset').value, hv = pv === 'hv', kmk = pv === 'kmk' || hv, tk = dlg.querySelector('#aTasks').checked;
+    dlg.querySelector('#anchorBox').hidden = kmk; dlg.querySelector('#kmkSrc').hidden = !kmk || hv; if (dlg.querySelector('#hvSrc')) dlg.querySelector('#hvSrc').hidden = !hv; if (dlg.querySelector('#mfsSrc')) dlg.querySelector('#mfsSrc').hidden = kmk; dlg.querySelector('#ownHint').hidden = kmk;
+    const tb = dlg.querySelector('#tendBox'); if (tb) tb.hidden = !kmk || hv;
+    /* Q12/Q13 mit amtlicher BE-Tabelle: Grenzen sind immer ganze BE (wie die Tabelle) – Auswahl sperren; halbe BE bei den erreichten Punkten bleiben möglich */
+    { const st = dlg.querySelector('#aStep'), lock = up && kmk;
+      if (lock && !st.disabled) { st.dataset.prev = st.value; if (![...st.options].some(o => o.value === 'tab')) st.insertAdjacentHTML('beforeend', '<option value="tab">ganze BE – wie die amtliche Tabelle</option>'); st.value = 'tab'; st.disabled = true; }
+      else if (!lock && st.disabled) { st.disabled = false; st.value = st.dataset.prev || '0.5'; const o = st.querySelector('option[value="tab"]'); if (o) o.remove(); }
+      { const o = st.querySelector('option[value="tab"]'); if (o) o.textContent = hv ? 'ganze BE – wie die Rechentabelle' : 'ganze BE – wie die amtliche Tabelle'; } }
     dlg.querySelector('#taskBox').hidden = !tk; dlg.querySelector('#impSec').hidden = tk || !!pt;
     const mx = dlg.querySelector('#aMax'); mx.readOnly = tk; mx.title = tk ? 'Summe der Aufgaben' : '';
   };
   /* Prüfungsteile (Oberstufe) */
-  const partRow = p => `<div class="prow" data-pid="${p.id}"><input type="text" data-pl maxlength="24" placeholder="z. B. Hörverstehen" value="${esc(p.label || '')}"><select data-pk><option value="be" ${p.kind !== 'is' ? 'selected' : ''}>BE (Lösungsgrad)</option><option value="is" ${p.kind === 'is' ? 'selected' : ''}>Inhalt + Sprache</option></select><input type="number" data-pm min="1" step="0.5" placeholder="BE" value="${p.kind === 'is' ? '' : esc(p.max ?? '')}" ${p.kind === 'is' ? 'disabled' : ''}><span class="pw"><input type="number" data-pw min="0" max="100" step="1" value="${esc(p.w ?? '')}"> %</span><button type="button" class="mini del" data-pdel title="Prüfungsteil entfernen" aria-label="Prüfungsteil entfernen">×</button></div>`;
-  function syncParts() { if (!dlg) return; $$('.prow', dlg).forEach(r => { const p = parts.find(x => x.id === r.dataset.pid); if (!p) return; p.label = r.querySelector('[data-pl]').value.trim(); p.kind = r.querySelector('[data-pk]').value; p.max = p.kind === 'is' ? undefined : (r.querySelector('[data-pm]').value === '' ? '' : +r.querySelector('[data-pm]').value); p.w = r.querySelector('[data-pw]').value === '' ? '' : +r.querySelector('[data-pw]').value; }); }
-  const partHint = () => { const W = parts.reduce((x, p) => x + (+p.w || 0), 0), ok = Math.abs(W - 100) < 0.01; const h = dlg.querySelector('#pHint'); if (h) h.innerHTML = `${parts.length} ${parts.length === 1 ? 'Prüfungsteil' : 'Prüfungsteile'} · Anteile zusammen <b style="color:${ok ? 'inherit' : 'var(--red)'}">${String(Math.round(W * 10) / 10).replace('.', ',')} %</b>${ok ? '' : ' – sie müssen 100 % ergeben'}`; };
+  const partRow = p => `<div class="prow" data-pid="${p.id}"><input type="text" data-pl maxlength="24" placeholder="z. B. Hörverstehen" value="${esc(p.label || '')}"><select data-pk><option value="hv" ${R.isHVPart(p) ? 'selected' : ''}>BE · Hörverstehen (ganze BE)</option><option value="be" ${p.kind !== 'is' && !R.isHVPart(p) ? 'selected' : ''}>BE (Lösungsgrad)</option><option value="is" ${p.kind === 'is' ? 'selected' : ''}>Inhalt + Sprache</option></select><input type="number" data-pm min="1" step="0.5" placeholder="BE" value="${p.kind === 'is' ? '' : esc(p.max ?? '')}" ${p.kind === 'is' ? 'disabled' : ''}><span class="pw"><input type="number" data-pw min="0" max="100" step="1" value="${esc(p.w ?? '')}"> %</span><button type="button" class="mini del" data-pdel title="Prüfungsteil entfernen" aria-label="Prüfungsteil entfernen">×</button></div>`;
+  function syncParts() { if (!dlg) return; $$('.prow', dlg).forEach(r => { const p = parts.find(x => x.id === r.dataset.pid); if (!p) return; p.label = r.querySelector('[data-pl]').value.trim(); { const k = r.querySelector('[data-pk]').value; p.kind = k === 'is' ? 'is' : 'be'; p.fmt = k === 'is' ? undefined : k; } p.max = p.kind === 'is' ? undefined : (r.querySelector('[data-pm]').value === '' ? '' : +r.querySelector('[data-pm]').value); p.w = r.querySelector('[data-pw]').value === '' ? '' : +r.querySelector('[data-pw]').value; }); }
+  const partHint = () => { const W = parts.reduce((x, p) => x + (+p.w || 0), 0), ok = Math.abs(W - 100) < 0.01; const h = dlg.querySelector('#pHint');
+    /* fehlende erreichbare BE deutlich zeigen: Feld rot umrandet und Hinweis */
+    const miss = parts.filter(p => p.kind !== 'is' && !(+p.max > 0));
+    $$('.prow', dlg).forEach(r => { const m = r.querySelector('[data-pm]'), p = parts.find(x => x.id === r.dataset.pid); if (m) m.classList.toggle('need', !!p && p.kind !== 'is' && !(+p.max > 0)); });
+    if (h) h.innerHTML = `${parts.length} ${parts.length === 1 ? 'Prüfungsteil' : 'Prüfungsteile'} · Anteile zusammen <b style="color:${ok ? 'inherit' : 'var(--red)'}">${String(Math.round(W * 10) / 10).replace('.', ',')} %</b>${ok ? '' : ' – sie müssen 100 % ergeben'}`
+      + (miss.length ? `<span class="needMsg">Bei ${miss.map(p => '„' + esc(p.label || 'BE-Teil') + '“').join(' und ')} ${miss.length === 1 ? 'fehlt' : 'fehlen'} noch die <b>erreichbaren BE</b> (rot umrandet) – ohne sie kann Libretto den Lösungsgrad nicht ausrechnen.</span>` : ''); };
   function drawParts() { const box = dlg.querySelector('#partRows'); if (!box) return; box.innerHTML = parts.map(partRow).join(''); partHint(); }
   if (dlg.querySelector('#partBox')) {
     dlg.querySelector('#partRows').addEventListener('input', () => { syncParts(); partHint(); });
@@ -1180,11 +1306,15 @@ function assessmentSheet(c, a) {
       if (n && !(await ask(`Prüfungsteil entfernen? Die dafür eingetragenen Werte von ${n} ${n === 1 ? 'Person' : 'Personen'} werden nicht mehr mitgerechnet (sie bleiben gespeichert).`, 'Entfernen', true))) return;
       parts = parts.filter(x => x.id !== id); drawParts(); });
     dlg.querySelector('#pAdd').onclick = () => { syncParts(); parts.push({ id: uid(), label: '', kind: 'is', w: '' }); drawParts(); const l = $$('.prow [data-pl]', dlg).pop(); if (l) l.focus(); };
-    dlg.querySelector('#pAbi').onclick = () => { syncParts(); const hv = parts.find(p => p.kind !== 'is'); parts = R.PARTS_ABI().map((p, i) => ({ ...p, id: (parts[i] && parts[i].kind === p.kind) ? parts[i].id : uid(), ...(p.kind !== 'is' && hv && +hv.max > 0 ? { max: hv.max } : {}) })); drawParts(); };
+    $$('[data-ptpl]', dlg).forEach(b => b.onclick = () => { syncParts(); const hv = parts.find(p => p.kind !== 'is'), old = parts.slice();
+      parts = R.PARTS_TPL(b.dataset.ptpl).map((p, i) => ({ ...p, id: (old[i] && old[i].kind === p.kind) ? old[i].id : uid(), ...(p.kind !== 'is' && hv && +hv.max > 0 ? { max: hv.max } : {}) }));
+      drawParts(); const m = dlg.querySelector('.prow [data-pm]:not([disabled])'); if (m && m.value === '') m.focus(); });
     dlg.querySelector('#pEnter').onclick = () => { if (commit(dlg) !== false) { close(); partsSheet(c, c.assessments.find(x => x.id === a.id)); } };
     dlg.querySelector('#aParts').addEventListener('change', upd);
   }
   ['#aType', '#aCount', '#aPts', '#aTasks'].forEach(s => dlg.querySelector(s).addEventListener('change', upd));
+  $$('[data-mfs4]', dlg).forEach(b => b.onclick = () => { dlg.querySelector('#aPreset').value = 'custom'; dlg.querySelector('#aA1').value = b.dataset.mfs4; dlg.querySelector('#aA2').value = 33; upd(); manualKey = false; if (+dlg.querySelector('#aMax').value > 0) suggest(true); });
+  if (dlg.querySelector('#kmkFix')) dlg.querySelector('#kmkFix').onclick = () => { const p = dlg.querySelector('#aPreset'); p.value = 'custom'; const o = p.querySelector('option[value=kmk]'); if (o) o.remove(); dlg.querySelector('#aA1').value = 50; dlg.querySelector('#aA2').value = 33; upd(); manualKey = false; if (+dlg.querySelector('#aMax').value > 0) suggest(true); dlg.querySelector('#kmkBadMsg').hidden = true; toast('Grenzen nach den Vorgaben eingesetzt – mit „Sichern“ übernehmen'); };
   if (dlg.querySelector('#mfsUse')) dlg.querySelector('#mfsUse').onclick = () => { dlg.querySelector('#aPreset').value = 'custom'; dlg.querySelector('#aA1').value = 50; dlg.querySelector('#aA2').value = 33; upd(); manualKey = false; if (+dlg.querySelector('#aMax').value > 0) suggest(true); };
   if (dlg.querySelector('#aAlt')) { dlg.querySelector('#aAlt').addEventListener('change', e => { e.target.dataset.touched = 1; upd(); });
     /* neue Schulaufgabe in Latein/Griechisch: zweigeteilt vorschlagen (andere Arten: aus) */
@@ -1205,7 +1335,7 @@ function assessmentSheet(c, a) {
   let simShow = null;   /* Index der Variante, deren Klassenliste aufgeklappt ist */
   function simRender() {
     const box = dlg.querySelector('#simBody'), det = dlg.querySelector('#simBox'); if (!box || !det || !det.open) return;
-    const max = +dlg.querySelector('#aMax').value, step = +dlg.querySelector('#aStep').value || 0.5;
+    const max = +dlg.querySelector('#aMax').value, step = (dlg.querySelector('#aStep').value === 'tab' ? 1 : +dlg.querySelector('#aStep').value) || 0.5;
     const raws = c.students.map(s => a.results && a.results[s.id]).filter(r => r && !r.status && !r.nt && r.raw != null).map(r => +r.raw);
     if (!dlg.querySelector('#aPts').checked || !max || !raws.length) { box.innerHTML = '<p class="hint">Die Simulation rechnet mit den eingetragenen Rohpunkten. Sobald Punkte da sind, siehst du hier, wie sich Durchschnitt und Notenspiegel mit anderen Grenzen ändern.</p>'; return; }
     const a1 = +dlg.querySelector('#aA1').value, a2 = +dlg.querySelector('#aA2').value, kn = up ? 'pointThresholds' : 'thresholds';
@@ -1222,12 +1352,13 @@ function assessmentSheet(c, a) {
     (up ? [55, 50, 45, 40] : [60, 55, 50, 45, 40]).forEach(x => { const y = a2 > 0 && a2 < x ? Math.min(a2, x - (up ? 15 : 10)) : Math.round(x / 2);
       const th = up ? R.suggestKey15(max, R.pct15FromAnchors(x, y), step).pointThresholds : R.suggestKey(max, R.pctFromAnchors(x, y), step).thresholds;
       add(up ? `4 Punkte (4–) ab ${x} %` : `Note 4 ab ${x} %`, up ? `1 Punkt ab ${y} %` : `Note 5 ab ${y} %`, th, { preset: 'custom', x, y }); });
+    if (hvOK) add('Hörverstehen (ISB-Rechentabelle)', 'Lösungsgrad, Grenzen ungerundet', R.suggestKeyHV(max).pointThresholds, { preset: 'hv' });
     const kk = R.suggestKeyKmk(max, up, step, true); add(up ? 'Amtliche BE-Tabelle' : 'KMK-Raster', up ? '4 Punkte ab 40 %, 5 Punkte ab 45 %' : 'Note 4 ab 40 %', up ? kk.pointThresholds : kk.thresholds, { preset: 'kmk' });
     /* „Jetzt eingestellt“ nur zeigen, wenn es keiner der Vorschläge ist */
     const list = rows.filter((r, i) => i > 0 || !rows.slice(1).some(x => x.cur));
     box.innerHTML = `<table class="simTbl"><thead><tr><th>Schlüssel</th><th>Ø</th>${up ? '<th>ab 10 P.</th>' : [1, 2, 3, 4, 5, 6].map(g => `<th><i style="background:var(--gr${g})"></i>${g}</th>`).join('')}<th>${up ? 'unter 5 P.' : '5 und 6'}</th><th></th></tr></thead><tbody>${list.map((r, i) => `<tr class="${r.cur ? 'cur' : ''}"><td><b>${esc(r.label)}</b>${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</td><td class="n"><b>${fmt(r.avg, 2)}</b></td>${up ? `<td class="n">${r.good}</td>` : r.counts.map(n => `<td class="n">${n || '<span class="z">·</span>'}</td>`).join('')}<td class="n">${r.weak}<small>${Math.round(r.weak / raws.length * 100)} %</small></td><td class="simAct">${r.cur ? '<span class="pill done">aktuell</span>' : `<button type="button" class="mini ${simShow === i ? 'on' : ''}" data-simcls="${i}" title="Klassenliste: bei wem sich mit diesem Schlüssel die Note ändert">Klasse</button>${r.apply ? `<button type="button" class="mini" data-sim="${i}">Übernehmen</button>` : ''}`}</td></tr>`).join('')}</tbody></table>
       ${simShow != null && list[simShow] ? `<p class="simFor">Klassenliste: <b>jetzt</b> → <b>${esc(list[simShow].label)}</b>${list[simShow].sub ? ' (' + esc(list[simShow].sub) + ')' : ''}</p>` + simClassHTML(c, up, sNow, sAt(list[simShow].th)) : ''}
-      <p class="hint">Gerechnet mit den Rohpunkten von ${raws.length} ${raws.length === 1 ? 'Person' : 'Personen'}. „Klasse“ zeigt, bei wem sich die Note ändern würde. „Übernehmen“ trägt die Grenzen oben ein – gespeichert wird erst mit „Sichern“. Welche Grenzen gelten, legt die Fachschaft fest.</p>`;
+      <p class="hint">Gerechnet mit den Rohpunkten von ${raws.length} ${raws.length === 1 ? 'Person' : 'Personen'}. „Klasse“ zeigt, bei wem sich die Note ändern würde. „Übernehmen“ trägt die Grenzen oben ein – gespeichert wird erst mit „Sichern“. Welche Grenzen gelten, entscheiden Lehrkraft und Fachschaft im Rahmen der Fachvorgaben.</p>`;
     $$('[data-simcls]', box).forEach(b => b.onclick = () => { const i = +b.dataset.simcls; simShow = simShow === i ? null : i; simRender(); });
     if (simShow != null && list[simShow]) simPrintWire(box, () => modelSim(c, a, `Notenschlüssel „${list[simShow].label}${list[simShow].sub ? ' · ' + list[simShow].sub : ''}“ statt des jetzt eingestellten`, sNow, sAt(list[simShow].th)));
     $$('[data-sim]', box).forEach(b => b.onclick = () => { const ap = list[+b.dataset.sim].apply; if (!ap) return;
@@ -1240,7 +1371,11 @@ function assessmentSheet(c, a) {
     el.innerHTML = ''; liveDist(); simRender(); };
   const suggest = quiet => {
     const max = +dlg.querySelector('#aMax').value; if (!max) { if (!quiet) toast('Erst erreichbare Punkte eingeben'); return; }
-    const step = +dlg.querySelector('#aStep').value;
+    const step = dlg.querySelector('#aStep').value === 'tab' ? 1 : +dlg.querySelector('#aStep').value;
+    if (dlg.querySelector('#aPreset').value === 'hv') {
+      const kk = R.suggestKeyHV(max); pctArr = kk.pct15;
+      $$('[data-k]', dlg).forEach((inp, i) => inp.value = kk.pointThresholds[i]); showPct(); return;
+    }
     if (dlg.querySelector('#aPreset').value === 'kmk') {
       const kk = R.suggestKeyKmk(max, up, step, true); pctArr = up ? kk.pct15 : kk.pct;
       $$('[data-k]', dlg).forEach((inp, i) => inp.value = (up ? kk.pointThresholds : kk.thresholds)[i]); showPct(); return;
@@ -1337,7 +1472,7 @@ function assessmentSheet(c, a) {
   /* Schlüssel gleich mitrechnen, sobald Punkte oder Prozentgrenzen eingegeben sind (solange keine Grenze von Hand geändert wurde) */
   const autoKey = () => { if (!dlg.querySelector('#aTasks').checked && !manualKey && +dlg.querySelector('#aMax').value > 0) suggest(true); };
   /* Punkte geändert: KMK-Raster immer neu; eigene Grenzen nur, solange noch keine eingetragen sind (gespeicherte Grenzen bleiben stehen) */
-  dlg.querySelector('#aMax').addEventListener('input', () => { if (dlg.querySelector('#aPreset').value === 'kmk' || $$('[data-k]', dlg).every(i => i.value === '')) autoKey(); });
+  dlg.querySelector('#aMax').addEventListener('input', () => { if (['kmk', 'hv'].includes(dlg.querySelector('#aPreset').value) || $$('[data-k]', dlg).every(i => i.value === '')) autoKey(); });
   ['#aA1', '#aA2'].forEach(sel => dlg.querySelector(sel).addEventListener('input', () => { manualKey = false; autoKey(); }));
   upd();
   dlg.querySelector('#aImpBtn').onclick = () => dlg.querySelector('#aImpFile').click();
@@ -1366,12 +1501,21 @@ function distHTML(dist, old, up, cnt) {
   return `<div class="distBar" style="--n:${dist.counts.length}">${dist.counts.map((n, i) => `<div>${n}<i style="height:${dist.n ? Math.max(2, n / Math.max(1, ...dist.counts) * 56) : 2}px;background:var(--gr${up ? R.POINT_GRADE(i) : i + 1})"></i>${up ? i : i + 1}</div>`).join('')}</div>
       <p class="meta"><span class="avgPill">Ø <b>${fmt(dist.avg, 2)}</b>${chg ? ` <small>bisher ${fmt(old, 2)}</small>` : ''}</span>${cnt || `<span>Gewertet: <b>${dist.n}</b></span>`}<span>${up ? 'unter 5 Punkten' : 'Noten 5 und 6'}: <b>${dist.weak} (${Math.round(dist.weakShare * 100)} %)</b></span></p>`;
 }
+/* Prüfungsteile neu rechnen und sagen, bei wem sich die Notenpunkte dadurch ändern (nichts ändert sich still) */
+function reParts(c, a) {
+  const ch = [];
+  Object.entries(a.results || {}).forEach(([sid, r]) => { if (!r || !r.pp || r.status) return; const was = r.v; R.applyParts(a, r);
+    if (was != null && r.v !== was) { const st = c.students.find(x => x.id === sid); ch.push(`${st ? st.name : '?'}: ${was} → ${r.v ?? '–'}`); } });
+  if (ch.length) setTimeout(() => toast(`Neu berechnet – ${ch.length === 1 ? 'eine Note geändert' : ch.length + ' Noten geändert'}: ${ch.slice(0, 4).join(' · ')}${ch.length > 4 ? ' …' : ''}`, 9000), 300);
+  return ch;
+}
 /* Faktor einer Aufgabe (Punkte zählen mehrfach) */
 /* Notenschlüssel an eine neue Gesamtpunktzahl anpassen (KMK neu, eigene Grenzen im gleichen Prozentverhältnis) */
 function rekeyAssessment(a, up) {
   const max = R.tasksMax(a), k = a.key; if (!k || !max) return; const old = +k.max || 0; if (max === old) return;
   const step = (k.anchors && +k.anchors.step) || 0.5;
-  if (k.preset === 'kmk') {
+  if (k.preset === 'hv') k.pointThresholds = R.suggestKeyHV(max).pointThresholds;
+  else if (k.preset === 'kmk') {
     const kk = R.suggestKeyKmk(max, up, step, up ? true : k.tend !== false);
     if (up) k.pointThresholds = kk.pointThresholds; else { k.thresholds = kk.thresholds; if (k.tend) k.tendThresholds = kk.tendThresholds; }
   } else if (old) {
@@ -1391,10 +1535,9 @@ function factorUnits(a) { const out = [], seen = new Set();
   return out; }
 function simFactor(a, up, ids, f) {
   const A = JSON.parse(JSON.stringify(a)); A.results = A.results || {};
-  const auto = Object.values(A.results).filter(r => r && !r.status && r.pts && r.raw != null && A.tasks.every(x => r.pts[x.id] != null && r.pts[x.id] !== '') && Math.abs(r.raw - R.tasksSum(A, r.pts)) < 1e-9);
+  R.markRawOrigin(A);
   A.tasks.filter(t => ids.includes(t.id)).forEach(x => { if (f > 0 && f !== 1) x.f = f; else delete x.f; });
-  rekeyAssessment(A, up); auto.forEach(r => R.applyTasks(A, r, up));
-  Object.values(A.results).forEach(r => { if (!r || r.status || auto.includes(r) || r.raw == null) return; const k = R.keyResult(r.raw, A.key, up); if (k) r.v = k.v; });
+  rekeyAssessment(A, up); Object.values(A.results).forEach(r => R.regrade(A, r, up));
   return A; }
 function renderFactorSim(box, c, a, up, st, onApply, applyWord) {
   const vOf = A => s => { const r = A.results && A.results[s.id]; return r && !r.status && r.v != null ? r.v : null; };
@@ -1454,7 +1597,7 @@ const factorOpts = f => { const cur = +f > 0 ? +f : 1; return (FACTORS.includes(
 const keyStep = k => (k && k.anchors && +k.anchors.step) || 0.5;
 /* Bereiche des Notenschlüssels: [{ label, lo, hi }] – Note 1 … 6 bzw. 15 … 0 Punkte (hi = oberste Punktzahl, die noch zu dieser Note gehört) */
 function keyRanges(a, up) {
-  const k = a.key, max = R.tasksMax(a) || (k && +k.max) || 0, st = keyStep(k);
+  const k = a.key, max = R.tasksMax(a) || (k && +k.max) || 0, st = k && k.preset === 'hv' ? 1 : keyStep(k);   /* Hörverstehen: nur ganze BE */
   const th = k && (up ? k.pointThresholds : k.thresholds); if (!th || !max || th.some(x => x == null || x === '' || isNaN(+x))) return null;
   const r2 = x => Math.round(x * 100) / 100, out = [];
   const n = th.length;
@@ -1533,6 +1676,7 @@ function partsSheet(c, a, focusSid) {
         if (!/^\d+(\.\d+)?$/.test(raw) || !isFinite(x)) { toast('Bitte eine Zahl eintragen'); el.value = fp(valOf(a.results[sid], p, k)); return; }
         if (p.kind === 'n' && (x !== Math.round(x) || (up ? x > 15 : (x < 1 || x > 6)))) { toast(up ? 'Teilnote: ganze Notenpunkte von 0 bis 15' : 'Teilnote: ganze Note von 1 bis 6 (ohne Tendenz)'); el.value = fp(valOf(a.results[sid], p, k)); return; }
         if (p.kind === 'is' && (x > 15 || x !== Math.round(x))) { toast('Inhalt und Sprache: ganze Notenpunkte von 0 bis 15'); el.value = fp(valOf(a.results[sid], p, k)); return; }
+        if (p.kind === 'be' && R.isHVPart(p) && x !== Math.round(x)) { toast('Hörverstehen: nur ganze BE (ISB-Leitfaden 04/2025, S. 3)'); el.value = fp(valOf(a.results[sid], p, k)); return; }
         if (p.kind === 'be' && (x > +p.max || Math.round(x * 2) !== x * 2)) { toast(`Höchstens ${fp(p.max)} BE (halbe BE möglich)`); el.value = fp(valOf(a.results[sid], p, k)); return; }
         v = x;
       }
@@ -1557,12 +1701,12 @@ function partsSheet(c, a, focusSid) {
   dlg.addEventListener('keydown', e => {
     const el = e.target; if (!el.matches || !el.matches('.ppc')) return;
     const sel = `.ppc[data-p="${el.dataset.p}"][data-k="${el.dataset.k}"]`, rows = $$('tbody tr[data-s]', dlg), i = rows.indexOf(el.closest('tr'));
-    const go = d => { let k = i + d; while (rows[k] && rows[k].querySelector(sel).disabled) k += d; const n2 = rows[k] && rows[k].querySelector(sel); if (n2) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { n2.focus(); n2.select(); }, 0); } };
+    const go = d => { let k = i + d; while (rows[k] && rows[k].querySelector(sel).disabled) k += d; const n2 = rows[k] && rows[k].querySelector(sel); if (n2) { el.dispatchEvent(new Event('change', { bubbles: true })); { n2.focus(); n2.select(); } } };
     if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); go(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
     else if (e.key === 'Tab') { const mine = $$('.ppc:not(:disabled)', el.closest('tr')), k = mine.indexOf(el); let target = null;
       if (!e.shiftKey && k === mine.length - 1) { for (let j = i + 1; j < rows.length && !target; j++) target = $$('.ppc:not(:disabled)', rows[j])[0]; }
       else if (e.shiftKey && k === 0) { for (let j = i - 1; j >= 0 && !target; j--) { const l = $$('.ppc:not(:disabled)', rows[j]); target = l[l.length - 1]; } }
-      if (target) { e.preventDefault(); el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { target.focus(); target.select(); }, 0); } }
+      if (target) { e.preventDefault(); el.dispatchEvent(new Event('change', { bubbles: true })); { target.focus(); target.select(); } } }
   });
   dlg.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('.ppc')) { e.target.select(); $$('tr.cur', dlg).forEach(x => x.classList.remove('cur')); const tr = e.target.closest('tr'); if (tr) tr.classList.add('cur'); } });
   dlg.addEventListener('close', () => { save(); render(); });
@@ -1583,7 +1727,7 @@ function taskSheet(c, a, focusSid) {
   const cells = s => {
     const r = a.results[s.id] || {}, ent = tasks.filter(t => r.pts && r.pts[t.id] != null && r.pts[t.id] !== '');
     const part = R.tasksSum(a, r.pts);
-    const sum = r.status ? '' : r.raw != null ? fp(r.raw) : ent.length ? `<span class="part" title="noch nicht alle Aufgaben eingetragen">(${fp(part)})</span>` : '';
+    const sum = r.status ? '' : r.raw != null ? fp(r.raw) + (r.rawMan ? ' <span class="man" title="Gesamtpunkte von Hand eingetragen – rechnen nicht aus den Aufgaben. Zum Ändern einen Aufgabenwert eintragen.">✎</span>' : '') : ent.length ? `<span class="part" title="noch nicht alle Aufgaben eingetragen">(${fp(part)})</span>` : '';
     const res = r.status ? R.cellText(r, up) : r.v != null ? (up ? r.v + ' P.' : r.v + (r.tend || '')) : '';
     return { sum, res, near: nearHTML(r) };
   };
@@ -1600,9 +1744,12 @@ function taskSheet(c, a, focusSid) {
     const cnt = R.distribution(a, c.students, up).counts;
     return `<b>Notenschlüssel</b>${rg.map((g, i) => { const gr = up ? R.POINT_GRADE(15 - i) : i + 1, n = cnt[up ? 15 - i : i]; return `<span class="kc"><i style="background:var(--gr${gr})"></i>${up ? g.label + ' P. (' + R.POINT_LABEL(+g.label) + ')' : 'Note ' + g.label}: ${fp(g.lo)}–${fp(g.hi)}${n ? ` <em title="so viele Personen">${n}×</em>` : ''}</span>`; }).join('')}`;
   };
+  /* Zwischensumme einer Schreibaufgabe/Sprachmittlung (Inhalt + Sprache) × Faktor – z. B. (4 + 6) × 2 = 20, für den Korrekturbogen */
+  const gTot = (r, g) => { const l = tasks.filter(t => t.g === g); if (!r || r.status || !r.pts || !l.every(t => r.pts[t.id] != null && r.pts[t.id] !== '')) return ''; return '= ' + fp(Math.round(l.reduce((x, t) => x + (+r.pts[t.id]) * R.taskF(t), 0) * 100) / 100); };
+  const gEnd = i => tasks[i].g && (i === tasks.length - 1 || tasks[i + 1].g !== tasks[i].g);
   const rowHTML = (s, n) => {
     const r = a.results[s.id] || {}, cc = cells(s), aw = !a.results[s.id] && isAway(c, s.id, a.date);
-    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}${aw ? ' <small class="hint">abwesend laut Kurseinstellung</small>' : ''}</td>${tasks.map((t, i) => `<td${t.g ? ` class="tkInG${!i || tasks[i - 1].g !== t.g ? ' gS' : ''}${i === tasks.length - 1 || tasks[i + 1].g !== t.g ? ' gE' : ''}"` : ''}><input class="cell tkc" data-s="${s.id}" data-t="${t.id}" value="${esc(fp(r.pts && r.pts[t.id]))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${r.status ? 'disabled' : ''}></td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${cc.sum}</td><td class="res"><b>${cc.res}</b>${cc.near}</td><td><select class="tkst" tabindex="-1" data-st="${s.id}" title="Besonderheit: E entschuldigt gefehlt (Nachtermin) · B befreit · ${up ? '0*' : '6*'} versäumt/verweigert · U Unterschleif">${STAT.map(([v, l]) => `<option value="${v}" ${(r.status || (r.nt ? 'nt' : '')) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`;
+    return `<tr data-s="${s.id}"><td class="nr">${n}</td><td class="nm">${esc(s.name)}${supTag(c, s.id)}${aw ? ' <small class="hint">abwesend laut Kurseinstellung</small>' : ''}</td>${tasks.map((t, i) => `<td${t.g ? ` class="tkInG${!i || tasks[i - 1].g !== t.g ? ' gS' : ''}${i === tasks.length - 1 || tasks[i + 1].g !== t.g ? ' gE' : ''}"` : ''}><input class="cell tkc" data-s="${s.id}" data-t="${t.id}" value="${esc(fp(r.pts && r.pts[t.id]))}" inputmode="decimal" autocomplete="off" spellcheck="false" ${r.status ? 'disabled' : ''}>${gEnd(i) ? `<span class="gTot" data-gt="${t.g}" title="${esc(t.gl || 'Schreiben')} zusammen (mit Faktor) – zum Übertragen auf den Korrekturbogen">${gTot(r, t.g)}</span>` : ''}</td>`).join('')}${READONLY ? '' : '<td></td>'}<td class="sum">${cc.sum}</td><td class="res"><b>${cc.res}</b>${cc.near}</td><td><select class="tkst" tabindex="-1" data-st="${s.id}" title="Besonderheit: E entschuldigt gefehlt (Nachtermin) · B befreit · ${up ? '0*' : '6*'} versäumt/verweigert · U Unterschleif">${STAT.map(([v, l]) => `<option value="${v}" ${(r.status || (r.nt ? 'nt' : '')) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`;
   };
   const colN = () => tasks.length + 6;
   const foot = () => {
@@ -1622,12 +1769,12 @@ function taskSheet(c, a, focusSid) {
     const sp = spans();
     if (!sp.some(x => x.g)) return `<tr><th>Nr.</th><th>Name</th>${tasks.map(t => taskTh(t)).join('')}${tailTh('')}</tr>`;
     const rs = ' rowspan="2"';
-    return `<tr class="hg1"><th${rs}>Nr.</th><th${rs}>Name</th>${sp.map(x => x.g ? `<th colspan="${x.list.length}" class="tkG"><div class="tkGh"><input class="tkgl" data-g="${x.g}" value="${esc(x.list[0].gl || 'Schreiben')}" maxlength="16" title="Name der Aufgabe – zum Ändern anklicken" aria-label="Name der Aufgabe" ${READONLY ? 'readonly' : ''}><select class="tkf${R.taskF(x.list[0]) !== 1 ? ' on' : ''}" data-g="${x.g}" tabindex="-1" title="Faktor der ganzen Aufgabe (Inhalt und Sprache zusammen)" aria-label="Faktor ${esc(x.list[0].gl || 'Schreiben')}" ${READONLY ? 'disabled' : ''}>${factorOpts(x.list[0].f)}</select>${!READONLY && tasks.length > x.list.length ? `<button type="button" class="tkdel" data-g="${x.g}" title="Ganze Aufgabe entfernen" aria-label="${esc(x.list[0].gl || 'Schreiben')} entfernen">×</button>` : ''}</div></th>` : taskTh(x.list[0], false, true)).join('')}${tailTh(rs)}</tr>
+    return `<tr class="hg1"><th${rs}>Nr.</th><th${rs}>Name</th>${sp.map(x => x.g ? `<th colspan="${x.list.length}" class="tkG"><div class="tkGh"><input class="tkgl" data-g="${x.g}" value="${esc(x.list[0].gl || 'Schreiben')}" maxlength="16" title="Name der Aufgabe – zum Ändern anklicken" aria-label="Name der Aufgabe" ${READONLY ? 'readonly' : ''}><select class="tkf${R.taskF(x.list[0]) !== 1 ? ' on' : ''}" data-g="${x.g}" tabindex="-1" title="Faktor der ganzen Aufgabe (Inhalt und Sprache zusammen)" aria-label="Faktor ${esc(x.list[0].gl || 'Schreiben')}" ${READONLY ? 'disabled' : ''}>${factorOpts(x.list[0].f)}</select><span class="gMax" title="So viele Punkte bringt diese Aufgabe höchstens in die Summe">max. ${fp(Math.round(x.list.reduce((y, t) => y + (+t.max || 0) * R.taskF(t), 0) * 100) / 100)}</span>${!READONLY && tasks.length > x.list.length ? `<button type="button" class="tkdel" data-g="${x.g}" title="Ganze Aufgabe entfernen" aria-label="${esc(x.list[0].gl || 'Schreiben')} entfernen">×</button>` : ''}</div></th>` : taskTh(x.list[0], false, true)).join('')}${tailTh(rs)}</tr>
       <tr class="hg2">${sp.filter(x => x.g).flatMap(x => x.list.map(t => taskTh(t, true))).join('')}</tr>`;
   };
   const inner = () => `<details class="tkHelp"><summary><span>Oben die <b>erreichbaren Punkte</b> je Aufgabe (bei „+“ entsteht eine neue), darunter die Punkte je Schüler. <b>Enter</b> = eine Zeile nach unten, <b>Tab</b> = ein Feld nach rechts.</span><em>Mehr dazu</em></summary>
       <p class="hint">Sobald alle Aufgaben einer Person eingetragen sind (auch 0), berechnet Libretto Summe und ${up ? 'Notenpunkte' : 'Note'}; leere Felder zählen nicht als 0. Ein kleiner Pfeil <b>↑</b> zeigt, wie viele Punkte bis zur nächstbesseren ${up ? 'Punktzahl' : 'Note'} fehlen (höchstens 1 Punkt), <b>↓</b> nur an der Grenze zur 5 – Libretto ändert dadurch nichts.</p>
-      <p class="hint">Unter den erreichbaren Punkten steht der <b>Faktor</b> (× 1): Stellst du ihn z. B. auf × 2,5, zählen die Punkte dieser Aufgabe zweieinhalbfach${R.isModernLang(c.subject) && (!up || c.late) ? '. „+ Schreiben / SM“ legt für eine Schreibaufgabe oder Sprachmittlung gleich die Teile Inhalt und Sprache an' : ''}.</p>
+      <p class="hint">Unter den erreichbaren Punkten steht der <b>Faktor</b> (× 1): Stellst du ihn z. B. auf × 2,5, zählen die Punkte dieser Aufgabe zweieinhalbfach${R.isModernLang(c.subject) && (!up || c.late) ? '. „+ Schreiben / SM“ legt für eine Schreibaufgabe oder Sprachmittlung gleich die Teile Inhalt und Sprache an; rechts daneben steht je Person die Zwischensumme mit Faktor (z. B. = 20) für den Korrekturbogen' : ''}.</p>
       <p class="hint">Eine Tabelle aus Excel (erreichbare Punkte und Namen mit Punkten) kannst du hier mit Strg/Cmd + V einfügen.</p></details>
     ${tasks.length === 1 && +tasks[0].max === 1 && !hasAnyPts() ? '<p class="hint tkStart">Neu: Trage zuerst oben bei der ersten Aufgabe die erreichbaren Punkte ein, dann bei „+“ die weiteren.</p>' : ''}
     <div class="tkWrap"><table class="tkTbl"><thead>${headHTML()}</thead>
@@ -1640,14 +1787,15 @@ function taskSheet(c, a, focusSid) {
   const { dlg } = sheet({ title: (a.title || R.TYPES[a.type].label) + ' – Punkte je Aufgabe', ok: '', cancel: 'Fertig', wide: true, body: body() });
   dlg.classList.add('tkDlg');
   dlg.querySelector('#tfSim').addEventListener('toggle', tfRender);
-  const refreshRow = sid => { const s = c.students.find(x => x.id === sid), tr = dlg.querySelector(`tr[data-s="${sid}"]`); if (!s || !tr) return; const cc = cells(s); tr.querySelector('.sum').innerHTML = cc.sum; tr.querySelector('.res').innerHTML = `<b>${cc.res}</b>${cc.near}`; const kb = dlg.querySelector('#tkKey'); if (kb) kb.innerHTML = keyStrip(); dlg.querySelector('tfoot').innerHTML = foot(); dlg.querySelector('#tkSum').innerHTML = summary(); };
+  const refreshRow = sid => { const s = c.students.find(x => x.id === sid), tr = dlg.querySelector(`tr[data-s="${sid}"]`); if (!s || !tr) return; const cc = cells(s); tr.querySelector('.sum').innerHTML = cc.sum; tr.querySelector('.res').innerHTML = `<b>${cc.res}</b>${cc.near}`; tr.querySelectorAll('.gTot').forEach(x => { x.textContent = gTot(a.results[sid], x.dataset.gt); }); const kb = dlg.querySelector('#tkKey'); if (kb) kb.innerHTML = keyStrip(); dlg.querySelector('tfoot').innerHTML = foot(); dlg.querySelector('#tkSum').innerHTML = summary(); };
   const bad = (el, msg) => { el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 400); toast(msg); const r0 = a.results[el.dataset.s]; el.value = fp(r0 && r0.pts ? r0.pts[el.dataset.t] : null); el.select(); };
   dlg.addEventListener('change', e => {
     const el = e.target; if (READONLY) return;
     if (el.matches('.tkc')) {
       const sid = el.dataset.s, t = tasks.find(x => x.id === el.dataset.t), raw = el.value.trim().replace(',', '.');
       let v = null;
-      if (raw !== '') { if (!/^\d+(\.\d+)?$/.test(raw)) { bad(el, 'Bitte eine Zahl eintragen'); return; } v = +raw; if (v > +t.max) { bad(el, `Aufgabe ${t.label}: höchstens ${fp(t.max)} Punkte`); return; } }
+      if (raw !== '') { if (!/^\d+(\.\d+)?$/.test(raw)) { bad(el, 'Bitte eine Zahl eintragen'); return; } v = +raw; if (v > +t.max) { bad(el, `Aufgabe ${t.label}: höchstens ${fp(t.max)} Punkte`); return; }
+        if (a.key && a.key.preset === 'hv' && v !== Math.round(v)) { bad(el, 'Hörverstehen: nur ganze BE (ISB-Leitfaden 04/2025, S. 3)'); return; } }
       let r = a.results[sid] || (a.results[sid] = {}); r.pts = r.pts || {};
       if (v == null) delete r.pts[t.id]; else { r.pts[t.id] = v; el.value = fp(v); }
       R.applyTasks(a, r, up);
@@ -1665,14 +1813,14 @@ function taskSheet(c, a, focusSid) {
   dlg.addEventListener('keydown', e => {
     const el = e.target; if (!el.matches || !el.matches('.tkc')) return;
     const col = el.dataset.t, rows = $$('tbody tr[data-s]', dlg), i = rows.indexOf(el.closest('tr'));
-    const go = d => { let k = i + d; while (rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`).disabled) k += d; const n2 = rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`); if (n2) { el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { n2.focus(); n2.select(); }, 0); } };
+    const go = d => { let k = i + d; while (rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`).disabled) k += d; const n2 = rows[k] && rows[k].querySelector(`.tkc[data-t="${col}"]`); if (n2) { el.dispatchEvent(new Event('change', { bubbles: true })); { n2.focus(); n2.select(); } } };
     if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); go(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
     else if (e.key === 'Tab') {   /* Tab springt von der letzten Aufgabe zur ersten Aufgabe der nächsten Person (nicht in die Status-Auswahl) */
       const mine = $$('.tkc:not(:disabled)', el.closest('tr')), k = mine.indexOf(el);
       const step = e.shiftKey ? -1 : 1; let target = null;
       if (!e.shiftKey && k === mine.length - 1) { for (let j = i + 1; j < rows.length && !target; j++) target = $$('.tkc:not(:disabled)', rows[j])[0]; }
       else if (e.shiftKey && k === 0) { for (let j = i - 1; j >= 0 && !target; j--) { const l = $$('.tkc:not(:disabled)', rows[j]); target = l[l.length - 1]; } }
-      if (target) { e.preventDefault(); el.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(() => { target.focus(); target.select(); }, 0); }
+      if (target) { e.preventDefault(); el.dispatchEvent(new Event('change', { bubbles: true })); { target.focus(); target.select(); } }
     }
   });
   dlg.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('.tkc')) e.target.select(); });
@@ -1680,14 +1828,13 @@ function taskSheet(c, a, focusSid) {
   ['change', 'focusout'].forEach(ev => dlg.addEventListener(ev, e => { if (e.target.matches && e.target.matches('.tkst')) statText(e.target, false); }));
   /* ---- Aufgaben im Blatt anlegen / ändern (wie in Excel) ---- */
   const redraw = () => { dlg.querySelector('#tkRoot').innerHTML = inner(); tfRender(); };
+  /* Nach jeder Änderung an Aufgaben: automatische Summen immer neu aus den Aufgaben; von Hand eingetragene Gesamtpunkte (r.rawMan) bleiben.
+     Passt der Notenschlüssel nicht mehr (z. B. Summe nur noch 1 BE), gibt es keine Note und einen deutlichen Hinweis. */
+  R.markRawOrigin(a);
   const recompute = () => {
-    Object.values(a.results).forEach(r => {
-      if (!r || r.status) return;
-      const sumOf = () => R.tasksSum(a, r.pts);
-      const full = r.pts && a.tasks.every(t => r.pts[t.id] != null && r.pts[t.id] !== '');
-      if (r.pts && (r.raw == null || (full && Math.abs(r.raw - sumOf()) < 1e-9))) R.applyTasks(a, r, up);
-      else if (r.raw != null) { delete r.tend; const k = R.keyResult(r.raw, a.key, up); if (k) { r.v = k.v; if (k.tend) r.tend = k.tend; } }
-    });
+    Object.values(a.results).forEach(r => R.regrade(a, r, up));
+    const err = R.keyCheck(a.key, up);
+    if (err) toast(`Der Notenschlüssel passt nicht mehr zu ${fp(R.tasksMax(a))} Punkten: ${err} Bis dahin rechnet Libretto keine Noten. Notenschlüssel im Spaltenkopf anpassen.`, 9000);
   };
   /* Summe geändert: Notenschlüssel auf die neue Summe umrechnen (KMK-Raster neu, eigene Grenzen im gleichen Prozentverhältnis) */
   const rekey = () => rekeyOf(a);
@@ -1713,10 +1860,9 @@ function taskSheet(c, a, focusSid) {
     if (el.matches('.tkl')) { const t = a.tasks.find(x => x.id === el.dataset.t); if (!t) return; t.label = el.value.trim() || String(a.tasks.indexOf(t) + 1); el.value = t.label; save(); const th = dlg.querySelector(`.tkm[data-t="${t.id}"]`); if (th) th.setAttribute('aria-label', 'Höchstpunkte Aufgabe ' + t.label); }
     else if (el.matches('.tkgl')) { const list = a.tasks.filter(x => x.g === el.dataset.g); const v = el.value.trim() || 'Schreiben'; list.forEach(x => x.gl = v); el.value = v; save(); }
     else if (el.matches('.tkf')) { const list = el.dataset.g ? a.tasks.filter(x => x.g === el.dataset.g) : a.tasks.filter(x => x.id === el.dataset.t), t = list[0]; if (!t) return;
-      /* Wessen Summe bisher genau aus den Aufgabenpunkten kam, rechnet mit dem neuen Faktor neu; von Hand eingetragene Gesamtpunkte bleiben stehen */
-      const auto = Object.values(a.results).filter(r => r && !r.status && r.pts && r.raw != null && a.tasks.every(x => r.pts[x.id] != null && r.pts[x.id] !== '') && Math.abs(r.raw - R.tasksSum(a, r.pts)) < 1e-9);
+      /* automatische Summen rechnen mit dem neuen Faktor neu; von Hand eingetragene Gesamtpunkte bleiben stehen */
       const f = +el.value; list.forEach(x => { if (f > 0 && f !== 1) x.f = f; else delete x.f; });
-      rekey(); auto.forEach(r => R.applyTasks(a, r, up)); changed(); }
+      changed(); }
     else if (el.matches('.tkm.new')) { if (el.value.trim() === '') return; if (addTask(el.value)) changed('.tkm.new'); else { el.value = ''; } }
     else if (el.matches('.tkm')) {
       const t = a.tasks.find(x => x.id === el.dataset.t); if (!t) return; const x = numOf(el.value);
@@ -1775,7 +1921,7 @@ function taskSheet(c, a, focusSid) {
     const msg = `Aus der Tabelle übernehmen?<br>${res.newTasks ? `<b>${res.tasks.length} Aufgaben</b> (zusammen ${fp(res.tasks.reduce((x, t) => x + t.max, 0))} Punkte)<br>` : ''}<b>${res.rows.length}</b> von ${res.total} Zeilen einem Schüler zugeordnet${res.overwrite ? `<br>Bei ${res.overwrite} ${res.overwrite === 1 ? 'Person werden' : 'Personen werden'} schon eingetragene Punkte überschrieben.` : ''}${res.unknown.length ? `<br>Nicht gefunden: ${esc(res.unknown.slice(0, 6).join('; '))}${res.unknown.length > 6 ? ' …' : ''}` : ''}`;
     if (!(await ask(msg, 'Übernehmen'))) return;
     if (res.newTasks) { a.tasks = res.tasks; tasks = a.tasks; }
-    res.rows.forEach(({ st, vals }) => { const r = a.results[st.id] || (a.results[st.id] = {}); r.pts = r.pts || {}; tasks.forEach((t, i) => { if (vals[i] != null) r.pts[t.id] = vals[i]; }); });
+    res.rows.forEach(({ st, vals }) => { const r = a.results[st.id] || (a.results[st.id] = {}); r.pts = r.pts || {}; tasks.forEach((t, i) => { if (vals[i] != null) r.pts[t.id] = vals[i]; }); delete r.rawMan; });
     rekey(); recompute(); save(); redraw(); toast('Punkte übernommen');
   });
   dlg.addEventListener('close', () => { save(); render(); });
@@ -1831,6 +1977,7 @@ function parseTaskPaste(text, c, a, up) {
       const raw = cells[k]; if (raw == null || raw === '') { v.push(null); continue; }
       const x = num(raw); if (x == null) return { error: `„${raw}“ bei ${name.join(', ')} ist keine Zahl. Es wurde nichts verändert.` };
       if (x > +tasks[k].max) return { error: `${name.join(', ')}: ${raw} Punkte bei Aufgabe ${tasks[k].label}, erreichbar sind nur ${String(tasks[k].max).replace('.', ',')}. Es wurde nichts verändert.` };
+      if (a.key && a.key.preset === 'hv' && x !== Math.round(x)) return { error: `${name.join(', ')}: ${raw} BE – im Hörverstehen gibt es nur ganze BE (ISB-Leitfaden 04/2025, S. 3). Es wurde nichts verändert.` };
       v.push(x);
     }
     const r0 = (a.results || {})[st.id]; if (r0 && r0.status) { unknown.push(name.join(', ') + ' (Status gesetzt)'); continue; }
@@ -1863,12 +2010,13 @@ function importGrades(text, c, up) {
   const norm = x => String(x || '').trim().toLowerCase().replace(/\s+/g, ' ');
   const key = (l, f) => norm(l) + '|' + norm(f);
   const byKey = new Map(), byLast = new Map();
-  c.students.forEach(st => { const n = splitName(st); byKey.set(key(n.last, n.first), st); const k = norm(n.last); byLast.set(k, byLast.has(k) ? null : st); });
+  /* gleiche Namen doppelt im Kurs → nicht zuordnen (null) statt raten; nur Nachname allein nur, wenn die Datei keinen Vornamen hat */
+  c.students.forEach(st => { const n = splitName(st); const k0 = key(n.last, n.first); byKey.set(k0, byKey.has(k0) ? null : st); const k = norm(n.last); byLast.set(k, byLast.has(k) ? null : st); });
   const results = {}, unknown = []; let n = 0;
   rows.slice(1).forEach(r => {
     let l = r[iL], f = iF >= 0 ? r[iF] : ''; if (iF < 0 && String(l).includes(',')) { [l, f] = String(l).split(','); }
     const v = String(r[iV] ?? '').trim(); if (!norm(l)) return;
-    const st = byKey.get(key(l, f)) || byLast.get(norm(l)); if (!st) { unknown.push(`${String(l).trim()}${norm(f) ? ', ' + String(f).trim() : ''}`); return; }
+    const st = byKey.get(key(l, f)) || (!norm(f) ? byLast.get(norm(l)) : null); if (!st || results[st.id]) { unknown.push(`${String(l).trim()}${norm(f) ? ', ' + String(f).trim() : ''}${st ? ' (doppelt)' : byKey.get(key(l, f)) === null ? ' (Name mehrfach im Kurs)' : ''}`); return; }
     if (v === '' || /^fehlt$/i.test(v)) return;
     const pr = R.parseCell(v, up); if (pr.error) return; results[st.id] = pr; n++;
   });
@@ -1877,10 +2025,16 @@ function importGrades(text, c, up) {
 }
 
 /* Einzelnoten eines Schülers bearbeiten */
+/* Leistungsfach Sport: Art der Einzelnote zusammen mit dem Teil (Fach Sport / Sporttheorie) wählen – Wert „art|f“ bzw. „art|t“ */
+function entTypeOptsLF(t, part) {
+  return ENTRY_TYPES.flatMap(k => k === 'prak' ? [[k + '|f', R.TYPES[k].label + ' · Fach Sport', t === k]] : [[k + '|f', R.TYPES[k].label + ' · Fach Sport', t === k && part === 'f'], [k + '|t', R.TYPES[k].label + ' · Sporttheorie', t === k && part === 't']])
+    .map(([v, l, sel]) => `<option value="${v}" ${sel ? 'selected' : ''}>${l}</option>`).join('');
+}
 function entrySheet(c, s) {
   const up = upper(c), sc = entScope(c);
   let rows = entriesOf(c, s.id, sc).map(e => ({ ...e }));
-  const typeOpts = t => ENTRY_TYPES.map(k => `<option value="${k}" ${t === k ? 'selected' : ''}>${R.TYPES[k].label}</option>`).join('');
+  const lfS = up && R.upperFormula(c) === 'sportlf';
+  const typeOpts = (t, r) => lfS ? entTypeOptsLF(t, r && R.sportPart(r)) : ENTRY_TYPES.map(k => `<option value="${k}" ${t === k ? 'selected' : ''}>${R.TYPES[k].label}</option>`).join('');
   const { dlg } = sheet({ title: `Einzelnoten · ${s.name}`, wide: true, body: `<p class="hint" style="margin-top:0">Jede Einzelnote zählt als eigener kleiner Leistungsnachweis – mit eigenem Datum und Gewicht nach ihrer Art. Falsch eingetragen? Einfach die Zeile <b>löschen</b> und oben „Sichern“. ${up ? 'Halbjahr ' + esc(sc.term) + '.' : ''}</p>
       <div class="entList" id="entList"></div><div class="panelBtns"><button type="button" class="mini accent" id="entAdd">+ Einzelnote</button></div>`,
     onOk: d => {
@@ -1891,23 +2045,23 @@ function entrySheet(c, s) {
     } });
   const list = dlg.querySelector('#entList');
   const draw = () => {
-    list.innerHTML = rows.length ? `<div class="entRow entHead"><span>Datum</span><span>Art</span><span>${up ? 'Punkte' : 'Note'}</span><span>Notiz</span><span></span></div>` + rows.map((r, i) => `<div class="entRow" data-i="${i}"><input type="date" data-f="date" value="${esc(r.date || '')}"><select data-f="type">${typeOpts(r.type)}</select><input type="text" data-f="grade" value="${esc(R.cellText(r, up))}" placeholder="${up ? '0–15' : '1–6'}"><input type="text" data-f="note" value="${esc(r.note || '')}" placeholder="Notiz (optional)"><button type="button" class="mini del" data-del="${i}">Löschen</button></div>`).join('')
+    list.innerHTML = rows.length ? `<div class="entRow entHead"><span>Datum</span><span>Art</span><span>${up ? 'Punkte' : 'Note'}</span><span>Notiz</span><span></span></div>` + rows.map((r, i) => `<div class="entRow" data-i="${i}"><input type="date" data-f="date" value="${esc(r.date || '')}"><select data-f="type">${typeOpts(r.type, r)}</select><input type="text" data-f="grade" value="${esc(R.cellText(r, up))}" placeholder="${up ? '0–15' : '1–6'}"><input type="text" data-f="note" value="${esc(r.note || '')}" placeholder="Notiz (optional)"><button type="button" class="mini del" data-del="${i}">Löschen</button></div>`).join('')
       : '<div class="stEmpty">Noch keine Einzelnoten.</div>';
     $$('.entRow[data-i]', list).forEach(row => { const r = rows[+row.dataset.i];
       row.querySelector('[data-f=date]').onchange = e => r.date = e.target.value;
-      row.querySelector('[data-f=type]').onchange = e => r.type = e.target.value;
+      row.querySelector('[data-f=type]').onchange = e => { const [k, st] = e.target.value.split('|'); r.type = k; if (st && k !== 'prak') r.st = st; else delete r.st; };
       row.querySelector('[data-f=note]').oninput = e => r.note = e.target.value;
       const g = row.querySelector('[data-f=grade]'); g.onchange = () => { const p = R.parseCell(g.value, up); if (!g.value.trim()) { delete r.v; delete r.tend; delete r.status; return; } if (p.error) { toast(p.error); g.select(); return; } delete r.v; delete r.tend; delete r.status; Object.assign(r, p); };
     });
     $$('[data-del]', list).forEach(b => b.onclick = () => { rows.splice(+b.dataset.del, 1); draw(); });
   };
   draw();
-  dlg.querySelector('#entAdd').onclick = () => { rows.push({ id: uid(), type: c.entryType || 'ub', date: todayISO() }); draw(); const g = $$('[data-f=grade]', list); g[g.length - 1].focus(); };
+  dlg.querySelector('#entAdd').onclick = () => { rows.push({ id: uid(), type: c.entryType || 'ub', ...(lfS && c.entrySt && c.entryType !== 'prak' ? { st: c.entrySt } : {}), date: todayISO() }); draw(); const g = $$('[data-f=grade]', list); g[g.length - 1].focus(); };
 }
 function entryCfgSheet(c) {
   sheet({ title: 'Spalte „Einzeln“', small: true, body: `<p class="prose" style="margin-top:0">Hier trägst du Noten ein, die nicht die ganze Klasse am selben Tag bekommt – etwa <b>Unterrichtsbeiträge</b> oder <b>Rechenschaftsablagen</b>. Note in die Zelle tippen und Enter: Libretto speichert sie mit dem heutigen Datum. Auf eine Note klicken: Datum, Art und Notiz ändern – oder die Note wieder <b>löschen</b>.</p>
-    ${field('Art bei schneller Eingabe', `<select id="eT">${ENTRY_TYPES.map(k => `<option value="${k}" ${(c.entryType || 'ub') === k ? 'selected' : ''}>${R.TYPES[k].label}</option>`).join('')}</select>`)}`,
-    onOk: d => { c.entryType = d.querySelector('#eT').value; save(); render(); } });
+    ${field('Art bei schneller Eingabe', `<select id="eT">${upper(c) && R.upperFormula(c) === 'sportlf' ? entTypeOptsLF(c.entryType || 'ub', R.sportPart({ type: c.entryType || 'ub', st: c.entrySt })) : ENTRY_TYPES.map(k => `<option value="${k}" ${(c.entryType || 'ub') === k ? 'selected' : ''}>${R.TYPES[k].label}</option>`).join('')}</select>`)}`,
+    onOk: d => { const [k, st] = d.querySelector('#eT').value.split('|'); c.entryType = k; if (st && k !== 'prak') c.entrySt = st; else delete c.entrySt; save(); render(); } });
 }
 
 /* ======================================================================
@@ -1923,9 +2077,9 @@ function talkView(c, sid) {
     const s = list[i];
     const as = c.assessments.concat((c.entries || []).filter(e => e.sid === s.id).map(e => ({ ...e, title: R.TYPES[e.type].label, results: { [s.id]: e } }))).filter(a => a.results && a.results[s.id]).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
     let stats;
-    if (up) stats = R.termsOf(c).map(t => { const p = R.computeTerm(c, s.id, t).points; return `<div class="tvStat ${t === scopeOf(c).term ? 'key' : ''}"><span>Halbjahr ${t}</span><b>${p == null ? '–' : p}</b><small>${p == null ? 'noch offen' : 'Punkte · ' + R.POINT_LABEL(p)}</small></div>`; }).join('');
-    else { const r = R.computeLower(c, s.id, scopeOf(c)), ov = c.overrides[s.id];
-      stats = `<div class="tvStat key"><span>Zeugnisnote</span><b>${ov ? ov.grade : r.suggestion ? esc(r.suggestion.text) : '–'}</b><small>${ov ? 'festgelegt' : 'Vorschlag nach § 28 GSO'}</small></div><div class="tvStat"><span>Ø gesamt</span><b>${fmt(r.total) || '–'}</b><small>rechnerisch</small></div>${c.hasSA ? `<div class="tvStat"><span>Ø große LN</span><b>${fmt(r.saAvg) || '–'}</b><small>Schulaufgaben</small></div>` : ''}<div class="tvStat"><span>Ø kleine LN</span><b>${fmt(r.smAvg) || '–'}</b><small>gewichtet</small></div>`; }
+    if (up) stats = R.termsOf(c).map(t => { const fo = finalOf(c, s, t), p = fo.points; return `<div class="tvStat ${t === scopeOf(c).term ? 'key' : ''}"><span>Halbjahr ${t}</span><b>${esc(fo.v)}</b><small>${fo.kind !== 'calc' ? fo.label : p == null ? 'noch offen' : 'Punkte · ' + R.POINT_LABEL(p)}</small></div>`; }).join('');
+    else { const r = R.computeLower(c, s.id, scopeOf(c)), ov = ovOf(c, s.id);
+      stats = `<div class="tvStat key"><span>Zeugnisnote</span><b>${esc(finalOf(c, s).v)}</b><small>${(fo => fo.kind === 'ng' ? 'ohne Note' : fo.kind === 'guest' ? 'Gast – zählt nicht' : fo.kind === 'ov' ? 'festgelegt' : 'Vorschlag nach § 28 GSO')(finalOf(c, s))}</small></div><div class="tvStat"><span>Ø gesamt</span><b>${fmt(r.total) || '–'}</b><small>rechnerisch</small></div>${c.hasSA ? `<div class="tvStat"><span>Ø große LN</span><b>${fmt(r.saAvg) || '–'}</b><small>Schulaufgaben</small></div>` : ''}<div class="tvStat"><span>Ø kleine LN</span><b>${fmt(r.smAvg) || '–'}</b><small>gewichtet</small></div>`; }
     const warn = up ? [] : R.studentWarnings(c, s.id, R.computeLower(c, s.id, scopeOf(c)));
     const row = (title, filter) => { const l = as.filter(filter); return l.length ? `<div class="tvRow"><div class="tvRowT">${title}</div><div class="tvChips">${l.map(a => { const r = a.results[s.id], v = R.valueOf(r, up); return `<div class="tvItem">${chip(v, R.cellText(r, up) || '–')}<small>${esc(a.title || R.TYPES[a.type].short)}${a.date ? '<br>' + sdate(a.date) : ''}</small></div>`; }).join('')}</div></div>` : ''; };
     const note = c.notes[s.id];
@@ -1950,35 +2104,44 @@ function studentSheet(c, s) {
   const as = c.assessments.concat((c.entries || []).filter(e => e.sid === s.id).map(e => ({ ...e, title: R.TYPES[e.type].label + ' (einzeln)', results: { [s.id]: e } }))).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
   let sum = '', warn = [];
   if (up) {
-    sum = R.termsOf(c).map(t => { const r = R.computeTerm(c, s.id, t); return `<div class="stat"><div class="v">${r.points ?? '–'}</div><div class="l">Halbjahr ${t}${r.points != null ? ' · ' + R.POINT_LABEL(r.points) : ''}</div></div>`; }).join('');
+    sum = R.termsOf(c).map(t => { const fo = finalOf(c, s, t); return `<div class="stat"><div class="v">${esc(fo.v)}</div><div class="l">Halbjahr ${t}${fo.kind !== 'calc' ? ' · ' + fo.label : fo.points != null ? ' · ' + R.POINT_LABEL(fo.points) : ''}</div></div>`; }).join('');
     if (c.seminar) { const sp = c.seminarPaper[s.id] || {}; sum += `<div class="stat"><div class="v">${R.seminarPaper(sp.arbeit, sp.gespraech) ?? '–'}</div><div class="l">Seminararbeit (max. 30)</div></div>`; }
   } else {
     const r = R.computeLower(c, s.id, scopeOf(c));
     warn = R.studentWarnings(c, s.id, r);
     sum = `${c.hasSA ? `<div class="stat"><div class="v">${fmt(r.saAvg)}</div><div class="l">Ø große LN</div></div>` : ''}<div class="stat"><div class="v">${fmt(r.smAvg)}</div><div class="l">Ø kleine LN</div></div><div class="stat"><div class="v">${fmt(r.total)}</div><div class="l">Ø gesamt (${c.hasSA ? r.ratio + ':1' : 'nur klein'})</div></div><div class="stat"><div class="v">${r.suggestion ? r.suggestion.text : '–'}</div><div class="l">Vorschlag Zeugnis</div></div>`;
   }
-  const ov = c.overrides[s.id] || {};
+  const ov = ovOf(c, s.id) || {}, ovK = ovKind();
   const aw = (c.away && c.away[s.id]) || {};
   const body = `
     ${clsShown(c.students) ? `<div class="grid3">${field('Name', `<input type="text" id="sName" value="${esc(s.name)}">`, 'span2')}${field('Klasse', `<input type="text" id="sCls" value="${esc(s.cls || '')}" placeholder="z. B. 8A" maxlength="6">`)}</div>` : field('Name', `<input type="text" id="sName" value="${esc(s.name)}">`)}
     <div class="stuSum">${sum}</div>
     ${warn.length ? `<div class="notices">${warn.map(w => `<div class="notice ${w.level === 'info' ? 'info' : ''}"><div class="grow">${esc(w.text)}</div></div>`).join('')}</div>` : ''}
     <div class="lnList">${as.length ? as.map(a => { const r = a.results && a.results[s.id]; const big = R.isBig(a); return `<div class="li"><div>${esc(a.title || R.TYPES[a.type].label)}<small>${big ? 'groß' : 'klein'}${a.date ? ' · ' + fdate(a.date) : ''}${up ? ' · ' + a.term : ''}${r && r.status ? ' · ' + esc(R.STATUS[r.status].label) : ''}${!r && isAway(c, s.id, a.date) ? ' · abwesend' : ''}</small></div><div class="hint" style="text-align:right">${r && r.raw != null ? String(r.raw).replace('.', ',') + ' / ' + (a.key ? a.key.max : '') + ' P.' : ''}</div><div class="v">${esc(R.cellText(r, up)) || '–'}</div></div>`; }).join('') : '<div class="li"><div class="hint">Noch keine Leistungsnachweise</div></div>'}</div>
-    ${up ? '' : `<div class="subhead">Zeugnisnote</div><div class="rows" style="margin-bottom:10px">${sw('sNg', !!(c.noGrade && c.noGrade[s.id]), 'Ohne Note (z. B. längere Erkrankung) – keine Warnungen, Hinweis auf Bemerkung nach § 39 Abs. 6 GSO')}</div><div class="grid2">${field('Festlegen (überschreibt den Vorschlag)', `<select id="sOv"><option value="">Vorschlag übernehmen</option>${[1, 2, 3, 4, 5, 6].map(n => `<option ${+ov.grade === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}${field('Begründung (z. B. pädagogische Gesamtwürdigung)', `<input type="text" id="sOvR" value="${esc(ov.reason || '')}">`)}</div>`}
+    ${up ? '' : `<div class="subhead">Zeugnisnote</div><div class="rows" style="margin-bottom:10px">${sw('sNg', !!(c.noGrade && c.noGrade[s.id]), 'Ohne Note (z. B. längere Erkrankung) – keine Warnungen, Hinweis auf Bemerkung nach § 39 Abs. 6 GSO')}</div><div class="grid2">${field(ovK === 'half' ? 'Festlegen fürs Zwischenzeugnis / Notenbild' : ovK === 'until' ? 'Festlegen (nur in „Ganzes Jahr“ oder „Zwischenzeugnis“)' : 'Festlegen fürs Jahreszeugnis', `<select id="sOv" ${ovK === 'until' ? 'disabled' : ''}><option value="">Vorschlag übernehmen</option>${[1, 2, 3, 4, 5, 6].map(n => `<option ${+ov.grade === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`)}${field('Begründung (z. B. pädagogische Gesamtwürdigung)', `<input type="text" id="sOvR" value="${esc(ov.reason || '')}">`)}</div>`}
     <div class="subhead">Nachteilsausgleich / Notenschutz</div>
     <div class="grid3"><div class="field"><span>Art</span><select id="sSupK"><option value="">keiner</option><option value="na" ${(supOf(c, s.id) || {}).k === 'na' ? 'selected' : ''}>Nachteilsausgleich</option><option value="ns" ${(supOf(c, s.id) || {}).k === 'ns' ? 'selected' : ''}>Notenschutz</option></select></div>${field('Was gilt? (optional)', `<input type="text" id="sSupT" value="${esc((supOf(c, s.id) || {}).t || '')}" placeholder="z. B. 25 % mehr Zeit · Rechtschreibung wird nicht bewertet" maxlength="120">`, 'span2')}</div>
     <p class="hint">Erscheint als kleine Marke (NA bzw. NS) neben dem Namen – in der Notentabelle und beim Eintragen –, damit du es beim Korrigieren vor Augen hast. Notenschutz wird im Zeugnis vermerkt; auf der Übertragsliste steht deshalb ein Hinweis.</p>
     <div class="subhead">Längere Abwesenheit</div>
     <div class="grid3">${field('Abwesend von', `<input type="date" id="sAwF" value="${esc(aw.from || '')}">`)}${field('bis', `<input type="date" id="sAwT" value="${esc(aw.to || '')}">`)}${field('Grund (optional)', `<input type="text" id="sAwR" value="${esc(aw.reason || '')}" placeholder="z. B. Auslandsaufenthalt">`)}</div>
     <p class="hint">Z. B. für ein Halbjahr im Ausland: Leistungsnachweise in diesem Zeitraum werden in der Tabelle und auf Ausdrucken mit „abw.“ gekennzeichnet. Gerechnet wird wie immer nur mit den vorhandenen Noten.</p>
+    <div class="subhead">Gastschüler/in</div>
+    <div class="rows" style="margin-bottom:8px">${sw('sGuest', !!s.guest, 'Gast in diesem Kurs (steht nicht auf der Klassenliste)')}</div>
+    <div id="guestBox" ${s.guest ? '' : 'hidden'}><div class="grid3">${field('Da von', `<input type="date" id="sGF" value="${esc((s.guest && s.guest.from) || '')}">`)}${field('bis', `<input type="date" id="sGT" value="${esc((s.guest && s.guest.to) || '')}">`)}${field('Noten', `<select id="sGC"><option value="1">zählen wie bei allen</option><option value="0" ${s.guest && s.guest.counts === false ? 'selected' : ''}>nur dokumentieren (zählen nicht)</option></select>`)}</div>
+      ${field('Herkunft / Vereinbarung (optional)', `<input type="text" id="sGN" value="${esc((s.guest && s.guest.note) || '')}" placeholder="z. B. Austauschschülerin aus Lyon, Absprache mit der Schulleitung">`)}
+      <p class="hint">„Zählen nicht“: Die Noten stehen in der Tabelle, gehen aber nicht in Notenspiegel, Durchschnitt und Statistik der Klasse ein; es gibt keine Zeugnisnote und keine Warnungen. Außerhalb des Zeitraums gilt der Gast wie abwesend.</p></div>
     ${field('Notizen (nur für dich)', `<textarea id="sNote" rows="3">${esc(c.notes[s.id] || '')}</textarea>`)}
     <div class="panelBtns">${c.seminar ? '<button type="button" class="mini accent" id="sSem">Betreuung &amp; Seminararbeit …</button>' : ''}<button type="button" class="mini accent" id="sTalk" title="Große Ansicht für Elterngespräche, mit ← → zur nächsten Person">Elternsprechtag-Ansicht</button><button type="button" class="mini" id="sPdf">Schülerblatt drucken (PDF)</button><button type="button" class="mini" id="sDoc">als Word</button></div>`;
   const { dlg, close: closeStu } = sheet({ title: s.name, wide: true, body, onOk: d => {
     const n = d.querySelector('#sName').value.trim(); if (n && n !== s.name) { Object.assign(s, splitName({ name: n })); s.name = fullName(s); }
     if (!up) { c.noGrade = c.noGrade || {}; if (d.querySelector('#sNg').checked) c.noGrade[s.id] = { reason: d.querySelector('#sOvR').value.trim() }; else delete c.noGrade[s.id]; }
-    if (!up) { const g = d.querySelector('#sOv').value; if (g) c.overrides[s.id] = { grade: +g, reason: d.querySelector('#sOvR').value.trim() }; else delete c.overrides[s.id]; }
+    if (!up && ovK !== 'until') { const g = d.querySelector('#sOv').value, o = g ? { grade: +g, reason: d.querySelector('#sOvR').value.trim(), scope: ovK } : null;
+      if (ovK === 'half') { c.ovHalf = c.ovHalf || {}; if (o) c.ovHalf[s.id] = o; else delete c.ovHalf[s.id]; if (c.overrides[s.id] && !c.overrides[s.id].scope) c.overrides[s.id].scope = 'year'; }
+      else { if (o) c.overrides[s.id] = o; else delete c.overrides[s.id]; } }
     const nt = d.querySelector('#sNote').value.trim(); if (nt) c.notes[s.id] = nt; else delete c.notes[s.id];
     const sk = d.querySelector('#sSupK').value; c.support = c.support || {}; if (sk) c.support[s.id] = { k: sk, t: d.querySelector('#sSupT').value.trim() }; else delete c.support[s.id];
+    if (d.querySelector('#sGuest').checked) { const gf = d.querySelector('#sGF').value, gt = d.querySelector('#sGT').value; if (gf && gt && gt < gf) { toast('Gast: Das Ende liegt vor dem Beginn'); return false; }
+      s.guest = { counts: d.querySelector('#sGC').value === '1', ...(gf ? { from: gf } : {}), ...(gt ? { to: gt } : {}), ...(d.querySelector('#sGN').value.trim() ? { note: d.querySelector('#sGN').value.trim() } : {}) }; } else delete s.guest;
     const af = d.querySelector('#sAwF').value, at = d.querySelector('#sAwT').value; c.away = c.away || {};
     if (af && at && at < af) { toast('Abwesenheit: Das Ende liegt vor dem Beginn'); return false; }
     if (af || at) c.away[s.id] = { from: af, to: at, reason: d.querySelector('#sAwR').value.trim() }; else delete c.away[s.id];
@@ -1989,6 +2152,7 @@ function studentSheet(c, s) {
   const semB = dlg.querySelector('#sSem'); if (semB) semB.onclick = () => { closeStu(); semCard(c, s); };
   dlg.querySelector('#sPdf').onclick = () => exportModel(modelStudents(c, [s]), 'pdf');
   dlg.querySelector('#sTalk').onclick = () => { closeStu(); talkView(c, s.id); };
+  dlg.querySelector('#sGuest').onchange = e => { dlg.querySelector('#guestBox').hidden = !e.target.checked; };
   dlg.querySelector('#sDoc').onclick = () => exportModel(modelStudents(c, [s]), 'docx');
 }
 
@@ -2002,7 +2166,42 @@ function studentSheet(c, s) {
      D.attTrash = { Datei-Kennung: Datum der Entfernung }   (aufgeräumt wird erst nach 120 Tagen)
    ====================================================================== */
 const SEM_TAB = 'W';
-const isPSem = c => /^(p[\s-]?seminar|projekt-?seminar)/i.test(String(c.subject || '').trim());
+const isPSem = c => !!(c && c.psem) || /^(p[\s-]?seminar|projekt-?seminar)/i.test(String((c && c.subject) || '').trim());
+/* Auswahlfeld mit eigener Liste (statt der Browser-Vorschlagsliste): tippen filtert, Pfeiltasten + Enter wählen, Esc schließt */
+function combo(input, itemsFn, opts = {}) {
+  const wrap = document.createElement('div'); wrap.className = 'combo'; input.parentNode.insertBefore(wrap, input); wrap.appendChild(input);
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'comboBtn'; btn.tabIndex = -1; btn.setAttribute('aria-label', 'Liste öffnen');
+  btn.innerHTML = '<svg viewBox="0 0 12 8" width="12" height="8" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  wrap.appendChild(btn);
+  const list = document.createElement('div'); list.className = 'comboList'; list.setAttribute('role', 'listbox'); list.hidden = true; wrap.appendChild(list);
+  input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.autocomplete = 'off';
+  let act = -1, shown = [];
+  const draw = all => { const q = input.value.trim().toLowerCase(), items = itemsFn();
+    shown = all || !q || items.some(x => x.toLowerCase() === q) ? items : items.filter(x => x.toLowerCase().includes(q));
+    if (!shown.length) { close(); return; }
+    act = Math.max(0, shown.findIndex(x => x.toLowerCase() === q));
+    list.innerHTML = shown.map((x, i) => `<div class="comboItem ${i === act ? 'act' : ''} ${x.toLowerCase() === q ? 'sel' : ''}" role="option" data-i="${i}">${esc(x)}</div>`).join('');
+    list.hidden = false; wrap.classList.add('open'); const a = list.querySelector('.act'); if (a) a.scrollIntoView({ block: 'nearest' }); };
+  const close = () => { list.hidden = true; wrap.classList.remove('open'); act = -1; };
+  const pick = i => { if (shown[i] == null) return; input.value = shown[i]; close(); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); };
+  const mark = () => $$('.comboItem', list).forEach((el, i) => { el.classList.toggle('act', i === act); if (i === act) el.scrollIntoView({ block: 'nearest' }); });
+  if (opts.openOnFocus !== false) input.addEventListener('focus', () => draw(true));
+  input.addEventListener('click', () => { if (list.hidden) draw(true); });
+  input.addEventListener('input', e => { if (e.isTrusted !== false && document.activeElement === input) draw(false); });
+  input.addEventListener('blur', () => setTimeout(close, 120));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (list.hidden) { draw(true); return; } act = (act + (e.key === 'ArrowDown' ? 1 : -1) + shown.length) % shown.length; mark(); }
+    else if (e.key === 'Enter' && !list.hidden && act >= 0) { e.preventDefault(); e.stopPropagation(); pick(act); }
+    else if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'Tab') close(); });
+  list.addEventListener('mousedown', e => { e.preventDefault(); const it = e.target.closest('.comboItem'); if (it) pick(+it.dataset.i); });
+  btn.addEventListener('mousedown', e => { e.preventDefault(); if (list.hidden) { input.focus(); draw(true); } else close(); });
+  return { close };
+}
+const LN_W = ['Exposé', 'Gliederungsentwurf', 'Zwischenbericht', 'Arbeitsplan zur Seminararbeit', 'Exzerpt', 'Recherche-Protokoll', 'Protokoll einer Seminarsitzung', 'Analyse einer Quelle', 'Zwischenpräsentation', 'Kurzreferat', 'Glossar', 'Interview', 'Materialmappe', 'Experiment', 'Organisation einer Exkursion'];
+const LN_P = ['Projektbeitrag', 'Präsentation', 'Projektdokumentation', 'Portfolio', 'Organisation und Planung', 'Kurzreferat', 'Protokoll'];
+/* Fachregeln (moderne Fremdsprachen, Latein …) gelten nicht für Seminare – das Leitfach ist dort nur Angabe */
+const ruleSubj = c => (c.seminar || isPSem(c) ? '' : c.subject);
 const isWSemName = x => /^(w[\s-]?seminar|wissenschaftsprop)/i.test(String(x || '').trim());
 const isSemTab = c => !!(c && c.seminar && UI.term === SEM_TAB);
 const yearStart = () => { const m = /^(\d{4})/.exec(String(D.settings.year || '')); return m ? +m[1] : +R.schoolYearOf().slice(0, 4); };
@@ -2015,15 +2214,17 @@ const semTermNow = c => R.semTermAt(semCfg(c).start, todayISO(), semMid());
 const semToday = () => todayISO();
 const semStatusOf = (c, sid) => R.semStatus(c, sid, semToday(), semMid());
 const isFreeDay = iso => { const [y, m] = iso.split('-'); return !!Cal.freeDays(+y, +m - 1)[iso]; };
-const semDeadlineSuggest = start => R.secondSchoolDayNov(+start + 1, isFreeDay);
-const SEM_KINDS = [['beratung', 'Beratungsgespräch'], ['zwischen', 'Zwischenstand / Zwischenpräsentation'], ['kurz', 'Kurze Rücksprache'], ['pruefung', 'Präsentation mit Prüfungsgespräch'], ['sonst', 'Sonstiges']];
+/* nur innerhalb des hinterlegten Ferienkalenders (KMBek 07.12.2022: bis 2029/30) – danach kein scheinbar amtliches Datum */
+const semDeadlineSuggest = start => { const y = +start + 1; if (!(y > 2000) || `${y}-11-30` > Cal.COVERED_UNTIL) return null; return R.secondSchoolDayNov(y, isFreeDay); };
+const SEM_KINDS = [['beratung', 'Beratungsgespräch'], ['zwischen', 'Zwischenstand / Zwischenpräsentation'], ['kurz', 'Kurze Rücksprache'], ['pruefung', 'Prüfungsgespräch'], ['sonst', 'Sonstiges']];
 const semKind = k => (SEM_KINDS.find(x => x[0] === k) || SEM_KINDS[4])[1];
 const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const wdate = d => d ? WD[new Date(d + 'T12:00').getDay()] + ', ' + fdate(d) : '';
 /* Sprache der Arbeit (§ 24 Abs. 1 GSO) nach dem Leitfach */
+const semLeit = c => String((isWSemName(c.subject) ? (c.sem && c.sem.leit) : c.subject) || (c.sem && c.sem.leit) || '').trim();
 function semLangHint(c) {
-  const f = String(semCfg(c).leit || c.subject || '').trim();
+  const f = semLeit(c);
   if (/^englisch/i.test(f)) return 'Leitfach Englisch: Die Seminararbeit wird auf Englisch verfasst, das Prüfungsgespräch auf Englisch geführt (§ 24 GSO).';
   if (R.isLang(f) && !/^(latein|griechisch)/i.test(f)) return `Leitfach ${f}: Die Arbeit wird auf ${f} oder auf Deutsch verfasst; das Prüfungsgespräch wird auf ${f} geführt (§ 24 GSO).`;
   return '';
@@ -2068,7 +2269,7 @@ function semView(c) {
       <div class="semCnt"><b>${nThema}<i>/${n}</i></b><small>Themen</small></div>
       <div class="semCnt"><b>${nAbg}<i>/${n}</i></b><small>abgegeben</small></div>
       <div class="semCnt"><b>${nBew}<i>/${n}</i></b><small>bewertet</small></div>
-      <button class="mini" data-semcfg="1" title="Abgabetermin, Themenfrist, Rahmenthema">Fristen …</button></div>`;
+      <div class="semBtns"><button class="mini" data-semcfg="1" title="Abgabetermin, Themenfrist, Rahmenthema">Fristen …</button><button class="mini" data-sempg="1" title="Tag und Uhrzeit je Person, Terminliste drucken">Prüfungsgespräche …</button></div></div>`;
   const terms = ['12/1', '12/2', '13/1'];
   const head = `<thead><tr class="grp"><th class="nm" rowspan="2" style="padding-left:14px;text-align:left">Name</th><th class="sep" rowspan="2" style="text-align:left;padding-left:12px">Thema</th><th class="gSmall sep" colspan="3">Betreuungstermine</th><th class="sep" rowspan="2">Abgabe</th><th class="gBig sep" colspan="3">Bewertung (§ 29 Abs. 6 GSO)</th><th class="sep" rowspan="2">Hinweise</th></tr>
     <tr class="cols">${terms.map((x, i) => `<th class="${i ? '' : 'sep'}" style="padding:6px 10px">${x}</th>`).join('')}<th class="sep" style="padding:6px 10px">Arbeit</th><th style="padding:6px 10px">Prüfungs-<br>gespräch</th><th style="padding:6px 10px">Gesamt<br><small>max. 30</small></th></tr></thead>`;
@@ -2117,6 +2318,9 @@ function bindAtt(box, get, set, onRemove) {
   mark();
 }
 
+const bwState = (c, s, kind) => { const b = semGet(c, s.id)[kind === 'P' ? 'bwP' : 'bwA']; const K = kind === 'P' ? kritP(c) : kritA(c);
+  const n = b ? K.filter(x => (b.p && b.p[x.k] != null && b.p[x.k] !== '') || (b.e && b.e[x.k])).length : 0;
+  return n ? `${n} von ${K.length} ${kind === 'P' ? 'Kompetenzen' : 'Bereichen'} bewertet` : `${K.length} ${kind === 'P' ? 'Kompetenzen nach ISB' : 'Bereiche nach ISB (Anlage 5a)'} – noch leer`; };
 /* ---------- Betreuungskarte (je Schüler) – speichert jede Änderung sofort ---------- */
 function semCard(c, s) {
   const cf = semCfg(c);
@@ -2134,21 +2338,28 @@ function semCard(c, s) {
   const body = `<div class="stuSum" id="smStats">${stats()}</div><div class="notices" id="smFlags">${flags()}</div>
     <div class="subhead">Thema</div>
     ${field('Thema der Seminararbeit', `<textarea id="smThema" rows="2" placeholder="Arbeitstitel – endgültig bis Ende 12/1 (§ 24 Abs. 1 GSO)">${esc(v.thema || '')}</textarea>`)}
+    <div class="grid3">${field('Kurztitel fürs Abiturzeugnis (falls nötig)', `<input type="text" id="smKurz" value="${esc(v.kurz || '')}" placeholder="begrenzte Zeichenzahl – laut Schule">`, 'span2')}<div class="field"><span>Zeichen</span><div class="semSum" id="smKurzN" style="font-size:20px">${(v.kurz || '').length}</div></div></div>
+    ${R.isModernLang(semLeit(c)) && !/^englisch/i.test(semLeit(c)) ? `<div class="grid3">${field('Sprache der Arbeit (§ 24 Abs. 1 GSO)', `<select id="smSpr"><option value="">${esc(semLeit(c))}</option><option value="de" ${v.sprache === 'de' ? 'selected' : ''}>Deutsch</option></select>`)}</div>` : ''}
+    <label class="check"><input type="checkbox" id="smWb" ${v.wb ? 'checked' : ''}> <span>Wettbewerbsbeitrag ersetzt die Seminararbeit (§ 24 Abs. 3 GSO)</span></label>
+    <div id="smWbRow" ${v.wb ? '' : 'hidden'}>${field('Wettbewerb', `<input type="text" id="smWbN" value="${esc(v.wbName || '')}" placeholder="vom Staatsministerium als geeignet anerkannt, z. B. Jugend forscht">`)}</div>
     <div class="grid3">${field('Thema festgelegt am', `<input type="date" id="smThemaAm" value="${esc(v.themaAm || '')}">`)}<div class="span2 hint" style="align-self:end;margin-bottom:12px">${esc(lh || 'Das Thema wählt die Schülerin bzw. der Schüler bis Ende 12/1 im Einvernehmen mit der Kursleitung (§ 24 Abs. 1 GSO).')}</div></div>
     <div class="subhead">Betreuungstermine <button type="button" class="mini accent" id="smTmAdd" style="float:right">+ Termin</button></div>
     <div class="tmList" id="smTm">${terminList()}</div>
+    <label class="check"><input type="checkbox" id="smExp" ${v.expose ? 'checked' : ''}> <span>Exposé bzw. Gliederungsentwurf besprochen (Meilenstein 12/2)</span></label>
     <div class="subhead">Abgabe</div>
     <div class="grid3">${field('Abgegeben am', `<input type="date" id="smAbg" value="${esc(v.abgabe || '')}">`)}${field('Uhrzeit (optional)', `<input type="time" id="smAbgZ" value="${esc(v.abgabeZeit || '')}">`)}
       <label class="check" style="margin-top:22px"><input type="checkbox" id="smErkl" ${v.erkl ? 'checked' : ''}> <span>Erklärung zur selbstständigen Anfertigung liegt vor</span></label></div>
+    <label class="check"><input type="checkbox" id="smKi" ${v.kiDoc ? 'checked' : ''}> <span>Dokumentation der KI-Nutzung abgegeben</span></label>
     <div class="grid3">${field('Frist verlängert bis', `<input type="date" id="smVerl" value="${esc(v.verl || '')}">`)}${field('Grund (Entscheidung der Schule)', `<input type="text" id="smVerlG" value="${esc(v.verlGrund || '')}" placeholder="z. B. längere Erkrankung">`, 'span2')}</div>
     <label class="check"><input type="checkbox" id="smWett" ${v.wett ? 'checked' : ''}> <span>Ersetzt durch einen gleichwertigen Wettbewerbsbeitrag (§ 24 GSO)</span></label>
     <div id="smWettBox" ${v.wett ? '' : 'hidden'}>${field('Wettbewerb / Beitrag', `<input type="text" id="smWettT" value="${esc(v.wettText || '')}">`)}</div>
     <div class="field"><span>Dateien der Arbeit (z. B. abgegebene Seminararbeit als PDF)</span><div id="smFiles">${attBoxHTML(v.files, 'Dateien')}</div></div>
     <div class="subhead">Bewertung</div>
-    <div class="grid3">${field('Seminararbeit (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smA" value="${esc(p0.arbeit ?? '')}" maxlength="2">`)}${field('Präsentation mit Prüfungsgespräch (0–15)', `<input type="text" inputmode="numeric" id="smP" value="${esc(p0.gespraech ?? '')}" maxlength="2">`)}
+    <div class="grid3">${field('Seminararbeit (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smA" value="${esc(p0.arbeit ?? '')}" maxlength="2">`)}${field('Prüfungsgespräch (0–15 Punkte)', `<input type="text" inputmode="numeric" id="smP" value="${esc(p0.gespraech ?? '')}" maxlength="2">`)}
       <div class="field"><span>Gesamtleistung (max. 30)</span><div class="semSum" id="smG">${R.seminarPaper(p0.arbeit, p0.gespraech) ?? '–'}</div></div></div>
-    <div class="grid3">${field('Prüfungsgespräch am', `<input type="date" id="smPgAm" value="${esc(v.pgAm || '')}">`)}${field('Bemerkung zur Bewertung (nur für dich)', `<input type="text" id="smBem" value="${esc(v.bem || '')}">`, 'span2')}</div>
-    <p class="hint">§ 29 Abs. 6 GSO: Die Punkte der Arbeit zählen doppelt, dazu die Punkte von Präsentation und Prüfungsgespräch; die Summe wird mit 2/3 multipliziert und gerundet. Für die Zulassung zur Abiturprüfung sind mindestens 9 Punkte nötig, und weder Arbeit noch Prüfungsgespräch dürfen mit 0 Punkten bewertet sein (§ 44 GSO). ${lh ? esc(lh) : ''}</p>
+    <div class="bwBtns"><button type="button" class="bwBtn" id="smBwA"><b>Bewertungsbogen Seminararbeit</b><small id="smBwAS">${bwState(c, s, 'A')}</small></button><button type="button" class="bwBtn" id="smBwP"><b>Bewertungsbogen Prüfungsgespräch</b><small id="smBwPS">${bwState(c, s, 'P')}</small></button></div>
+    <div class="grid3">${field('Prüfungsgespräch am', `<input type="date" id="smPgAm" value="${esc(v.pgAm || '')}">`)}${field('Uhrzeit', `<input type="time" id="smPgZ" value="${esc(v.pgZeit || '')}">`)}${field('Bemerkung zur Bewertung (nur für dich)', `<input type="text" id="smBem" value="${esc(v.bem || '')}">`)}</div>
+    <p class="hint">§ 29 Abs. 6 GSO: Die Punkte der Arbeit zählen doppelt, dazu die Punkte des Prüfungsgesprächs (§ 24 Abs. 2 GSO; laut ISB-Übersicht insgesamt ca. 25 Minuten, optional mit einem Kurzvortrag von höchstens 5 Minuten); die Summe wird mit 2/3 multipliziert und gerundet. Unter 9 Punkten muss die Schule das bis Ende 13/1 mitteilen (§ 44 Abs. 1 Satz 2 GSO); ob die Zulassung gefährdet ist, hängt von allen eingebrachten Leistungen ab (§ 44 Abs. 2 Nr. 3 GSO). Weder Arbeit noch Prüfungsgespräch dürfen mit 0 Punkten bewertet sein (§ 44 GSO). ${lh ? esc(lh) : ''}</p>
     ${field('Notizen (nur für dich)', `<textarea id="smNote" rows="2">${esc(c.notes[s.id] || '')}</textarea>`)}
     <div class="panelBtns"><button type="button" class="mini" id="smDocPdf">Betreuungsdokumentation (PDF)</button><button type="button" class="mini" id="smDocWord">als Word</button><button type="button" class="mini" id="smGrades">Noten 12/1 und 12/2 …</button></div>
     <p class="hint">Alles wird sofort gespeichert. Libretto dokumentiert nur – über Zulassung, Fristverlängerung und Folgen entscheidet die Schule.</p>`;
@@ -2157,10 +2368,19 @@ function semCard(c, s) {
   const q = id => dlg.querySelector(id);
   const refresh = () => { q('#smStats').innerHTML = stats(); q('#smFlags').innerHTML = flags(); };
   const put = (k, val) => { if (READONLY) return; const o = st(); if (val === '' || val === false || val == null) delete o[k]; else o[k] = val; save(); refresh(); };
-  [['#smThema', 'thema'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
+  [['#smThema', 'thema'], ['#smKurz', 'kurz'], ['#smWbN', 'wbName'], ['#smPgZ', 'pgZeit'], ['#smThemaAm', 'themaAm'], ['#smAbg', 'abgabe'], ['#smAbgZ', 'abgabeZeit'], ['#smVerl', 'verl'], ['#smVerlG', 'verlGrund'], ['#smWettT', 'wettText'], ['#smPgAm', 'pgAm'], ['#smBem', 'bem']]
     .forEach(([sel, k]) => { const el = q(sel); el.addEventListener('change', () => put(k, el.value.trim())); });
   q('#smThema').addEventListener('input', () => { if (!READONLY) { const o = st(); const x = q('#smThema').value.trim(); if (x) o.thema = x; else delete o.thema; save(); } });
   q('#smErkl').onchange = () => put('erkl', q('#smErkl').checked);
+  q('#smKi').onchange = () => put('kiDoc', q('#smKi').checked);
+  q('#smWb').onchange = () => { put('wb', q('#smWb').checked); q('#smWbRow').hidden = !q('#smWb').checked; };
+  if (q('#smSpr')) q('#smSpr').onchange = () => put('sprache', q('#smSpr').value);
+  q('#smExp').onchange = () => put('expose', q('#smExp').checked);
+  q('#smKurz').addEventListener('input', () => { q('#smKurzN').textContent = q('#smKurz').value.trim().length; });
+  const bwDone = () => { const x = c.seminarPaper[s.id] || {}; q('#smA').value = x.arbeit ?? ''; q('#smP').value = x.gespraech ?? ''; q('#smG').textContent = R.seminarPaper(x.arbeit, x.gespraech) ?? '–';
+    const y = semGet(c, s.id); q('#smPgAm').value = y.pgAm || ''; q('#smPgZ').value = y.pgZeit || ''; q('#smBwAS').textContent = bwState(c, s, 'A'); q('#smBwPS').textContent = bwState(c, s, 'P'); refresh(); };
+  q('#smBwA').onclick = () => semBwSheet(c, s, 'A', bwDone);
+  q('#smBwP').onclick = () => semBwSheet(c, s, 'P', bwDone);
   q('#smWett').onchange = () => { put('wett', q('#smWett').checked); q('#smWettBox').hidden = !q('#smWett').checked; };
   q('#smNote').addEventListener('change', () => { if (READONLY) return; const x = q('#smNote').value.trim(); if (x) c.notes[s.id] = x; else delete c.notes[s.id]; save(); });
   const pts = (sel, k) => { const el = q(sel); el.addEventListener('change', () => {
@@ -2179,6 +2399,173 @@ function semCard(c, s) {
   if (!(v.thema || '').trim()) q('#smThema').focus();
 }
 
+/* ---------- W-Seminar: Bewertungsbögen (ISB-Material 2026, an die Schule anpassbar) ---------- */
+const KRIT_P = [
+  { k: 'fach', l: 'Fachkompetenz', d: 'Inhalte korrekt, differenziert und fachlich fundiert darstellen', f: 1 },
+  { k: 'arg', l: 'Argumentationskompetenz', d: 'schlüssig, strukturiert und überzeugend argumentieren', f: 1 },
+  { k: 'meth', l: 'Methoden- und Wissenschaftskompetenz', d: 'geeignete wissenschaftliche Methoden anwenden und begründen', f: 1 },
+  { k: 'dar', l: 'Darstellungskompetenz', d: 'Inhalte klar strukturiert und sprachlich präzise präsentieren', f: 1 },
+  { k: 'refl', l: 'Reflexions- und Transferkompetenz', d: 'Wissen und Erkenntnisse kritisch hinterfragen, bewerten und auf neue Problemstellungen übertragen', f: 1 }];
+const KRIT_A = [   /* Leitfragen wörtlich nach Anlage 5a „Bewertungsbogen für die Seminararbeit“ (Gewichte dort „z. B.“ – von der Schule anpassbar) */
+  { k: 'form', l: 'Form', d: 'formale Vorgaben eingehalten; übersichtlich und ansprechend gestaltet; übliche Kriterien einer wissenschaftlichen Arbeit (Seitenzählung, Schriftsatz usw.)', w: 10 },
+  { k: 'spr', l: 'Sprache', d: 'orthografisch, sprachlich und stilistisch korrekt; gut lesbarer, sachlicher Stil; Fachbegriffe und fremdsprachige Begriffe richtig verwendet', w: 20 },
+  { k: 'meth', l: 'Methode', d: 'Behauptungen genau belegt und begründet; überzeugende Untersuchungsstrategie; Bilder, Zitate, Tabellen mit Erkenntniszugewinn; fachspezifische Methoden korrekt angewendet; maßgebliche Quellen verwendet und genau ausgewertet; alle Quellen korrekt angegeben; ggf. experimentelle, forschende oder analytische Anteile auf die Problemstellung bezogen und angemessen reflektiert', w: 30, ds: 'Behauptungen belegt und begründet, überzeugende Untersuchungsstrategie, Bilder/Zitate/Tabellen mit Erkenntnisgewinn, fachspezifische Methoden korrekt, maßgebliche Quellen ausgewertet und korrekt angegeben' },
+  { k: 'inh', l: 'Inhalt', d: 'klar und logisch gegliedert; zentrale Frage- bzw. Problemstellung klar herausgearbeitet; Forschungsstand hinreichend einbezogen; Bezug zum Thema in allen Teilen erkennbar; Gedankengänge nachvollziehbar und überzeugend; Ergebnisse am Ende von Kapiteln klar formuliert; Ausführungen und Schlussfolgerungen sachlich und fachlich zutreffend; am Schluss plausible, schlüssige Antwort auf die Frage-/Problemstellung', w: 40, ds: 'klar gegliedert, Fragestellung klar herausgearbeitet, Forschungsstand einbezogen, Themenbezug, nachvollziehbare Gedankengänge, fachlich zutreffende Ergebnisse, schlüssige Antwort am Schluss' }];
+const EINSCH = ['++', '+', '–', '––'];
+const kritP = c => (semCfg(c).kritP && semCfg(c).kritP.length ? semCfg(c).kritP : KRIT_P);
+const kritA = c => (semCfg(c).kritA && semCfg(c).kritA.length ? semCfg(c).kritA : KRIT_A);
+const rnd = x => Math.floor(x + 0.5 + 1e-9);
+const noteOf = n => (R.POINT_LABEL ? R.POINT_LABEL(+n).replace('-', '–') : String(R.POINT_GRADE(+n)));
+const ptsLabel = v => v === '' || v == null ? '' : `${v} P.`;
+const ptsNote = v => v === '' || v == null ? '' : ['ungenügend', 'mangelhaft', 'ausreichend', 'befriedigend', 'gut', 'sehr gut'][Math.min(5, Math.floor((+v + 2) / 3))];
+/* Vorschläge: gewichteter Durchschnitt der Teilpunkte, gerundet – nur, wenn alle Kriterien bewertet sind */
+function bwPVorschlag(c, b) { const K = kritP(c); if (!b || !K.every(x => b.p && b.p[x.k] !== '' && b.p[x.k] != null)) return null; const sf = K.reduce((a, x) => a + (+x.f || 1), 0); return rnd(K.reduce((a, x) => a + (+b.p[x.k]) * (+x.f || 1), 0) / sf); }
+function bwAVorschlag(c, b) { const K = kritA(c); if (!b || !K.every(x => b.p && b.p[x.k] !== '' && b.p[x.k] != null)) return null; const sw = K.reduce((a, x) => a + (+x.w || 0), 0) || 1; return rnd(K.reduce((a, x) => a + (+b.p[x.k]) * (+x.w || 0), 0) / sw); }
+const PSCALE = [{ g: '1', v: ['15', '14', '13'] }, { g: '2', v: ['12', '11', '10'] }, { g: '3', v: ['9', '8', '7'] }, { g: '4', v: ['6', '5', '4'] }, { g: '5', v: ['3', '2', '1'] }, { g: '6', v: ['0'] }];
+const ptsSelect = (attr, v) => `<select ${attr}><option value="">–</option>${Array.from({ length: 16 }, (_, i) => 15 - i).map(n => `<option value="${n}" ${String(v) === String(n) ? 'selected' : ''}>${n} P. · Note ${noteOf(n)}</option>`).join('')}</select>`;
+
+function modelSemBwP(c, s, blank) {
+  const st = blank ? {} : semGet(c, s.id), b = blank ? {} : (st.bwP || {}), sp = blank ? {} : (c.seminarPaper[s.id] || {}), v = bwPVorschlag(c, b);
+  const zeit = st.pgZeit ? st.pgZeit + (st.pgBis ? '–' + st.pgBis : '') + ' Uhr' : '';
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Bewertung des Prüfungsgesprächs', subtitle: blank ? 'Bewertungsbogen' : s.name, file: fileSafe(`${st.pgAm || todayISO()} Bewertung Prüfungsgespräch ${blank ? 'Vorlage' : s.name} ${c.name}`), meta: semMeta(c),
+    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ['Datum, Uhrzeit', [st.pgAm ? wdate(st.pgAm) : '', zeit].filter(Boolean).join(', ')], ['Form', (blank ? '☐ mit freiem Kurzvortrag (höchstens 5 Minuten)     ☐ nur Prüfungsgespräch' : b.vortrag ? 'freier Kurzvortrag (höchstens 5 Minuten) und Prüfungsgespräch' : 'Prüfungsgespräch') + (R.isModernLang(semLeit(c)) ? ' – in der Fremdsprache (§ 24 Abs. 2 GSO)' : '')]] },
+      { h: 'Bewertung nach Kompetenzen' },
+      { crit: { scale: PSCALE, lines: blank ? 2 : 0, items: kritP(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.d, w: (+x.f || 1) !== 1 ? 'Faktor ' + String(x.f).replace('.', ',') : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: pv, note: (b.n || {})[x.k] || '' }; }) } },
+      { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Kompetenzen', v: v + ' P.', s: 'gewichteter Durchschnitt, gerundet' }] : []), { l: 'Prüfungsgespräch', v: sp.gespraech === '' || sp.gespraech == null ? (blank ? '____ Punkte' : '–') : sp.gespraech + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
+      { note: 'Prüfungsgespräch nach § 24 Abs. 2 GSO; Dauer laut ISB-Übersicht ca. 25 Minuten (Umsetzung des KMS vom 02.02.2026). Kompetenzen nach dem Bewertungsbogen des ISB, von der Schule anpassbar. Die Punkte je Kompetenz sind eine Ersteinschätzung; die Bewertung setzt die Lehrkraft fest.' },
+      { sig: ['Datum, Unterschrift Kursleitung'] }] }] };
+}
+function modelSemBwA(c, s, blank) {
+  const st = blank ? {} : semGet(c, s.id), b = blank ? {} : (st.bwA || {}), sp = blank ? {} : (c.seminarPaper[s.id] || {}), v = bwAVorschlag(c, b), cf = semCfg(c);
+  const due = st.verl || cf.deadline, inTime = st.abgabe ? (due ? st.abgabe <= due : null) : null;
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Bewertung der Seminararbeit', subtitle: blank ? 'Bewertungsbogen' : s.name, file: fileSafe(`${todayISO()} Bewertung Seminararbeit ${blank ? 'Vorlage' : s.name} ${c.name}`), meta: semMeta(c),
+    blocks: [{ kv: [['Schülerin / Schüler', blank ? ' ' : s.name], ['Thema der Seminararbeit', blank ? '\n ' : st.thema || ''], ...(st.kurz || blank ? [['Kurztitel (Abiturzeugnis)', blank ? ' ' : st.kurz]] : []),
+        ['Abgabe', blank ? ' ' : st.abgabe ? `${wdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}${inTime === true ? ' – termingerecht' : inTime === false ? ' – nach der Frist' : ''}` : 'noch nicht abgegeben'],
+        /* eine Zeile statt drei – damit der Bogen auf eine Seite passt */
+        ['Selbstständig verfasst', blank ? '☐ ja – nur mithilfe der angegebenen Quellen     ☐ nein' : [b.selbst ? 'ja' + (st.erkl ? ' (Erklärung liegt vor)' : '') : st.erkl ? 'Erklärung liegt vor' : '–', st.kiDoc ? 'KI-Nutzung dokumentiert' : '', R.isModernLang(semLeit(c)) ? 'Sprache der Arbeit: ' + (st.sprache === 'de' ? 'Deutsch' : semLeit(c)) : ''].filter(Boolean).join(' · ')],
+        ...(st.wb ? [['Wettbewerbsbeitrag (§ 24 Abs. 3 GSO)', st.wbName || 'ja']] : [])] },
+      { h: 'Bewertung nach Bereichen' },
+      { crit: { scale: EINSCH, lines: blank ? 2 : 0, items: kritA(c).map(x => { const pv = (b.p || {})[x.k]; return { l: x.l, d: x.ds || x.d, w: x.w ? x.w + ' %' : '', v: ptsLabel(pv), vs: pv === '' || pv == null ? '' : 'Note ' + noteOf(pv), sel: (b.e || {})[x.k], note: (b.n || {})[x.k] || '' }; }) } },
+      { group: [...(b.urteil ? [{ h: 'Gesamturteil' }, { p: b.urteil }] : blank ? [{ h: 'Gesamturteil' }, { lines: 4 }] : []), { stats: [...(v != null ? [{ l: 'Vorschlag aus den Bereichen', v: v + ' P.', s: 'nach Gewichtung, gerundet' }] : []), { l: 'Seminararbeit', v: sp.arbeit === '' || sp.arbeit == null ? (blank ? '____ Punkte' : '–') : sp.arbeit + ' Punkte', s: 'von 15 · festgesetzt von der Lehrkraft', key: true }] },
+      { note: 'Bereiche und Gewichtung nach dem ISB-Bewertungsbogen (Anlage 5a), von der Schule anpassbar. ++ voll · + überwiegend · – teilweise · –– nicht erfüllt. Die Abgabe ist Zulassungsvoraussetzung (§ 44 Abs. 2 Nr. 6 GSO); Gesamtleistung (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO).' },
+      { sig: ['Datum, Unterschrift Kursleitung'] }] }] };
+}
+/* Mehrere Bögen in einer Datei (je Person eine neue Seite mit eigenem Kopf) */
+function modelMany(c, mk, title, file) {
+  const list = c.students; if (!list.length) return mk(c, { id: '', name: '' }, true);
+  const first = mk(c, list[0]);
+  list.slice(1).forEach(s => { const m = mk(c, s); first.blocks.push({ pagebreak: true }, { head: { eyebrow: m.eyebrow, title: m.title, subtitle: m.subtitle, meta: m.meta } }, ...m.blocks); });
+  first.file = fileName(file, c); return first;
+}
+const modelSemBwAAll = c => modelMany(c, modelSemBwA, 'Bewertung der Seminararbeit', 'Bewertungsbögen Seminararbeit');
+const modelSemBwPAll = c => modelMany(c, modelSemBwP, 'Bewertung des Prüfungsgesprächs', 'Bewertungsbögen Prüfungsgespräch');
+
+/* Bewertungsbogen bearbeiten (kind 'A' = Arbeit, 'P' = Prüfungsgespräch) – speichert sofort */
+function semBwSheet(c, s, kind, done) {
+  const isP = kind === 'P', key = isP ? 'bwP' : 'bwA', spk = isP ? 'gespraech' : 'arbeit';
+  const b0 = () => { const o = semSt(c, s.id); o[key] = o[key] || { p: {}, n: {}, e: {} }; ['p', 'n', 'e'].forEach(k => o[key][k] = o[key][k] || {}); return o[key]; };
+  const v0 = semGet(c, s.id)[key] || {}, st0 = semGet(c, s.id), sp0 = c.seminarPaper[s.id] || {};
+  const K = isP ? kritP(c) : kritA(c);
+  const row = x => `<div class="bwRow" data-k="${esc(x.k)}">
+      <div class="bwHead"><div><b>${esc(x.l)}</b><small>${esc(x.d || '')}</small></div><span class="bwW">${isP ? ((+x.f || 1) !== 1 ? 'Faktor ' + String(x.f).replace('.', ',') : '') : (x.w ? x.w + ' %' : '')}</span></div>
+      <div class="bwCtl">${isP ? '' : `<span class="seg bwSeg">${EINSCH.map(e => `<button type="button" class="${((v0.e || {})[x.k]) === e ? 'on' : ''}" data-be="${e}">${e}</button>`).join('')}</span>`}
+        <label class="bwPts"><span>${isP ? 'Punkte' : 'Punkte (optional)'}</span>${ptsSelect(`data-bp="${esc(x.k)}"`, (v0.p || {})[x.k] ?? '')}</label></div>
+      <textarea rows="2" data-bn="${esc(x.k)}" placeholder="Anmerkungen">${esc((v0.n || {})[x.k] || '')}</textarea></div>`;
+  const body = `${isP ? `<div class="grid3">${field('Datum', `<input type="date" id="bwD" value="${esc(st0.pgAm || '')}">`)}${field('von', `<input type="time" id="bwV" value="${esc(st0.pgZeit || '')}">`)}${field('bis', `<input type="time" id="bwB" value="${esc(st0.pgBis || '')}">`)}</div>
+      <label class="check"><input type="checkbox" id="bwVt" ${v0.vortrag ? 'checked' : ''}> <span>mit freiem Kurzvortrag zum Einstieg (höchstens 5 Minuten, ohne Medien)</span></label>`
+    : `<label class="check"><input type="checkbox" id="bwSelbst" ${v0.selbst ? 'checked' : ''}> <span>Die Arbeit wurde eindeutig selbstständig und nur mithilfe der angegebenen Quellen verfasst</span></label>
+      <p class="hint">Abgabe: ${st0.abgabe ? esc(wdate(st0.abgabe)) : 'noch nicht eingetragen'} – die Abgabe ist Zulassungsvoraussetzung (§ 44 Abs. 2 Nr. 6 GSO).</p>`}
+    <div class="bwList">${K.map(row).join('')}</div>
+    ${field('Gesamturteil', `<textarea id="bwU" rows="3" placeholder="Kurzes Gutachten">${esc(v0.urteil || '')}</textarea>`)}
+    <div class="bwRes"><div><small>Vorschlag aus den ${isP ? 'Kompetenzen' : 'Bereichen'}</small><b id="bwVor">–</b></div><button type="button" class="mini" id="bwTake" disabled>Vorschlag übernehmen</button>
+      <label class="bwFinal"><small>${isP ? 'Prüfungsgespräch' : 'Seminararbeit'} (festgesetzt)</small><input type="text" inputmode="numeric" maxlength="2" id="bwP" value="${esc(sp0[spk] ?? '')}"></label></div>
+    <div class="panelBtns"><button type="button" class="mini accent" id="bwPdf">Bewertungsbogen drucken (PDF)</button><button type="button" class="mini" id="bwWord">als Word</button><button type="button" class="mini" id="bwKrit">Kriterien für diesen Kurs …</button></div>
+    <p class="hint">${isP ? 'Kompetenzen nach dem Bewertungsbogen des ISB. Die Punkte je Kompetenz sind eine Ersteinschätzung; der Vorschlag ist ihr (gewichteter) Durchschnitt, gerundet.' : 'Bereiche und Gewichtung nach dem ISB-Bewertungsbogen (Anlage 5a). Wenn du je Bereich Punkte vergibst, rechnet Libretto einen gewichteten Vorschlag.'} Die Punkte setzt du fest. Alles wird sofort gespeichert.</p>`;
+  const { dlg } = sheet({ title: (isP ? 'Prüfungsgespräch · ' : 'Seminararbeit · ') + s.name, wide: true, ok: '', cancel: 'Fertig', body });
+  dlg.addEventListener('close', () => done && done(), { once: true });
+  const q = id => dlg.querySelector(id);
+  const upd = () => { const v = isP ? bwPVorschlag(c, semGet(c, s.id).bwP) : bwAVorschlag(c, semGet(c, s.id).bwA); q('#bwVor').textContent = v == null ? '–' : v + ' P. (Note ' + noteOf(v) + ')'; q('#bwTake').disabled = v == null || READONLY; q('#bwTake').dataset.v = v ?? ''; };
+  const rw = fn => { if (READONLY) return; fn(b0()); save(); upd(); };
+  $$('[data-bp]', dlg).forEach(el => el.onchange = () => rw(b => { if (el.value === '') delete b.p[el.dataset.bp]; else b.p[el.dataset.bp] = +el.value; }));
+  $$('[data-bn]', dlg).forEach(el => el.onchange = () => rw(b => { const x = el.value.trim(); if (x) b.n[el.dataset.bn] = x; else delete b.n[el.dataset.bn]; }));
+  $$('.bwSeg', dlg).forEach(sg => sg.onclick = e => { const bt = e.target.closest('[data-be]'); if (!bt) return; const k = sg.closest('.bwRow').dataset.k, on = bt.classList.contains('on');
+    $$('button', sg).forEach(x => x.classList.remove('on')); if (!on) bt.classList.add('on'); rw(b => { if (on) delete b.e[k]; else b.e[k] = bt.dataset.be; }); });
+  q('#bwU').onchange = () => rw(b => { const x = q('#bwU').value.trim(); if (x) b.urteil = x; else delete b.urteil; });
+  if (isP) { [['#bwD', 'pgAm'], ['#bwV', 'pgZeit'], ['#bwB', 'pgBis']].forEach(([sel, k]) => q(sel).onchange = () => { if (READONLY) return; const o = semSt(c, s.id); if (q(sel).value) o[k] = q(sel).value; else delete o[k]; save(); });
+    q('#bwVt').onchange = () => rw(b => { if (q('#bwVt').checked) b.vortrag = true; else delete b.vortrag; }); }
+  else q('#bwSelbst').onchange = () => rw(b => { if (q('#bwSelbst').checked) b.selbst = true; else delete b.selbst; });
+  const setPts = x => { if (READONLY) return; if (x !== '' && (!/^\d{1,2}$/.test(String(x)) || +x > 15)) { toast('Punkte 0–15'); q('#bwP').select(); return; }
+    const o = (c.seminarPaper[s.id] = c.seminarPaper[s.id] || {}); o[spk] = x === '' ? '' : +x; q('#bwP').value = o[spk]; save(); };
+  q('#bwP').onchange = () => setPts(q('#bwP').value.trim());
+  q('#bwTake').onclick = () => { setPts(q('#bwTake').dataset.v); toast('Vorschlag übernommen'); };
+  q('#bwPdf').onclick = () => exportModel(isP ? modelSemBwP(c, s) : modelSemBwA(c, s), 'pdf');
+  q('#bwWord').onclick = () => exportModel(isP ? modelSemBwP(c, s) : modelSemBwA(c, s), 'docx');
+  q('#bwKrit').onclick = () => semKritSheet(c, kind, () => { dlg.close(); semBwSheet(c, s, kind, done); });
+  upd();
+}
+/* Kriterien eines Kurses anpassen (die Schule darf das ISB-Raster anpassen) */
+function semKritSheet(c, kind, done) {
+  const isP = kind === 'P'; let L = JSON.parse(JSON.stringify(isP ? kritP(c) : kritA(c)));
+  const draw = d => { d.querySelector('#krRows').innerHTML = L.map((x, i) => `<div class="krRow"><input type="text" data-kl="${i}" value="${esc(x.l)}" placeholder="Kriterium"><input type="text" data-kd="${i}" value="${esc(x.d || '')}" placeholder="Beschreibung"><label><span>${isP ? 'Faktor' : 'Gewicht %'}</span><input type="number" min="0" step="${isP ? '0.5' : '5'}" data-kw="${i}" value="${esc(isP ? (x.f ?? 1) : (x.w ?? 0))}"></label><button type="button" class="iconbtn" data-kx="${i}" title="Entfernen">✕</button></div>`).join('');
+    const sum = L.reduce((a, x) => a + (+x.w || 0), 0); d.querySelector('#krSum').textContent = isP ? '' : `Summe der Gewichte: ${sum} %${sum !== 100 ? ' – wird anteilig gerechnet' : ''}`;
+    $$('[data-kx]', d).forEach(b => b.onclick = () => { sync(d); L.splice(+b.dataset.kx, 1); draw(d); }); };
+  const sync = d => L.forEach((x, i) => { x.l = d.querySelector(`[data-kl="${i}"]`).value.trim(); x.d = d.querySelector(`[data-kd="${i}"]`).value.trim(); const w = +d.querySelector(`[data-kw="${i}"]`).value; if (isP) x.f = w > 0 ? w : 1; else x.w = w >= 0 ? w : 0; });
+  sheet({ title: (isP ? 'Kompetenzen Prüfungsgespräch' : 'Bereiche Seminararbeit') + ' · ' + c.name, wide: true, body: `<p class="prose">Vorgabe ist der Bewertungsbogen des ISB. Die Schule bzw. du kannst die Kriterien anpassen – sie gelten für alle in diesem Kurs. Bereits vergebene Teilpunkte bleiben erhalten.</p>
+    <div id="krRows" class="krRows"></div><p class="hint" id="krSum"></p>
+    <div class="panelBtns"><button type="button" class="mini" id="krAdd">+ Kriterium</button><button type="button" class="mini" id="krDef">ISB-Vorschlag wiederherstellen</button></div>`,
+    onOpen: d => { draw(d); d.querySelector('#krAdd').onclick = () => { sync(d); L.push(isP ? { k: uid(), l: '', d: '', f: 1 } : { k: uid(), l: '', d: '', w: 0 }); draw(d); };
+      d.querySelector('#krDef').onclick = () => { L = JSON.parse(JSON.stringify(isP ? KRIT_P : KRIT_A)); draw(d); }; },
+    onOk: d => { sync(d); L = L.filter(x => x.l); if (!L.length) { toast('Mindestens ein Kriterium'); return false; }
+      const cf = semCfg(c); if (JSON.stringify(L) === JSON.stringify(isP ? KRIT_P : KRIT_A)) delete cf[isP ? 'kritP' : 'kritA']; else cf[isP ? 'kritP' : 'kritA'] = L; save(); done && done(); } });
+}
+/* Terminliste der Prüfungsgespräche: je Person Tag und Uhrzeit, automatisch verteilen, ausdrucken */
+const addMin = (hm, m) => { const [h, mi] = hm.split(':').map(Number), t = h * 60 + mi + m; return String(Math.floor(t / 60) % 24).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+function semPgSheet(c) {
+  const cf = semCfg(c);
+  const rowsHTML = () => c.students.map(s => { const st = semGet(c, s.id); return `<tr><td class="l">${esc(s.name)}</td><td><input type="date" data-pd="${s.id}" value="${esc(st.pgAm || '')}"></td><td><input type="time" data-pz="${s.id}" value="${esc(st.pgZeit || '')}"></td><td><input type="time" data-pb="${s.id}" value="${esc(st.pgBis || '')}"></td><td class="l pgTh">${esc(st.kurz || st.thema || '')}</td></tr>`; }).join('');
+  const { dlg } = sheet({ title: 'Prüfungsgespräche · ' + c.name, wide: true, ok: '', cancel: 'Fertig', body: `
+    <p class="prose">Tag und Uhrzeit je Person. Das Prüfungsgespräch (§ 24 Abs. 2 GSO) dauert laut ISB-Übersicht insgesamt ca. 25 Minuten.</p>
+    <div class="pgAuto"><b>Automatisch verteilen</b>${field('ab', `<input type="date" id="pgD" value="${esc(cf.pgStart || todayISO())}">`)}${field('Beginn', `<input type="time" id="pgZ" value="${esc(cf.pgTime || '08:00')}">`)}${field('Dauer (Min.)', `<input type="number" id="pgL" min="10" max="25" value="${esc(cf.pgLen || 25)}">`)}${field('Pause (Min.)', `<input type="number" id="pgP" min="0" max="60" value="${esc(cf.pgPause ?? 5)}">`)}${field('je Tag höchstens', `<input type="number" id="pgN" min="1" max="20" value="${esc(cf.pgPerDay || 4)}">`)}<button type="button" class="mini" id="pgGo">Freie Plätze füllen</button></div>
+    <div class="gridWrap"><table class="grid pgTbl"><thead><tr><th class="l">Name</th><th>Tag</th><th>von</th><th>bis</th><th class="l">Thema</th></tr></thead><tbody id="pgRows">${rowsHTML()}</tbody></table></div>
+    <label class="check"><input type="checkbox" id="pgTh" checked> <span>Themen mitdrucken (für einen Aushang ggf. weglassen)</span></label>
+    <div class="panelBtns"><button type="button" class="mini accent" id="pgPdf">Terminliste drucken (PDF)</button><button type="button" class="mini" id="pgWord">als Word</button></div>
+    <p class="hint">„Freie Plätze füllen“ vergibt Termine nur an Personen ohne Termin – in der Reihenfolge der Liste, nur an Schultagen. Alles wird sofort gespeichert.</p>` });
+  const q = id => dlg.querySelector(id);
+  const bindRows = () => { [['pd', 'pgAm'], ['pz', 'pgZeit'], ['pb', 'pgBis']].forEach(([a, k]) => $$(`[data-${a}]`, dlg).forEach(el => el.onchange = () => { if (READONLY) return; const o = semSt(c, el.dataset[a]); if (el.value) o[k] = el.value; else delete o[k];
+    if (k === 'pgZeit' && el.value && !o.pgBis) { o.pgBis = addMin(el.value, +q('#pgL').value || 25); dlg.querySelector(`[data-pb="${el.dataset[a]}"]`).value = o.pgBis; } save(); })); };
+  bindRows();
+  q('#pgGo').onclick = () => { if (READONLY) return; const len = Math.min(25, Math.max(10, +q('#pgL').value || 25)), pause = Math.max(0, +q('#pgP').value || 0), per = Math.max(1, +q('#pgN').value || 4), z0 = q('#pgZ').value || '08:00';
+    Object.assign(cf, { pgStart: q('#pgD').value, pgTime: z0, pgLen: len, pgPause: pause, pgPerDay: per });
+    let d = new Date((q('#pgD').value || todayISO()) + 'T12:00'); const free = iso => { const wd = new Date(iso + 'T12:00').getDay(); return wd === 0 || wd === 6 || isFreeDay(iso); };
+    const used = iso => c.students.filter(s => semGet(c, s.id).pgAm === iso).length;
+    let n = 0;
+    c.students.filter(s => !semGet(c, s.id).pgAm).forEach(s => { let iso = Cal.iso(d); let guard = 0; while ((free(iso) || used(iso) >= per) && guard++ < 400) { d = Cal.add(d, 1); iso = Cal.iso(d); }
+      const k = used(iso), from = addMin(z0, k * (len + pause)); const o = semSt(c, s.id); o.pgAm = iso; o.pgZeit = from; o.pgBis = addMin(from, len); n++; });
+    save(); q('#pgRows').innerHTML = rowsHTML(); bindRows(); toast(n ? `${n} Termine vergeben` : 'Alle haben schon einen Termin'); };
+  q('#pgPdf').onclick = () => exportModel(modelSemPgPlan(c, q('#pgTh').checked), 'pdf');
+  q('#pgWord').onclick = () => exportModel(modelSemPgPlan(c, q('#pgTh').checked), 'docx');
+}
+function modelSemPgPlan(c, withTheme = true) {
+  const list = c.students.map(s => ({ s, st: semGet(c, s.id) })).sort((a, b) => ((a.st.pgAm || '9') + (a.st.pgZeit || '')).localeCompare((b.st.pgAm || '9') + (b.st.pgZeit || '')));
+  const rows = []; let day = null;
+  list.forEach(({ s, st }) => { const d = st.pgAm || ''; if (d !== day) { day = d; rows.push({ group: d ? wdate(d).replace(/^(\w\w), /, (m0, w) => ({ Mo: 'Montag', Di: 'Dienstag', Mi: 'Mittwoch', Do: 'Donnerstag', Fr: 'Freitag', Sa: 'Samstag', So: 'Sonntag' })[w] + ', ') : 'noch ohne Termin' }); }
+    const z = st.pgZeit ? st.pgZeit + (st.pgBis ? '–' + st.pgBis : '') : '';
+    rows.push(withTheme ? [z, s.name, st.kurz || st.thema || ''] : [z, s.name]); });
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Prüfungsgespräche', subtitle: 'Terminliste · ' + c.name, file: fileName('Terminliste Prüfungsgespräche', c), meta: semMeta(c),
+    blocks: [{ table: { head: withTheme ? ['Uhrzeit', 'Name', 'Thema der Seminararbeit'] : ['Uhrzeit', 'Name'], rows, align: withTheme ? ['c', 'l', 'l'] : ['c', 'l'], widths: withTheme ? [13, 27, 60] : [20, 80] } },
+      { note: 'Das Prüfungsgespräch (§ 24 Abs. 2 GSO) dauert laut ISB-Übersicht insgesamt ca. 25 Minuten: optional ein Kurzvortrag von höchstens 5 Minuten, dann das Gespräch (ca. 20–25 Minuten).' }] };
+}
+/* Leitfragen fürs Beratungsgespräch (Auswahl nach der ISB-Übersicht „Beratungsgespräche“) */
+const BERAT_Q = {
+  '12/1': ['Bezug des Themas zum Rahmenthema? Umfang realistisch, ggf. eingrenzen', 'Echte Forschungsfrage mit eigenständiger Untersuchung?', 'Wo recherchieren, Forschungsstand?', 'Nächste Schritte und verbindliche Zwischenziele', 'Kleine Leistungsnachweise: Selbsteinschätzung und Rückmeldung', 'KI: welche Anwendungen wofür – und warum?'],
+  '12/2': ['Zwischenergebnisse, z. B. Exposé: Ziele erreicht?', 'Gliederung schlüssig, formale Vorgaben beachtet?', 'Literatur- und Materialstand, Methode passend zur Fragestellung?', 'Zeitplan realistisch? Was ist schon geschafft?', 'KI: Nutzung transparent dokumentiert?'],
+  '13/1': ['Formale Vorgaben, welche Teile müssen noch überarbeitet werden?', 'Aufbau stimmig, Bewertungskriterien bekannt?', 'Zeitpuffer für Ausdruck, Unterschriften, Technik', 'Anforderungen an das Prüfungsgespräch bekannt?', 'KI-Nutzung reflektiert darstellbar?'] };
+
+/* Zielvereinbarung des letzten früheren Gesprächs (Ziel, sonst „vereinbart“) */
+function semPrevGoal(c, s, id, date) {
+  const ts = (semGet(c, s.id).termine || []).filter(x => x.id !== id && (x.ziel || x.vereinbart) && (!date || (x.date || '') <= date)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return ts[0] ? { date: ts[0].date, text: ts[0].ziel || ts[0].vereinbart } : null;
+}
 /* ---------- Betreuungstermin ---------- */
 function semTerminSheet(c, s, t0, done) {
   const isNew = !t0, cf = semCfg(c);
@@ -2188,13 +2575,23 @@ function semTerminSheet(c, s, t0, done) {
   const added = [];   /* in diesem Fenster angehängt – bei „Abbrechen“ wieder weg */
   let saved = false, termTouched = !isNew;
   const body = `<div class="grid3">${field('Datum', `<input type="date" id="tmD" value="${esc(t.date || '')}">`)}${field('Halbjahr', `<select id="tmT">${['12/1', '12/2', '13/1'].map(x => `<option ${t.term === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`)}${field('Art', `<select id="tmK">${SEM_KINDS.map(([k, l]) => `<option value="${k}" ${t.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}</div>
-    ${field('Besprochen (Stand der Arbeit, Fragen, Rückmeldung)', `<textarea id="tmI" rows="5">${esc(t.inhalt || '')}</textarea>`)}
-    ${field('Vereinbart / nächste Schritte', `<textarea id="tmV" rows="3">${esc(t.vereinbart || '')}</textarea>`)}
+    <div id="tmBer" ${t.kind === 'beratung' ? '' : 'hidden'}>
+      <div class="tmPrev" id="tmPrev"></div>
+      <details class="tmQ"><summary>Leitfragen fürs Gespräch (ISB, Auswahl)</summary><div id="tmQ"></div></details>
+      ${field('Bisher begonnene / abgeschlossene Arbeiten (Schülerin / Schüler)', `<textarea id="tmE" rows="3">${esc(t.erledigt || '')}</textarea>`)}
+      ${field('Aufgetretene Schwierigkeiten / Fragen', `<textarea id="tmF2" rows="2">${esc(t.fragen || '')}</textarea>`)}</div>
+    ${field(t.kind === 'beratung' ? 'Rückmeldung und Vorschläge der Lehrkraft' : 'Besprochen (Stand der Arbeit, Fragen, Rückmeldung)', `<textarea id="tmI" rows="4">${esc(t.inhalt || '')}</textarea>`)}
+    ${field(t.kind === 'beratung' ? 'Nächste Schritte mit Zeitrahmen' : 'Vereinbart / nächste Schritte', `<textarea id="tmV" rows="3">${esc(t.vereinbart || '')}</textarea>`)}
+    <div id="tmBer2" ${t.kind === 'beratung' ? '' : 'hidden'}>
+      ${field('Zielvereinbarung inkl. zeitlichem Rahmen', `<textarea id="tmZ" rows="2">${esc(t.ziel || '')}</textarea>`)}
+      ${field('Einsatz von KI (Anwendungen, Zweck, Reflexion)', `<textarea id="tmKI" rows="2">${esc(t.ki || '')}</textarea>`)}</div>
     <div class="grid3">${field('Nächster Termin', `<input type="date" id="tmN" value="${esc(t.next || '')}">`)}<label class="check span2" style="margin-top:22px"><input type="checkbox" id="tmS" ${t.signed ? 'checked' : ''}> <span>Protokoll ist von der Schülerin / dem Schüler unterschrieben</span></label></div>
     <div class="field"><span>Dateien zu diesem Termin (z. B. Exposé, Gliederung, Literaturliste, Entwurf)</span><div id="tmF">${attBoxHTML(t.files, 'Dateien')}</div></div>
     <div class="panelBtns"><button type="button" class="mini" id="tmPdf">Protokoll drucken (PDF)</button><button type="button" class="mini" id="tmWord">als Word</button></div>
     ${isNew ? '' : '<button type="button" class="danger" id="tmDel">Termin löschen</button>'}`;
-  const read = d => { t.date = d.querySelector('#tmD').value; t.term = d.querySelector('#tmT').value; t.kind = d.querySelector('#tmK').value; t.inhalt = d.querySelector('#tmI').value.trim(); t.vereinbart = d.querySelector('#tmV').value.trim(); t.next = d.querySelector('#tmN').value; t.signed = d.querySelector('#tmS').checked; ['inhalt', 'vereinbart', 'next'].forEach(k => { if (!t[k]) delete t[k]; }); if (!t.signed) delete t.signed; };
+  const read = d => { t.date = d.querySelector('#tmD').value; t.term = d.querySelector('#tmT').value; t.kind = d.querySelector('#tmK').value; t.inhalt = d.querySelector('#tmI').value.trim(); t.vereinbart = d.querySelector('#tmV').value.trim(); t.next = d.querySelector('#tmN').value; t.signed = d.querySelector('#tmS').checked;
+    t.erledigt = d.querySelector('#tmE').value.trim(); t.fragen = d.querySelector('#tmF2').value.trim(); t.ziel = d.querySelector('#tmZ').value.trim(); t.ki = d.querySelector('#tmKI').value.trim();
+    ['inhalt', 'vereinbart', 'next', 'erledigt', 'fragen', 'ziel', 'ki'].forEach(k => { if (!t[k]) delete t[k]; }); if (!t.signed) delete t.signed; };
   const { dlg, close } = sheet({ title: (isNew ? 'Neuer Betreuungstermin' : 'Betreuungstermin') + ' · ' + s.name, wide: true, body, onOk: d => {
     read(d); if (!t.date) { toast('Bitte ein Datum eintragen'); return false; }
     const o = semSt(c, s.id); o.termine = (o.termine || []).filter(x => x.id !== t.id).concat([t]).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -2204,7 +2601,14 @@ function semTerminSheet(c, s, t0, done) {
   dlg.addEventListener('close', () => { if (!saved && added.length) { trashAtt(added); save(); } }, { once: true });
   const q = id => dlg.querySelector(id);
   q('#tmD').addEventListener('change', () => { if (!termTouched) { const x = R.semTermAt(cf.start, q('#tmD').value, semMid()); q('#tmT').value = ['12/1', '12/2', '13/1'].includes(x) ? x : '13/1'; } });
-  q('#tmT').addEventListener('change', () => { termTouched = true; });
+  q('#tmT').addEventListener('change', () => { termTouched = true; berQ(); });
+  /* Beratungsgespräch: Zielvereinbarung des letzten Gesprächs zeigen, Leitfragen zum Halbjahr */
+  const berQ = () => { q('#tmQ').innerHTML = `<ul>${(BERAT_Q[q('#tmT').value] || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    const pv = semPrevGoal(c, s, t.id, q('#tmD').value); q('#tmPrev').innerHTML = pv ? `<small>Zielvereinbarung aus dem Gespräch vom ${esc(fdate(pv.date))}</small><div>${esc(pv.text)}</div>` : ''; q('#tmPrev').hidden = !pv; };
+  const kindUi = () => { const ber = q('#tmK').value === 'beratung'; q('#tmBer').hidden = !ber; q('#tmBer2').hidden = !ber;
+    q('#tmI').closest('.field').querySelector('span').textContent = ber ? 'Rückmeldung und Vorschläge der Lehrkraft' : 'Besprochen (Stand der Arbeit, Fragen, Rückmeldung)';
+    q('#tmV').closest('.field').querySelector('span').textContent = ber ? 'Nächste Schritte mit Zeitrahmen' : 'Vereinbart / nächste Schritte'; };
+  q('#tmK').addEventListener('change', kindUi); q('#tmD').addEventListener('change', berQ); berQ();
   bindAtt(q('#tmF'), () => t.files, list => { list.filter(f => !t.files.some(x => x.id === f.id)).forEach(f => added.push(f)); t.files = list; });
   q('#tmPdf').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'pdf'); };
   q('#tmWord').onclick = () => { read(dlg); exportModel(modelSemProtocol(c, s, t), 'docx'); };
@@ -2217,11 +2621,18 @@ function semTerminSheet(c, s, t0, done) {
 }
 
 /* ---------- Ausdrucke W-Seminar ---------- */
-function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.subject}`], ...(cf.leit && cf.leit !== c.subject ? [['Leitfach', cf.leit]] : []), ...(cf.rahmen ? [['Rahmenthema', cf.rahmen]] : []), ['Abiturjahrgang', String(semAbi(c))], ...(D.settings.teacher ? [['Kursleitung', D.settings.teacher]] : [])]; }
+function semMeta(c) { const cf = semCfg(c); return [['Kurs', `${c.name} · ${c.subject}`], ...(isWSemName(c.subject) && cf.leit ? [['Leitfach', cf.leit]] : []), ...(cf.rahmen ? [['Rahmenthema', cf.rahmen]] : []), ['Abiturjahrgang', String(semAbi(c))], ...(D.settings.teacher ? [['Kursleitung', D.settings.teacher]] : [])]; }
 const filesTxt = list => (list || []).map(f => f.name).join('\n');
 function modelSemProtocol(c, s, t) {
   const st = semGet(c, s.id);
-  return { title: 'Betreuungsprotokoll W-Seminar', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Betreuungsprotokoll ${s.name} ${c.name}`), meta: semMeta(c),
+  if (t.kind === 'beratung') { const pv = semPrevGoal(c, s, t.id, t.date);
+    return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Beratungsgespräch', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Beratungsgespräch ${s.name} ${c.name}`), meta: semMeta(c),
+      blocks: [{ kv: [['Schülerin / Schüler', s.name + (isMixed(c.students) && s.cls ? ' (' + s.cls + ')' : '')], ['Thema der Seminararbeit', st.thema || '–'], ['Datum · Ausbildungsabschnitt', `${wdate(t.date)} · ${t.term || ''}`]] },
+        ...(pv ? [{ h: 'Zielvereinbarung aus dem letzten Gespräch (' + fdate(pv.date) + ')' }, { p: pv.text }] : []),
+        { h: 'Stand der Arbeit' }, { kv: [['Bisher begonnene / abgeschlossene Arbeiten', t.erledigt || ''], ['Schwierigkeiten / Fragen', t.fragen || ''], ['Rückmeldung und Vorschläge der Lehrkraft', t.inhalt || '']] },
+        { h: 'Vereinbarungen' }, { kv: [['Nächste Schritte mit Zeitrahmen', t.vereinbart || ''], ['Zielvereinbarung', t.ziel || ''], ...(t.ki ? [['Einsatz von KI', t.ki]] : []), ['Nächster Termin', t.next ? wdate(t.next) : ''], ['Vorgelegte Unterlagen', filesTxt(t.files) || '–']] },
+        { sig: ['Datum, Unterschrift Schülerin / Schüler', 'Datum, Unterschrift Kursleitung'] }] }; }
+  return { eyebrow: 'W-Seminar · Abitur ' + semAbi(c), title: 'Betreuungsprotokoll W-Seminar', subtitle: `${s.name} · ${wdate(t.date)}`, file: fileSafe(`${t.date || todayISO()} Betreuungsprotokoll ${s.name} ${c.name}`), meta: semMeta(c),
     blocks: [{ kv: [['Schülerin / Schüler', s.name + (isMixed(c.students) && s.cls ? ' (' + s.cls + ')' : '')], ['Thema der Seminararbeit', st.thema || '–'], ['Datum', wdate(t.date)], ['Ausbildungsabschnitt', t.term || ''], ['Art', semKind(t.kind)],
       ['Besprochen', t.inhalt || ''], ['Vereinbart / nächste Schritte', t.vereinbart || ''], ['Nächster Termin', t.next ? wdate(t.next) : ''], ['Vorgelegte Unterlagen', filesTxt(t.files) || '–']] },
       { sig: ['Datum, Unterschrift Schülerin / Schüler', 'Datum, Unterschrift Kursleitung'] }] };
@@ -2234,17 +2645,17 @@ function modelSemDossier(c, list) {
     const due = st.verl || semCfg(c).deadline;
     blocks.push({ kv: [['Thema der Seminararbeit', st.thema || '–'], ['Thema festgelegt am', st.themaAm ? fdate(st.themaAm) : '–'],
       ['Abgabe', (st.abgabe ? `abgegeben am ${fdate(st.abgabe)}${st.abgabeZeit ? ', ' + st.abgabeZeit + ' Uhr' : ''}` : 'noch nicht abgegeben') + (due ? ` · Frist ${fdate(due)}${st.verl ? ' (verlängert' + (st.verlGrund ? ': ' + st.verlGrund : '') + ')' : ''}` : '')],
-      ['Erklärung zur selbstständigen Anfertigung', st.erkl ? 'liegt vor' : '–'], ...(st.wett ? [['Ersatz durch Wettbewerbsbeitrag', st.wettText || 'ja']] : []), ...((st.files || []).length ? [['Dateien der Arbeit', filesTxt(st.files)]] : [])] });
+      ...(st.kurz ? [['Kurztitel (Abiturzeugnis)', st.kurz]] : []), ['Erklärung zur selbstständigen Anfertigung', st.erkl ? 'liegt vor' : '–'], ...(st.expose ? [['Exposé / Gliederung', 'besprochen']] : []), ...(st.kiDoc ? [['Dokumentation der KI-Nutzung', 'abgegeben']] : []), ...(st.wett ? [['Ersatz durch Wettbewerbsbeitrag', st.wettText || 'ja']] : []), ...((st.files || []).length ? [['Dateien der Arbeit', filesTxt(st.files)]] : [])] });
     const ts = (st.termine || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     blocks.push({ h: `Betreuungstermine (${ts.length})` });
     if (!ts.length) blocks.push({ p: 'Noch keine Termine dokumentiert.' });
-    ts.forEach(t => blocks.push({ kv: [[`${fdate(t.date)} · ${t.term || ''}`, semKind(t.kind) + (t.signed ? ' · Protokoll unterschrieben' : '')], ...(t.inhalt ? [['Besprochen', t.inhalt]] : []), ...(t.vereinbart ? [['Vereinbart', t.vereinbart]] : []), ...(t.next ? [['Nächster Termin', fdate(t.next)]] : []), ...((t.files || []).length ? [['Unterlagen', filesTxt(t.files)]] : [])] }));
-    blocks.push({ h: 'Leistungen' });
+    ts.forEach(t => blocks.push({ kv: [[`${fdate(t.date)} · ${t.term || ''}`, semKind(t.kind) + (t.signed ? ' · Protokoll unterschrieben' : '')], ...(t.erledigt ? [['Bisher erledigt', t.erledigt]] : []), ...(t.fragen ? [['Schwierigkeiten / Fragen', t.fragen]] : []), ...(t.inhalt ? [[t.kind === 'beratung' ? 'Rückmeldung' : 'Besprochen', t.inhalt]] : []), ...(t.vereinbart ? [['Vereinbart', t.vereinbart]] : []), ...(t.ziel ? [['Zielvereinbarung', t.ziel]] : []), ...(t.ki ? [['Einsatz von KI', t.ki]] : []), ...(t.next ? [['Nächster Termin', fdate(t.next)]] : []), ...((t.files || []).length ? [['Unterlagen', filesTxt(t.files)]] : [])] }));
+    const tail = []; tail.push({ h: 'Leistungen' });
     const hj = x => { const q = R.computeTerm(c, s.id, x).points; return q == null ? '–' : String(q); };
-    blocks.push({ table: { head: ['Halbjahr 12/1', 'Halbjahr 12/2', 'Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt)]], big: [4] } });
-    if (st.pgAm) blocks.push({ p: `Präsentation mit Prüfungsgespräch am ${fdate(st.pgAm)}.` });
-    if (r.flags.length) blocks.push({ p: 'Hinweise: ' + r.flags.map(f => f.text).join(' ') });
-    blocks.push({ sig: ['Datum, Unterschrift Kursleitung'] });
+    tail.push({ table: { head: ['Halbjahr 12/1', 'Halbjahr 12/2', 'Seminararbeit', 'Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt)]], big: [4] } });
+    if (st.pgAm) tail.push({ p: `Prüfungsgespräch am ${fdate(st.pgAm)}${st.pgZeit ? ', ' + st.pgZeit + ' Uhr' : ''}.` });
+    if (r.flags.length) tail.push({ p: 'Hinweise: ' + r.flags.map(f => f.text).join(' ') });
+    tail.push({ sig: ['Datum, Unterschrift Kursleitung'] }); blocks.push({ group: tail });
   });
   const one = list.length === 1 ? list[0] : null;
   return { title: one ? one.name : `Betreuungsdokumentation ${c.name}`, subtitle: one ? `Betreuungsdokumentation W-Seminar · ${c.name}` : 'W-Seminar', file: one ? fileSafe(`${todayISO()} Betreuungsdokumentation ${one.name} ${c.name}`) : fileName('Betreuungsdokumentation', c), meta: semMeta(c),
@@ -2265,7 +2676,7 @@ function modelSemResults(c) {
     return [String(i + 1), s.name, hj('12/1'), hj('12/2'), sp.arbeit === '' || sp.arbeit == null ? '–' : String(sp.arbeit), sp.gespraech === '' || sp.gespraech == null ? '–' : String(sp.gespraech), r.gesamt == null ? '–' : String(r.gesamt), note]; });
   return { title: `Ergebnisse W-Seminar ${c.name}`, subtitle: `Halbjahresleistungen und Seminararbeit · Abitur ${semAbi(c)}`, file: fileName('Ergebnisse W-Seminar', c), meta: semMeta(c),
     blocks: [{ table: { head: ['Nr.', 'Name', '12/1', '12/2', 'Arbeit', 'Prüfungs­gespräch', 'Gesamtleistung (max. 30)', 'Hinweis'], rows, align: ['c', 'l', 'c', 'c', 'c', 'c', 'c', 'l'], big: [6], widths: [4, 24, 7, 7, 7, 10, 12, 20] } },
-      { p: 'Halbjahresleistung 12/1 und 12/2: Durchschnitt der kleinen Leistungsnachweise, gerundet, keine Aufrundung auf 1 Punkt (§ 29 Abs. 2 GSO). Gesamtleistung der Seminararbeit: (2 × Arbeit + Präsentation mit Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO). Zulassung zur Abiturprüfung u. a. nur, wenn die Arbeit abgegeben ist, weder Arbeit noch Prüfungsgespräch 0 Punkte haben und die Gesamtleistung mindestens 9 Punkte beträgt (§ 44 Abs. 2 GSO).' },
+      { p: 'Halbjahresleistung 12/1 und 12/2: Durchschnitt der kleinen Leistungsnachweise, gerundet, keine Aufrundung auf 1 Punkt (§ 29 Abs. 2 GSO). Gesamtleistung der Seminararbeit: (2 × Arbeit + Prüfungsgespräch) × 2/3, gerundet (§ 29 Abs. 6 GSO). Zulassung zur Abiturprüfung u. a. nur, wenn die Arbeit abgegeben ist, weder Arbeit noch Prüfungsgespräch 0 Punkte haben und die Gesamtleistung mindestens 9 Punkte beträgt (§ 44 Abs. 2 GSO).' },
       { sig: ['Datum, Unterschrift Kursleitung'] }] };
 }
 
@@ -2323,13 +2734,25 @@ function transferSheet(c) {
 }
 
 function scopeLabel(c) { if (isSemTab(c)) return 'W-Seminar · Seminararbeit'; if (upper(c)) { const t = scopeOf(c).term; return t ? 'Halbjahr ' + t : c.seminar ? 'W-Seminar · Übersicht' : 'Qualifikationsphase ' + c.grade; } return UI.scope === 'half' ? `Stand Zwischenzeugnis${D.settings.half1End ? ' (bis ' + fdate(D.settings.half1End) + ')' : ''}` : UI.scope === 'until' ? 'Stand bis ' + fdate(UI.until || todayISO()) : 'Schuljahr ' + D.settings.year; }
-function baseMeta(c) { return [['Kurs', `${c.name} · ${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', c.seminar ? `W-Seminar, Abitur ${semAbi(c)}` : String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
+function baseMeta(c) { return [['Kurs', `${c.name} · ${c.seminar || c.psem ? (c.seminar ? 'W-Seminar' : 'P-Seminar') + ', Leitfach ' : ''}${c.subject}`], [upper(c) ? 'Q-Phase' : 'Jahrgangsstufe', c.seminar ? `W-Seminar, Abitur ${semAbi(c)}` : String(c.grade)], ['Schuljahr', D.settings.year], ...(D.settings.teacher ? [['Lehrkraft', D.settings.teacher]] : [])]; }
 /* Kopfdaten eines Schülerblatts: bei gemischten Kursen (8A+8B) steht die tatsächliche Klasse der Person extra */
 function studMeta(c, s) { const m = baseMeta(c); if (isMixed(c.students) && s.cls) m.splice(1, 0, ['Klasse', s.cls]); return m; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
 function lnName(a) { return (a.short || R.TYPES[a.type].short) + (a.date ? ' ' + sdate(a.date) : ''); }
 function entTxt(c, s) { return entriesOf(c, s.id).map(e => R.cellText(e, upper(c))).join(' ') || ''; }
-function finalTxt(c, s, r) { const ng = c.noGrade && c.noGrade[s.id]; if (ng) return 'ohne Note'; const ov = c.overrides[s.id]; return ov ? ov.grade + ' (festgelegt)' : r.suggestion ? r.suggestion.text : '–'; }
+/* EIN Ergebnis für Ansicht und alle Ausgaben (Übertragsliste, Schülerblatt, Notenübersicht, CSV): „ohne Note“ und „Gast ohne Wertung“ gehen vor jeder Rechnung.
+   kind: 'ng' | 'guest' | 'ov' | 'calc'; v = Eintrag (Note bzw. Punkte oder „–“); sub = kurze Erläuterung */
+function finalOf(c, s, term) {
+  const up = upper(c), ng = c.noGrade && c.noGrade[s.id];
+  if (ng) return { kind: 'ng', v: '–', label: 'ohne Note', sub: 'ohne Note' + (ng.reason ? ': ' + ng.reason : '') + (up ? '' : ' – ggf. Bemerkung (§ 39 Abs. 6 GSO)') };
+  if (!R.counted(s)) return { kind: 'guest', v: '–', label: 'Gast', sub: 'Gast – Noten zählen nicht (nur dokumentiert)' };
+  if (up) { const r = R.computeTerm(c, s.id, term); return { kind: 'calc', v: r.points == null ? '–' : String(r.points), points: r.points, r, label: '', sub: '' }; }
+  const r = R.computeLower(c, s.id, scopeOf(c)), ov = ovOf(c, s.id);
+  if (ov) return { kind: 'ov', v: String(ov.grade), r, label: 'festgelegt', sub: ov.reason || 'von der Lehrkraft festgelegt' };
+  return { kind: 'calc', v: r.suggestion ? r.suggestion.text : '–', r, label: '', sub: '' };
+}
+const inStats = (c, s) => R.counted(s) && !(c.noGrade && c.noGrade[s.id]);
+function finalTxt(c, s, r) { const ng = c.noGrade && c.noGrade[s.id]; if (ng) return 'ohne Note'; if (!R.counted(s)) return 'Gast'; const ov = ovOf(c, s.id); return ov ? ov.grade + ' (festgelegt)' : r.suggestion ? r.suggestion.text : '–'; }
 /* ---- Ausdrucke: gemeinsame Bausteine ---- */
 const cLabel = c => (c.name || '').toLowerCase().includes((c.subject || '').toLowerCase()) ? c.name : `${c.name} · ${c.subject}`;
 const f2 = x => x == null || x === '' || !isFinite(+x) ? '' : String(Math.round(+x * 100) / 100).replace('.', ',');
@@ -2338,14 +2761,15 @@ const avgTxt = (list, dg = 2) => { const v = list.filter(x => x != null && x !==
 /* Wer zählt bei einer Arbeit? Gewertet = alle mit Note, auch 6* (unentschuldigt versäumt, § 26 Abs. 4 GSO) und Unterschleif;
    nicht gewertet: entschuldigt (Nachtermin offen), befreit, noch ohne Eintrag */
 function countInfo(c, a, up) {
-  const rs = c.students.map(s => a.results && a.results[s.id]);
+  const ss = c.students.filter(R.counted), guests = c.students.length - ss.length;   /* Gäste, deren Noten nicht zählen, gehören nicht zur Klasse dieser Statistik */
+  const rs = ss.map(s => a.results && a.results[s.id]);
   const by = k => rs.filter(r => r && r.status === k).length;
   const nt = rs.filter(r => r && r.nt && R.valueOf(r, up) != null).length;
   const n = rs.filter(r => r && !r.nt && R.valueOf(r, up) != null).length, n6 = by('n6'), us = by('us'), ent = by('ent'), bef = by('bef');
-  const leer = c.students.length - n - nt - ent - bef;
+  const leer = ss.length - n - nt - ent - bef;
   const inn = [n6 ? `${n6} × ${up ? '0*' : '6*'} (unentschuldigt versäumt)` : '', us ? `${us} × Unterschleif` : ''].filter(Boolean);
-  const out = [nt ? `${nt} Nachtermin (eigene Arbeit)` : '', ent ? `${ent} entschuldigt` : '', bef ? `${bef} befreit` : '', leer > 0 ? `${leer} ohne Eintrag` : ''].filter(Boolean);
-  return { n, all: c.students.length, txt: `${n} von ${c.students.length}` + (inn.length ? ' · mitgezählt: ' + inn.join(', ') : '') + (out.length ? ' · nicht gezählt: ' + out.join(', ') : '') };
+  const out = [nt ? `${nt} Nachtermin (eigene Arbeit)` : '', ent ? `${ent} entschuldigt` : '', bef ? `${bef} befreit` : '', leer > 0 ? `${leer} ohne Eintrag` : '', guests ? `${guests} ${guests === 1 ? 'Gast' : 'Gäste'} (zählen nicht)` : ''].filter(Boolean);
+  return { n, all: ss.length, txt: `${n} von ${ss.length}` + (inn.length ? ' · mitgezählt: ' + inn.join(', ') : '') + (out.length ? ' · nicht gezählt: ' + out.join(', ') : '') };
 }
 const countSpan = (c, a, up) => { const ci = countInfo(c, a, up); return `<span title="${esc(ci.txt)}">Gewertet: <b>${ci.n}</b> von ${ci.all}</span>`; };
 function statusNote(results, up) {
@@ -2364,8 +2788,8 @@ function modelCourse(c) {
   if (up && !scopeOf(c).term) {
     const terms = R.termsOf(c);
     const head = ['Name', ...terms.map(t => t + ' (Punkte)'), ...(c.seminar ? ['Seminararbeit (max. 30)'] : [])];
-    const rows = groupedRows(c, s => [s.name, ...terms.map(t => { const p = R.computeTerm(c, s.id, t).points; return p == null ? '–' : String(p); }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
-    rows.push({ cells: ['Ø Kurs', ...terms.map(t => avgTxt(c.students.map(s => R.computeTerm(c, s.id, t).points))), ...(c.seminar ? [avgTxt(c.students.map(s => R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech)))] : [])], cls: 'foot' });
+    const rows = groupedRows(c, s => [s.name, ...terms.map(t => { const fo = finalOf(c, s, t); return fo.kind === 'calc' ? fo.v : fo.label; }), ...(c.seminar ? [String(R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech) ?? '–')] : [])]);
+    rows.push({ cells: ['Ø Kurs', ...terms.map(t => avgTxt(c.students.filter(s => inStats(c, s)).map(s => R.computeTerm(c, s.id, t).points))), ...(c.seminar ? [avgTxt(c.students.map(s => R.seminarPaper((c.seminarPaper[s.id] || {}).arbeit, (c.seminarPaper[s.id] || {}).gespraech)))] : [])], cls: 'foot' });
     return { eyebrow: 'Notenübersicht', title: cLabel(c), file: fileName('Notenübersicht', c), subtitle: scopeLabel(c), meta: baseMeta(c), blocks: [{ stats: statsBox.filter((_, i) => i !== 3) }, { table: { head, rows, align: ['l'], bold: head.map((_, i) => i).slice(1) } }], landscape: false };
   }
   const as = visibleAssessments(c);
@@ -2373,19 +2797,20 @@ function modelCourse(c) {
   const colAvg = a => { const d = R.distribution(a, c.students, up); return d.n ? fmt(d.avg, 2) : ''; };
   let head, rows, foot;
   if (up) {
-    const t = scopeOf(c).term, rs = c.students.map(s => R.computeTerm(c, s.id, t));
-    head = ['Name', ...big.map(lnName), ...small.map(lnName), 'Einzeln', 'Ø klein', 'Ergebnis', 'Punkte'];
-    rows = groupedRows(c, s => { const r = R.computeTerm(c, s.id, t); return [s.name, ...big.map(a => ct(c, a, s, true)), ...small.map(a => ct(c, a, s, true)), entTxt(c, s), fmt(r.small), fmt(r.raw), r.points == null ? '–' : String(r.points)]; });
-    foot = ['Ø Kurs', ...big.map(colAvg), ...small.map(colAvg), '', avgTxt(rs.map(r => r.small)), avgTxt(rs.map(r => r.raw)), avgTxt(rs.map(r => r.points), 1)];
+    const t = scopeOf(c).term, rs = c.students.filter(s => inStats(c, s)).map(s => R.computeTerm(c, s.id, t));
+    const lfS = R.upperFormula(c) === 'sportlf', pt = x => x == null ? '' : String(x);
+    head = ['Name', ...big.map(lnName), ...small.map(lnName), 'Einzeln', lfS ? 'Fach Sport' : 'Ø klein', lfS ? 'Sporttheorie' : 'Ergebnis', 'Punkte'];
+    rows = groupedRows(c, s => { const r = R.computeTerm(c, s.id, t); return [s.name, ...big.map(a => ct(c, a, s, true)), ...small.map(a => ct(c, a, s, true)), entTxt(c, s), lfS ? pt(r.fs) : fmt(r.small), lfS ? pt(r.th) : fmt(r.raw), (fo => fo.kind === 'calc' ? fo.v : fo.label)(finalOf(c, s, t))]; });
+    foot = ['Ø Kurs', ...big.map(colAvg), ...small.map(colAvg), '', avgTxt(rs.map(r => r.small)), avgTxt(rs.map(r => lfS ? r.th : r.raw)), avgTxt(rs.map(r => r.points), 1)];
   } else {
-    const rs = c.students.filter(s => !(c.noGrade && c.noGrade[s.id])).map(s => R.computeLower(c, s.id, scopeOf(c)));
+    const rs = c.students.filter(s => inStats(c, s)).map(s => R.computeLower(c, s.id, scopeOf(c)));
     head = ['Name', ...(c.hasSA ? big.map(lnName) : []), ...(c.hasSA ? ['Ø groß'] : []), ...small.map(lnName), 'Einzeln', 'Ø klein', 'Ø gesamt', 'Zeugnis'];
     rows = groupedRows(c, s => { const r = R.computeLower(c, s.id, scopeOf(c)); return [s.name, ...(c.hasSA ? big.map(a => ct(c, a, s, false)) : []), ...(c.hasSA ? [fmt(r.saAvg)] : []), ...small.map(a => ct(c, a, s, false)), entTxt(c, s), fmt(r.smAvg), fmt(r.total), finalTxt(c, s, r)]; });
     foot = ['Ø Klasse', ...(c.hasSA ? big.map(colAvg) : []), ...(c.hasSA ? [avgTxt(rs.map(r => r.saAvg))] : []), ...small.map(colAvg), '', avgTxt(rs.map(r => r.smAvg)), avgTxt(rs.map(r => r.total)), ''];
   }
   rows.push({ cells: foot, cls: 'foot' });
-  const legend = (as.length || (c.entries || []).length ? 'Einzeln = Einzelnoten mit eigenem Datum (z. B. Unterrichtsbeiträge) · ' : '') + as.map(a => `${lnName(a)} = ${a.title || R.TYPES[a.type].label}${R.isBig(a) && a.bigWeight && +a.bigWeight !== 1 ? ' (' + wLabel(a.bigWeight) + ')' : ''}${!R.isBig(a) && R.weightOf(a, c) !== 1 ? ' (Gewicht ' + R.weightOf(a, c) + ')' : ''}`).join(' · ');
-  const rule = up ? 'Halbjahresleistung nach § 29 GSO: Schulaufgabe und Durchschnitt der kleinen LN 1:1, gerundet.' : c.hasSA ? `Jahresfortgangsnote nach § 28 GSO: große : kleine LN = ${R.saRatio(c)}:1.` : 'Fach ohne Schulaufgaben: Note aus den kleinen Leistungsnachweisen.';
+  const legend = (as.length || (c.entries || []).length ? 'Einzeln = Einzelnoten mit eigenem Datum (z. B. Unterrichtsbeiträge) · ' : '') + as.map(a => `${lnName(a)} = ${a.title || R.TYPES[a.type].label}${up && R.upperFormula(c) === 'sportlf' && a.type !== 'prak' ? (R.sportPart(a) === 't' ? ' (Sporttheorie)' : ' (Fach Sport)') : ''}${R.isBig(a) && a.bigWeight && +a.bigWeight !== 1 ? ' (' + wLabel(a.bigWeight) + ')' : ''}${!R.isBig(a) && R.weightOf(a, c) !== 1 ? ' (Gewicht ' + R.weightOf(a, c) + ')' : ''}`).join(' · ');
+  const rule = up ? (R.upperFormula(c) === 'sportlf' ? 'Leistungsfach Sport (§ 29 Abs. 5 GSO, KMBek Sport Q12/13 Nr. 2.3.1): Fach Sport = (2 × Ø praktische Leistungen + Ø kleine LN) ÷ 3, gerundet; Sporttheorie = (Schulaufgabe + Ø kleine LN) ÷ 2, gerundet; Punkte = Durchschnitt beider, gerundet.' : R.upperFormula(c) === 'sport' ? 'Sport (§ 29 Abs. 5 GSO): (2 × Ø praktische Leistungen + Ø übrige kleine LN) ÷ 3, gerundet.' : 'Halbjahresleistung nach § 29 GSO: Schulaufgabe und Durchschnitt der kleinen LN 1:1, gerundet.') : c.hasSA ? `Jahresfortgangsnote nach § 28 GSO: große : kleine LN = ${R.saRatio(c)}:1.` : 'Fach ohne Schulaufgaben: Note aus den kleinen Leistungsnachweisen.';
   return { eyebrow: 'Notenübersicht', title: cLabel(c), file: fileName('Notenübersicht', c), subtitle: scopeLabel(c), meta: baseMeta(c), landscape: head.length > 11,
     blocks: [{ stats: statsBox }, { table: { head, rows, align: ['l'], bold: [head.length - 1], small: head.length > 16 } }, { note: rule + ' Kürzel: E = entschuldigt (Nachtermin), B = befreit, ' + (up ? '0*' : '6*') + ' = versäumt/verweigert (§ 26 Abs. 4 GSO), U = Unterschleif' + (Object.keys(c.away || {}).length ? ', abw. = längere Abwesenheit' : '') + '.' }, ...(legend ? [{ note: legend }] : [])] };
 }
@@ -2394,14 +2819,15 @@ function modelTransfer(c) {
   const up = upper(c);
   const head = ['Nr.', 'Name', up ? 'Punkte ' + (scopeOf(c).term || R.termsOf(c)[0]) : 'Note', 'Bemerkung', '✓'];
   const rows = groupedRows(c, (s, i) => {
-    if (up) { const t = scopeOf(c).term || R.termsOf(c)[0]; const r = R.computeTerm(c, s.id, t); return [String(i + 1), s.name, r.points == null ? '–' : String(r.points), r.zero ? '0 Punkte – nicht belegt' : r.open.length ? 'Nachtermin offen' : '', '']; }
-    const r = R.computeLower(c, s.id, scopeOf(c)); const ov = c.overrides[s.id]; const ng = c.noGrade && c.noGrade[s.id];
-    if (ng) return [String(i + 1), s.name, '–', 'ohne Note' + (ng.reason ? ': ' + ng.reason : '') + ' – ggf. Bemerkung (§ 39 Abs. 6 GSO)', ''];
+    const fo = finalOf(c, s, up ? (scopeOf(c) || {}).term || R.termsOf(c)[0] : undefined);
+    if (fo.kind === 'ng' || fo.kind === 'guest') return [String(i + 1), s.name, '–', fo.sub, ''];
+    if (up) { const r = fo.r; return [String(i + 1), s.name, fo.v, [r.zero ? '0 Punkte – nicht belegt' : r.open.length ? 'Nachtermin offen' : '', s.guest ? 'Gast (zählt)' : ''].filter(Boolean).join(' · '), '']; }
+    const r = fo.r; const ov = ovOf(c, s.id);
     const nsNote = (supOf(c, s.id) || {}).k === 'ns' ? 'Notenschutz – im Zeugnis vermerken' : '';
     const rem = ov ? (ov.reason || 'von der Lehrkraft festgelegt') : r.suggestion && r.suggestion.grade == null ? 'Grenzfall – Entscheidung nötig' : r.open.length ? 'Nachtermin offen' : '';
-    return [String(i + 1), s.name, ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–', [rem, nsNote].filter(Boolean).join(' · '), ''];
+    return [String(i + 1), s.name, fo.v, [rem, nsNote, s.guest ? 'Gast (zählt)' : ''].filter(Boolean).join(' · '), ''];
   });
-  return { eyebrow: 'Übertragsliste', title: `Übertragsliste ${c.name} · ${c.subject}`, file: fileName('Übertragsliste', c), subtitle: scopeLabel(c) + ' – zum Eintragen ins Notenprogramm der Schule', meta: baseMeta(c),
+  return { eyebrow: 'Übertragsliste', title: `Übertragsliste ${cLabel(c)}`, file: fileName('Übertragsliste', c), subtitle: scopeLabel(c) + ' – zum Eintragen ins Notenprogramm der Schule', meta: baseMeta(c),
     blocks: [{ table: { head, rows, align: ['c', 'l', 'c', 'l', 'c'], big: [2], widths: [4, 30, 9, 30, 4] } }, { note: (isMixed(c.students) ? 'Nach Klassen unterteilt, je Klasse alphabetisch – Reihenfolge und Nummern wie auf dem Notenblatt des Infoportals.' : 'Reihenfolge alphabetisch wie in der Schülerliste.') + ' Nach dem Übertragen in der Spalte ✓ abhaken.' }] };
 }
 /* Kopfgruppen für Aufgaben, die zusammengehören (Schreibaufgabe: Inhalt + Sprache), und Rand-Markierung der Gruppe */
@@ -2414,7 +2840,7 @@ function taskHeadGroups(tk, before, after) {
   return out;
 }
 function modelAssessment(c, a, opt = {}) {
-  const up = upper(c), dist = R.distribution(a, c.students, up), unit = up ? 'Notenpunkte' : 'Note';
+  const up = upper(c), dist = R.distribution(a, c.students, up), unit = up ? 'Punkte' : 'Note';   /* Q12/13: „Punkte“ = Notenpunkte, Rohwerte heißen dort BE */
   const lnT = a.title || R.TYPES[a.type].label, parts = R.byParts(a), tasksMode = R.byTask(a);
   const detail = !!opt.detail && (tasksMode || parts);
   const res = s => a.results && a.results[s.id];
@@ -2424,7 +2850,7 @@ function modelAssessment(c, a, opt = {}) {
   const exacts = parts ? c.students.map(res).filter(r => r && !r.status && r.exact != null).map(r => +r.exact) : [];
   /* Kennzahlen oben – der Durchschnitt groß und hervorgehoben */
   const stats = [{ l: 'Durchschnitt', v: dist.n ? fmt(dist.avg, 2) : '–', s: dist.n ? unit : 'noch keine Ergebnisse', key: true },
-    { l: 'Gewertet', v: String(dist.n), s: `von ${c.students.length} Schülern` },
+    { l: 'Gewertet', v: String(dist.n), s: `von ${c.students.filter(R.counted).length} Schülern` },
     { l: up ? 'Unter 5 Punkten' : 'Noten 5 und 6', v: String(dist.weak), s: dist.n ? Math.round(dist.weakShare * 100) + ' % der Gewerteten' : '' }];
   if (raws.length && maxP) stats.push({ l: 'Ø Punkte', v: f2(avgRaw), s: `von ${f2(maxP)} · ${Math.round(avgRaw / maxP * 100)} %` });
   if (parts && exacts.length) stats.push({ l: 'Ø ungerundet', v: f2(R.mean(exacts)), s: (up ? 'Notenpunkte' : 'Noten') + ' vor dem Runden' });
@@ -2443,9 +2869,9 @@ function modelAssessment(c, a, opt = {}) {
       align: ['c', 'l'], big: [dh.length - 1], bold: [dh.length - 2], small: tk.length > 9, widths: [3, 14, ...tk.map(() => 3.4), 4.4, 4.4] };
   } else if (detail && parts) {
     const ps = a.parts, cols = [], heads = [], hg = [{ label: '', span: 2 }], edge = {};
-    ps.forEach(p => { const st = cols.length + 2; if (p.kind === 'is') { heads.push('Inhalt', 'Sprache', 'Teilnote'); cols.push([p, 'i'], [p, 's'], [p, 'tn']); hg.push({ label: `${p.label} · ${f2(p.w)} %`, span: 3 }); edge[st] = 'gL'; edge[st + 2] = 'gR'; }
+    ps.forEach(p => { const st = cols.length + 2; if (p.kind === 'is') { heads.push('Inhalt', 'Sprache', 'Teilnote'); cols.push([p, 'i'], [p, 's'], [p, 'tn']); hg.push({ label: `${p.label} · ${f2(p.w)}\u00a0%`, span: 3 }); edge[st] = 'gL'; edge[st + 2] = 'gR'; }
       else if (p.kind === 'n') { heads.push(up ? 'Punkte' : 'Note'); cols.push([p, 'v']); hg.push({ label: `${p.label} · Gewicht ${f2(p.w)}`, span: 1 }); edge[st] = 'gL gR'; }
-      else { heads.push('BE', 'Teilnote'); cols.push([p, 'v'], [p, 'tn']); hg.push({ label: `${p.label} · ${f2(p.w)} %`, span: 2 }); edge[st] = 'gL'; edge[st + 1] = 'gR'; } });
+      else { heads.push('BE', 'Teilnote'); cols.push([p, 'v'], [p, 'tn']); hg.push({ label: `${p.label} · ${f2(p.w)}\u00a0%`, span: 2 }); edge[st] = 'gL'; edge[st + 1] = 'gR'; } });
     hg.push({ label: '', span: 2 });
     let sperr = false;
     const val = (r, p, k) => { if (!r || r.status || !r.pp) return ''; const v = r.pp[p.id]; if (k === 'tn') { const n = R.partNote(p, v); if (!n) return ''; if (n.sperr) sperr = true; return f2(n.tn) + (n.sperr ? '*' : ''); } if (p.kind === 'is') return v && v[k] != null && v[k] !== '' ? String(v[k]) : ''; return v != null && v !== '' ? f2(v) : ''; };
@@ -2458,7 +2884,7 @@ function modelAssessment(c, a, opt = {}) {
     if (sperr) opt._sperr = true;
   } else {
     const pts = a.usePoints, ex = parts;
-    const head = ['Nr.', 'Name', ...(pts ? ['Punkte'] : []), ...(ex ? ['genau'] : []), unit];
+    const head = ['Nr.', 'Name', ...(pts ? [up ? 'BE' : 'Punkte'] : []), ...(ex ? ['genau'] : []), unit];
     const rows = groupedRows(c, (s, i) => { const r = res(s); return [String(i + 1), s.name, ...(pts ? [r && r.raw != null ? f2(r.raw) : ''] : []), ...(ex ? [r && r.exact != null && !r.status ? f2(r.exact) : ''] : []), noteTxt(s)]; });
     rows.push({ cells: ['', 'Ø Klasse', ...(pts ? [f2(avgRaw)] : []), ...(ex ? [exacts.length ? f2(R.mean(exacts)) : ''] : []), dist.n ? fmt(dist.avg, 2) : ''], cls: 'foot' });
     table = { head, rows, align: ['c', 'l'], big: [head.length - 1], widths: [3, 18, ...(pts ? [5] : []), ...(ex ? [5] : []), 5] };
@@ -2470,17 +2896,17 @@ function modelAssessment(c, a, opt = {}) {
   if (dist.n) right.push({ bars: { labels, values: counts, upper: up, w: up ? 330 : 300, h: 132 } }); else right.push({ note: 'Noch keine Ergebnisse.' });
   const kr = a.usePoints && a.key ? keyRanges(a, up) : null;
   if (kr) {
-    right.push({ h: 'Notenschlüssel' + (a.key.preset === 'kmk' ? (up ? ' (amtliche BE-Tabelle)' : ' (KMK-Raster)') : '') });
-    const kRow = (g, i) => [up ? `${g.label} (${R.POINT_LABEL(+g.label)})` : g.label, `${f2(g.lo)} – ${f2(g.hi)}`, String(counts[i] || 0)];
+    right.push({ h: 'Notenschlüssel' + (a.key.preset === 'hv' ? ' · Hörverstehen (ISB)' : a.key.preset === 'kmk' ? (up ? ' (amtliche BE-Tabelle)' : ' (KMK-Raster)') : '') });
+    const kRow = (g, i) => [up ? `${g.label} (${R.POINT_LABEL(+g.label)})` : g.label, g.hi < g.lo ? "–" : g.lo === g.hi ? f2(g.lo) : `${f2(g.lo)} – ${f2(g.hi)}`, String(counts[i] || 0)];
     if (up) {   /* 16 Stufen in zwei Hälften nebeneinander (15–8 | 7–0): halb so hoch, passt neben bzw. unter die Liste, ohne Seitenumbruch */
       const h = Math.ceil(kr.length / 2);
-      right.push({ table: { head: ['Punkte', 'Rohpunkte', 'Anz.', 'Punkte', 'Rohpunkte', 'Anz.'], rows: kr.slice(0, h).map((g, i) => [...kRow(g, i), ...(kr[i + h] ? kRow(kr[i + h], i + h) : ['', '', ''])]), small: true, keep: true, widths: [3.4, 5, 2, 3.4, 5, 2], gEdge: { 2: 'gR', 3: 'gL' } } });
+      right.push({ table: { head: ['Punkte', 'BE', 'Anz.', 'Punkte', 'BE', 'Anz.'], rows: kr.slice(0, h).map((g, i) => [...kRow(g, i), ...(kr[i + h] ? kRow(kr[i + h], i + h) : ['', '', ''])]), small: true, keep: true, widths: [3.4, 5, 2, 3.4, 5, 2], gEdge: { 2: 'gR', 3: 'gL' } } });
     } else right.push({ table: { head: ['Note', 'Rohpunkte', 'Anzahl'], rows: kr.map(kRow), keep: true, widths: [3, 6, 3] } });
   }
   if (parts && a.alt) right.push({ h: 'Gewichtung' }, { table: { head: ['Teil', 'Bewertung', 'Gewicht'], rows: a.parts.map(p => [p.label, up ? 'Notenpunkte' : 'ganze Note', f2(p.w)]), align: ['l', 'l'], small: true, keep: true, widths: [5, 7, 2.4] } });
   else if (parts) right.push({ h: 'Gewichtung' }, { table: { head: ['Prüfungsteil', 'Bewertung', 'Anteil'], rows: a.parts.map(p => [p.label, p.kind === 'is' ? 'Inhalt 40 % · Sprache 60 %' : `BE (max. ${f2(p.max)}) → Lösungsgrad`, f2(p.w) + ' %']), align: ['l', 'l'], small: true, keep: true, widths: [5, 7, 2.4] } });
   const notes = [];
-  if (raws.length) { const med = raws.length % 2 ? raws[(raws.length - 1) / 2] : (raws[raws.length / 2 - 1] + raws[raws.length / 2]) / 2; notes.push(`Rohpunkte: Ø ${f2(avgRaw)} · Median ${f2(med)} · höchste ${f2(raws[raws.length - 1])} · niedrigste ${f2(raws[0])}${maxP ? ' · erreichbar ' + f2(maxP) : ''}.`); }
+  if (raws.length) { const med = raws.length % 2 ? raws[(raws.length - 1) / 2] : (raws[raws.length / 2 - 1] + raws[raws.length / 2]) / 2; notes.push(`${up ? "BE" : "Rohpunkte"}: Ø ${f2(avgRaw)} · Median ${f2(med)} · höchste ${f2(raws[raws.length - 1])} · niedrigste ${f2(raws[0])}${maxP ? ' · erreichbar ' + f2(maxP) : ''}.`); }
   if (!up && a.usePoints && a.key && a.key.preset === 'kmk' && a.key.tend) notes.push('Tendenzen aus dem 15-Punkte-Raster.');
   if (parts && a.alt) notes.push(`Zweigeteilte Schulaufgabe nach KMS vom 31.07.2023 (V.3-BS5402.7/135/1): Übersetzung und Aufgabenteil getrennt bewertet, Gesamtnote = gewichteter Durchschnitt ${f2(a.parts[0].w)} : ${f2(a.parts[1].w)}, bei n,5 die bessere Note.${a.alt.ue5 ? ' „Ausreichend“ nur bei mindestens „mangelhafter“ Übersetzung.' : ''}${a.alt.g11 ? ' „Befriedigend“ nur, wenn kein Teil „ungenügend“ ist.' : ''}${a.alt.up ? ' Hat ein Teil 0 Punkte, höchstens 6 Punkte (Anlage 2).' : ''}`);
   else if (parts) notes.push('Teilnote Hörverstehen o. Ä.: Anteil der BE nach Abitur-Tabelle (95 % = 15 … 20 % = 1 Punkt). Schreiben/Sprachmittlung: 40 % Inhalt + 60 % Sprache; ist Inhalt oder Sprache 0 Punkte, höchstens 3 Punkte (Sperrklausel' + (opt._sperr ? ', mit * markiert' : '') + '). Gesamt: gewichteter Durchschnitt, gerundet.');
@@ -2499,7 +2925,7 @@ function modelAssessment(c, a, opt = {}) {
     title: lnT, file: fileName(lnT + (detail ? ' Auswertung' : ''), c, a.date), subtitle: `${cLabel(c)}${a.date ? ' · ' + wdate(a.date) : ''}${up ? ' · Halbjahr ' + a.term : ''}`, meta: baseMeta(c), blocks,
     landscape: detail && ((tasksMode && a.tasks.length > 8) || (parts && a.parts.reduce((x, p) => x + (p.kind === 'is' ? 3 : 2), 0) > 9)) };
 }
-const stuSub = (c, s) => `${c.name} · ${c.subject}${isMixed(c.students) && s.cls ? ' · Klasse ' + s.cls : ''} · ${scopeLabel(c)}`;
+const stuSub = (c, s) => `${cLabel(c)}${isMixed(c.students) && s.cls ? ' · Klasse ' + s.cls : ''} · ${scopeLabel(c)}`;
 function modelStudents(c, list) {
   const up = upper(c);
   const blocks = [];
@@ -2509,15 +2935,15 @@ function modelStudents(c, list) {
     if (idx) blocks.push({ pagebreak: true }, { head });
     /* Kennzahlen oben: Zeugnisnote bzw. Halbjahresleistungen auf einen Blick */
     if (c.seminar) { /* W-Seminar: Tabelle unten */ }
-    else if (up) blocks.push({ stats: R.termsOf(c).map((t, i) => { const p = R.computeTerm(c, s.id, t).points; return { l: 'Halbjahr ' + t, v: p == null ? '–' : String(p), s: p == null ? 'noch offen' : 'Punkte (' + R.POINT_LABEL(p) + ')', key: t === scopeOf(c).term || (!scopeOf(c).term && i === 0) }; }) });
-    else { const r = R.computeLower(c, s.id, scopeOf(c)), ov = c.overrides[s.id]; blocks.push({ stats: [{ l: 'Zeugnisnote', v: ov ? String(ov.grade) : r.suggestion ? r.suggestion.text : '–', s: ov ? 'von der Lehrkraft festgelegt' : 'Vorschlag nach § 28 GSO', key: true }, { l: 'Ø gesamt', v: fmt(r.total) || '–', s: 'rechnerisch' }, ...(c.hasSA ? [{ l: 'Ø große LN', v: fmt(r.saAvg) || '–', s: 'Schulaufgaben' }] : []), { l: 'Ø kleine LN', v: fmt(r.smAvg) || '–', s: 'gewichtet' }] }); }
+    else if (up) blocks.push({ stats: R.termsOf(c).map((t, i) => { const fo = finalOf(c, s, t), p = fo.points; return { l: 'Halbjahr ' + t, v: fo.v, s: fo.kind !== 'calc' ? fo.label : p == null ? 'noch offen' : 'Punkte (' + R.POINT_LABEL(p) + ')', key: t === scopeOf(c).term || (!scopeOf(c).term && i === 0) }; }) });
+    else { const fo = finalOf(c, s), r = R.computeLower(c, s.id, scopeOf(c)); blocks.push({ stats: [{ l: 'Zeugnisnote', v: fo.v, s: fo.kind === 'ng' ? fo.label : fo.kind === 'guest' ? 'Gast – zählt nicht' : fo.kind === 'ov' ? 'von der Lehrkraft festgelegt' : 'Vorschlag nach § 28 GSO', key: true }, { l: 'Ø gesamt', v: fmt(r.total) || '–', s: 'rechnerisch' }, ...(c.hasSA ? [{ l: 'Ø große LN', v: fmt(r.saAvg) || '–', s: 'Schulaufgaben' }] : []), { l: 'Ø kleine LN', v: fmt(r.smAvg) || '–', s: 'gewichtet' }] }); }
     const rows = as.map(a => { const r = a.results && a.results[s.id]; return [a.title || R.TYPES[a.type].label, R.isBig(a) ? 'groß' + (a.bigWeight && +a.bigWeight !== 1 ? ' ' + wLabel(a.bigWeight) : '') : 'klein', a.date ? fdate(a.date) : '', ...(up ? [a.term] : []), r && r.raw != null ? String(r.raw).replace('.', ',') + (a.key ? ' / ' + String(a.key.max).replace('.', ',') : '') : '', R.cellText(r, up) || (isAway(c, s.id, a.date) ? 'abw.' : '–')]; });
     if (awayOf(c, s.id)) blocks.push({ p: 'Hinweis: ' + awayText(awayOf(c, s.id)) + '.' });
     if (supOf(c, s.id)) blocks.push({ p: supText(c, s.id) + '.' });
-    blocks.push({ h: 'Leistungsnachweise' }, { table: { head: ['Leistungsnachweis', 'Art', 'Datum', ...(up ? ['Halbjahr'] : []), 'Punkte', up ? 'Notenpunkte' : 'Note'], rows: rows.length ? rows : [['Noch keine Einträge', '', '', ...(up ? [''] : []), '', '']], align: ['l'], bold: [up ? 5 : 4] } });
-    if (c.seminar) { blocks.push({ h: 'Ergebnis' }); const sp = c.seminarPaper[s.id] || {}, g = R.seminarPaper(sp.arbeit, sp.gespraech); const pv = x => x === '' || x == null ? '–' : String(x); blocks.push({ table: { head: ['Seminararbeit', 'Präsentation / Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[pv(sp.arbeit), pv(sp.gespraech), g == null ? '–' : String(g)]], big: [2] } }); }
+    blocks.push({ h: 'Leistungsnachweise' }, { table: { head: ['Leistungsnachweis', 'Art', 'Datum', ...(up ? ['Halbjahr'] : []), up ? 'BE' : 'Punkte', up ? 'Punkte' : 'Note'], rows: rows.length ? rows : [['Noch keine Einträge', '', '', ...(up ? [''] : []), '', '']], align: ['l'], bold: [up ? 5 : 4] } });
+    if (c.seminar) { blocks.push({ h: 'Ergebnis' }); const sp = c.seminarPaper[s.id] || {}, g = R.seminarPaper(sp.arbeit, sp.gespraech); const pv = x => x === '' || x == null ? '–' : String(x); blocks.push({ table: { head: ['Seminararbeit', 'Prüfungsgespräch', 'Gesamtleistung (max. 30)'], rows: [[pv(sp.arbeit), pv(sp.gespraech), g == null ? '–' : String(g)]], big: [2] } }); }
   });
-  return { eyebrow: 'Schülerblatt', title: list.length === 1 ? list[0].name : `Schülerblätter ${c.name} · ${c.subject}`, file: list.length === 1 ? fileSafe(`${todayISO()} Schülerblatt ${list[0].name} ${c.name} ${c.subject}`) : fileName('Schülerblätter', c), subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: list.length && list[0] ? studMeta(c, list[0]) : baseMeta(c), blocks };
+  return { eyebrow: 'Schülerblatt', title: list.length === 1 ? list[0].name : `Schülerblätter ${cLabel(c)}`, file: list.length === 1 ? fileSafe(`${todayISO()} Schülerblatt ${list[0].name} ${cLabel(c).replace(' · ', ' ')}`) : fileName('Schülerblätter', c), subtitle: list.length === 1 ? stuSub(c, list[0]) : scopeLabel(c), meta: list.length && list[0] ? studMeta(c, list[0]) : baseMeta(c), blocks };
 }
 function modelStudentsAll(c) {
   const m = modelStudents(c, c.students);
@@ -2526,12 +2952,29 @@ function modelStudentsAll(c) {
 }
 const fileSafe = s => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').replace(/\s+/g, ' ').replace(/-{2,}/g, '-').replace(/^[\s.-]+|[\s.-]+$/g, '');
 /* Dateiname: Datum zuerst (sortiert sich von selbst nach Zeit), dann Art, Kurs, Fach – z. B. „2026-10-06 Stehgreifaufgabe 8AB Italienisch“ */
-const fileName = (kind, c, date) => fileSafe(`${date || todayISO()} ${kind} ${c.name} ${c.subject}`);
+const fileName = (kind, c, date) => fileSafe(`${date || todayISO()} ${kind} ${cLabel(c).replace(' · ', ' ')}`);   /* Fach nur, wenn es nicht schon im Kursnamen steht */
+/* Vor dem PDF: Bliebe auf dem letzten Blatt nur ein Rest (unter gut einem Fünftel), wird die Seite stufenweise etwas enger gesetzt –
+   aber nur, wenn dadurch wirklich ein Blatt wegfällt. Gemessen in unsichtbarem Rahmen in Druckbreite (A4, Ränder wie beim Drucken). */
+async function fitHtml(html, landscape) {
+  const W = landscape ? 1027 : 698, PH = landscape ? 664 : 993;
+  const fr = document.createElement('iframe'); fr.setAttribute('sandbox', 'allow-same-origin'); fr.style.cssText = `position:fixed;left:-5000px;top:0;width:${W}px;height:400px;border:0;visibility:hidden`;
+  document.body.appendChild(fr);
+  try {
+    await new Promise(r => { fr.onload = r; fr.srcdoc = html; });
+    const doc = fr.contentDocument; if (!doc || !doc.body) return html;
+    const pages = () => Math.ceil((doc.documentElement.scrollHeight - 2) / PH);
+    const p0 = pages(), rest = doc.documentElement.scrollHeight - (p0 - 1) * PH;
+    if (p0 < 2 || rest > PH * 0.22) return html;
+    for (const k of ['fit1', 'fit2', 'fit3']) { doc.body.className = k; if (pages() < p0) return html.replace('<body>', `<body class="${k}">`); }
+    return html;
+  } catch (e) { return html; } finally { fr.remove(); }
+}
 async function exportModel(m, kind) {
   const base = m.file ? fileSafe(m.file) : fileSafe(m.title);
   try {
-    if (kind === 'pdf') await N.savePdf(base + '.pdf', Print.html(m, D.settings), m.landscape, Print.footer(D.settings));
-    if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, D.settings), 'docx');
+    const st = (D && D.settings) || {};
+    if (kind === 'pdf') await N.savePdf(base + '.pdf', await fitHtml(Print.html(m, st), m.landscape), m.landscape, Print.footer(st));
+    if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, st), 'docx');
     if (kind === 'csv') await N.saveFile(base + '.csv', Print.csv(m), 'csv');
   } catch (e) { toast('Export fehlgeschlagen: ' + e.message); }
 }
@@ -2540,9 +2983,9 @@ function printSheet(c) {
   const opt = (id, title, sub, xl) => `<div class="row"><span><b>${title}</b><br><small class="hint">${sub}</small></span><button type="button" class="mini accent" data-p="${id}:pdf">PDF</button><button type="button" class="mini" data-p="${id}:docx">Word</button>${id === 'course' || xl ? `<button type="button" class="mini" data-p="${id}:csv">Excel</button>` : ''}</div>`;
   const { dlg, close } = sheet({ title: 'Drucken & Export', ok: '', cancel: 'Fertig', body: `<p class="hint" style="margin-top:0">Gilt für die aktuelle Ansicht: <b>${esc(scopeLabel(c))}</b>. Alle Ausdrucke tragen das theis-Logo und den Hinweis, dass Libretto die Dokumentation der Schule nicht ersetzt.</p>
     <div class="rows">${opt('course', 'Kursübersicht', 'Alle Schüler mit allen Noten, Durchschnitten und Vorschlag')}${opt('transfer', 'Übertragsliste fürs Infoportal', isSemTab(c) ? 'Ergebnisse der Seminararbeit – zum Abtippen und Abhaken' : 'Nur Name und Endnote – zum Abtippen und Abhaken')}${opt('students', 'Schülerblätter', 'Eine Seite pro Schüler, z. B. für Elterngespräche')}</div>
-    ${c.seminar ? `<div class="subhead">W-Seminar</div><div class="rows">${opt('semOverview', 'Übersicht der Seminararbeiten', 'Themen, Betreuungstermine je Halbjahr, Abgabe – ohne Noten, z. B. für die Oberstufenkoordination', true)}${opt('semResults', 'Ergebnisse W-Seminar', '12/1, 12/2, Arbeit, Prüfungsgespräch, Gesamtleistung mit Hinweisen (§ 44 GSO)', true)}${opt('semDossier', 'Betreuungsdokumentation', 'Je Schüler: Thema, alle Termine mit Protokoll, Abgabe, Bewertung – eine Seite pro Person')}</div>` : ''}
+    ${c.seminar ? `<div class="subhead">W-Seminar</div><div class="rows">${opt('semOverview', 'Übersicht der Seminararbeiten', 'Themen, Betreuungstermine je Halbjahr, Abgabe – ohne Noten, z. B. für die Oberstufenkoordination', true)}${opt('semResults', 'Ergebnisse W-Seminar', '12/1, 12/2, Arbeit, Prüfungsgespräch, Gesamtleistung mit Hinweisen (§ 44 GSO)', true)}${opt('semDossier', 'Betreuungsdokumentation', 'Je Schüler: Thema, alle Termine mit Protokoll, Abgabe, Bewertung – eine Seite pro Person')}${opt('semBwA', 'Bewertungsbögen Seminararbeit', 'Je Person: Bereiche nach ISB (Anlage 5a) mit Einschätzung, Anmerkungen, Punkten')}${opt('semBwP', 'Bewertungsbögen Prüfungsgespräch', 'Je Person: fünf Kompetenzen nach ISB mit Punkten und Anmerkungen')}${opt('semPg', 'Terminliste Prüfungsgespräche', 'Tag, Uhrzeit, Name und Thema – nach Tagen geordnet')}${opt('semBlankA', 'Leerer Bewertungsbogen Seminararbeit', 'Zum Ausfüllen von Hand')}${opt('semBlankP', 'Leerer Bewertungsbogen Prüfungsgespräch', 'Zum Ausfüllen von Hand')}</div>` : ''}
     <p class="hint">Einzelne Leistungsnachweise druckst du über den Spaltenkopf in der Tabelle, einzelne Schüler über ihren Namen.</p>` });
-  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(({ course: modelCourse, transfer: modelTransfer, students: modelStudentsAll, semOverview: modelSemOverview, semResults: modelSemResults, semDossier: modelSemDossierAll }[what])(c), kind); });
+  $$('[data-p]', dlg).forEach(b => b.onclick = () => { const [what, kind] = b.dataset.p.split(':'); exportModel(({ course: modelCourse, transfer: modelTransfer, students: modelStudentsAll, semOverview: modelSemOverview, semResults: modelSemResults, semDossier: modelSemDossierAll, semBwA: modelSemBwAAll, semBwP: modelSemBwPAll, semPg: modelSemPgPlan, semBlankA: x => modelSemBwA(x, { id: '', name: '' }, true), semBlankP: x => modelSemBwP(x, { id: '', name: '' }, true) }[what])(c), kind); });
 }
 
 /* ======================================================================
@@ -2562,13 +3005,16 @@ function calendarHTML() {
   D.courses.filter(c => !f || classesOf(c).includes(f)).forEach(c => c.assessments.filter(a => a.date && WRITTEN.includes(a.type)).forEach(a => (ev[a.date] = ev[a.date] || []).push({ c, a })));
   D.classDates.filter(x => !f || x.cls === f).forEach(x => (ev[x.date] = ev[x.date] || []).push({ other: x }));
   D.courses.filter(c => c.seminar && c.sem && c.sem.deadline && (!f || classesOf(c).includes(f))).forEach(c => (ev[c.sem.deadline] = ev[c.sem.deadline] || []).push({ semc: c }));
+  dlList().filter(x => !f || D.courses.some(c => classesOf(c).includes(f) && dlFor(x, c))).forEach(x => {
+    if (x.close) (ev[x.close] = ev[x.close] || []).push({ dl: x, ns: true });
+    if (x.date && x.date !== x.close) (ev[x.date] = ev[x.date] || []).push({ dl: x }); });
   const free = Cal.freeDays(y, m);
   const first = new Date(y, m, 1), start = Cal.add(first, -((first.getDay() + 6) % 7));
   const cells = [];
   for (let i = 0; i < 42; i++) {
     const d = Cal.add(start, i), iso = Cal.iso(d), inM = d.getMonth() === m, fr = free[iso], we = d.getDay() === 0 || d.getDay() === 6;
     if (i >= 35 && !inM) break;
-    const items = (ev[iso] || []).map(x => x.semc ? `<span class="cev" style="--hue:var(${hueOf(x.semc.subject)})" title="${esc('Abgabe der Seminararbeit · ' + x.semc.name + ' ' + x.semc.subject + (x.semc.sem.deadlineTime ? ' · ' + x.semc.sem.deadlineTime + ' Uhr' : ''))}">${esc(x.semc.name)} Abgabe</span>` : x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
+    const items = (ev[iso] || []).map(x => x.dl ? `<button type="button" class="cev dl" data-act="deadlines" title="${esc((x.ns ? 'Notenschluss ' : '') + dlLabel(x.dl) + ' · ' + DL_G[dlG(x.dl)])}">${esc((x.ns ? 'Notenschluss ' : '') + dlLabel(x.dl))}</button>` : x.semc ? `<span class="cev" style="--hue:var(${hueOf(x.semc.subject)})" title="${esc('Abgabe der Seminararbeit · ' + x.semc.name + ' ' + x.semc.subject + (x.semc.sem.deadlineTime ? ' · ' + x.semc.sem.deadlineTime + ' Uhr' : ''))}">${esc(x.semc.name)} Abgabe</span>` : x.other ? `<span class="cev other" title="${esc(x.other.cls + ' · ' + x.other.subject)}">${esc(x.other.cls)} ${esc(x.other.subject.slice(0, 4))}</span>`
       : `<button class="cev" style="--hue:var(${hueOf(x.c.subject)})" data-cal="${x.c.id}|${x.a.id}" title="${esc(x.c.name + ' ' + x.c.subject + ' · ' + (x.a.title || R.TYPES[x.a.type].label))}">${esc(clsOf(x.c))} ${esc(x.a.short || R.TYPES[x.a.type].short)}</button>`).join('');
     const se = inM ? eventsOn(iso) : [];
     const sev = se.slice(0, 2).map(e => `<span class="cev sch" title="${esc((e.time ? e.time + ' · ' : '') + e.title)}">${esc(e.title)}</span>`).join('') + (se.length > 2 ? `<span class="cev more" title="${esc(se.slice(2).map(e => e.title).join('\n'))}">+${se.length - 2} weitere</span>` : '');
@@ -2584,13 +3030,182 @@ function calendarHTML() {
   const rng = e => e.to && e.to !== e.from ? `${sdate(e.from)}–${sdate(e.to)}` : sdate(e.from);
   const evList = (D.events || []).length ? `<details class="evBox" ${UI.evOpen === false ? '' : 'open'}><summary>Schultermine im ${MONTHS[m]} <span class="count">${mEv.length}</span></summary>
       <div class="tlist">${mEv.length ? mEv.map(e => `<div class="trow"><span class="d">${rng(e)}${e.time ? `<br><small>${esc(e.time)}</small>` : ''}</span><span>${esc(e.title)}</span></div>`).join('') : '<p class="hint">Keine Schultermine in diesem Monat.</p>'}</div>
-      <div class="panelBtns"><button class="mini" id="evImp2">Neu einlesen …</button><button class="mini" id="evClear">Schultermine entfernen</button></div></details>` : '';
+      ${feedLine()}
+      <div class="panelBtns">${D.settings.evFeed ? '<button class="mini" id="evFeedNow">Jetzt aktualisieren</button><button class="mini" id="evFeedSet">Abo-Link ändern …</button>' : '<button class="mini" id="evImp2">Neu einlesen …</button><button class="mini" id="evFeedSet">Als Abo verknüpfen …</button>'}<button class="mini" id="evClear">${D.settings.evFeed ? 'Abo beenden und Termine entfernen' : 'Schultermine entfernen'}</button></div></details>` : '';
   return `<section class="panel glass" style="margin-bottom:16px"><div class="calHead"><h2 class="ptitle" style="margin:0">Kalender</h2>
       <div class="calNav"><button class="iconbtn" data-calnav="-1" title="Vorheriger Monat">‹</button><span class="calTitleWrap"><button class="calTitle" id="calTitle" title="Monat und Jahr wählen" aria-expanded="${!!pk}">${MONTHS[m]} ${y}<i>▾</i></button>${picker}</span><button class="iconbtn" data-calnav="1" title="Nächster Monat">›</button><button class="mini" data-calnav="0">Heute</button></div>
-      <div class="calTools">${(D.events || []).length ? '' : '<button class="mini" id="evImp" title="Termine der Schule aus dem Infoportal (CSV) oder aus einer Kalenderdatei (ICS) übernehmen">Schultermine einlesen …</button>'}<span class="picker"><select id="calCls"><option value="">Alle Klassen und Kurse</option>${classes.map(x => `<option ${x === f ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></span></div></div>
+      <div class="calTools">${(D.events || []).length ? '' : '<button class="mini" id="evImp" title="Termine der Schule aus dem Infoportal (CSV) oder aus einer Kalenderdatei (ICS) übernehmen">Schultermine einlesen …</button><button class="mini" id="evFeedSet" title="Link zum Schulkalender (ICS/webcal) – Libretto holt neue Termine dann selbst">Schulkalender abonnieren …</button>'}<span class="picker"><select id="calCls"><option value="">Alle Klassen und Kurse</option>${classes.map(x => `<option ${x === f ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></span></div></div>
     <div class="cal"><div class="cwd">Mo</div><div class="cwd">Di</div><div class="cwd">Mi</div><div class="cwd">Do</div><div class="cwd">Fr</div><div class="cwd">Sa</div><div class="cwd">So</div>${cells.join('')}</div>
     ${evList}<input type="file" id="evFile" accept=".csv,.ics,.txt" hidden>
     <p class="note">Zeigt angekündigte und geplante schriftliche Leistungsnachweise (Schulaufgaben, Stegreifaufgaben, Kurzarbeiten, Tests)${(D.events || []).length ? ' und die eingelesenen Schultermine (grau)' : ''}. Ferien und Feiertage in Bayern laut Kultusministerium, ohne Gewähr; Mariä Himmelfahrt gilt nur in überwiegend katholischen Gemeinden.</p></section>`;
+}
+/* ======================================================================
+   Fristen fürs Notenmachen: Zwischenbericht/Zwischenzeugnis, Halbjahr, Q12/Q13, Jahreszeugnis
+   (je Schule verschieden – § 40 Abs. 2 GSO: Zwischenzeugnis oder mind. zwei Informationen über das Notenbild).
+   Gespeichert in D.settings.dl = [{ id, kind, date, close, title?, g?, src }]; date = Termin, close = Notenschluss (optional).
+   ====================================================================== */
+const DL_KINDS = {
+  zb1: { l: '1. Zwischenbericht (Notenbild)', g: 'u' },
+  zz: { l: 'Zwischenzeugnis', g: 'u' },
+  hj: { l: 'Klassenkonferenz zum Halbjahr', g: 'u' },
+  zb2: { l: '2. Zwischenbericht (Notenbild)', g: 'u' },
+  jz: { l: 'Jahreszeugnis (Klassenkonferenz)', g: 'u' },
+  q13: { l: 'Zeugnis 13/1', g: '13' },
+  abi: { l: 'Ende 13/2 – Zulassung zum Abitur', g: '13' },
+  q12: { l: 'Zeugnis 12/1', g: '12' },
+  q12e: { l: 'Ende 12/2', g: '12' },
+  own: { l: 'Eigene Frist', g: 'all' } };
+const DL_G = { all: 'alle Kurse', u: 'Jgst. 5–11', '12': 'Q12', '13': 'Q13' };
+const dlList = () => (D.settings.dl = Array.isArray(D.settings.dl) ? D.settings.dl : []);
+const dlG = x => x.kind === 'own' ? (x.g || 'all') : DL_KINDS[x.kind].g;
+const dlLabel = x => x.kind === 'own' ? (x.title || 'Eigene Frist') : DL_KINDS[x.kind].l;
+const dlDue = x => x.close || x.date || '';
+const dlFor = (x, c) => { const g = dlG(x); return g === 'all' || (g === 'u' ? !upper(c) : upper(c) && String(c.grade) === g); };
+/* Was steht im Schulkalender? Erkennt die üblichen Titel; Notenschluss-Termine werden der passenden Frist zugeordnet */
+function detectDeadlines(events) {
+  const out = {}, own = [];
+  const kindOf = (t, iso) => { const mo = +iso.slice(5, 7), early = mo >= 1 && mo <= 4;
+    if (/q\s*13|13\s*\/\s*1|abitur/i.test(t) && /zeugnis|notenschluss|zulassung|halbjahr/i.test(t)) return /13\s*\/\s*2|zulassung/i.test(t) || !early ? 'abi' : 'q13';
+    if (/q\s*12|12\s*\/\s*1/i.test(t) && /zeugnis|notenschluss|halbjahr/i.test(t)) return /12\s*\/\s*2/i.test(t) || !early ? 'q12e' : 'q12';
+    if (/(1\.|erste[nrs]?)\s*zwischenbericht/i.test(t)) return 'zb1';
+    if (/(2\.|zweite[nrs]?)\s*zwischenbericht/i.test(t)) return 'zb2';
+    if (/zwischenzeugnis/i.test(t)) return 'zz';
+    if (/konferenz\w*\s+(zum|zur)\s+(schul)?halbjahr|halbjahres\w*konferenz/i.test(t)) return 'hj';
+    if (/konferenz\w*\s+zum\s+jahreszeugnis|jahreszeugnis\w*\s*konferenz|notenschluss\s+(zum\s+)?jahreszeugnis/i.test(t)) return 'jz';
+    return null; };
+  (events || []).forEach(e => { const t = e.title || '', k = kindOf(t, e.from), ns = /notenschluss|noten\s*schluss|notenabgabe/i.test(t);
+    if (k) { const o = out[k] = out[k] || { kind: k, src: 'cal' }; if (ns) o.close = o.close || e.from; else o.date = o.date || e.from; }
+    else if (ns) own.push({ kind: 'own', title: t.slice(0, 80), g: 'all', close: e.from, src: 'cal' }); });
+  return Object.values(out).concat(own).map(x => ({ ...x, date: x.date || '' })).sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+/* Gefundene Fristen in die Liste übernehmen, ohne Eigenes zu überschreiben: ein eingetragener Notenschluss bleibt stehen */
+function mergeDeadlines(found) {
+  const L = dlList(); let n = 0;
+  found.forEach(f => { const ex = f.kind === 'own' ? L.find(x => x.kind === 'own' && x.title === f.title) : L.find(x => x.kind === f.kind);
+    if (!ex) { L.push({ id: uid(), ...f }); n++; return; }
+    if (f.date && ex.date !== f.date && (!ex.date || ex.src === 'cal')) { ex.date = f.date; n++; }
+    if (f.close && !ex.close) { ex.close = f.close; n++; } });
+  if (!D.settings.half1End) { const h = L.find(x => x.kind === 'zz') || L.find(x => x.kind === 'hj'); if (h && dlDue(h)) D.settings.half1End = dlDue(h); }
+  return n;
+}
+/* Nach dem Einlesen der Schultermine: gefundene Fristen zum Übernehmen anbieten */
+function offerDeadlines(events) {
+  const found = detectDeadlines(events); if (!found.length || READONLY) return;
+  sheet({ title: 'Fristen fürs Notenmachen gefunden', ok: 'Übernehmen', body: `<p class="prose">Im Schulkalender stehen diese Termine. Libretto zeigt sie dann in der Übersicht und im passenden Kurs an – und erinnert, wenn eine Frist naht.</p>
+    <div class="dlFound">${found.map((f, i) => `<label class="row"><input type="checkbox" data-dlf="${i}" checked><span><b>${esc(dlLabel(f))}</b><small>${f.date ? wdate(f.date) : ''}${f.close ? (f.date ? ' · ' : '') + 'Notenschluss ' + wdate(f.close) : ''} · ${DL_G[dlG(f)]}</small></span></label>`).join('')}</div>
+    <p class="hint">Den Notenschluss (bis wann die Noten fertig sein müssen) legt jede Schule selbst fest – du kannst ihn danach unter „Fristen“ ergänzen.</p>`,
+    onOk: d => { const pick = found.filter((f, i) => d.querySelector(`[data-dlf="${i}"]`).checked); const n = mergeDeadlines(pick); save(); render(); toast(n ? `${pick.length} Fristen übernommen` : 'Fristen waren schon eingetragen'); } });
+}
+/* Fristen bearbeiten */
+function deadlineSheet() {
+  let L = JSON.parse(JSON.stringify(dlList()));
+  const row = (x, i) => `<div class="dlRow" data-dl="${i}">
+      <div class="dlName">${x.kind === 'own' ? `<input type="text" data-dt="${i}" value="${esc(x.title || '')}" placeholder="z. B. Notenschluss Q13">
+        <select data-dg="${i}">${Object.entries(DL_G).map(([k, l]) => `<option value="${k}" ${(x.g || 'all') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : `<b>${esc(dlLabel(x))}</b><small>${DL_G[dlG(x)]}${x.src === 'cal' ? ' · aus dem Schulkalender' : ''}</small>`}</div>
+      ${field('Termin', `<input type="date" data-dd="${i}" value="${esc(x.date || '')}">`)}${field('Notenschluss', `<input type="date" data-dc="${i}" value="${esc(x.close || '')}">`)}
+      <button type="button" class="iconbtn" data-ddel="${i}" title="Frist entfernen">✕</button></div>`;
+  const avail = () => Object.keys(DL_KINDS).filter(k => k === 'own' || !L.some(x => x.kind === k));
+  const draw = d => { d.querySelector('#dlRows').innerHTML = L.length ? L.map(row).join('') : '<p class="hint">Noch keine Fristen eingetragen.</p>';
+    d.querySelector('#dlAddK').innerHTML = avail().map(k => `<option value="${k}">${esc(DL_KINDS[k].l)}${k === 'own' ? '' : ' (' + DL_G[DL_KINDS[k].g] + ')'}</option>`).join(''); bind(d); };
+  const sync = d => L.forEach((x, i) => { const g = sel => d.querySelector(sel); if (g(`[data-dd="${i}"]`)) x.date = g(`[data-dd="${i}"]`).value; if (g(`[data-dc="${i}"]`)) x.close = g(`[data-dc="${i}"]`).value;
+    if (g(`[data-dt="${i}"]`)) x.title = g(`[data-dt="${i}"]`).value.trim(); if (g(`[data-dg="${i}"]`)) x.g = g(`[data-dg="${i}"]`).value; if (x.src === 'cal') x.src = 'cal'; });
+  const bind = d => $$('[data-ddel]', d).forEach(b => b.onclick = () => { sync(d); L.splice(+b.dataset.ddel, 1); draw(d); });
+  const nEv = (D.events || []).length, nFound = nEv ? detectDeadlines(D.events).length : 0;
+  sheet({ title: 'Fristen fürs Notenmachen', wide: true, body: `
+    <p class="prose">Bis wann müssen die Noten stehen? Das legt jede Schule selbst fest – je nach Jahrgangsstufe verschieden. <b>Termin</b> ist z. B. die Ausgabe oder die Klassenkonferenz, <b>Notenschluss</b> der Tag, bis zu dem alle Noten eingetragen sein müssen (optional). Libretto zeigt die nächste Frist in der Übersicht und im passenden Kurs und hebt sie zwei Wochen vorher hervor.</p>
+    <div id="dlRows" class="dlRows"></div>
+    <div class="panelBtns"><span class="picker"><select id="dlAddK"></select></span><button type="button" class="mini" id="dlAdd">+ Frist</button>
+      ${nEv ? `<button type="button" class="mini" id="dlCal" ${nFound ? '' : 'disabled'} title="${nFound ? '' : 'In den eingelesenen Schulterminen wurde nichts Passendes gefunden'}">Aus den Schulterminen übernehmen${nFound ? ' (' + nFound + ')' : ''}</button>` : `<button type="button" class="mini" id="dlImp">Schultermine einlesen …</button>`}</div>
+    <p class="hint">Schulen mit Zwischenberichten statt Zwischenzeugnis (§ 40 Abs. 2 GSO) tragen den 1. und 2. Zwischenbericht ein. Der Stichtag für die Ansicht „Stand Zwischenzeugnis“ wird aus dem Zwischenzeugnis bzw. der Halbjahreskonferenz übernommen, falls er unter Einstellungen noch leer ist.</p>`,
+    onOpen: (d, close) => { draw(d);
+      d.querySelector('#dlAdd').onclick = () => { sync(d); const k = d.querySelector('#dlAddK').value; if (!k) return; L.push({ id: uid(), kind: k, date: '', close: '', src: 'hand', ...(k === 'own' ? { title: '', g: 'all' } : {}) }); draw(d); };
+      const cb = d.querySelector('#dlCal'); if (cb) cb.onclick = () => { sync(d); const keep = D.settings.dl; D.settings.dl = L; const n = mergeDeadlines(detectDeadlines(D.events)); L = D.settings.dl; D.settings.dl = keep; draw(d); toast(n ? 'Aus den Schulterminen ergänzt – mit „Sichern“ übernehmen' : 'Schon alles eingetragen'); };
+      const ib = d.querySelector('#dlImp'); if (ib) ib.onclick = () => { close(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); }; },
+    onOk: d => { sync(d); D.settings.dl = L.filter(x => x.date || x.close || (x.kind === 'own' && x.title));
+      if (!D.settings.half1End) { const h = D.settings.dl.find(x => x.kind === 'zz') || D.settings.dl.find(x => x.kind === 'hj'); if (h && dlDue(h)) { D.settings.half1End = dlDue(h); toast('Stichtag „Stand Zwischenzeugnis“: ' + fdate(D.settings.half1End)); } }
+      save(); render(); } });
+}
+/* Die nächsten Fristen (ab heute); für einen Kurs nur die passenden */
+/* Alle Fristen eines Kurses: die passenden der Schule und beim W-Seminar Themenwahl und Abgabe der Seminararbeit */
+function courseDeadlines(c) {
+  const L = dlList().filter(x => dlDue(x) && dlFor(x, c));
+  if (c.seminar && c.sem) { const cf = c.sem;
+    if (cf.themeDue) L.push({ id: 'semT', kind: 'own', title: 'Themenwahl Seminararbeit (§ 24 GSO)', g: 'all', date: cf.themeDue, src: 'sem' });
+    if (cf.deadline) L.push({ id: 'semA', kind: 'own', title: 'Abgabe der Seminararbeit' + (cf.deadlineTime ? ' (' + cf.deadlineTime + ' Uhr)' : ''), g: 'all', date: cf.deadline, src: 'sem' }); }
+  return L.sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+function nextDeadlines(c, days = 400) {
+  const t = todayISO(), lim = Cal.iso(Cal.add(new Date(t + 'T12:00'), days));
+  return (c ? courseDeadlines(c) : dlList()).filter(x => dlDue(x) && dlDue(x) >= t && dlDue(x) <= lim).sort((a, b) => dlDue(a).localeCompare(dlDue(b)));
+}
+/* Fristen dieses Kurses auf einen Blick (über die kleine Marke im Kurskopf) */
+function courseDeadlineSheet(c) {
+  const t = todayISO(), L = courseDeadlines(c), nx = L.find(x => dlDue(x) >= t);
+  const rows = L.map(x => { const past = dlDue(x) < t, n = dlDays(x);
+    return `<div class="trow dlLine ${past ? 'past' : ''} ${x === nx ? 'next' : ''}"><span class="d">${sdate(dlDue(x))}<small>${past ? 'vorbei' : dlWhen(n)}</small></span><span><b>${esc(dlTitle(x))}</b>${x.close && x.date ? `<br><small>Termin ${esc(wdate(x.date))}</small>` : ''}${x.src === 'sem' ? '<br><small>W-Seminar – ändern unter „Kurs &amp; Schüler“</small>' : ''}</span></div>`; }).join('');
+  sheet({ title: 'Fristen · ' + c.name, ok: '', cancel: 'Schließen', body: `<div class="tlist">${rows || '<p class="hint">Für diesen Kurs ist noch keine Frist eingetragen.</p>'}</div>
+    <div class="panelBtns"><button type="button" class="mini" data-dlall>Fristen der Schule bearbeiten …</button></div>
+    <p class="hint">Es erscheinen nur die Fristen für ${upper(c) ? 'Q' + esc(String(c.grade)) : 'die Jahrgangsstufen 5–11'}${c.seminar ? ' und das W-Seminar' : ''}. Ob deine Schule ein Zwischenzeugnis oder Zwischenberichte hat, legst du unter „Fristen“ fest – eingetragen wird nur, was es gibt.</p>`,
+    onOpen: (d, close) => { d.querySelector('[data-dlall]').onclick = () => { close(); deadlineSheet(); }; } });
+}
+const dlDays = x => Math.round((new Date(dlDue(x) + 'T12:00') - new Date(todayISO() + 'T12:00')) / 864e5);
+const dlWhen = n => n === 0 ? 'heute' : n === 1 ? 'morgen' : n < 14 ? 'in ' + n + ' Tagen' : 'in ' + Math.round(n / 7) + ' Wochen';
+const dlTitle = x => (x.close ? 'Notenschluss ' : '') + dlLabel(x);
+/* Hinweis oben im Kurs: nächste Frist in den kommenden drei Wochen */
+function deadlineNotice(c) {
+  const x = nextDeadlines(c, 7)[0]; if (!x) return '';
+  const n = dlDays(x), open = c.assessments.reduce((k, a) => k + Object.values(a.results || {}).filter(r => r && r.status === 'ent').length, 0);
+  return `<div class="notice dlNote soon"><div class="grow"><b>${esc(dlTitle(x))}: ${esc(wdate(dlDue(x)))} (${dlWhen(n)})</b>${x.close && x.date ? ` – Termin ${esc(fdate(x.date))}` : ''}.${open ? ` Noch ${open === 1 ? '1 Nachtermin' : open + ' Nachtermine'} offen.` : ''}</div><button class="mini" data-act="deadlines">Fristen</button></div>`;
+}
+/* Einmaliger Hinweis (1.0.10): Leistungsnachweise in modernen Fremdsprachen mit KMK-Raster bzw. Gesamt-BE-Tabelle – dort nicht vorgesehen.
+   Libretto ändert nichts von selbst; die Liste zeigt, wo die Lehrkraft prüfen sollte. */
+function kmkMfsCheck() {
+  if (!D || READONLY || (D.settings.notice || {}).kmkMfs) return;
+  const hits = [];
+  D.courses.forEach(c => { if (!R.isModernLang(ruleSubj(c))) return; (c.assessments || []).forEach(a => { if (a.key && a.key.preset === 'kmk') hits.push({ c, a }); }); });
+  if (!hits.length) return;
+  sheet({ title: 'Bitte Notenschlüssel prüfen', ok: 'Verstanden', cancel: 'Später erinnern', body: `<p class="prose" style="margin-top:0">In diesen Leistungsnachweisen der modernen Fremdsprachen ist das <b>KMK-Raster</b> bzw. die Gesamt-BE-Tabelle gewählt (4 ab 40 %). Das ist dort nicht vorgesehen: „ausreichend“ liegt je nach Aufgabe bei 50–60 %, die Grenze zu „ungenügend“ bei 33 % (KMS vom 08.03.2023; Q12/Q13: ISB-Leitfaden 04/2025). Ältere Libretto-Versionen haben das KMK-Raster hier noch angeboten.</p>
+    <div class="kmkList">${hits.map(({ c, a }) => `<button type="button" class="kmkItem" data-c="${c.id}" data-a="${a.id}"><b>${esc(c.name)}</b> · ${esc(c.subject || '')}<span>${esc(R.TYPES[a.type] ? R.TYPES[a.type].label : a.type)}${a.title ? ' „' + esc(a.title) + '“' : ''}${a.date ? ' · ' + fdate(a.date) : ''}</span></button>`).join('')}</div>
+    <p class="hint">Libretto ändert keine Noten von selbst. Ein Klick öffnet den Leistungsnachweis; dort setzt „Note 4 ab 50 % …“ passende Grenzen ein, und der Notenspiegel zeigt sofort, was sich ändern würde. Falls die Grenzen bewusst so gewählt sind (z. B. Absprache mit der Schule), einfach lassen.</p>`,
+    onOpen: (d, close) => $$('.kmkItem', d).forEach(b => b.onclick = () => { close(); UI.course = b.dataset.c; UI.tab = 'grades'; render(); const c = course(), a = c && c.assessments.find(x => x.id === b.dataset.a); if (a) setTimeout(() => assessmentSheet(c, a), 200); }),
+    onOk: () => { D.settings.notice = { ...(D.settings.notice || {}), kmkMfs: true }; save(); } });
+}
+/* ---------- Schulkalender als Abo (ICS-Link) ----------
+   D.settings.evFeed = { url, last (ISO-Zeit), n, err }. Der Link liegt verschlüsselt bei den übrigen Daten. Neue Termine ersetzen die alten nur,
+   wenn der Abruf klappt und Termine enthält – sonst bleibt alles, wie es ist. */
+function feedLine() {
+  const f = D.settings.evFeed; if (!f) return '';
+  const when = f.last ? new Date(f.last).toLocaleString('de-DE', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'noch nie';
+  return `<p class="hint feedLine"><b>Abo:</b> ${esc(feedHost(f.url))} · zuletzt aktualisiert ${esc(when)}${f.err ? ` · <span style="color:var(--red)">letzter Versuch: ${esc(f.err)}</span>` : ''}</p>`;
+}
+function feedHost(u) { try { return new URL(String(u).replace(/^webcals?:/i, 'https:')).host; } catch (e) { return 'Link'; } }
+async function refreshFeed(force) {
+  const f = D && D.settings.evFeed; if (!f || READONLY) return null;
+  if (!force && f.last && Date.now() - new Date(f.last).getTime() < 6 * 3600e3) return null;
+  let r; try { r = await N.icsFetch(f.url); } catch (e) { r = { ok: false, error: 'Nicht erreichbar' }; }
+  if (!D || D.settings.evFeed !== f) return null;
+  if (!r.ok) { f.err = r.error; save(); if (UI.tab === 'dates') renderDates(); return r; }
+  const list = parseEvents(r.text) || [];
+  if (!list.length) { f.err = 'keine Termine im Kalender'; save(); return { ok: false, error: f.err }; }
+  D.events = list; f.last = new Date().toISOString(); f.n = list.length; delete f.err; save();
+  if (UI.tab === 'dates') renderDates();
+  return { ok: true, n: list.length };
+}
+function feedSheet() {
+  const f = D.settings.evFeed || {};
+  sheet({ title: 'Schulkalender abonnieren', small: true, ok: 'Abonnieren', body: `<p class="prose" style="margin-top:0">Hat deine Schule einen Kalender zum <b>Abonnieren</b> (ICS- oder webcal-Link, z. B. im Infoportal, auf der Schulhomepage oder als Google-/Outlook-Kalender), kopier den Link hierher. Libretto holt dann neue und geänderte Termine selbst – beim Start höchstens alle sechs Stunden oder mit „Jetzt aktualisieren“.</p>
+    ${field('Link zum Kalender', `<input type="url" id="fdUrl" placeholder="https://… oder webcal://…" value="${esc(f.url || '')}" spellcheck="false" autocomplete="off">`)}
+    <p class="hint">Libretto ruft den Link nur ab und schickt nichts mit – keine Namen, keine Noten. Der Link wird verschlüsselt mit deinen Daten gespeichert. Die bisher eingelesenen Schultermine werden durch die Termine aus dem Abo ersetzt.</p><p class="hint"><button type="button" class="linkbtn" id="fdHow">Wo finde ich den Link? Schritt für Schritt …</button></p><p class="gateErr" id="fdErr"></p>`,
+    onOpen: d => { d.querySelector('#fdHow').onclick = () => helpSheet({ topic: 'kalabo' }); },
+    onOk: async d => {
+      const url = d.querySelector('#fdUrl').value.trim(); if (!url) { d.querySelector('#fdErr').textContent = 'Bitte einen Link einfügen'; return false; }
+      const btn = d.querySelector('.sheethead button[type=submit]'); if (btn) btn.disabled = true;
+      const r = await N.icsFetch(url); if (btn) btn.disabled = false;
+      if (!r.ok) { d.querySelector('#fdErr').textContent = r.error; return false; }
+      const list = parseEvents(r.text) || []; if (!list.length) { d.querySelector('#fdErr').textContent = 'Im Kalender wurden keine Termine gefunden'; return false; }
+      D.events = list; D.settings.evFeed = { url, last: new Date().toISOString(), n: list.length }; save(); UI.evOpen = true; renderDates();
+      toast(`Schulkalender abonniert – ${list.length} Termine`, 4000); offerDeadlines(list); return true;
+    } });
 }
 /* Schultermine einlesen: CSV-Export des Infoportals (Kalender;Titel;…;Start;Ende) oder ICS-Kalenderdatei */
 function parseEvents(text) {
@@ -2634,13 +3249,15 @@ function bindCalendar() {
   const file = $('#evFile');
   const pick = () => { if (READONLY) return; file.click(); };
   if ($('#evImp')) $('#evImp').onclick = pick; if ($('#evImp2')) $('#evImp2').onclick = pick;
+  if ($('#evFeedSet')) $('#evFeedSet').onclick = () => { if (!READONLY) feedSheet(); };
+  if ($('#evFeedNow')) $('#evFeedNow').onclick = async () => { const b = $('#evFeedNow'); b.disabled = true; const r = await refreshFeed(true); if (r && !r.ok) toast('Aktualisieren fehlgeschlagen: ' + r.error, 6000); else if (r) toast(`Schulkalender aktualisiert – ${r.n} Termine`); };
   if (file) file.onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     try { const list = parseEvents(await f.text());
       if (list === null) { toast('Spalten nicht erkannt – erwartet werden „Titel“ und „Start“ (CSV aus dem Infoportal) oder eine ICS-Kalenderdatei', 6000); return; }
       if (!list.length) { toast('In der Datei wurden keine Termine gefunden'); return; }
-      const had = (D.events || []).length; D.events = list; save(); UI.evOpen = true; renderDates(); toast(`${list.length} Schultermine eingelesen${had ? ' – die bisherigen wurden ersetzt' : ''}`, 4000);
+      const had = (D.events || []).length; D.events = list; if (D.settings.evFeed) { delete D.settings.evFeed; toast('Abo beendet – jetzt gelten die Termine aus der Datei', 4000); } save(); UI.evOpen = true; renderDates(); toast(`${list.length} Schultermine eingelesen${had ? ' – die bisherigen wurden ersetzt' : ''}`, 4000); offerDeadlines(list);
     } catch (err) { console.error(err); toast('Datei konnte nicht gelesen werden'); } };
-  if ($('#evClear')) $('#evClear').onclick = async () => { if (READONLY) return; if (await ask(`Alle ${D.events.length} eingelesenen Schultermine aus dem Kalender entfernen? Deine Leistungsnachweise bleiben unverändert.`, 'Entfernen', true)) { D.events = []; save(); renderDates(); } };
+  if ($('#evClear')) $('#evClear').onclick = async () => { if (READONLY) return; if (await ask(`Alle ${D.events.length} eingelesenen Schultermine aus dem Kalender entfernen?${D.settings.evFeed ? ' Das Abo wird beendet.' : ''} Deine Leistungsnachweise bleiben unverändert.`, 'Entfernen', true)) { D.events = []; delete D.settings.evFeed; save(); renderDates(); } };
 }
 function renderDates() {
   const t = todayISO();
@@ -2678,7 +3295,7 @@ function startData() {
   const next = all.filter(x => x.a.date && x.a.date >= t).sort((x, y) => x.a.date.localeCompare(y.a.date));
   /* Noten fehlen: Termin vorbei, aber noch nicht (alle) eingetragen. Abwesende zählen nicht; „E“ (Nachtermin) gilt als eingetragen und steht unten eigens. */
   const missing = all.filter(x => x.a.date && x.a.date < t).map(x => {
-    const need = x.c.students.filter(s => !isAway(x.c, s.id, x.a.date));
+    const need = x.c.students.filter(s => !isAway(x.c, s.id, x.a.date) && R.counted(s));
     const got = need.filter(s => has(x.a.results && x.a.results[s.id])).length;
     /* § 25 GSO: schriftliche LN binnen zwei Wochen korrigieren und zurückgeben – Schulaufgaben in 12/13 und in Deutsch ab Jgst. 10 binnen drei Wochen */
     const written = ['sa', 'jst', 'stex', 'ka', 'flt'].includes(x.a.type), long = x.a.type === 'sa' && (upper(x.c) || (/^deutsch/i.test(x.c.subject || '') && +x.c.grade >= 10));
@@ -2697,11 +3314,34 @@ function startData() {
 function courseStats(c) {
   const up = upper(c); let vals = [], risk = 0;
   if (up) { const tm = R.termsOf(c).includes(pickTerm(c)) ? pickTerm(c) : defaultTerm(c);
-    c.students.forEach(s => { const r = R.computeTerm(c, s.id, tm); if (r.raw != null) vals.push(r.raw); if (r.under5 || r.zero) risk++; });
+    c.students.filter(R.counted).forEach(s => { const r = R.computeTerm(c, s.id, tm); if (r.points != null) vals.push(r.points);   /* wie die Zeile „Ø Kurs“: Durchschnitt der Halbjahresleistungen (Punkte) */ if (r.under5 || r.zero) risk++; });
     return { avg: R.mean(vals), risk, unit: 'P.', term: tm };
   }
-  c.students.forEach(s => { if (c.noGrade && c.noGrade[s.id]) return; const r = R.computeLower(c, s.id, null); if (r.total != null) vals.push(r.total); if (R.studentWarnings(c, s.id, r).some(w => w.level === 'warn')) risk++; });
+  c.students.forEach(s => { if ((c.noGrade && c.noGrade[s.id]) || !R.counted(s)) return; const r = R.computeLower(c, s.id, null); if (r.total != null) vals.push(r.total); if (R.studentWarnings(c, s.id, r).some(w => w.level === 'warn')) risk++; });
   return { avg: R.mean(vals), risk, unit: '' };
+}
+/* ---------- Datenschutz: Löschhinweis nach LDO § 14a Abs. 2 Satz 2 – Libretto löscht nie von selbst ----------
+   Ein Kurs erscheint ab zwei Monaten vor der Frist (zwei Jahre nach Ende seines Schuljahres). „Noch behalten“ (z. B. wenn die Schule etwas anderes bestimmt hat)
+   blendet den Hinweis für ein Jahr aus (c.ldoKeep = Datum). */
+function ldoDue() {
+  const t = todayISO(), soon = Cal.iso(Cal.add(new Date(t + 'T12:00'), 60));
+  return D.courses.map(c => ({ c, r: R.retention(c) })).filter(x => x.r && x.r.due <= soon && !(x.c.ldoKeep && x.c.ldoKeep > t)).sort((a, b) => a.r.due.localeCompare(b.r.due));
+}
+function ldoSheet() {
+  const t = todayISO();
+  const rowsHTML = () => { const l = ldoDue(); return l.length ? l.map(({ c, r }) => `<div class="ldoRow"><span><b>${esc(c.name)} · ${esc(c.seminar ? 'W-Seminar' : c.subject || '')}</b><small>Schuljahr ${esc(r.year)} · ${r.due < t ? '<b class="late">Frist abgelaufen</b> am ' : 'zu löschen bis '}${wdate(r.due)}</small></span><span class="ldoBtns"><button type="button" class="mini" data-keep="${c.id}" title="Hinweis ein Jahr lang ausblenden – z. B. wenn die Schule eine längere Aufbewahrung bestimmt hat">Noch behalten</button><button type="button" class="mini dangerFill" data-ldodel="${c.id}">Löschen</button></span></div>`).join('') : '<p class="hint">Keine Kurse mehr, die gelöscht werden müssen.</p>'; };
+  const { dlg } = sheet({ title: 'Alte Kurse löschen', ok: '', cancel: 'Schließen', body: `<p class="prose" style="margin-top:0">Nach <b>§ 14a Abs. 2 der Lehrerdienstordnung</b> sind eigene Aufzeichnungen über Schülerinnen und Schüler – also auch die Noten in Libretto – spätestens <b>zwei Jahre nach Ablauf des Schuljahres</b> zu löschen, sofern nichts anderes bestimmt ist. Libretto löscht nie von selbst.</p>
+    <div id="ldoList">${rowsHTML()}</div>
+    <p class="hint">Gelöschte Kurse bleiben 60 Tage im Papierkorb (unter „Sicherung“). Ältere Sicherungen auf diesem Computer und im Sicherungsordner enthalten sie, bis Libretto sie nach und nach ersetzt (etwa drei Monate). Ausdrucke und Dateien außerhalb von Libretto bitte selbst löschen.</p>` });
+  dlg.addEventListener('click', async e => {
+    const k = e.target.closest('[data-keep]'), x = e.target.closest('[data-ldodel]');
+    if (k) { const c = D.courses.find(y => y.id === k.dataset.keep); if (!c) return; c.ldoKeep = Cal.iso(Cal.add(new Date(t + 'T12:00'), 365)); save(); toast('Hinweis für ein Jahr ausgeblendet'); }
+    else if (x) { const c = D.courses.find(y => y.id === x.dataset.ldodel); if (!c) return;
+      if (!(await ask(`Kurs <b>${esc(c.name + ' · ' + (c.subject || ''))}</b> mit allen Noten löschen? Er bleibt 60 Tage lang unter „Sicherung“ wiederherstellbar.`, 'Löschen', true))) return;
+      toTrash('course', `Kurs ${c.name} · ${c.subject}`, c); D.courses = D.courses.filter(y => y.id !== c.id); if (UI.course === c.id) UI.course = D.courses[0] && D.courses[0].id; save(); toast('Kurs gelöscht – 60 Tage lang wiederherstellbar'); }
+    else return;
+    dlg.querySelector('#ldoList').innerHTML = rowsHTML(); render();
+  });
 }
 function renderStart() {
   renderSide();
@@ -2722,19 +3362,28 @@ function renderStart() {
   if (d.makeup.length > 6) todo.push(`<p class="hint sMore">und ${d.makeup.length - 6} weitere Nachtermine – alle unter „Kalender &amp; Termine“</p>`);
   d.xfer.forEach(x => todo.push(`<button type="button" class="trow sRow" data-xfer="${x.c.id}"><span class="d">Übertrag</span><span><b>${cName(x.c)}</b><br><small>${x.n === 1 ? '1 Leistungsnachweis' : x.n + ' Leistungsnachweise'} noch nicht (vollständig) ins Notenprogramm der Schule übertragen</small></span><span class="pill">Öffnen</span></button>`));
   if (d.conflicts) todo.push(`<button type="button" class="trow sRow" data-tabgo="dates"><span class="d">Termine</span><span><b>Termin prüfen (§ 22 GSO)</b><br><small>${d.conflicts === 1 ? 'Ein Termin kollidiert' : d.conflicts + ' Termine kollidieren'} mit einem anderen großen Leistungsnachweis der Klasse</small></span><span class="pill part">Kalender</span></button>`);
+  /* Fristen fürs Notenmachen: zwei Wochen vorher unter „Zu erledigen“ */
+  const dls = nextDeadlines(null, 28), dlCs = x => D.courses.filter(c => dlFor(x, c));
+  const dlOpen = x => dlCs(x).reduce((k, c) => k + d.missing.filter(m => m.c.id === c.id).length + d.makeup.filter(m => m.c.id === c.id).length, 0);
+  dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).forEach(x => { const o = dlOpen(x), cs = dlCs(x);
+    todo.push(`<button type="button" class="trow sRow dlRowS" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${dlWhen(dlDays(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${esc(cs.slice(0, 4).map(c => c.name).join(', '))}${cs.length > 4 ? ' …' : ''}${o ? ` · noch offen: ${o} (fehlende Noten, Nachtermine)` : ''}</small></span><span class="pill ${dlDays(x) <= 7 ? 'late' : 'part'}">Frist</span></button>`); });
+  { const old = ldoDue(); if (old.length) todo.push(`<button type="button" class="trow sRow" data-act="ldo"><span class="d">Datenschutz</span><span><b>${old.length === 1 ? '1 alter Kurs kann gelöscht werden' : old.length + ' alte Kurse können gelöscht werden'}</b><br><small>Noten sind spätestens zwei Jahre nach Ende des Schuljahres zu löschen (LDO § 14a Abs. 2)</small></span><span class="pill info">Ansehen</span></button>`); }
   if (bkBad) todo.push(`<button type="button" class="trow sRow" data-tabgo="backup"><span class="d">Sicherung</span><span><b>${esc(bkText)}</b><br><small>Deine Noten liegen sonst nur auf diesem Computer.</small></span><span class="pill part">Einrichten</span></button>`);
   /* Als Nächstes: Leistungsnachweise und Schultermine der kommenden Wochen */
   const horizon = Cal.iso(Cal.add(new Date(t + 'T12:00'), 28));
   const coming = d.next.filter(x => x.a.date <= horizon).map(x => ({ date: x.a.date, html: `<button type="button" class="trow sRow" data-goto="${x.c.id}"><span class="d">${sdate(x.a.date)}<small>${inDays(x.a.date)}</small></span><span><b>${lnName(x)}</b><br><small>${cName(x.c)}</small></span>${R.isBig(x.a) ? '<span class="pill big">groß</span>' : ''}</button>` }))
+    .concat(dls.filter(x => dlDays(x) > 14).map(x => ({ date: dlDue(x), html: `<button type="button" class="trow sRow" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${inDays(dlDue(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${DL_G[dlG(x)]}</small></span><span class="pill info">Frist</span></button>` })))
     .concat(d.events.filter(e => e.from <= horizon).slice(0, 8).map(e => ({ date: e.from < t ? t : e.from, html: `<div class="trow sRow ev"><span class="d">${sdate(e.from)}<small>${e.from <= t ? 'läuft' : inDays(e.from)}</small></span><span>${esc(e.title)}${e.time ? `<br><small>${esc(e.time)}</small>` : ''}</span><span class="pill">Schule</span></div>` })))
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 9);
   const later = d.next.filter(x => x.a.date > horizon).length;
   /* Kurse */
-  const cards = D.courses.slice().sort(courseCmp).map(c => { const st = courseStats(c), nMk = d.makeup.filter(x => x.c.id === c.id).length, nMi = d.missing.filter(x => x.c.id === c.id).length;
-    return `<button type="button" class="sCard" data-goto="${c.id}" style="--hue:var(${hueOf(c.subject)})"><span class="sCardTop"><b>${esc(c.name)}</b><span>${esc(c.subject || '')}</span></span>
+  const card = c => { const st = courseStats(c), nMk = d.makeup.filter(x => x.c.id === c.id).length, nMi = d.missing.filter(x => x.c.id === c.id).length;
+    return `<button type="button" class="sCard" data-goto="${c.id}" style="--hue:var(${hueOf(c.subject)})"><span class="sCardTop"><b>${esc(c.name)}<em class="sBadge">${esc(courseBadge(c))}</em></b><span>${esc(c.seminar ? 'W-Seminar · ' + semLeit(c) : isPSem(c) ? 'P-Seminar · ' + c.subject : c.subject || '')}</span></span>
       <span class="sAvg">${st.avg == null ? '–' : fmt(st.avg, 2)}<small>${st.avg == null ? 'noch keine Noten' : 'Ø ' + (st.term ? st.term : 'Klasse')}${st.unit ? ' · Punkte' : ''}</small></span>
       <span class="sMeta">${c.students.length} Schüler · ${c.assessments.length} LN</span>
-      <span class="sTags">${st.risk ? `<i class="warn">${st.risk} gefährdet</i>` : ''}${nMi ? `<i>${nMi === 1 ? '1 LN offen' : nMi + ' LN offen'}</i>` : ''}${nMk ? `<i class="info">${nMk === 1 ? '1 Nachtermin' : nMk + ' Nachtermine'}</i>` : ''}</span></button>`; }).join('');
+      <span class="sTags">${st.risk ? `<i class="warn">${st.risk} gefährdet</i>` : ''}${nMi ? `<i>${nMi === 1 ? '1 LN offen' : nMi + ' LN offen'}</i>` : ''}${nMk ? `<i class="info">${nMk === 1 ? '1 Nachtermin' : nMk + ' Nachtermine'}</i>` : ''}</span></button>`; };
+  const grpsUsed = COURSE_GROUPS.filter(([k]) => D.courses.some(c => courseGroup(c) === k));
+  const cards = grpsUsed.map(([k, g]) => `${grpsUsed.length > 1 ? `<div class="sGrp">${g}</div>` : ''}<div class="sCards">${D.courses.filter(c => courseGroup(c) === k).sort(courseCmp).map(card).join('')}</div>`).join('');
   const lastC = course();
   const top = [betaNotice(), updateNotice()].filter(Boolean).join('');
   main.innerHTML = `<div class="startPage">
@@ -2742,14 +3391,15 @@ function renderStart() {
       <div class="sHeadActs">${lastC ? `<button type="button" class="mini" data-goto="${lastC.id}" title="Zuletzt geöffneter Kurs">Weiter in ${esc(lastC.name)}</button>` : ''}<button type="button" class="mini accent" id="sNewLN">+ Leistungsnachweis</button></div></header>
     ${top ? `<div class="notices">${top}</div>` : ''}
     <div class="sCols">
-      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0)}</span></div>
+      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0) + (ldoDue().length ? 1 : 0) + dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).length}</span></div>
         <div class="tlist">${todo.length ? todo.join('') : '<div class="sDone"><b>Alles erledigt.</b><span>Keine fehlenden Noten, keine offenen Nachtermine, Sicherung aktuell.</span></div>'}</div></section>
       <section class="panel glass"><div class="phead"><h2 class="ptitle">Als Nächstes</h2><span class="count">${coming.length}</span></div>
         <div class="tlist">${coming.length ? coming.map(x => x.html).join('') : '<p class="hint" style="margin:6px 10px">In den nächsten vier Wochen steht nichts an. Geplante Leistungsnachweise trägst du mit Datum ein – dann erscheinen sie hier und im Kalender.</p>'}</div>
+        ${dlList().length ? '' : `<p class="note">Bis wann müssen die Noten stehen? <button type="button" class="linkbtn" data-act="deadlines">Fristen fürs Notenmachen eintragen</button> (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – oder aus den Schulterminen übernehmen.</p>`}
         ${later ? `<p class="note">${later === 1 ? 'Ein weiterer Leistungsnachweis' : later + ' weitere Leistungsnachweise'} später im Schuljahr – siehe <button type="button" class="linkbtn" data-tabgo="dates">Kalender &amp; Termine</button>.</p>` : ''}</section>
     </div>
     <div class="sHeadline">Meine Klassen und Kurse</div>
-    <div class="sCards">${cards}</div>
+    ${cards}
     <p class="note sFoot">${bkBad ? '' : esc(bkText) + ' · '}Die Übersicht zeigt nur an – geändert wird hier nichts. Was beim Öffnen erscheint, stellst du unter Einstellungen → Allgemein ein.</p></div>`;
   $$('[data-goto]', main).forEach(b => b.onclick = () => pickCourse(b.dataset.goto));
   $$('[data-xfer]', main).forEach(b => b.onclick = () => { pickCourse(b.dataset.xfer); transferSheet(course()); });
@@ -2863,12 +3513,12 @@ function klPlan(d) {
     const inc = c.students.map(s => ({ ...s, cls: klCls(s.cls) }));
     const course = klMatch(c);
     if (!course) return { c: { ...c, students: inc }, isNew: true, on: true };
-    const df = TheisKlassen.diff(course.students.map(s => klWrap(course, s)), inc);
+    const df = TheisKlassen.diff(course.students.filter(s => !s.guest).map(s => klWrap(course, s)), inc);   /* Gäste stehen nicht auf der Klassenliste – sie bleiben unberührt */
     df.added.forEach(x => x.on = true); df.changed.forEach(x => x.on = true); df.removed.forEach(x => x.on = false);
     return { c: { ...c, students: inc }, course, d: df };
   });
   if (!KL.plan.length) return toast('Die Datei enthält keine Klassen');
-  const none = KL.plan.every(p => !p.isNew && !p.d.added.length && !p.d.removed.length && !p.d.changed.some(x => !x.silent));
+  const none = KL.plan.every(p => !p.isNew && !p.d.added.length && !p.d.removed.length && !(p.d.ambiguous || []).length && !p.d.changed.some(x => !x.silent));
   if (none) { klApply(true); return toast('Alles schon auf dem gleichen Stand – nichts zu ändern'); }
   klDialog();
 }
@@ -2884,7 +3534,8 @@ function klDialog() {
       ${sec('Neu', 'add', d.added, x => klName(x.inc) + (x.inc.cls ? ` (${x.inc.cls})` : ''))}
       ${sec('Geändert', 'chg', real, x => klName(x.cur) + ' – ' + klFieldTxt(x))}
       ${sec('Nicht mehr in der Datei', 'rem', d.removed, x => klName(x.cur) + (klHasGrades(p.course, x.cur.id) ? ' – hat eingetragene Noten' : ''))}
-      ${!d.added.length && !real.length && !d.removed.length ? '<p class="hint" style="margin:6px 0 0">Keine Unterschiede.</p>' : ''}
+      ${(d.ambiguous || []).length ? `<div class="klSec"><h4>Nicht eindeutig – bleibt unverändert <small>${d.ambiguous.length}</small></h4>${d.ambiguous.map(x => `<div class="klRow"><span>${esc(klName(x.cur[0]))}: ${x.cur.length}× im Kurs${x.cur.some(s => s.cls) ? ' (' + x.cur.map(s => esc(s.cls || '–')).join(', ') + ')' : ''}, ${x.inc.length}× in der Datei${x.inc.some(s => s.cls) ? ' (' + x.inc.map(s => esc(s.cls || '–')).join(', ') + ')' : ''}</span></div>`).join('')}<p class="hint" style="margin:6px 0 0">Gleiche Namen ohne eindeutige Klasse ordnet Libretto nicht selbst zu – sonst könnten Noten bei der falschen Person landen. Bitte bei Bedarf von Hand anpassen (Schülerblatt).</p></div>` : ''}
+      ${!d.added.length && !real.length && !d.removed.length && !(d.ambiguous || []).length ? '<p class="hint" style="margin:6px 0 0">Keine Unterschiede.</p>' : ''}
       ${d.removed.length ? '<p class="hint" style="margin:6px 0 0">„Nicht mehr in der Datei“: Nur wenn du ein Häkchen setzt, wird die Person aus dem Kurs entfernt – mit ihren Noten. Ohne Häkchen bleibt alles bestehen.</p>' : ''}</div>`;
   }).join('');
   sheet({ title: 'Klassen abgleichen', wide: true, ok: 'Übernehmen', body: `<p class="hint" style="margin:0 0 8px">Datei aus ${esc(m.app || 'einer theis-App')}${m.exported ? ' vom ' + esc(new Date(m.exported).toLocaleDateString('de-DE')) : ''}${m.schoolYear ? ' · Schuljahr ' + esc(m.schoolYear) : ''}. Nichts wird geändert, bevor du „Übernehmen“ drückst; vorher legt Libretto eine Sicherung an.</p><div id="klPlan">${cards}</div>`,
@@ -2912,7 +3563,7 @@ async function klApply(silent) {
     const rem = new Set();
     for (const x of p.d.changed) {
       const s = c.students.find(o => o.id === x.cur.id); if (!s) continue;
-      if (x.inc.id && !s.xid) s.xid = x.inc.id;
+      if (x.inc.id && !s.xid && (x.silent || x.on)) s.xid = x.inc.id;   /* Kennung nur bei eindeutiger bzw. bestätigter Zuordnung */
       if (x.silent || !x.on) continue;
       if (x.fields.includes('name')) { s.last = x.inc.last; s.first = x.inc.first; s.name = fullName(s); }
       if (x.fields.includes('g')) { if (x.inc.g) s.g = x.inc.g; else delete s.g; }
@@ -2924,7 +3575,7 @@ async function klApply(silent) {
     if (rem.size) {
       c.students = c.students.filter(s => !rem.has(s.id)); c.entries = (c.entries || []).filter(e => !rem.has(e.sid));
       const del = (o, id) => { if (o && typeof o === 'object') delete o[id]; };
-      rem.forEach(id => { ['away', 'overrides', 'notes', 'seminarPaper', 'noGrade'].forEach(k => del(c[k], id)); semDrop(c, id); });
+      rem.forEach(id => { ['away', 'overrides', 'ovHalf', 'notes', 'seminarPaper', 'noGrade'].forEach(k => del(c[k], id)); semDrop(c, id); });
       c.assessments.forEach(a => { if (a.results) rem.forEach(id => delete a.results[id]); });
       Object.keys(c.xfer || {}).forEach(k => { const sid = k.startsWith('e|') ? null : k.split('|')[1]; if (sid && rem.has(sid)) delete c.xfer[k]; });
       sum.nr += rem.size;
@@ -2951,62 +3602,175 @@ async function openLicenses() {
   sheet({ title: 'Lizenzen', wide: true, ok: '', cancel: 'Fertig', body: `<pre class="lic">${esc(txt)}</pre><div class="linkrow"><button type="button" class="mini" id="licChromium">Lizenzen der Chromium-Komponenten öffnen</button></div>`,
     onOpen: d => { d.querySelector('#licChromium').onclick = () => { if (N && N.openDoc) N.openDoc('chromium'); }; } });
 }
+/* Effekte reduzieren und Textgröße (nur dieses Gerät) */
+function applyFx(fx) { document.documentElement.classList.toggle('lowfx', fx === 'low'); }
+function applyZoom(z) { try { N.zoom(z || 1).catch(() => {}); } catch (e) {} }
 async function settingsSheet(tab) {
   const s = D.settings, v = await N.version();
   const skin = ST.skin && SKINS.some(x => x[0] === ST.skin) ? ST.skin : 'standard', mode = ST.mode || 'auto', font = ST.font || 'standard';
-  const TABS = [['gen', 'Allgemein'], ['look', 'Aussehen'], ['sec', 'Sicherheit'], ['about', 'Über']];
+  const IC = {
+    gen: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>',
+    grade: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>',
+    look: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.8-1.8 0-1.3-1-1.6-1-2.7 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.2" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>',
+    sec: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    about: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>' };
+  const TABS = [['gen', 'Allgemein', 'Name, Schule, Start'], ['grade', 'Termine', 'Stichtag, Fristen, Schultermine'], ['look', 'Aussehen', 'Farben, Schrift, Größe'], ['sec', 'Sicherheit', 'Sperre, Updates, Sicherung'], ['about', 'Über', 'Version, Hilfe, Quellen']];
   const cur = TABS.some(t => t[0] === tab) ? tab : (settingsSheet.last || 'gen');
   const row = (title, sub, ctl) => `<div class="setRow"><div><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${ctl}</div>`;
-  sheet({ title: 'Einstellungen', body: `
-    <div class="seg setTabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-stab="${k}" aria-pressed="${k === cur}">${l}</button>`).join('')}</div>
+  const card = (title, inner, hint) => `<section class="setCard">${title ? `<h4>${title}</h4>` : ''}${inner}${hint ? `<p class="setHint">${hint}</p>` : ''}</section>`;
+  const seg = (id, attr, items, on) => `<div class="seg modePick" id="${id}">${items.map(([k, l]) => `<button type="button" data-${attr}="${k}" aria-pressed="${String(on) === String(k)}">${l}</button>`).join('')}</div>`;
+  const nd = nextDeadlines(null)[0];
+  const zoom = ST.zoom || 1, cv = courseViewMode();
+  const { dlg } = sheet({ title: 'Einstellungen', wide: true, body: `<div class="setTwo">
+    <nav class="setNav" role="tablist">${TABS.map(([k, l, sub]) => `<button type="button" role="tab" data-stab="${k}" aria-pressed="${k === cur}"><i>${IC[k]}</i><span><b>${l}</b><small>${sub}</small></span></button>`).join('')}
+      <div class="setNavFoot"><img src="icon.png" alt=""><span>Libretto ${esc(v)}</span></div></nav>
+    <div class="setMain">
     <div class="setPane" data-pane="gen" ${cur === 'gen' ? '' : 'hidden'}>
-      <div class="grid2">${field('Name der Lehrkraft (für Ausdrucke)', `<input type="text" id="sT" value="${esc(s.teacher)}">`)}${field('Schule (optional)', `<input type="text" id="sS" value="${esc(s.school)}">`)}
-        ${field('Schuljahr', `<input type="text" id="sY" value="${esc(s.year)}">`)}${field('Stichtag Zwischenzeugnis / Notenbild', `<input type="date" id="sH" value="${esc(s.half1End)}">`)}</div>
-      <p class="hint">Name und Schule erscheinen auf deinen Ausdrucken. Der Stichtag steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO).</p>
-      <div class="setHead">Beim Öffnen zeigen</div>
-      <div class="seg modePick" id="sStart">${[['start', 'Übersicht'], ['grades', 'Letzter Kurs']].map(([k, l]) => `<button type="button" data-start="${k}" aria-pressed="${(ST.startTab === 'grades' ? 'grades' : 'start') === k}">${l}</button>`).join('')}</div>
-      <p class="hint">Die Übersicht zeigt, wo Noten fehlen, welche Nachtermine offen sind und was als Nächstes ansteht. Gilt für dieses Gerät.</p>
+      ${card('Für deine Ausdrucke', `<div class="grid2">${field('Name der Lehrkraft', `<input type="text" id="sT" value="${esc(s.teacher)}" placeholder="z. B. J. Muster">`)}${field('Schule (optional)', `<input type="text" id="sS" value="${esc(s.school)}" placeholder="z. B. Gymnasium Musterstadt">`)}</div>`, 'Name und Schule stehen oben rechts auf jedem Ausdruck.')}
+      ${card('Schuljahr', `<div class="grid2">${field('Schuljahr', `<input type="text" id="sY" value="${esc(s.year)}">`)}<div></div></div>`)}
+      ${card('Beim Öffnen zeigen', seg('sStart', 'start', [['start', 'Übersicht'], ['grades', 'Letzter Kurs']], ST.startTab === 'grades' ? 'grades' : 'start'), 'Die Übersicht zeigt, wo Noten fehlen, welche Nachtermine offen sind und was als Nächstes ansteht. Gilt für diesen Computer.')}
+    </div>
+    <div class="setPane" data-pane="grade" ${cur === 'grade' ? '' : 'hidden'}>
+      ${card('Stichtag', `<div class="grid2">${field('Stichtag Zwischenzeugnis / Notenbild', `<input type="date" id="sH" value="${esc(s.half1End)}">`)}<div></div></div>`, 'Steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO): Es zählen nur Noten bis zu diesem Tag.')}
+      ${card('Fristen fürs Notenmachen', row(dlList().length ? dlList().length + ' Fristen eingetragen' : 'Noch keine Fristen', dlList().length ? (nd ? 'Nächste: ' + esc(dlTitle(nd) + ' – ' + fdate(dlDue(nd))) : 'keine mehr in diesem Schuljahr') : 'Zwischenbericht oder Zwischenzeugnis, Halbjahr, Q12, Q13, Jahreszeugnis – je Schule verschieden', '<button type="button" class="mini accent" id="sDl">Fristen …</button>'), 'Libretto erinnert eine Woche vorher in der Übersicht und im Kurs.')}
+      ${card('Schultermine', `${row((D.events || []).length ? (D.events.length === 1 ? '1 Schultermin' : D.events.length + ' Schultermine') + (D.settings.evFeed ? ' · abonniert' : ' · aus einer Datei') : 'Noch keine Schultermine', D.settings.evFeed ? esc('Abo: ' + feedHost(D.settings.evFeed.url)) : 'Erscheinen grau im Kalender und in der Übersicht; erkannte Fristen bietet Libretto zum Übernehmen an.', '')}
+        <div class="setBtns"><button type="button" class="mini" id="sEvImp">Aus Datei einlesen …</button><button type="button" class="mini" id="sEvFeed">${D.settings.evFeed ? 'Abo-Link ändern …' : 'Schulkalender abonnieren …'}</button>${D.settings.evFeed ? '<button type="button" class="mini" id="sEvNow">Jetzt aktualisieren</button>' : ''}<button type="button" class="mini linkish" id="sEvHow">So geht’s</button></div>`, 'Datei: CSV aus dem Infoportal oder ICS. Abo: Link zum Schulkalender (ICS oder webcal) – Libretto holt neue Termine dann selbst.')}
     </div>
     <div class="setPane" data-pane="look" ${cur === 'look' ? '' : 'hidden'}>
-      <div class="setHead">Farbwelt</div>
-      <div class="skinPick">${SKINS.map(([k, l]) => `<button type="button" class="skinBtn${skin === k ? ' on' : ''}" data-sk="${k}" aria-pressed="${skin === k}"><span class="skinSw">${(SKIN_SW[k] || []).map(col => `<i style="background:${col}"></i>`).join('')}</span>${esc(l)}</button>`).join('')}</div>
-      <div class="setHead">Helligkeit</div>
-      <div class="seg modePick" id="sMode">${[['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button type="button" data-mode="${k}" aria-pressed="${mode === k}">${l}</button>`).join('')}</div>
-      <div class="setHead">Schrift</div>
-      <div class="fontPick">${FONTS.map(([k, n, st, d]) => `<button type="button" class="fontBtn" data-font="${k}" aria-pressed="${font === k}" style="font-family:${esc(st)}">${esc(n)}<small>${esc(d)}</small></button>`).join('')}</div>
-      <div class="setHead">Notentabelle</div>
-      ${row('Kompakte Zeilen', 'Mehr Schülerinnen und Schüler auf einen Blick – praktisch auf dem Laptop.', `<input type="checkbox" class="sw" id="sDense" ${ST.dense ? 'checked' : ''}>`)}
-      <p class="hint">Das Aussehen gilt nur für dieses Gerät und wird sofort übernommen. Noten und Ausdrucke ändern sich dadurch nicht.</p>
+      ${card('Farbwelt', `<div class="pillPick">${SKINS.map(([k, l]) => `<button type="button" class="pill${skin === k ? ' on' : ''}" data-sk="${k}" aria-pressed="${skin === k}"><span class="pillSw">${(() => { const [b0, c1, c2] = SKIN_SW[k] || ['#eee', '#888', '#888']; return `<i style="background:conic-gradient(${c1} 0 50%, ${c2 === c1 ? b0 : c2} 0 100%)"></i>`; })()}</span>${esc(l)}</button>`).join('')}</div>`)}
+      ${card('Helligkeit', seg('sMode', 'mode', [['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']], mode), 'Automatisch folgt dem Computer – tagsüber hell, abends dunkel.')}
+      ${card('Schrift', `<div class="pillPick">${FONTS.map(([k, n, st, d]) => `<button type="button" class="pill fpill${font === k ? ' on' : ''}" data-font="${k}" aria-pressed="${font === k}" title="${esc(d)}" style="font-family:${esc(st)}">${esc(n)}<small>${esc(d)}</small></button>`).join('')}</div>`)}
+      ${card('Textgröße', `<div class="seg modePick zoomPick" id="sZoom">${[[0.9, 'Klein', 13], [1, 'Normal', 15], [1.1, 'Groß', 17], [1.2, 'Sehr groß', 19]].map(([k, l, px]) => `<button type="button" data-zoom="${k}" aria-pressed="${zoom === k}"><span style="font-size:${px}px">Aa</span> ${l}</button>`).join('')}</div>`, 'Vergrößert die ganze Oberfläche – angenehm auf großen Bildschirmen oder am Beamer.')}
+      ${card('Darstellung', `${row('Kursliste in der Leiste', 'Wie die Kurse links geordnet sind.', seg('sCv', 'cv', [['b', 'Stufen'], ['c', 'Fächer'], ['e', 'Karten']], cv))}
+        ${row('Kompakte Zeilen', 'Mehr Schülerinnen und Schüler auf einen Blick – praktisch auf dem Laptop.', `<input type="checkbox" class="sw" id="sDense" ${ST.dense ? 'checked' : ''}>`)}
+        ${row('Effekte reduzieren', 'Ohne Glas- und Bewegungseffekte – ruhiger und spürbar schneller auf älteren Computern.', `<input type="checkbox" class="sw" id="sFx" ${ST.fx === 'low' ? 'checked' : ''}>`)}`, 'Das Aussehen gilt nur für diesen Computer und wird sofort übernommen. Noten und Ausdrucke ändern sich dadurch nicht.')}
     </div>
     <div class="setPane" data-pane="sec" ${cur === 'sec' ? '' : 'hidden'}>
-      <div class="grid2">${field('Automatisch sperren nach', `<select id="sL">${[[5, '5 Minuten'], [10, '10 Minuten'], [15, '15 Minuten']].map(([m, l]) => `<option value="${m}" ${+s.autoLock === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
-        ${field('Nach Updates suchen', `<select id="sU"><option value="1" ${ST.updateCheck !== false ? 'selected' : ''}>Beim Start (nur Versionsnummer abfragen)</option><option value="0" ${ST.updateCheck === false ? 'selected' : ''}>Nie</option></select>`)}</div>
-      <p class="hint">Die automatische Sperre gehört zu den Sicherheitsstandards für dienstliche Daten auf privaten Geräten. Bei der Suche nach Updates wird nur die Versionsnummer abgefragt – keine Noten, keine Namen.</p>
-      ${row('Sicherung, Passwort und Notfallschlüssel', 'Sicherungsordner wählen, jetzt sichern, Passwort ändern, wiederherstellen.', '<button type="button" class="mini" id="sToBackup">Zur Sicherung</button>')}
-      ${row('Jetzt sperren', 'Libretto sperrt sich auch selbst, wenn du eine Weile nichts eingibst.', '<button type="button" class="mini" id="sLockNow">Sperren</button>')}
+      ${card('Sperre und Updates', `<div class="grid2">${field('Automatisch sperren nach', `<select id="sL">${[[5, '5 Minuten'], [10, '10 Minuten'], [15, '15 Minuten']].map(([m, l]) => `<option value="${m}" ${+s.autoLock === m ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
+        ${field('Nach Updates suchen', `<select id="sU"><option value="1" ${ST.updateCheck !== false ? 'selected' : ''}>Beim Start (nur Versionsnummer)</option><option value="0" ${ST.updateCheck === false ? 'selected' : ''}>Nie</option></select>`)}</div>`, 'Die automatische Sperre gehört zu den Mindestsicherheitsstandards für dienstliche Daten auf privaten Geräten. Bei der Update-Suche wird nur die Versionsnummer abgefragt – keine Noten, keine Namen.')}
+      ${card('Daten', `${row('Sicherung, Passwort und Notfallschlüssel', 'Sicherungsordner wählen, jetzt sichern, Passwort ändern, wiederherstellen.', '<button type="button" class="mini" id="sToBackup">Zur Sicherung</button>')}
+        ${row('Jetzt sperren', 'Libretto sperrt sich auch selbst, wenn du eine Weile nichts eingibst.', '<button type="button" class="mini" id="sLockNow">Sperren</button>')}
+        ${row('Klassen austauschen', 'Namen und Klassen (ohne Noten) als theis-Klassen-Datei speichern oder einlesen – z. B. mit Voce.', '<button type="button" class="mini" id="sKl">Öffnen …</button>')}
+        ${row('Alte Kurse (Datenschutz)', ldoDue().length ? (ldoDue().length === 1 ? '1 Kurs' : ldoDue().length + ' Kurse') + ' älter als zwei Schuljahre – nach LDO § 14a zu löschen.' : 'Keine Kurse, die nach LDO § 14a gelöscht werden müssen.', '<button type="button" class="mini" id="sLdo">Ansehen …</button>')}`, 'Alle Noten liegen verschlüsselt (AES-256-GCM) nur auf diesem Computer und in deinem Sicherungsordner.')}
     </div>
     <div class="setPane" data-pane="about" ${cur === 'about' ? '' : 'hidden'}>
-      <div class="about"><img src="icon.png" alt="" width="64" height="64"><div><b>Libretto</b> · Notenverwaltung · Gymnasium Bayern<br><span class="sel">Version ${esc(v)}</span></div></div>
-      <div class="maker"><span class="by">Eine App von</span>${window.THEISAPPS_LOGO}<div class="mk-meta">Apps für die Schule · <a href="${SITE_URL}" target="_blank" rel="noopener">theisapps.de</a><br>© 2026 theisapps. Alle Rechte vorbehalten.<br><a href="${SUPPORT_URL}" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div></div>
-      <p class="hint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>
-      <div class="linkrow"><button type="button" class="mini" id="abOpen">Über Libretto</button><button type="button" class="mini" id="licBtn">Lizenzen der verwendeten Open-Source-Software</button></div>
-    </div>`,
+      <section class="setCard aboutCard"><img src="icon.png" alt=""><div><b>Libretto</b><span>Notenverwaltung für das bayerische Gymnasium (G9)</span><span class="sel">Version ${esc(v)} · kostenlos</span></div><button type="button" class="mini" id="abOpen">Was ist neu?</button></section>
+      ${card('Nachschlagen', `<div class="setLinks">
+        <button type="button" data-ab="help"><b>Hilfe</b><small>alle Themen mit Suche</small></button>
+        <button type="button" data-ab="hb"><b>Handbuch als PDF</b><small>vollständig, zum Ausdrucken</small></button>
+        <button type="button" data-ab="src"><b>Quellenverzeichnis</b><small>Rechtsgrundlagen und Vorgaben</small></button>
+        <button type="button" id="licBtn"><b>Lizenzen</b><small>Open-Source-Software</small></button></div>`)}
+      <section class="setCard maker"><span class="by">Eine App von</span>${window.THEISAPPS_LOGO}<div class="mk-meta">Apps für die Schule · <a href="${SITE_URL}" target="_blank" rel="noopener">theisapps.de</a><br>© 2026 theisapps. Alle Rechte vorbehalten.<br><a href="${SUPPORT_URL}" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div></section>
+      <p class="setHint">Berechnungen nach der Schulordnung für die Gymnasien in Bayern (GSO), ohne Gewähr. ${esc(Print.DISCLAIMER)}</p>
+    </div></div></div>`,
     onOpen: (d, close) => {
-      $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; $$('[data-stab]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); });
+      d.classList.add('setDlg');
+      const pick = (attr, b) => $$(`[data-${attr}]`, d).forEach(x => { x.setAttribute('aria-pressed', String(x === b)); x.classList.toggle('on', x === b); });
+      $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; pick('stab', b); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); d.querySelector('.setMain').scrollTop = 0; });
       d.querySelector('#licBtn').onclick = openLicenses;
+      d.querySelector('#sDl').onclick = () => { close(); deadlineSheet(); };
+      d.querySelector('#sEvImp').onclick = () => { close(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); };
+      d.querySelector('#sEvFeed').onclick = () => { close(); feedSheet(); };
+      d.querySelector('#sEvHow').onclick = () => helpSheet({ topic: 'kalabo' });
+      { const nb = d.querySelector('#sEvNow'); if (nb) nb.onclick = async () => { nb.disabled = true; const r = await refreshFeed(true); nb.disabled = false; if (r && !r.ok) toast('Aktualisieren fehlgeschlagen: ' + r.error, 6000); else toast('Schulkalender aktualisiert'); }; }
+      d.querySelector('#sKl').onclick = () => { close(); klassenSheet(); };
+      d.querySelector('#sLdo').onclick = () => { close(); ldoSheet(); };
       d.querySelector('#abOpen').onclick = () => { close(); openAbout(); };
+      $$('[data-ab]', d).forEach(b => b.onclick = async () => { const k = b.dataset.ab;
+        if (k === 'help') { close(); helpSheet(); } else if (k === 'src') { close(); sourcesSheet(); }
+        else { b.disabled = true; try { await helpSheet({ pdf: true }); } catch (e) { toast('PDF konnte nicht erstellt werden'); } finally { b.disabled = false; } } });
       d.querySelector('#sToBackup').onclick = () => { close(); UI.tab = 'backup'; render(); };
       d.querySelector('#sLockNow').onclick = () => { close(); lockNow(); };
-      $$('[data-sk]', d).forEach(b => b.onclick = () => { ST.skin = b.dataset.sk; applyLook(ST.skin, ST.mode, ST.font); $$('[data-sk]', d).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); }); N.setCfg({ skin: ST.skin }).catch(() => {}); });
-      $$('[data-start]', d).forEach(b => b.onclick = () => { ST.startTab = b.dataset.start; $$('[data-start]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ startTab: ST.startTab }).catch(() => {}); });
-      $$('[data-mode]', d).forEach(b => b.onclick = () => { ST.mode = b.dataset.mode; applyLook(ST.skin, ST.mode, ST.font); $$('[data-mode]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ mode: ST.mode }).catch(() => {}); });
-      $$('[data-font]', d).forEach(b => b.onclick = () => { ST.font = b.dataset.font; applyLook(ST.skin, ST.mode, ST.font); $$('[data-font]', d).forEach(x => x.setAttribute('aria-pressed', String(x === b))); N.setCfg({ font: ST.font }).catch(() => {}); });
+      $$('[data-sk]', d).forEach(b => b.onclick = () => { ST.skin = b.dataset.sk; applyLook(ST.skin, ST.mode, ST.font); pick('sk', b); N.setCfg({ skin: ST.skin }).catch(() => {}); });
+      $$('[data-start]', d).forEach(b => b.onclick = () => { ST.startTab = b.dataset.start; pick('start', b); N.setCfg({ startTab: ST.startTab }).catch(() => {}); });
+      $$('[data-mode]', d).forEach(b => b.onclick = () => { ST.mode = b.dataset.mode; applyLook(ST.skin, ST.mode, ST.font); pick('mode', b); N.setCfg({ mode: ST.mode }).catch(() => {}); });
+      $$('[data-font]', d).forEach(b => b.onclick = () => { ST.font = b.dataset.font; applyLook(ST.skin, ST.mode, ST.font); pick('font', b); N.setCfg({ font: ST.font }).catch(() => {}); });
+      $$('[data-zoom]', d).forEach(b => b.onclick = () => { ST.zoom = +b.dataset.zoom; applyZoom(ST.zoom); pick('zoom', b); N.setCfg({ zoom: ST.zoom }).catch(() => {}); });
+      $$('[data-cv]', d).forEach(b => b.onclick = () => { D.settings.courseView = b.dataset.cv; pick('cv', b); save(); renderSide(); });
       d.querySelector('#sDense').onchange = e => { ST.dense = e.target.checked; document.body.classList.toggle('dense', !!ST.dense); N.setCfg({ dense: !!ST.dense }).catch(() => {}); };
+      d.querySelector('#sFx').onchange = e => { ST.fx = e.target.checked ? 'low' : 'full'; applyFx(ST.fx); N.setCfg({ fx: ST.fx }).catch(() => {}); };
     },
     onOk: d => { s.teacher = d.querySelector('#sT').value.trim(); s.school = d.querySelector('#sS').value.trim(); s.year = d.querySelector('#sY').value.trim() || s.year; s.half1End = d.querySelector('#sH').value; s.autoLock = +d.querySelector('#sL').value; N.setCfg({ updateCheck: d.querySelector('#sU').value === '1' }).then(x => { ST = x; }); save(); brandLine(); render(); } });
+  return dlg;
 }
-function helpSheet() {
-  const fig = (img, alt) => `<figure class="helpFig"><img src="help/${img}.jpg" alt="${esc(alt)}" loading="lazy"></figure>`;
+/* ======================================================================
+   Quellenverzeichnis: alle Vorschriften und Vorgaben, auf die sich Libretto stützt (Stand November 2026).
+   Eine Liste für Hilfe, eigenes Fenster und PDF. w = wofür in Libretto.
+   ====================================================================== */
+const SOURCES_STAND = '17.11.2026';
+/* [Kürzel, Titel mit Datum/Aktenzeichen, wofür Libretto es nutzt, Fundstelle im Dokument, direkter Link (nur geprüfte), Prüfstand]
+   Prüfstand: 'Volltext' = Original gelesen und abgeglichen · 'Passage' = konkrete Stelle geprüft · 'Titel' = nur Veröffentlichung/Bezeichnung geprüft */
+const SOURCES = [
+  ['Gesetze und Verordnungen', [
+    ['BayEUG Art. 52', 'Bayerisches Gesetz über das Erziehungs- und Unterrichtswesen, Art. 52 (Nachweise des Leistungsstands, Bewertung)', 'pädagogische Verantwortung der Lehrkraft bei der Bewertung; was Libretto nur vorschlägt', 'Art. 52', 'https://www.gesetze-bayern.de/Content/Document/BayEUG-52', 'Titel'],
+    ['GSO § 21', 'Gymnasialschulordnung, § 21 Leistungsnachweise (Fassung ab 01.08.2026)', 'große und kleine LN; P-Seminar mindestens zwei kleine LN (Abs. 2 Satz 7)', '§ 21', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-21', 'Passage'],
+    ['GSO § 22', 'GSO, § 22 Große Leistungsnachweise', 'Mindestzahl der Schulaufgaben, Ersatzformen, höchstens eine Schulaufgabe am Tag', '§ 22 Abs. 1 ff.', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-22', 'Passage'],
+    ['GSO § 23', 'GSO, § 23 Kleine Leistungsnachweise', 'kleine LN (Stegreifaufgaben, Kurzarbeiten, mündliche Leistungen)', '§ 23', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-23', 'Passage'],
+    ['GSO § 24', 'GSO, § 24 Seminararbeit', 'Thema bis Ende 12/1 (Abs. 1 Satz 1); Sprache der Arbeit (Abs. 1 Satz 2); Abgabe spätestens am zweiten Unterrichtstag im November der Jgst. 13 (Abs. 1 Satz 3); Prüfungsgespräch (Abs. 2); Wettbewerbsbeitrag (Abs. 3)', '§ 24 Abs. 1–3', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-24', 'Volltext'],
+    ['GSO § 26', 'GSO, § 26 Bewertung der Leistungen', 'Versäumnis, Verweigerung, Unterschleif (Kürzel N, U)', '§ 26', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-26', 'Passage'],
+    ['GSO § 28', 'GSO, § 28 Bildung der Jahresfortgangsnote in den Jahrgangsstufen 5 bis 11', 'große : kleine LN 1 : 1 bzw. 2 : 1; Rundung, x,5 als pädagogische Entscheidung', '§ 28', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-28', 'Passage'],
+    ['GSO § 29', 'GSO, § 29 Bewertung der Leistungen in den Jahrgangsstufen 12 und 13', 'Halbjahresleistung (Abs. 2), Kunst/Musik LF (Abs. 3/4), Sport und Sporttheorie (Abs. 5), Gesamtleistung Seminararbeit (Abs. 6)', '§ 29 Abs. 2–6', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-29', 'Passage'],
+    ['GSO § 44', 'GSO, § 44 Zulassung zur Abiturprüfung', 'Mitteilung unter 9 Punkten im W-Seminar (Abs. 1 Satz 2); Hinweise zur Zulassung (Abs. 2 Nr. 3 und Nr. 6: Abgabe, keine 0 Punkte in Arbeit oder Gespräch) – Libretto warnt nur, die Schule entscheidet', '§ 44 Abs. 1–2', 'https://www.gesetze-bayern.de/Content/Document/BayGSO-44', 'Volltext'],
+    ['GSO (gesamt)', 'Schulordnung für die Gymnasien in Bayern, außerdem § 25 Rückgabe, § 27 Nachtermin, §§ 39/40 Zeugnisse', 'Nachtermin, Rückgabefristen, Zeugnisbemerkungen', 'die genannten Paragrafen', 'https://www.gesetze-bayern.de/Content/Document/BayGSO', 'Titel'],
+    ['BaySchO § 34', 'Bayerische Schulordnung, §§ 31–36 Nachteilsausgleich und Notenschutz (§ 34 Notenschutz), § 20 Entschuldigung', 'nur Kennzeichnung am Namen – die bewilligte Maßnahme setzt die Lehrkraft selbst um', '§ 20, §§ 31–36', 'https://www.gesetze-bayern.de/Content/Document/BaySchO2016-34', 'Titel'],
+    ['LDO § 14a', 'Lehrerdienstordnung, § 14a Datenschutz (gültig ab 01.01.2025)', 'Löschhinweis: eigene Aufzeichnungen spätestens zwei Jahre nach Ablauf des Schuljahres löschen, sofern nichts anderes bestimmt ist (Abs. 2 Satz 2) – Libretto erinnert, löscht aber nie von selbst', '§ 14a Abs. 1–3', 'https://www.gesetze-bayern.de/Content/Document/BayVwV288393-14a', 'Volltext']]],
+  ['Bekanntmachungen und Schreiben des Kultusministeriums', [
+    ['W-Seminar', 'KMBek „Das Wissenschaftspropädeutische Seminar in den Jahrgangsstufen 12 und 13 des neunjährigen Gymnasiums …“ vom 06.04.2023, V.9-BS5610.0/13/1, BayMBl. 2023 Nr. 185', 'Ablauf, Seminararbeit, Betreuung (zusammen mit § 24/§ 29/§ 44 GSO und den Änderungen 2026 zu lesen)', 'gesamte Bekanntmachung', 'https://www.verkuendung-bayern.de/baymbl/2023-185/', 'Titel'],
+    ['KMS 02.02.2026', 'KMS „Anpassungen im Wissenschaftspropädeutischen Seminar“ (Abiturjahrgang 2025/2027), VI.5-BS5640.0/422/4', 'Prüfungsgespräch – Umsetzung nach der ISB-Übersicht (s. „Prüfungsgespräch – Übersicht“)', 'Volltext liegt Libretto nicht vor; Datum und Aktenzeichen amtlich belegt (Kontaktbrief Französisch 2026, S. 10)', '', 'Titel'],
+    ['P-Seminar', 'KMBek „Das Projekt-Seminar zur beruflichen Orientierung in Jahrgangsstufe 11 des neunjährigen Gymnasiums“ vom 17.05.2022, V.9-BS5610.0/11/2, BayMBl. 2022 Nr. 338', 'P-Seminar (Jgst. 11): Zahl der LN nach § 21 Abs. 2 Satz 7 GSO', 'Nr. 2, Nr. 5', 'https://www.verkuendung-bayern.de/baymbl/2022-338/', 'Titel'],
+    ['KMS 18.06.2026', '„Weiterentwicklung der Prüfungskultur an den bayerischen Gymnasien“, VI.3-BS5200.0/88/5', 'Mindestzahl der Schulaufgaben ab 2026/27 (Deutsch 5–8, Mathematik 9); mündliche große LN in den modernen Fremdsprachen', '11 Seiten, v. a. S. 4–5', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/weiterentwicklung_pruefungskultur_gymnasium_kms_06_26.pdf', 'Volltext'],
+    ['KMS 24.07.2026', '„Weiterentwicklung der Mündlichkeit in den modernen Fremdsprachen“, VI.2-BS5402.8/127/7', 'mündliche große LN, Übergang in Jgst. 11 (Libretto prüft das nicht jahrgangsübergreifend)', 'S. 4–6', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/weiterentwicklung_muendlichkeit_mod_fs_kms_07_26.pdf', 'Passage'],
+    ['KMS 24.07.2025', '„Moderne Fremdsprachen, Jahrgangsstufen 5 bis 11“, VI.2-BS4402.8/151/1', 'Rahmen der Leistungsnachweise in 5–11 (Soll-Vorgaben zur Kompetenzabdeckung bleiben Entscheidung der Lehrkraft)', 'Nr. 3, S. 4; S. 10', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/moderne_fremdsprachen_jgst_5_bis_11_kms_07_25.pdf', 'Titel'],
+    ['KMS 08.03.2023', '„Unterricht in den Modernen Fremdsprachen im LehrplanPLUS, Jahrgangsstufe 11; hier: Regelungen für Leistungsnachweise“, V.6-BS4402.8/118/1', '„ausreichend“ je nach Aufgabe 50–60 % (viel Sprachproduktion: 50 %), Grenze zu „ungenügend“ 33 %; kein pauschaler Fachschaftsbeschluss; darum kein KMK-Raster in modernen Fremdsprachen (spätere Regelungen zur Mündlichkeit: KMS 24.07.2026)', 'S. 2–3', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/unterricht_mod_fs_jgst_11_regelungen_fuer_leistungsnachweise_kms_03_23.pdf', 'Volltext'],
+    ['KMS 12.06.2023 (schriftlich)', '„Schriftliche Prüfungsformen im Unterricht der modernen Fremdsprachen in der Profil- und Leistungsstufe (ab 2024/25) und der Abiturprüfung (ab 2026)“, V.6-BS4402.8/99/1', 'Abitur-Gewichte 20 / 55 / 25 %, Inhalt : Sprache 40 : 60, Sperrklausel', 'Nr. 1.3, 1.4, Nr. 3', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/Moderne_FS_-_Schriftliche_Pruefungsformen_in_der_Profil-_und_Leistungsstufe_und_im_Abitur.pdf', 'Passage'],
+    ['KMS 12.06.2023 (mündlich)', '„Mündliche Prüfungsformen in den modernen Fremdsprachen als große Leistungsnachweise in der Profil- und Leistungsstufe …“, V.6-BS5402.8/80/1', 'großer mündlicher LN Q12/Q13', 'Nr. 5, S. 9–11', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/KMBek_und_KMS/Muendliche_Pruefungsformen_in_Q-Phase_und_Abitur.pdf', 'Titel'],
+    ['KMS 31.07.2023', 'Latein und Griechisch: „Altsprachlicher Unterricht im neunjährigen Gymnasium; hier: Abiturprüfung und Gestaltung der Schulaufgaben in der Qualifikationsphase“, V.3-BS5402.7/135/1, Anlagen 2–4', 'zweigeteilte Schulaufgabe, Gewichtung der Teile, KMK-Schlüssel für BE in der Qualifikationsphase', 'Anlage 3 Nr. 8, Anlage 4 Nr. 9', 'https://www.km.bayern.de/download/4-23-12/KMS_Abitur_L_Gr_G9_mit_Anlagen%2520%281%29.pdf', 'Passage'],
+    ['KMS 08.07.2025', 'Latein und Griechisch: „Altsprachlicher Unterricht in Bayern – Korrekturmatrix, jahrgangsübergreifende Kurse“, VI.3-BS5402.7/159/1', 'neue Übersetzungs-Korrekturmatrix ab Abitur 2026 (ersetzt die alte Matrix, nicht die Gesamtpunktetabelle) – in Libretto nicht als eigene Rechnung hinterlegt', 'S. 2–5 und Anlage', 'https://www.km.bayern.de/download/4-25-07/250708_KMS_AU_Korrekturmatrix_J%C3%9CK_k.pdf', 'Titel'],
+    ['KMS 28.09.2026', 'Deutsch: „Unterricht im Fach Deutsch – Lernbereich Schreiben“, VI.4-BS5402.5/105/7, mit Anlage „Progression der Schreibformen“', 'ganzheitliche Bewertung der Schreibleistungen (direkte Notengebung, Kommentar)', 'Nr. 3.3/3.4', 'https://www.deutschabitur.bayern.de/fileadmin/user_upload/deutschabitur/KMS_Unterricht_im_Fach_Deutsch_-_Lernbereich_Schreiben_vom_28.09.2026.pdf', 'Passage'],
+    ['KMS 11.09.2026', 'Mathematik: „Weiterentwicklung der Prüfungskultur im Fach Mathematik; Digitaler Grundkompetenztest und digitale Hilfsmittel …“, VI.7-BS5400.13/135/1', 'Grundkompetenztest Jgst. 11 als kleiner LN (Schlüssel kommt zentral – Libretto hinterlegt keinen)', 'Nr. 1–2', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Mathematik/KMBek_und_KMS/KMS_Weiterentwicklung_Pruefungskultur_Mathematik_GYM-3.pdf', 'Titel'],
+    ['KMS 14.07.2026', '„Informationen zur Verankerung der Modus-Maßnahmen in der GSO“, VI-BS5610.0/16/1', 'Ende der früheren freien Verhältniswahl (Modus-Maßnahme 23); Libretto rechnet nach § 28 GSO', 'Anlage S. 4 Nr. 2 (Anlage nur über schulrecht-online.de, kein amtlicher Host; Hauptschreiben liegt nicht vor)', 'https://www.schulrecht-online.de/fileadmin/user_upload/KMS_2026-07-14_Anlage.pdf', 'Titel'],
+    ['Sport Q12/13', 'KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 01.08.2022, geändert 06.09.2024', 'Fach Sport: (2 × Ø praktische Leistungen + Ø kleine LN) ÷ 3, erst die Endpunktzahl gerundet (Nr. 1.2.1); Leistungsfach: Fach Sport und Sporttheorie je gerundet, Endpunktzahl = Durchschnitt, gerundet; keine Aufrundung auf 1 Punkt (Nr. 2.3.1)', 'Nr. 1.2.1, Nr. 2.3.1', 'https://www.gesetze-bayern.de/Content/Document/BayVV_2235_1_1_5_K_13224/true', 'Passage'],
+    ['Kunst Q12/13', 'KMBek „Regelungen für das Fach Kunst in der Qualifikationsphase …“ vom 07.07.2023, geändert 18.08.2026 (BayMBl. 2026 Nr. 350)', 'Hinweis zur Halbjahresleistung im Leistungsfach (§ 29 Abs. 3 GSO)', 'Nr. 1.3, 1.4', 'https://www.gesetze-bayern.de/Content/Document/BayVV_2235_1_1_5_K_13894/true', 'Titel'],
+    ['Musik Q12/13', 'KMBek „Leistungsfach Musik sowie Fächer des Zusatzangebots Vokal- und Instrumentalensemble …“ vom 15.06.2023 (BayMBl. 2023 Nr. 323), geändert 18.08.2026 (BayMBl. 2026 Nr. 349)', 'Hinweis zur Halbjahresleistung im Leistungsfach (§ 29 Abs. 4 GSO) – praktische Prüfung nicht in Libretto hinterlegt', 'Nr. 1.4.5, 1.5', 'https://www.verkuendung-bayern.de/baymbl/2023-323/', 'Titel'],
+    ['Mindestsicherheitsstandards', '„Mindestsicherheitsstandards beim Einsatz privater informationstechnischer Systeme von Lehrkräften im dienstlichen Bereich“ (Fußzeile 14.09.2023, Dateiname 20.09.2023)', 'verschlüsselte Speicherung und Sicherung, automatische Sperre spätestens nach 15 Minuten (betrifft das ganze Gerät, nicht nur Libretto)', 'Nr. 1, 4, 7–9', 'https://www.km.bayern.de/download/4-24-02/Mindestsicherheitsstandards_Stand_20.09.2023.pdf', 'Passage']]],
+  ['ISB – Staatsinstitut für Schulqualität und Bildungsforschung', [
+    ['Hinweise 5–11', 'Schriftliche Leistungsnachweise in den Jahrgangsstufen 5–11, Moderne Fremdsprachen – Hinweise (Stand Juli 2024, Datei „…_01_25“)', 'Inhalt/Textstruktur : Sprache 4 : 6 (A1/A1+ 3 : 7, bei längeren offenen Texten auch 4 : 6); halbe BE möglich; keine Sperrklausel in 5–11', 'S. 1–2', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/Leistungserhebungen_und_Bewertungsraster/Hinweise/5-11_mod_fs_schriftliche_leistungsnachweise_hinweise_01_25.pdf', 'Volltext'],
+    ['Rechentabelle PuLSt 12/2025', 'Rechentabellen Hörverstehen und Schreiben (Pakete „pulst_hoerverstehen_12_25.zip“, „pulst_schreiben_12_25.zip“ auf der ISB-Seite „Leistungserhebungen und Bewertungsraster“)', 'Hörverstehen über den Lösungsgrad ohne gerundete Grenzen (Deckblatt D22:S23, Klassenliste E7/F7); Inhalt 40 % / Sprache 60 % mit Sperrklausel je Schreibaufgabe (I7, M7, Q7, V7); Gesamtnote = Runden des ungerundeten gewichteten Werts (X7 → Y7)', 'Blätter „Deckblatt“ und „Klassenliste“', 'https://www.isb.bayern.de/schularten/gymnasium/faecher/moderne-fremdsprachen/leistungserhebungen-und-bewertungsraster/', 'Volltext'],
+    ['Leitfaden 04/2025', '„Leistungsnachweise in der Profil- und Leistungsstufe – Moderne Fremdsprachen“, Leitfaden (Stand April 2025)', 'Gewichtungsvorschläge HV 30–40 % + Sprachmittlung 60–70 %, Textverstehen 60–70 % + Stellungnahme 30–40 % (S. 2); HV 20–26 BE empfohlen, keine halben BE im HV (S. 2–3); 40 : 60 je Teilaufgabe, Sperrklausel (S. 3–4); BE-Formate: ausreichend ab 50 %, mangelhaft ab 33 % (S. 4); spät beginnende Fremdsprachen 50–60 %, halbe BE erwünscht, keine Sperrklausel (S. 5)', 'S. 1–6', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Faecher/Moderne_Fremdsprachen/Leistungserhebungen_und_Bewertungsraster/pulst_mod_fs_leistungsnachweise_leitfaden_04_25.pdf', 'Volltext'],
+    ['Kontaktbrief Oberstufe 2025', 'Kontaktbrief Oberstufe 2025: Umsetzung der Bewertungseinheiten in Notenpunkte ab Abitur 2026', 'amtliche BE-Tabelle für Gesamt-BE (ganze BE, kaufmännisch gerundet; Beispiele 120/100/90/60 BE)', 'S. 4', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Kontaktbriefe/Oberstufe/kontaktbrief_oberstufe_2025.pdf', 'Passage'],
+    ['Kontaktbrief Französisch 2026', 'ISB, Kontaktbrief Französisch 2026 (September 2026)', 'Nachweis des KMS 02.02.2026; Hörverstehen oder Sprachmittlung auch als kleiner LN möglich', 'S. 3, 9–11', 'https://www.isb.bayern.de/fileadmin/user_upload/Gymnasium/Kontaktbriefe/Franzoesisch/kontaktbrief_franzoesisch_2026.pdf', 'Titel'],
+    ['Bewertungsbogen Seminararbeit', 'Anlage 5a „Bewertungsbogen für die Seminararbeit“ (DOCX, oberstufe.bayern.de) – Vorschlag, an die Schule anpassbar', 'Bereiche, Gewichtung 10/20/30/40 % und Leitfragen im Bewertungsbogen (Leitfragen im Wortlaut, im Ausdruck teils gekürzt)', 'ganzer Bogen', 'https://www.oberstufe.bayern.de/fileadmin/user_upload/oberstufe/Anlage_5a_Bewertungsbogen_fuer_die_Seminararbeit.docx', 'Volltext'],
+    ['Bewertung Prüfungsgespräch', 'Bewertungsbogen und Bewertungsraster Prüfungsgespräch (DOCX/XLSX „final“, oberstufe.bayern.de) – Vorschlag, an die Schule anpassbar', 'fünf Kompetenzen im Bewertungsbogen Prüfungsgespräch (Bezeichnungen übernommen, Beschreibungen gekürzt)', 'ganzer Bogen; Raster ohne Formeln', 'https://www.oberstufe.bayern.de/fileadmin/user_upload/oberstufe/Bewertungsbogen_Pruefungsgespraech_final.docx', 'Passage'],
+    ['Prüfungsgespräch – Übersicht', '„Das Prüfungsgespräch im W-Seminar – Übersicht für Lehrkräfte“ (One-Pager, ohne Ausgabedatum, abgerufen 17.11.2026)', 'Dauer insgesamt ca. 25 Minuten: optionaler Kurzvortrag höchstens 5 Minuten, Gespräch ca. 20–25 Minuten', 'Abschnitt „Ablauf & Inhalte“', 'https://www.oberstufe.bayern.de/fileadmin/user_upload/oberstufe/One_Pager_Pruefungsgespraech.pdf', 'Volltext'],
+    ['W-Seminar-Material', 'Materialportal W-Seminar (Übersicht der Beratungsgespräche, Feedbackbogen Anlage 3)', 'Beratungsgespräch mit Zielvereinbarung', 'Materialseite', 'https://www.oberstufe.bayern.de/wissenschaftspropaedeutisches-seminarw-seminar-q1213/material/', 'Titel']]],
+  ['Kultusministerkonferenz', [
+    ['KMK-Vereinbarung', 'Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung, Beschluss vom 07.07.1972 i. d. F. vom 06.06.2024', 'Prozentgrenzen für 15 bis 1 Notenpunkte (für Abiturprüfungen in Fächern mit Bildungsstandards; in Libretto nur als wählbarer Schlüssel, nicht für alle Fächer und Formate)', 'Anlage 1, S. 25 (PDF-S. 24)', 'https://www.kmk.org/fileadmin/veroeffentlichungen_beschluesse/1972/1972_07_07-VB-gymnasiale-Oberstufe-Abiturpruefung.pdf', 'Passage']]],
+  ['Kalender', [
+    ['Ferienordnung', 'KMBek „Ferienordnung und schulfreie Samstage für die Schuljahre 2024/2025 bis 2029/2030“ vom 07.12.2022, IV.7-BS4407/521/59, BayMBl. 2022 Nr. 747', 'Kalender, Abgabefrist der Seminararbeit, Terminliste der Prüfungsgespräche – hinterlegt bis zu den Sommerferien 2030; für spätere Schuljahre schlägt Libretto keine Frist vor. Abweichungen der eigenen Schule bitte selbst eintragen.', 'Nr. 1.1 (Abweichungen Nr. 1.3/1.4)', 'https://www.verkuendung-bayern.de/baymbl/2022-747/', 'Volltext']]],
+  ['Eigene Verfahren von Libretto (keine amtliche Vorgabe)', [
+    ['Verteilung der Zwischenstufen', 'Wo eine Quelle nur zwei Schwellen nennt (z. B. 4 P. ab 50 %, 1 P. ab 33 %), verteilt Libretto die übrigen Grenzen gleichmäßig', 'Vorschlag – jede Grenze ist änderbar', '–', '', ''],
+    ['Warnungen und Fristen', 'Hinweise auf fehlende Noten, Termine und Fristen', 'Erinnerung, keine rechtliche Prüfung', '–', '', ''],
+    ['Vorlagen je Fach', '„Als Standard merken“ speichert Schlüssel und Prüfungsteile je Fach', 'deine eigene Festlegung', '–', '', '']]]];
+const SRC_ST = { Volltext: 'Original gelesen', Passage: 'Stelle geprüft', Titel: 'nur Bezeichnung geprüft' };
+function sourcesHTML() {
+  let n = 0;
+  return `<p>Libretto stützt sich auf diese Vorschriften und Vorgaben (Stand ${SOURCES_STAND}) – nicht jede ist vollständig umgesetzt. Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen deiner Schule. Bei jeder Quelle steht, wofür Libretto sie nutzt, wo im Dokument die Stelle steht und wie genau sie geprüft ist.</p>
+    <div class="srcDir">${SOURCES.map(([g, items]) => `<section class="srcGrp"><h4>${esc(g)}</h4>${items.map(([k, t, w, f, u, st]) => `<div class="srcItem"><span class="srcNo">${++n}</span><div><b>${esc(k)}</b><span class="srcT">${esc(t)}</span><span class="srcW"><em>In Libretto:</em> ${esc(w)}</span>${u ? `<a class="srcL" href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https:\/\/(www\.)?/, '').replace(/\/.*\/(.{0,40})$/, '/…/$1'))}</a>` : ''}</div><span class="srcF">${esc(f)}${st ? `<i class="srcS ${st}">${esc(SRC_ST[st])}</i>` : ''}</span></div>`).join('')}</section>`).join('')}</div>
+    <p class="hint">Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.</p>`;
+}
+function modelSources() {
+  let n = 0;
+  const blocks = [{ p: `Libretto stützt sich auf diese Vorschriften und Vorgaben (Stand ${SOURCES_STAND}) – nicht jede ist vollständig umgesetzt. Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule. „Prüfstand“: Original gelesen · Stelle geprüft · nur Bezeichnung geprüft. Links abgerufen am ${SOURCES_STAND}. Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.` }];
+  SOURCES.forEach(([g, items]) => blocks.push({ h: g }, ({ table: { head: ['Nr.', 'Quelle', 'In Libretto verwendet für', 'Fundstelle · Prüfstand'], rows: items.map(([k, t, w, f, u, st]) => [String(++n), k + ' – ' + t + (u ? '\n' + u : ''), w, f + (st ? ' · ' + SRC_ST[st] : '')]), align: ['c', 'l', 'l', 'l'], widths: [6, 40, 36, 18], pct: true, small: true } })));
+  return { eyebrow: 'Libretto · Notenverwaltung Gymnasium Bayern', title: 'Quellenverzeichnis', subtitle: 'Rechtsgrundlagen und Vorgaben, Stand ' + SOURCES_STAND, file: 'Libretto Quellenverzeichnis', meta: [['Stand', SOURCES_STAND]], blocks };
+}
+function sourcesSheet() {
+  sheet({ title: 'Quellenverzeichnis', wide: true, ok: '', cancel: 'Schließen', body: `<div class="prose helpDoc">${sourcesHTML()}</div>
+    <div class="panelBtns"><button type="button" class="mini accent" id="srcPdf">Als PDF speichern</button></div>`,
+    onOpen: d => { d.querySelector('#srcPdf').onclick = () => exportModel(modelSources(), 'pdf'); } });
+}
+function helpSheet(opts) {
+  const fig = (img, alt) => `<figure class="helpFig"><img src="help/${img}.jpg" alt="${esc(alt)}"></figure>`;
   const K = document.body.classList.contains('mac') ? '⌘' : 'Strg+';
   const kbd = x => `<span class="kbd">${x}</span>`;
   /* Abschnitte: [id, Titel, Gruppe, Inhalt] – die Gruppe ordnet das Inhaltsverzeichnis */
@@ -3017,6 +3781,7 @@ function helpSheet() {
       <li><b>Klassenliste einlesen:</b> PDF aus dem Infoportal, Excel- oder CSV-Datei ins Feld ziehen – oder Namen einfügen. Libretto erkennt Vor- und Nachnamen; jede Zeile bleibt änderbar.</li>
       <li><b>Leistungsnachweis anlegen:</b> „+ Leistungsnachweis“: Art (z. B. Schulaufgabe), Datum, ggf. Rohpunkte und Notenschlüssel.</li>
       <li><b>Noten eintragen:</b> In die Spalte klicken, Note tippen, ${kbd('Enter')} – weiter zur nächsten Person.</li>
+      <li><b>Speichern:</b> Libretto speichert jede Eingabe sofort von selbst. Wer es gewohnt ist, drückt trotzdem ${kbd(K + 'S')}: Das übernimmt auch einen gerade getippten Wert, speichert und legt höchstens alle zehn Minuten zusätzlich eine Sicherung an.</li>
       <li><b>Sicherungsordner wählen:</b> Unter „Sicherung“ einen USB-Stick oder Cloud-Ordner wählen. Ab dann sichert Libretto automatisch und verschlüsselt.</li>
     </ol>${fig('kurs', 'Kurs anlegen')}
     <p><b>Kurs aus mehreren Klassen</b> (z. B. Italienisch aus 8A und 8B, Religion aus 6A bis 6E): Steht die Klasse in der Liste, übernimmt Libretto sie beim Einlesen; sonst „Klassen eintragen“ wählen und die Klasse je Namen ergänzen. Notentabelle und Ausdrucke – auch die Übertragsliste – sind dann nach Klassen unterteilt, und die Terminprüfung gilt für jede der Klassen.</p>
@@ -3043,16 +3808,23 @@ function helpSheet() {
     <p>„+ Leistungsnachweis“: Art, Datum und ggf. Gewicht (z. B. Jahrgangsstufentest als ½ Schulaufgabe, eine Stegreifaufgabe doppelt). Spaltenkopf anklicken: bearbeiten, Notenspiegel, drucken.</p>
     <p>Mit <b>„Rohpunkte eingeben“</b> tippst du Punkte ein, Libretto rechnet über den Notenschlüssel in Noten bzw. Notenpunkte um. Den Schlüssel berechnet Libretto aus den Vorgaben eurer Fachschaft – etwa <b>Note 4 ab 50 %, Note 5 ab 33 %</b>; die Noten 1–3 werden gleichmäßig verteilt, jede Grenze bleibt änderbar. Libretto merkt sich die Vorgabe je Fach.</p>${fig('schluessel', 'Notenschlüssel')}
     <p><b>Oberstufe (Notenpunkte):</b> Bei „Eigene Grenzen“ legst du fest, ab wie viel Prozent es <b>4 Punkte (Note 4–)</b> – also die unterste 4 – und <b>1 Punkt (Note 5–)</b> gibt; dazwischen und darüber verteilt Libretto gleichmäßig. Nach dem KMK-Raster (Abitur-Tabelle) beginnt die 4 bei 40 % (4 Punkte), 5 Punkte gibt es ab 45 %, 6 Punkte (4+) ab 50 %. <b>Moderne Fremdsprachen:</b> Wo in Q12/13 mit BE bewertet wird – etwa Wortschatz- und Grammatikaufgaben –, gilt nach dem ISB-Leitfaden (April 2025) „ausreichend“ ab 50 % und „mangelhaft“ ab 33 %; Libretto schlägt deshalb 4 Punkte ab 50 % und 1 Punkt ab 33 % vor. Das Hörverstehen in Klausuren rechnet dagegen – wie die Excel-Tabelle des ISB – mit der Abitur-Tabelle (4 Punkte ab 40 %). Zur Erinnerung: 15/14/13 Punkte = 1+/1/1–, 12/11/10 = 2+/2/2–, 9/8/7 = 3+/3/3–, 6/5/4 = 4+/4/4–, 3/2/1 = 5+/5/5–, 0 = 6. Halbjahresleistungen unter 5 Punkten gelten als unterpunktet.</p>
-    <p><b>Amtliche BE-Tabelle / KMK-Raster</b> (Abiturprüfung ab 2026 nach dem ISB-Kontaktbrief Oberstufe 2025, S. 4, und der KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 5 ab 45 %, 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Für die modernen Fremdsprachen in Jgst. 5–11 und die spät beginnenden Fremdsprachen nennt das ISB als Schwellenwert für „ausreichend“ 50–60 % und für „mangelhaft“ 33 % – Libretto schlägt dort Note 4 ab 50 % und Note 5 ab 33 % vor. In der Unter- und Mittelstufe ergibt das KMK-Raster die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen. Vorgewählt in Mathematik und in der Oberstufe (außer moderne Fremdsprachen). In der Oberstufe setzt Libretto die Grenzen immer in ganzen BE kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). In der Unter- und Mittelstufe wird bei halben Punkten – wie in den üblichen Excel-Notenlisten – aufgerundet. Wichtig: Verbindlich ist die Tabelle für BE-bewertete Abiturprüfungen und Prüfungsteile sowie – nach dem Altsprachen-KMS vom 31.07.2023 – für BE-Bewertungen in Latein und Griechisch in der Qualifikationsphase (dort empfohlen schon ab Jgst. 11). Für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht (BayEUG Art. 52). Deutsch-Aufsätze werden nicht über Rohpunkte, sondern ganzheitlich bewertet (KMS vom 28.09.2026).</p>
-    <p><b>Was ist verbindlich, was entscheidet die Fachschaft?</b> Für die meisten Fächer in Jgst. 5–11 gibt es <b>keinen</b> landesweiten Prozentschlüssel – den legen Lehrkraft und Fachschaft fest (BayEUG Art. 52, § 26 GSO). Verbindlich sind dagegen die Tabellen der Abiturprüfung und die Raster, deren Verwendung ein KMS vorschreibt (z. B. Oberstufe moderne Fremdsprachen, zweigeteilte Schulaufgabe in Latein und Griechisch).</p>
-    <p><b>Simulation des Notenschlüssels:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ verschiedene Schlüssel nebeneinander – z. B. Note 4 ab 60 / 55 / 50 / 45 / 40 % (Oberstufe: 4 Punkte ab …) und das KMK-Raster bzw. die amtliche BE-Tabelle – mit Durchschnitt, Verteilung und Anteil der 5er und 6er bzw. der Ergebnisse unter 5 Punkten. <b>„Klasse“</b> klappt die ganze Klassenliste auf: Wer mit diesem Schlüssel eine andere Note bekäme, ist grün (besser) oder rot (schlechter) markiert, mit „jetzt → neu“. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>
+    <p><b>Amtliche BE-Tabelle / KMK-Raster</b> (Abiturprüfung ab 2026 nach dem ISB-Kontaktbrief Oberstufe 2025, S. 4, und der KMK-Vereinbarung zur gymnasialen Oberstufe i. d. F. vom 06.06.2024): 15 Punkte ab 95 %, 14 ab 90 %, 13 ab 85 % … 5 ab 45 %, 4 ab 40 %, 3 ab 33 %, 2 ab 27 %, 1 ab 20 %. Für die modernen Fremdsprachen in Jgst. 5–11 und die spät beginnenden Fremdsprachen nennt das ISB als Schwellenwert für „ausreichend“ 50–60 % und für „mangelhaft“ 33 % – Libretto schlägt dort Note 4 ab 50 % und Note 5 ab 33 % vor. In der Unter- und Mittelstufe ergibt das KMK-Raster die Noten <b>1 ab 85 %, 2 ab 70 %, 3 ab 55 %, 4 ab 40 %, 5 ab 20 %</b>, auf Wunsch mit Tendenzen. Vorgewählt in Mathematik und in Q12/Q13 (außer moderne Fremdsprachen). <b>Moderne Fremdsprachen:</b> Hier bietet Libretto das KMK-Raster gar nicht an – „ausreichend“ liegt je nach Aufgabe bei 50–60 %, „ungenügend“ unter 33 % (KMS vom 08.03.2023 für Jgst. 11, wie in 5–10; Q12/Q13: ISB-Leitfaden 04/2025). Ältere Leistungsnachweise mit KMK-Raster zeigt Libretto einmal zur Prüfung an; geändert wird nichts von selbst. In der Oberstufe setzt Libretto die Grenzen immer in ganzen BE kaufmännisch gerundet – genau wie die amtliche Tabelle (z. B. 90 BE: 2 Punkte ab 24 BE, 15 Punkte ab 86 BE). <b>Ausnahme Hörverstehen</b> (fortgeführte moderne Fremdsprachen, Q12/Q13): Hier rechnet die ISB-Rechentabelle über den Lösungsgrad <b>ohne</b> gerundete Grenzen – in Libretto der Schlüssel „Hörverstehen – ISB-Rechentabelle“ bzw. ein BE-Prüfungsteil. Beispiel 22 BE: 7 BE sind 31,8 % → 2 Punkte (die gerundete Gesamt-BE-Tabelle gäbe 3). In der Unter- und Mittelstufe wird bei halben Punkten – wie in den üblichen Excel-Notenlisten – aufgerundet. Wichtig: Verbindlich ist die Tabelle für BE-bewertete Abiturprüfungen und Prüfungsteile sowie – nach dem Altsprachen-KMS vom 31.07.2023 – für BE-Bewertungen in Latein und Griechisch in der Qualifikationsphase (dort empfohlen schon ab Jgst. 11). Für andere Leistungsnachweise legen Lehrkraft und Fachschaft den Schlüssel fest, soweit keine Fachvorgabe besteht (BayEUG Art. 52). Deutsch-Aufsätze werden nicht über Rohpunkte, sondern ganzheitlich bewertet (KMS vom 28.09.2026).</p>
+    <p><b>Was ist verbindlich, was entscheidet die Fachschaft?</b> Für die meisten Fächer in Jgst. 5–11 gibt es <b>keinen</b> landesweiten Prozentschlüssel – den legen Lehrkraft und Fachschaft fest (BayEUG Art. 52, § 26 GSO). Verbindlich sind dagegen die Tabellen der Abiturprüfung und die Raster, deren Verwendung ein KMS vorschreibt (z. B. Q12/Q13 moderne Fremdsprachen, zweigeteilte Schulaufgabe in Latein und Griechisch).</p>
+    <p><b>Simulation des Notenschlüssels:</b> Im Leistungsnachweis zeigt „Was passiert, wenn ich die Grenzen verschiebe?“ verschiedene Schlüssel nebeneinander – z. B. Note 4 ab 60 / 55 / 50 / 45 / 40 % (Q12/Q13: 4 Punkte ab …) und das KMK-Raster bzw. die amtliche BE-Tabelle – mit Durchschnitt, Verteilung und Anteil der 5er und 6er bzw. der Ergebnisse unter 5 Punkten. <b>„Klasse“</b> klappt die ganze Klassenliste auf: Wer mit diesem Schlüssel eine andere Note bekäme, ist grün (besser) oder rot (schlechter) markiert, mit „jetzt → neu“. „Übernehmen“ trägt die Grenzen nur ein – gespeichert wird erst mit „Sichern“. Der Notenspiegel darunter zeigt beim Ändern sofort den neuen Durchschnitt.</p>
     <p><b>Simulation des Faktors:</b> Im Fenster „Leistungsnachweis bearbeiten“ direkt unter den Aufgaben (sobald Punkte eingetragen sind) und im Eingabeblatt „Punkte je Aufgabe“ unten steht „Was passiert, wenn eine Aufgabe anders zählt?“. Aufgabe wählen (eine Schreibaufgabe zählt als eine Aufgabe), Faktor antippen (× 0,5 … × 3) – Libretto zeigt erreichbare Punkte, Durchschnitt und die Klassenliste mit allen, deren Note sich ändern würde. Gerechnet wird an einer Kopie; erst der Knopf „… ab jetzt × … zählen“ ändert die Arbeit. Mit „Simulation drucken“ (PDF oder Word) bekommst du die Klassenliste jetzt → simuliert mit Notenspiegel auf Papier, z. B. für die Fachbetreuung – das gibt es auch bei der Schlüssel-Simulation, sobald du dort „Klasse“ antippst.</p>`],
   ['aufgaben', 'Punkte je Aufgabe, Faktor und nachträgliche Gewichtung', 'Leistungsnachweise', `
     <p>Unter „Rohpunkte“ gibt es „Punkte je Aufgabe eingeben“. Im Eingabeblatt stehen oben die <b>erreichbaren Punkte</b> je Aufgabe: eintippen und ${kbd('Tab')} – bei „+“ entsteht die nächste Aufgabe. Darunter trägst du je Person die Punkte ein; sobald alle Aufgaben eingetragen sind (auch 0), rechnet Libretto Summe und Note. Leere Felder zählen nicht als 0. Unten: Ø Punkte und Lösungsquote je Aufgabe, darunter immer der <b>Notenschlüssel</b> mit Punktbereichen und der <b>Durchschnitt</b> groß.</p>
     <p><b>Knapp dran:</b> ↑ neben der Note heißt: höchstens 1 Punkt fehlt zur nächstbesseren Note; ↓ erscheint knapp über der Grenze zur 5. Nur ein Hinweis zum Nochmal-Ansehen – Libretto ändert keine Note.</p>
     <p><b>Faktor je Aufgabe:</b> Unter jeder Höchstpunktzahl steht „× 1“. Dort stellst du ein, dass eine Aufgabe <b>doppelt</b> (× 2), <b>halb</b> (× 0,5) oder z. B. × 2,5 zählt. Das geht auch <b>nachträglich</b> – etwa wenn eine Aufgabe sehr schlecht ausgefallen ist: Faktor ändern, Libretto rechnet erreichbare Punkte, Summen und Noten neu (bei Prozent-Grenzen passt sich der Schlüssel an). Eine Aufgabe ganz streichen: × in der Überschrift – die Eingaben bleiben gespeichert. Auf dem Ausdruck steht der Faktor in der Zeile „erreichbar“.</p>
+    <p><b>Schreibaufgabe und Sprachmittlung</b> (moderne Fremdsprachen): „+ Schreiben / SM“ legt eine Aufgabe mit den Teilen Inhalt und Sprache und einem gemeinsamen Faktor an. Im Kopf steht, wie viele Punkte sie höchstens bringt (z. B. „max. 20“), und je Person rechts daneben die <b>Zwischensumme mit Faktor</b> – bei Inhalt 4 und Sprache 6 mit × 2 also „= 20“ – zum Übertragen auf den Korrekturbogen.</p>
+    <p><b>Gesamtpunkte von Hand:</b> Trägst du in der Notentabelle direkt eine Summe ein, bleibt sie stehen, auch wenn sich Aufgaben ändern (im Aufgabenblatt mit ✎ markiert). Sobald du wieder Aufgabenpunkte einträgst, rechnet Libretto die Summe aus den Aufgaben. Passt der Notenschlüssel nach einer Änderung nicht mehr zu den erreichbaren Punkten, zeigt Libretto keine Note, sondern einen Hinweis.</p>
     <p><b>Aus Excel:</b> Eine Tabelle (Zeile „erreichbar“ und Namen mit Punkten) im Blatt mit ${kbd(K + 'V')} einfügen; Libretto zeigt vorher, was übernommen wird. Mit „Als Standard für das Fach merken“ startet jede neue Arbeit dieses Fachs gleich so.</p>
     <p><b>Status-Spalte:</b> nur für Personen ohne Punkte: E entschuldigt (Nachtermin offen) · B befreit · 6* bzw. 0* versäumt/verweigert · U Unterschleif. Beim Aufklappen steht der volle Text.</p>`],
+  ['sim', 'Simulationen: erst ausprobieren, dann entscheiden', 'Leistungsnachweise', `
+    <p><b>Notenschlüssel:</b> Im Fenster „Leistungsnachweis bearbeiten“ zeigt „Simulation“ Varianten der Grenzen (z. B. die 4 ab 50, 55 oder 60 %) mit Durchschnitt und Notenspiegel. „Klasse“ öffnet die ganze Klassenliste: Wer besser würde, ist grün, wer schlechter würde, rot. „Übernehmen“ setzt die Grenzen.</p>
+    <p><b>Faktor einer Aufgabe:</b> Unter den Aufgaben (im Bearbeiten-Fenster und im Blatt „Punkte je Aufgabe“): Was passiert, wenn Aufgabe 2 halb oder doppelt zählt? Wieder mit Klassenliste; „… ab jetzt × 2 zählen“ stellt den Faktor um, gespeichert wird mit „Sichern“.</p>
+    <p><b>Drucken:</b> Jede Simulation mit Klassenliste lässt sich als PDF oder Word ausgeben – Liste jetzt → simuliert, Notenspiegel, Kennzahlen, mit dem Hinweis, dass an den Noten nichts geändert wurde. Praktisch fürs Gespräch mit der Fachbetreuung.</p>
+    <p class="hint">Gerechnet wird immer an einer Kopie. Es ändert sich erst etwas, wenn du übernimmst.</p>`],
   ['fs', 'Moderne Fremdsprachen, Jgst. 5–11', 'Szenarien nach Fächern', `
     <p><b>Schreibaufgabe und Sprachmittlung:</b> Im Eingabeblatt legt „+ Schreiben / SM“ eine Aufgabe mit den Teilen <b>Inhalt</b> und <b>Sprache</b> an – 4 + 6 Punkte (Regelfall) oder 3 + 7 (Anfangsunterricht, Niveau A1), wie in den Bewertungsrastern des ISB. Sie steht unter einer gemeinsamen Überschrift und hat <b>einen</b> Faktor (z. B. × 2 oder × 2,5) für beide Teile; Name und Faktor änderst du direkt in der Überschrift. Libretto merkt sich je Kurs die zuletzt gewählte Verteilung und den Faktor.</p>
     <p><b>Typischer Ablauf einer Schulaufgabe:</b> Hörverstehen und Leseverstehen als normale Aufgaben (Punkte), dazu „+ Schreiben / SM“; Notenschlüssel nach Fachschaftsbeschluss (z. B. Note 4 ab 50 %). Mündliche Schulaufgaben bewertest du mit <b>Viva</b> und übernimmst die Noten (siehe „Viva“).</p>
@@ -3061,7 +3833,7 @@ function helpSheet() {
     <p>Im Leistungsnachweis <b>„Nach Prüfungsteilen bewerten“</b> einschalten – nachgebaut nach der Rechentabelle des ISB:</p>
     <ul><li>Teile mit <b>BE</b> (z. B. Hörverstehen): Anteil der BE → Teilnote nach der Abitur-Tabelle (95 % = 15 … 20 % = 1, darunter 0).</li>
       <li><b>Inhalt + Sprache</b> (Schreiben, Sprachmittlung): je 0–15 Notenpunkte nach den Bewertungsrastern; Teilnote = 40 % Inhalt + 60 % Sprache. Ist Inhalt oder Sprache 0 Punkte, höchstens 3 Punkte (<b>Sperrklausel</b>, rot markiert).</li>
-      <li>Ergebnis: Teilnoten nach den Anteilen gemittelt („genau“), dann gerundet. „Wie im Abitur“ setzt Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %; Teile und Anteile änderst du frei (zusammen 100 %).</li></ul>
+      <li>Ergebnis: Teilnoten nach den Anteilen gemittelt („genau“), dann gerundet. Vorlagen: „Hörverstehen + Sprachmittlung“ (35 / 65 %) und „Textaufgaben + Stellungnahme“ (65 / 35 %) nach dem ISB-Leitfaden 04/2025 (S. 2: 30–40 % / 60–70 %) sowie „Wie im Abitur“ (Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %). Teile und Anteile änderst du frei (zusammen 100 %). Mehrere Schreibaufgaben = je ein eigener Teil, denn Inhalt/Sprache und Sperrklausel gelten je Aufgabe. Fehlen bei einem BE-Teil die erreichbaren BE, ist das Feld rot umrandet.</li></ul>
     <p>Libretto merkt sich die Prüfungsteile je Fach als Vorlage. Der Ausdruck „Detailliert“ zeigt BE, Inhalt, Sprache und Teilnote je Teil.</p>
     <p><b>Mündliche Schulaufgabe:</b> In der Q-Phase ist genau eine Schulaufgabe mündlich (KMS vom 12.06.2023) – Bewertung mit Viva, Noten übernehmen.</p>
     <p><b>Spät beginnende Fremdsprache:</b> Beim Kurs „Spät beginnende Fremdsprache“ anhaken. Dann bewertest du auch in Q12/13 mit Bewertungseinheiten wie in Jgst. 5–11 – „+ Schreiben / SM“ mit Inhalt 4 + Sprache 6, ohne Sperrklausel, halbe BE erwünscht – und Libretto rechnet über den Notenschlüssel in Notenpunkte um; „ausreichend“ beginnt zwischen 50 % und 60 %, „mangelhaft“ bei 33 % (ISB-Leitfaden, April 2025).</p>`],
@@ -3073,40 +3845,86 @@ function helpSheet() {
     <p>Die Teilnote der Übersetzung bildest du selbst aus der Fehlerzahl – einen landesweiten Fehlerschlüssel für Jgst. 5–11 gibt es nicht; die Korrekturmatrix und ein Bonus von höchstens zwei Fehlern für besonders treffende Formulierungen gelten nach KMS. Für eine Interpretationsschulaufgabe (Jgst. 11, Q 13/1) oder eine Ersatzform wie die Dialogschulaufgabe schaltest du „Zweigeteilt“ aus und benotest direkt.</p>
     <p class="hint">Quelle: KMS vom 31.07.2023, V.3-BS5402.7/135/1 („Altsprachlicher Unterricht im neunjährigen Gymnasium“), Anlagen 2–4.</p>`],
   ['mint', 'Mathematik und Naturwissenschaften', 'Szenarien nach Fächern', `
-    <p>Rohpunkte mit <b>Punkten je Aufgabe</b>; das KMK-Raster ist vorgewählt. Die Lösungsquote je Aufgabe zeigt, welche Aufgabe schwierig war – nachträglich halb werten geht über den Faktor × 0,5. In der Oberstufe entspricht das KMK-Raster der Tabelle der Abiturprüfung. Mathematik hat in Jgst. 5–7 vier Schulaufgaben (§ 22 GSO) – Libretto prüft die Mindestzahl.</p>`],
+    <p>Rohpunkte mit <b>Punkten je Aufgabe</b>; das KMK-Raster ist vorgewählt. Die Lösungsquote je Aufgabe zeigt, welche Aufgabe schwierig war – nachträglich halb werten geht über den Faktor × 0,5. In Q12/Q13 entspricht das KMK-Raster der Tabelle der Abiturprüfung. Mathematik hat in Jgst. 5–7 vier Schulaufgaben (§ 22 GSO) – Libretto prüft die Mindestzahl.</p>`],
   ['de', 'Deutsch und Fächer mit direkter Notengebung', 'Szenarien nach Fächern', `
-    <p>Aufsätze werden meist direkt benotet: Leistungsnachweis ohne Rohpunkte anlegen und Noten (Oberstufe: Notenpunkte) eintippen. Rückgabefrist für Schulaufgaben in Deutsch ab Jgst. 10: drei Wochen. Das KMS „Unterricht im Fach Deutsch – Lernbereich Schreiben“ vom 28.09.2026 verlangt eine ganzheitliche Bewertung der Schreibleistung – eine bloße Addition von Teilpunkten wird dem nicht gerecht; direkt benoten ist deshalb der richtige Weg. In Jgst. 5–8 sind drei Aufsatz-Schulaufgaben verbindlich (KMS vom 18.06.2026).</p>`],
-  ['ohne', 'Fächer ohne Schulaufgaben, Seminare', 'Szenarien nach Fächern', `
+    <p>Aufsätze werden meist direkt benotet: Leistungsnachweis ohne Rohpunkte anlegen und Noten (Q12/Q13: Notenpunkte) eintippen. Rückgabefrist für Schulaufgaben in Deutsch ab Jgst. 10: drei Wochen. Das KMS „Unterricht im Fach Deutsch – Lernbereich Schreiben“ vom 28.09.2026 verlangt eine ganzheitliche Bewertung der Schreibleistung – eine bloße Addition von Teilpunkten wird dem nicht gerecht; direkt benoten ist deshalb der richtige Weg. In Jgst. 5–8 sind drei Aufsatz-Schulaufgaben verbindlich (KMS vom 18.06.2026).</p>`],
+  ['ohne', 'Fächer ohne Schulaufgaben, Sport, Kunst und Musik', 'Szenarien nach Fächern', `
     <p>Sport, Musik, Kunst & Co.: beim Kurs „Fach mit Schulaufgaben“ ausschalten – die Note entsteht nur aus kleinen Leistungsnachweisen. Praktische Leistungen als Art „Praktische Leistung“.</p>
-    <p><b>Sport in Q12/13</b> (§ 29 Abs. 5 GSO): Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3. Praktische Leistungen trägst du als „Praktische Leistung“ ein – Libretto zählt sie doppelt. Im Leistungsfach Sport legst du für die Sporttheorie einen eigenen Kurs an (Schulaufgabe + kleine LN); beide Punktzahlen zählen 1 : 1.</p>
+    <p><b>Sport in Q12/13</b> (§ 29 Abs. 5 GSO): Halbjahresleistung = (2 × Durchschnitt der praktischen Leistungen im Handlungsfeld + Durchschnitt der übrigen kleinen LN) ÷ 3. Praktische Leistungen trägst du als „Praktische Leistung“ ein – Libretto zählt sie doppelt. </p>
+    <p><b>Leistungsfach Sport</b> (§ 29 Abs. 5 Satz 2 GSO; KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13“, Nr. 2.3.1): Fach Sport und Sporttheorie werden in <b>einem</b> Kurs geführt (Kurs anlegen: Art „Leistungsfach“, Sporttheorie „im selben Kurs“). Libretto rechnet in drei Stufen, jeweils gerundet: <b>Fach Sport</b> = (2 × Ø praktische Leistungen + Ø kleine LN des Fachs Sport) ÷ 3; <b>Sporttheorie</b> = (Schulaufgabe + Ø kleine LN der Sporttheorie) ÷ 2; <b>Endpunktzahl</b> = (Fach Sport + Sporttheorie) ÷ 2. Eine Aufrundung auf 1 Punkt ist nicht zulässig. Bei jedem kleinen LN wählst du „Fach Sport“ oder „Sporttheorie“ (im Spaltenkopf: FS bzw. Th); die Schulaufgabe gehört immer zur Sporttheorie, praktische Leistungen immer zum Fach Sport. Fehlt ein Teil, zeigt Libretto noch keine Endpunktzahl. Ältere Kurse mit eigenem Theoriekurs rechnen wie bisher – dort bildest du die Endpunktzahl selbst.</p>
     <p><b>Kunst und Musik als Leistungsfach</b> (§ 29 Abs. 3 und 4 GSO): Halbjahresleistung = Durchschnitt aus Schulaufgabe, <b>künstlerischem Projekt</b> bzw. <b>praktischer Prüfung</b> und dem Durchschnitt der kleinen LN. Dafür gibt es in diesen Kursen die eigenen Arten „Künstlerisches Projekt“ und „Praktische Prüfung“.</p>
+    `],
+  ['wsem', 'W-Seminar: Kurs und Betreuung', 'Seminare', `
+    <p><b>Kurs anlegen:</b> „Neuer Kurs“ → Jahrgangsstufe 12, „Art des Kurses: W-Seminar“ und oben das <b>Leitfach</b> eintragen (z. B. Italienisch). Über „Fristen …“ im Reiter „Seminararbeit“ trägst du Rahmenthema, Themenfrist und Abgabetermin ein.</p>
     <p><b>W-Seminar:</b> Kurs der Jgst. 12 oder 13, „Art des Kurses“ W-Seminar (oder Fach „W-Seminar“). Reiter 12/1, 12/2, Seminararbeit und Übersicht; Klick auf einen Namen öffnet die <b>Betreuungskarte</b> mit Thema, Terminen und Protokoll (Besprochen, Vereinbart, nächster Termin, unterschrieben), Abgabe mit Fristverlängerung und Bewertung. Dateien (Exposé, Gliederung, Arbeit) hängst du an den Termin – verschlüsselt gespeichert und mitgesichert. Ausdrucke: Betreuungsprotokoll, Betreuungsdokumentation, Übersicht der Seminararbeiten, Ergebnisliste. Über Zulassung, Fristverlängerung und Rücktritt entscheidet die Schule.</p>
+    <p><b>Betreuungskarte:</b> Thema, Kurztitel fürs Abiturzeugnis (mit Zeichenzähler), bei modernen Fremdsprachen die Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch, § 24 Abs. 1 GSO), Wettbewerbsbeitrag statt Seminararbeit (§ 24 Abs. 3), Haken für Exposé bzw. Gliederung (12/2) und die Dokumentation der KI-Nutzung, Abgabe mit Uhrzeit und Fristverlängerung, Erklärung zur selbstständigen Anfertigung – alles wird sofort gespeichert.</p>
+    <p><b>Beratungsgespräch:</b> Als Art „Beratungsgespräch“ gibt es die Felder des ISB-Feedbackbogens: bisher erledigt, Schwierigkeiten und Fragen, Rückmeldung, nächste Schritte, Zielvereinbarung, KI-Einsatz. Die Zielvereinbarung des letzten Gesprächs steht oben, die Leitfragen zum Halbjahr sind aufklappbar. Ausdruck mit zwei Unterschriften.</p>
+    <p><b>Seminare und Leitfach:</b> W- und P-Seminar sind keine Fächer, sondern eine Kursart: Beim W-Seminar „Art des Kurses: W-Seminar“ wählen, beim P-Seminar (Jgst. 11) den Schalter „P-Seminar“ – und oben jeweils das <b>Leitfach</b> eintragen. Fachregeln (z. B. Notenschlüssel der modernen Fremdsprachen) gelten für Seminare nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Exposé, Exzerpt, Gliederungsentwurf, Recherche-Protokoll …). Im W-Seminar mit einer modernen Fremdsprache als Leitfach: Sprache der Arbeit (Englisch immer Englisch, sonst Fremdsprache oder Deutsch) und Prüfungsgespräch in der Fremdsprache (§ 24 Abs. 1 und 2 GSO); ein anerkannter Wettbewerbsbeitrag kann die Seminararbeit ersetzen (§ 24 Abs. 3).</p>`],
+  ['wbew', 'W-Seminar: Bewertung und Prüfungsgespräch', 'Seminare', `
+    <p><b>Bewertungsbögen (W-Seminar):</b> In der Betreuungskarte öffnen „Bewertungsbogen Seminararbeit“ und „Bewertungsbogen Prüfungsgespräch“ die Raster nach dem ISB-Material: die Arbeit nach Form, Sprache, Methode und Inhalt (Gewichtung 10/20/30/40 %, Einschätzung ++ bis ––, auf Wunsch Punkte je Bereich), das Prüfungsgespräch nach fünf Kompetenzen (Fach-, Argumentations-, Methoden- und Wissenschafts-, Darstellungs-, Reflexions- und Transferkompetenz) mit Punkten je Kompetenz. Libretto rechnet daraus einen <b>Vorschlag</b> (gewichteter Durchschnitt, gerundet) – die Punkte setzt du fest. Kriterien und Gewichte lassen sich je Kurs anpassen. Ausdruck als PDF oder Word, auch als leerer Bogen zum Ausfüllen von Hand. Das Prüfungsgespräch (§ 24 Abs. 2 GSO) dauert laut ISB-Übersicht insgesamt ca. 25 Minuten; ein Kurzvortrag von höchstens 5 Minuten zum Einstieg ist möglich.</p>
+    <p><b>Prüfungsgespräche planen:</b> Im Reiter „Seminararbeit“ → „Prüfungsgespräche …“ trägst du Tag und Uhrzeit ein oder lässt freie Plätze automatisch füllen (Dauer, Pause, Gespräche je Tag, nur Schultage). Die Terminliste lässt sich mit oder ohne Themen drucken.</p>
+    <p><b>Rechnung:</b> Gesamtleistung = (2 × Seminararbeit + Prüfungsgespräch) × 2/3, gerundet, höchstens 30 Punkte (§ 29 Abs. 6 GSO). Libretto zeigt je Person den Stand der Zulassung nach § 44 GSO (termingerechte Abgabe, Bewertung) – die Entscheidung trifft die Schule.</p>
+    <p><b>Ausdrucke</b> (Drucken &amp; Export im W-Seminar): Bewertungsbögen für alle oder leer zum Ausfüllen, Terminliste der Prüfungsgespräche (mit oder ohne Themen), Betreuungsdokumentation je Person, Protokolle der Beratungsgespräche, Übertragsliste der Ergebnisse.</p>`],
+  ['psem', 'P-Seminar', 'Seminare', `
+    <p><b>Kurs anlegen:</b> Jahrgangsstufe 11, Schalter „P-Seminar“ einschalten und oben das Leitfach eintragen. Fachregeln des Leitfachs (z. B. Notenschlüssel der modernen Fremdsprachen) gelten im Seminar nicht. Beim neuen Leistungsnachweis schlägt Libretto übliche Formen vor (Projektbeitrag, Präsentation, Projektdokumentation …).</p>
     <p><b>P-Seminar</b> (Jgst. 11): ohne Schulaufgaben, mindestens zwei kleine Leistungsnachweise, vor allem individuelle Projektbeiträge. <b>Profilfächer</b> in 12/13 als normaler Kurs; bei fremdsprachiger Konversation heißt die „Schulaufgabe“ Konversationsübung (§ 22 Abs. 3 GSO).</p>`],
   ['sonder', 'Nachtermin, Krankheit, Abwesenheit, Nachteilsausgleich', 'Sonderfälle', `
     <p><b>Nachtermin:</b> ${kbd('E')} eintragen; die Übersicht und der Kalender listen offene Nachtermine. Die Note des Nachtermins trägst du später in dieselbe Zelle ein.</p>
     <p><b>Länger erkrankt, zu wenige Noten:</b> Fehlendes leer lassen oder B/E setzen – Libretto rechnet mit dem, was da ist. Kann keine Note gebildet werden: im Schülerblatt „Ohne Note“; die Übertragsliste weist auf die Bemerkung nach § 39 Abs. 6 GSO hin.</p>
     <p><b>Auslandsaufenthalt, längere Abwesenheit:</b> im Schülerblatt Beginn und Ende eintragen; Leistungsnachweise in dem Zeitraum stehen dann als „abw.“ in Tabelle und Ausdrucken.</p>
+    <p><b>Gastschülerinnen und Gastschüler</b> (stehen oft auf keiner Klassenliste): unter „Kurs &amp; Schüler“ → „+ Gast“ anlegen – mit Zeitraum (von/bis) und der Vereinbarung, ob die Noten <b>zählen</b> oder nur <b>dokumentiert</b> werden. Am Namen steht dann „Gast“. Zählen die Noten nicht, bleiben sie aus Notenspiegel, Durchschnitten und Zeugnisnote heraus; Übertragsliste und Schülerblatt zeigen „Gast“ statt einer Note. Außerhalb des Zeitraums erscheinen Leistungsnachweise als „abw.“. Beim Klassen-Abgleich bleiben Gäste unberührt.</p>
     <p><b>Nachteilsausgleich und Notenschutz:</b> im Schülerblatt eintragen, was gilt (z. B. „25 % mehr Zeit“, „Rechtschreibung wird nicht bewertet“). Eine Marke <b>NA</b> bzw. <b>NS</b> steht dann neben dem Namen – in der Notentabelle und beim Eintragen. Bei Notenschutz erinnert die Übertragsliste an den Zeugnisvermerk. Über Art und Umfang entscheidet die Schule.</p>
     <p><b>Reihenfolge der Namen:</b> wie auf den Klassenlisten – „von“, „Freiherr von“ usw. zählen nicht zum Sortierwort.</p>`],
   ['zeugnis', 'Zeugnis, Übertrag und Elterngespräche', 'Zeugnis und Gespräche', `
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
+    
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
     <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen.</p>`],
   ['kalender', 'Kalender, Termine und Klassen austauschen', 'Organisation', `
-    <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. <b>Schultermine einlesen:</b> im Infoportal unter Termine „als CSV exportieren“ und hier auswählen (auch ICS-Dateien). Dazu: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen („Termin anderer Fächer“).</p>${fig('kalender', 'Kalender')}
+    <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. <b>Schultermine einlesen:</b> im Infoportal unter Termine „als CSV exportieren“ und hier auswählen (auch ICS-Dateien). <b>Oder abonnieren:</b> Gibt es einen Link zum Schulkalender (ICS oder webcal – z. B. im Infoportal, auf der Homepage, Google- oder Outlook-Kalender), wählt „Schulkalender abonnieren …“. Libretto holt neue und geänderte Termine dann selbst (beim Start höchstens alle sechs Stunden, sonst „Jetzt aktualisieren“); abgerufen wird nur, gesendet nichts. Dazu: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen („Termin anderer Fächer“).</p>${fig('kalender', 'Kalender')}
     <p><b>Klassen austauschen:</b> exportiert deine Kurse (nur Namen und Klassen, keine Noten) als theis-Klassen-Datei – etwa für Voce – oder liest eine solche Datei ein. Libretto zeigt vorher, was neu, geändert oder entfallen ist; übernommen wird nur, was du anhakst, und vorher wird gesichert.</p>
     <p><b>Viva:</b> Nach einer mündlichen Schulaufgabe in Viva unter „Ergebnisse &amp; Bögen“ die „Notenliste (CSV)“ speichern; in Libretto im Leistungsnachweis unter „Noten aus Datei übernehmen“ wählen – die Noten werden über die Namen zugeordnet.</p>`],
+  ['kalabo', 'Schultermine einlesen oder abonnieren – Schritt für Schritt', 'Organisation', `
+    <p>Schultermine erscheinen grau im Kalender, in der Übersicht unter „Als Nächstes“ und helfen bei den Fristen fürs Notenmachen. Beides findest du unter <b>Einstellungen → Termine</b> oder im Kalender.</p>
+    <p><b>Einmal einlesen (Datei):</b></p>
+    <ol><li>Im Infoportal (oder einem anderen Schulkalender) die Termine als <b>CSV</b> oder <b>ICS</b> exportieren und speichern.</li>
+      <li>In Libretto „Schultermine einlesen …“ wählen und die Datei öffnen.</li>
+      <li>Libretto übernimmt die Termine und bietet erkannte Fristen (z. B. „Ausgabe des 1. Zwischenberichts“) zum Übernehmen an. Neue Termine kommen erst mit der nächsten Datei dazu.</li></ol>
+    <p><b>Abonnieren (Link) – neue Termine kommen von selbst:</b></p>
+    <ol><li>Den Link zum Schulkalender besorgen. Er endet meist auf <b>.ics</b> oder beginnt mit <b>webcal://</b>. Häufige Wege:
+        <ul><li><b>Google Kalender</b> (im Browser): beim Kalender ⋮ → „Einstellungen und Freigabe“ → „Kalender integrieren“ → „Öffentliche Adresse im iCal-Format“ (bei nicht öffentlichen Kalendern: „Geheime Adresse im iCal-Format“).</li>
+          <li><b>Outlook / Microsoft 365</b> (im Browser): Einstellungen → Kalender → „Freigegebene Kalender“ → „Kalender veröffentlichen“ → den <b>ICS</b>-Link kopieren.</li>
+          <li><b>Apple iCloud</b>: in der Kalender-App beim Kalender „Freigeben“ → „Öffentlicher Kalender“ → Link kopieren (beginnt mit webcal://).</li>
+          <li><b>Infoportal:</b> An manchen Schulen gibt es dort eine <b>ICS-Freigabe</b> der Schultermine (ein Link zum Kopieren). Wo sie steht und ob sie freigeschaltet ist, legt jede Schule selbst fest – im Zweifel die Schulverwaltung oder den Infoportal-Administrator fragen.</li>
+          <li><b>Schulhomepage:</b> Steht dort „Kalender abonnieren“, „iCal“ oder „ICS“, ist das der Link.</li></ul>
+        Das ist nicht an jeder Schule gleich; entscheidend ist nur, dass du einen Link auf eine ICS-Datei (oder webcal://) hast.</li>
+      <li>In Libretto „Schulkalender abonnieren …“ wählen, den Link einfügen und „Abonnieren“ drücken.</li>
+      <li>Libretto holt die Termine sofort und danach beim Start höchstens alle sechs Stunden; „Jetzt aktualisieren“ geht jederzeit. Abgerufen wird nur – Libretto sendet nichts an den Kalender.</li></ol>
+    <p class="hint">Ein eingelesener Stand und ein Abo schließen sich aus: Liest du später eine Datei ein, endet das Abo (und umgekehrt). Deine Leistungsnachweise bleiben dabei immer unberührt.</p>`],
+  ['fristen', 'Fristen fürs Notenmachen', 'Organisation', `
+    <p><b>Fristen fürs Notenmachen:</b> Unter Einstellungen → „Fristen …“ (oder in der Übersicht) trägst du ein, bis wann die Noten stehen müssen: 1. und 2. Zwischenbericht <i>oder</i> Zwischenzeugnis (das entscheidet jede Schule, § 40 Abs. 2 GSO), Klassenkonferenz zum Halbjahr, Zeugnis 12/1 und 13/1, Ende 12/2, Zulassung zum Abitur, Jahreszeugnis – jeweils mit Termin und, wenn die Schule einen festlegt, Notenschluss. Liest du die Schultermine ein (CSV aus dem Infoportal), erkennt Libretto Titel wie „Ausgabe des 1. Zwischenberichts“, „Zeugnistermin Q12“ oder „Klassenkonferenzen zum Jahreszeugnis“ und bietet sie zum Übernehmen an. Jede Frist gilt nur für die passenden Kurse (Jgst. 5–11, Q12 oder Q13): Im Kurskopf steht die nächste Frist – ein Klick zeigt alle Fristen dieses Kurses (beim W-Seminar auch Themenwahl und Abgabe der Seminararbeit); eine Woche vorher erscheint oben ein Hinweis; in der Übersicht steht sie zwei Wochen vorher unter „Zu erledigen“ – mit fehlenden Noten und offenen Nachterminen.</p>
+    <p class="hint">Ob deine Schule ein Zwischenzeugnis oder Zwischenberichte hat und wann Notenschluss ist, legt die Schule fest (§ 40 Abs. 2 GSO) – eingetragen wird nur, was es gibt.</p>`],
   ['druck', 'Ausdrucke und Export', 'Organisation', `
     <p>Jede Notenliste beginnt mit den Kennzahlen – der <b>Durchschnitt</b> steht groß und umrahmt oben links –, darunter die Liste mit der Zeile „Ø Klasse“, daneben Notenspiegel und Notenschlüssel mit Punktbereichen. „Detailliert“ zeigt zusätzlich die Punkte je Aufgabe bzw. je Prüfungsteil, Ø und Lösungsquote; bei Schulaufgaben heißt das Blatt „Auswertung für die Fachbetreuung“ und hat zwei Unterschriftsfelder. Außerdem: Notenübersicht des Kurses, Übertragsliste, Schülerblätter – als PDF, Word oder Excel.</p>`],
-  ['sicher', 'Sicherung, Sperre, Updates und Datenschutz', 'Sicherheit', `
+  ['sicher', 'Sicherung, Sperre, Updates und Datenschutz', 'Einstellungen und Sicherheit', `
     <ul><li>Alle Daten liegen nur auf diesem Computer, verschlüsselt (AES-256-GCM). Kein Server, kein Konto, keine Übertragung von Noten oder Namen. Einzige Verbindung: die abschaltbare Abfrage der aktuellen Versionsnummer bei theisapps.de.</li>
       <li><b>Sicherung:</b> automatisch und verschlüsselt in deinen Sicherungsordner (USB-Stick, Cloud-Ordner), mit Versionen. Zusätzlich sichert Libretto auf diesem Computer. „Jetzt sichern“ in der Leiste.</li>
       <li><b>Notfallschlüssel:</b> Beim Einrichten erhältst du einen Notfallschlüssel – ausdrucken und gut aufbewahren. Ohne Passwort und Notfallschlüssel lassen sich die Daten nicht öffnen, auch nicht von theis.</li><li><b>Gelöscht?</b> Gelöschte Kurse, Leistungsnachweise und Termine lassen sich 60 Tage lang unter „Sicherung“ wiederherstellen.</li>
+      <li><b>Speichern:</b> geschieht nach jeder Eingabe von selbst. ${kbd(K + 'S')} speichert sofort (auch einen gerade getippten Wert, auch in offenen Fenstern) und sichert höchstens alle zehn Minuten zusätzlich. Libretto behält die 30 neuesten Sicherungen und eine je Tag für 90 Tage – der Sicherungsordner bleibt klein (eine Sicherung ist meist nur einige Kilobyte bis wenige hundert Kilobyte groß).</li>
+      <li><b>Alte Kurse löschen (Datenschutz):</b> Nach § 14a Abs. 2 der Lehrerdienstordnung sind eigene Notenaufzeichnungen spätestens zwei Jahre nach Ende des Schuljahres zu löschen, sofern nichts anderes bestimmt ist. Libretto zeigt solche Kurse in der Übersicht unter „Zu erledigen“ (oder unter Einstellungen → Sicherheit → „Alte Kurse“): „Löschen“ legt sie für 60 Tage in den Papierkorb, „Noch behalten“ blendet den Hinweis für ein Jahr aus. Von selbst löscht Libretto nie.</li>
       <li><b>Sperre:</b> nach 5, 10 oder spätestens 15 Minuten ohne Eingabe (Mindestsicherheitsstandards des Kultusministeriums; einstellbar unter Einstellungen); „Jetzt sperren“ ebenda.</li>
+      <li><b>Installieren:</b> Mac – die DMG-Datei öffnen und Libretto auf „Programme“ ziehen; beim ersten Öffnen meldet macOS, die App sei nicht überprüft: Das Blatt „Erster Start.pdf“ im selben Fenster zeigt in vier Schritten, wie man sie trotzdem öffnet (nur einmal nötig). Windows – „Libretto-Windows-Setup.exe“ ausführen; erscheint „Der Computer wurde durch Windows geschützt“, auf „Weitere Informationen“ und dann „Trotzdem ausführen“ klicken. Administratorrechte sind nicht nötig.</li>
       <li><b>Updates:</b> neue Version einfach über die alte installieren. Die Daten liegen getrennt von der App und bleiben erhalten; beim ersten Start einer neuen Version legt Libretto zusätzlich eine Sicherung an.</li>
+      <li><b>Systemvoraussetzungen:</b> macOS 13 (Ventura) oder neuer – Apple-Chip oder Intel; Windows 10 oder 11 (64 Bit).</li>
       <li>Für Noten auf privaten Geräten ist in Bayern die Genehmigung der Schulleitung nötig (Mindestsicherheitsstandards des Kultusministeriums).</li></ul>${fig('sicherung', 'Sicherung')}`],
-  ['aussehen', 'Aussehen', 'Sicherheit', `
-    <p>Unter <b>Einstellungen → Aussehen</b>: elf Farbwelten (z. B. Liquid Glass, Neon, Heft, Graphit mit hohem Kontrast), sechs Schriften, hell/dunkel/wie das Gerät und „Kompakte Zeilen“. Gilt nur für diesen Computer und ändert weder Noten noch Ausdrucke.</p>`],
+  ['einstellungen', 'Einstellungen und Aussehen', 'Einstellungen und Sicherheit', `
+    <p>Die Einstellungen (unten links) sind nach Bereichen geordnet:</p>
+    <ul><li><b>Allgemein:</b> Name und Schule für die Ausdrucke, Schuljahr und was beim Öffnen erscheint (Übersicht oder letzter Kurs).</li>
+      <li><b>Termine:</b> Stichtag für die Ansicht „Stand Zwischenzeugnis“, Fristen fürs Notenmachen und die Schultermine – als Datei einlesen oder als Schulkalender abonnieren.</li>
+      <li><b>Aussehen:</b> elf Farbwelten, hell/dunkel/automatisch, sechs Schriften, Textgröße, Ansicht der Kursliste, kompakte Zeilen und „Effekte reduzieren“ (ohne Glas- und Bewegungseffekte – spürbar schneller auf älteren Computern).</li>
+      <li><b>Sicherheit:</b> automatische Sperre (5, 10 oder 15 Minuten), Suche nach Updates, Sicherung, Passwort und Notfallschlüssel, Klassen austauschen und alte Kurse löschen (Datenschutz).</li>
+      <li><b>Über:</b> Version, Neuerungen, Hilfe als PDF, Quellenverzeichnis, Lizenzen.</li></ul>
+    <p class="hint">Aussehen, Textgröße und Effekte gelten nur für diesen Computer und ändern weder Noten noch Ausdrucke.</p>`],
   ['gso', 'Regeln, die Libretto anwendet (GSO)', 'Regeln und Fragen', `
     <ul>
       <li><b>§ 28</b> Jahresfortgangsnote 5–11: Gesamtnote große LN und Gesamtnote kleine LN – bei zwei Schulaufgaben 1:1, bei mehr als zwei 2:1 (abweichend einstellbar). Fächer ohne Schulaufgaben: nur kleine LN. Rundung kaufmännisch; genau x,5 ist ein Grenzfall für deine Entscheidung.</li>
@@ -3120,37 +3938,10 @@ function helpSheet() {
   ['spiel', 'Was Schule und Fachschaft selbst festlegen', 'Regeln und Fragen', `
     <p>Viele Regeln lassen bewusst Spielraum. Libretto macht dafür <b>Vorschläge</b> und lässt dich alles einstellen – es schreibt nichts vor, was die Schule entscheidet.</p>
     <ul><li><b>Lehrerkonferenz</b> (§ 21 Abs. 2, § 22 GSO): Grundsätze für Zahl, Art und Termine der Leistungsnachweise; Ersatz einer Schulaufgabe durch ein gleichwertiges Format; welche kleinen LN am Tag einer Schulaufgabe erlaubt sind; Ersatz des Zwischenzeugnisses durch Informationen (§ 40).</li>
-      <li><b>Fachschaft</b>: Notenschlüssel (z. B. „Note 4 ab 50 %“) – in Libretto „als Standard für das Fach merken“; Schreibprogramm in Deutsch; Abstimmung von Prüfungsformen.</li>
+      <li><b>Fachschaft</b>: Notenschlüssel (z. B. „Note 4 ab 50 %“) – in Libretto „als Standard für das Fach merken“; in den modernen Fremdsprachen nur im Rahmen der ISB-Vorgaben (ausreichend je nach Aufgabe ab 50–60 %) und in Q12/Q13 nicht für Schreiben, Sprachmittlung und Hörverstehen; Schreibprogramm in Deutsch; Abstimmung von Prüfungsformen.</li>
       <li><b>Lehrkraft</b> (BayEUG Art. 52, § 28 Abs. 1 GSO): Zahl und Art der kleinen LN, Gewichtung schriftlich/mündlich/praktisch (in Libretto: Gewichte je Art oder nach Bereichen), Aufgaben und Erwartungshorizont, pädagogische Festsetzung der Zeugnisnote – genau x,5 zeigt Libretto als Grenzfall.</li>
-      <li><b>Nicht frei wählbar</b>: das Verhältnis groß : klein nach § 28 (1 : 1 bzw. 2 : 1 – Abweichungen nur begründet im Einzelfall, weil die GSO „grundsätzlich“ sagt), die Rechnung in Q12/13 (§ 29), Seminararbeit 2 : 1, die Raster der Oberstufe in den modernen Fremdsprachen, die zweigeteilte Schulaufgabe in Latein/Griechisch, die Abiturtabellen.</li></ul>`],
-  ['quellen', 'Quellen und Rechtsgrundlagen', 'Regeln und Fragen', `
-    <p>Libretto rechnet nach diesen Vorschriften und Vorgaben (Stand November 2026). Libretto ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen deiner Schule.</p>
-    <div class="srcList">
-      <p><b>Gesetze und Verordnungen</b></p>
-      <ul><li><b>Bayerisches Gesetz über das Erziehungs- und Unterrichtswesen (BayEUG)</b>, Art. 52 – Leistungsnachweise, pädagogische Verantwortung bei der Bewertung.</li>
-        <li><b>Schulordnung für die Gymnasien in Bayern (Gymnasialschulordnung – GSO)</b> vom 23.01.2007 in der ab 01.08.2026 geltenden Fassung: § 16 Vorrückungsfächer · § 20 Seminare · § 21 Leistungsnachweise · § 22 Schulaufgaben (Mindestzahl, Termine, Q12/13) · § 23 kleine Leistungsnachweise · § 24 Seminararbeit · § 25 Rückgabe und Einsicht · § 26 Bewertung, Versäumnis, Unterschleif · § 27 Nachtermin, Ersatzprüfung · § 28 Jahresfortgangsnote · § 29 Punktesystem und Halbjahresleistungen · § 30 Vorrücken · § 39 Zeugnisse (Abs. 6 ohne Note) · § 40 Zwischenzeugnis, Gefährdung · § 44 Zulassung zur Abiturprüfung.</li>
-        <li><b>Bayerische Schulordnung (BaySchO)</b>: § 20 Entschuldigung bei Krankheit · §§ 31 ff. Nachteilsausgleich und Notenschutz, Zeugnisbemerkung.</li></ul>
-      <p><b>Bekanntmachungen und Schreiben des Kultusministeriums (KMS)</b></p>
-      <ul><li>Wissenschaftspropädeutisches Seminar – Bekanntmachung vom 06.04.2023 (BayMBl. 2023 Nr. 185).</li>
-        <li>P-Seminar zur beruflichen Orientierung – Bekanntmachung des Kultusministeriums.</li>
-        <li>„Weiterentwicklung der Prüfungskultur an den bayerischen Gymnasien“ – KMS vom 18.06.2026, VI.3-BS5200.0/88/5 (ab 2026/27: Deutsch 5–8 mindestens drei Aufsatz-Schulaufgaben, Mathematik 9 drei Schulaufgaben, moderne Fremdsprachen in mindestens zwei Jahrgangsstufen ein großer Leistungsnachweis ganz oder teilweise mündlich).</li>
-        <li>Moderne Fremdsprachen, Qualifikationsphase und Abitur: KMS „Schriftliche Prüfungsformen in der Profil- und Leistungsstufe und im Abitur“ (Gewichte 20/55/25 %, Inhalt : Sprache 40 : 60, Sperrklausel, Prozenttabelle 95 % = 15 … 20 % = 1 Punkt) sowie das KMS zu den mündlichen Prüfungsformen.</li>
-        <li>Latein und Griechisch: KMS vom 31.07.2023, V.3-BS5402.7/135/1 („Altsprachlicher Unterricht im neunjährigen Gymnasium“), Anlage 2 (Bewertungsschlüssel, Tabelle zur Gesamtpunktzahl), Anlagen 3 und 4 (Richtlinien für die Schulaufgaben Latein Jg. 5–13, Griechisch Jg. 8–13; KMK-Bewertungsschlüssel für BE in der Qualifikationsphase verbindlich, Anlage 3 Nr. 8, Anlage 4 Nr. 9).</li>
-        <li>Deutsch: „Unterricht im Fach Deutsch – Lernbereich Schreiben“, KMS vom 28.09.2026, VI.4-BS5402.5/105/7 (ganzheitliche Bewertung der Schreibleistungen, Ersatz von Schulaufgaben; ersetzt das KMS vom 29.06.2023).</li>
-        <li>Sport, Kunst und Musik in der Qualifikationsphase: die jeweiligen Bekanntmachungen des Kultusministeriums; die Rechnung der Halbjahresleistung steht in § 29 Abs. 3–5 GSO.</li>
-        <li>„Mindestsicherheitsstandards“ für private Endgeräte von Lehrkräften, Stand 20.09.2023 – u. a. verschlüsselte Speicherung, verschlüsselte Sicherungen, automatische Sperre spätestens nach 15 Minuten.</li></ul>
-      <p><b>ISB – Staatsinstitut für Schulqualität und Bildungsforschung</b></p>
-      <ul><li>Hinweise zu schriftlichen Leistungsnachweisen in den modernen Fremdsprachen, Jgst. 5–11, mit Bewertungsrastern Schreiben/Sprachmittlung (Inhalt : Sprache 4 : 6, im Anfangsunterricht A1 auch 3 : 7).</li>
-        <li>PuLSt – Bewertungsraster und Rechentabelle Hörverstehen, Schreiben, Sprachmittlung für die Qualifikationsphase (Stand 12/2025): Hörverstehen über den Lösungsgrad nach der Abitur-Tabelle (20 % = 1 … 95 % = 15 Punkte), Schreiben und Sprachmittlung 40 : 60 mit Sperrklausel.</li>
-        <li>„Leistungsnachweise in der Profil- und Leistungsstufe – Moderne Fremdsprachen, Leitfaden“ (Stand April 2025): Excel-Tabelle verpflichtend; bei BE-Bewertung „ausreichend“ ab 50 %, „mangelhaft“ ab 33 %; spät beginnende Fremdsprachen mit BE wie in der Unter- und Mittelstufe (Inhalt : Sprache 4 : 6, ohne Sperrklausel, „ausreichend“ zwischen 50 % und 60 %).</li>
-        <li>Kontaktbrief Oberstufe 2025 (September 2025), S. 4: „Umsetzung der erreichten Bewertungseinheiten in Notenpunkte“ ab Abitur 2026 – Tabelle für 120, 100, 90 und 60 BE.</li>
-        <li>Materialien zum W-Seminar: Bewertungsbögen Seminararbeit und Prüfungsgespräch, Übersicht der Beratungsgespräche.</li></ul>
-      <p><b>Kultusministerkonferenz</b></p>
-      <ul><li>Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung, KMK-Beschluss vom 07.07.1972 i. d. F. vom 06.06.2024 – Prozentgrenzen für 15 bis 1 Notenpunkte.</li></ul>
-      <p><b>Kalender</b></p>
-      <ul><li>Ferientermine und Feiertage in Bayern nach den Bekanntmachungen des Kultusministeriums.</li></ul>
-    </div>
-    <p class="hint">Fundstellen: gesetze-bayern.de (BayEUG, GSO, BaySchO, Bekanntmachungen), km.bayern.de, isb.bayern.de, gymnasiale-oberstufe.bayern.de, kmk.org. Hast du eine neuere Fassung oder einen Fehler entdeckt? Bitte an hallo@theisapps.de.</p>`],
+      <li><b>Nicht frei wählbar</b>: das Verhältnis groß : klein nach § 28 (1 : 1 bzw. 2 : 1 – Abweichungen nur begründet im Einzelfall, weil die GSO „grundsätzlich“ sagt), die Rechnung in Q12/13 (§ 29), Seminararbeit 2 : 1, die Raster in Q12/Q13 in den modernen Fremdsprachen, die zweigeteilte Schulaufgabe in Latein/Griechisch, die Abiturtabellen.</li></ul>`],
+  ['quellen', 'Quellenverzeichnis', 'Regeln und Fragen', sourcesHTML() + `<div class="panelBtns"><button type="button" class="mini" data-srcpdf="1">Quellenverzeichnis als PDF</button></div>`],
   ['faq', 'Häufige Fragen', 'Regeln und Fragen', `
     <p><b>Ich habe mich vertippt.</b> Direkt danach „Rückgängig“ unten anklicken – oder die Zelle einfach neu füllen.</p>
     <p><b>Die Zeugnisnote ist ein Grenzfall.</b> Im Schülerblatt die Note festlegen und kurz begründen; auf der Übertragsliste steht dann „von der Lehrkraft festgelegt“.</p>
@@ -3160,19 +3951,91 @@ function helpSheet() {
     <p><b>Neuer Computer.</b> Libretto installieren, beim Start „Sicherung wiederherstellen …“ wählen und die .vault-Datei aus deinem Sicherungsordner öffnen.</p>
     <p><b>Fehler oder Wünsche?</b> Schreib an <b>hallo@theisapps.de</b>.</p>`]
   ];
+  /* Einstellungen vor Sicherung (Reihenfolge innerhalb der Gruppe) */
+  { const i = S.findIndex(x => x[0] === 'einstellungen'), j = S.findIndex(x => x[0] === 'sicher'); if (i > j && j >= 0) S.splice(j, 0, S.splice(i, 1)[0]); }
   const groups = [...new Set(S.map(x => x[2]))];
-  const toc = groups.map(g => `<div class="hTocG"><b>${esc(g)}</b>${S.filter(x => x[2] === g).map(x => `<button type="button" class="linkbtn" data-hgo="${x[0]}">${esc(x[1])}</button>`).join('')}</div>`).join('');
-  const { dlg } = sheet({ title: 'Libretto – Hilfe', wide: true, ok: '', cancel: 'Schließen', body: `<div class="prose helpDoc">
-    <div class="notice"><div class="grow"><b>Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere zusätzlich selbst. Fehler oder Wünsche? Schreib an <b>hallo@theisapps.de</b>.</div></div>
-    <input type="search" id="hQ" class="hSearch" placeholder="Hilfe durchsuchen – z. B. Sperrklausel, Nachtermin, Faktor" aria-label="Hilfe durchsuchen">
-    <nav class="hToc" id="hToc">${toc}</nav>
-    ${groups.map(g => `<div class="hGroup" data-hg="${esc(g)}"><div class="hGroupT">${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<section class="hSec" id="h-${x[0]}"><h3>${esc(x[1])}</h3>${x[3]}</section>`).join('')}</div>`).join('')}
-    <p class="hint" id="hNone" hidden>Nichts gefunden – versuch ein anderes Wort oder schreib an hallo@theisapps.de.</p></div>` });
-  dlg.addEventListener('click', e => { const b = e.target.closest('[data-hgo]'); if (b) { const t = dlg.querySelector('#h-' + b.dataset.hgo); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+  const GI = { 'Erste Schritte': '①', 'Im Alltag': '✎', 'Leistungsnachweise': '▤', 'Szenarien nach Fächern': '◎', 'Seminare': '◆', 'Sonderfälle': '◐', 'Zeugnis und Gespräche': '✉', 'Organisation': '◷', 'Einstellungen und Sicherheit': '⚙', 'Regeln und Fragen': '§' };
+  if (opts && opts.pdf) return helpPdf(S, groups, GI);
+  const nav = groups.map(g => `<div class="hNavG"><div class="hNavGT"><i>${GI[g] || '•'}</i>${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<button type="button" class="hNavI" data-hgo="${x[0]}">${esc(x[1])}</button>`).join('')}</div>`).join('');
+  const { dlg } = sheet({ title: 'Libretto – Hilfe', wide: true, ok: '', cancel: 'Schließen', body: `<div class="helpDoc hTwo">
+    <aside class="hNav"><input type="search" id="hQ" class="hSearch" placeholder="Hilfe durchsuchen …" aria-label="Hilfe durchsuchen">
+      <nav id="hToc">${nav}</nav>
+      <button type="button" class="hPdf" id="hPdf"><b>Handbuch als PDF</b><small>vollständig, zum Ausdrucken</small></button></aside>
+    <div class="hMain prose" id="hMain">
+      <div class="hHero"><img src="icon.png" alt=""><div><div class="hHeroT">Libretto – Handbuch</div><div class="hHeroS">Version ${esc(APPV || '')} · ${S.length} Themen in ${groups.length} Bereichen · Bayerisches Gymnasium (G9)</div></div></div>
+      <div class="notice"><div class="grow"><b>Wichtig:</b> ${esc(Print.DISCLAIMER)} Sichere zusätzlich selbst. Fehler oder Wünsche? Schreib an <b>hallo@theisapps.de</b>.</div></div>
+      ${groups.map(g => `<div class="hGroup" data-hg="${esc(g)}"><div class="hGroupT"><i>${GI[g] || '•'}</i>${esc(g)}</div>${S.filter(x => x[2] === g).map(x => `<section class="hSec" id="h-${x[0]}"><h3>${esc(x[1])}</h3>${x[3]}</section>`).join('')}</div>`).join('')}
+      <p class="hint" id="hNone" hidden>Nichts gefunden – versuch ein anderes Wort oder schreib an hallo@theisapps.de.</p></div></div>` });
+  dlg.classList.add('helpDlg');
+  const main = dlg.querySelector('#hMain');
+  const mark = id => $$('.hNavI', dlg).forEach(b => b.classList.toggle('on', b.dataset.hgo === id));
+  dlg.addEventListener('click', e => {
+    const b = e.target.closest('[data-hgo]'); if (b) { const t = dlg.querySelector('#h-' + b.dataset.hgo); if (t) { main.scrollTo({ top: t.offsetTop - main.offsetTop - 8, behavior: 'smooth' }); mark(b.dataset.hgo); } }
+    if (e.target.closest('[data-srcpdf]')) exportModel(modelSources(), 'pdf');
+  });
+  /* aktueller Abschnitt in der Leiste markiert */
+  let raf = 0; main.addEventListener('scroll', () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const y = main.scrollTop + 40; let cur = null;
+    for (const sx of $$('.hSec', main)) { if (sx.hidden) continue; if (sx.offsetTop - main.offsetTop <= y) cur = sx; else break; }
+    if (cur) mark(cur.id.slice(2)); }); }, { passive: true });
+  mark(S[0][0]);
+  if (opts && opts.topic) setTimeout(() => { const t = dlg.querySelector('#h-' + opts.topic); if (t) { main.scrollTo({ top: t.offsetTop - main.offsetTop - 8 }); mark(opts.topic); } }, 60);
   dlg.querySelector('#hQ').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); let n = 0;
-    $$('.hSec', dlg).forEach(sx => { const hit = !q || sx.textContent.toLowerCase().includes(q); sx.hidden = !hit; if (hit) n++; });
+    $$('.hSec', dlg).forEach(sx => { const hit = !q || sx.textContent.toLowerCase().includes(q); sx.hidden = !hit; if (hit) n++; const nb = dlg.querySelector(`.hNavI[data-hgo="${sx.id.slice(2)}"]`); if (nb) nb.hidden = !hit; });
     $$('.hGroup', dlg).forEach(g => g.hidden = !$$('.hSec', g).some(sx => !sx.hidden));
-    dlg.querySelector('#hToc').hidden = !!q; dlg.querySelector('#hNone').hidden = n > 0; });
+    $$('.hNavG', dlg).forEach(g => g.hidden = !$$('.hNavI', g).some(x => !x.hidden));
+    dlg.querySelector('#hNone').hidden = n > 0; });
+  dlg.querySelector('#hPdf').onclick = async ev => { const btn = ev.currentTarget; btn.disabled = true;
+    try { await helpPdf(S, groups, GI); } catch (err) { toast('PDF konnte nicht erstellt werden'); } finally { btn.disabled = false; } };
+}
+
+/* Handbuch als PDF: Titelseite, Inhaltsverzeichnis, je Bereich eine neue Seite; Bilder eingebettet */
+async function helpPdf(S, groups, GI) {
+  const st = (D && D.settings) || {};
+  const box = document.createElement('div');
+  box.innerHTML = S.map(x => `<section data-id="${x[0]}">${x[3]}</section>`).join('');
+  box.querySelectorAll('button,input,.panelBtns').forEach(n => n.remove());
+  for (const img of box.querySelectorAll('img')) {
+    try { const bl = await (await fetch(img.getAttribute('src'))).blob(); img.src = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch (e) { img.closest('figure') ? img.closest('figure').remove() : img.remove(); }
+  }
+  const body = {}; box.querySelectorAll('section[data-id]').forEach(n => body[n.dataset.id] = n.innerHTML);
+  let icon = ''; try { const bl = await (await fetch('icon.png')).blob(); icon = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch (e) {}
+  const num = {}; let k = 0; groups.forEach((g, gi) => S.filter(x => x[2] === g).forEach((x, si) => num[x[0]] = (gi + 1) + '.' + (si + 1)));
+  const css = `*{box-sizing:border-box}body{margin:0;font:10.2pt/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#1b1d22;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cover{height:252mm;display:flex;flex-direction:column;justify-content:space-between;padding:26mm 6mm 8mm;page-break-after:always}
+  .cover img.ic{width:30mm;height:30mm;border-radius:7mm;box-shadow:0 2mm 6mm rgba(29,43,79,.18)}
+  .cover .ey{font-size:9pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;margin-top:18mm}
+  .cover h1{font-size:38pt;line-height:1.05;margin:3mm 0 4mm;color:#1d2b4f;letter-spacing:-.02em}
+  .cover .sub{font-size:14pt;color:#444;max-width:130mm}
+  .cover .bar{height:2.2mm;width:42mm;background:#1d2b4f;border-radius:1mm;margin:9mm 0}
+  .cover .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:6mm}
+  .cover .facts div{border:.3mm solid #d5d9e0;border-radius:3mm;padding:3.5mm 4mm}.cover .facts b{display:block;font-size:15pt;color:#1d2b4f}.cover .facts span{font-size:8.4pt;color:#5b6271;text-transform:uppercase;letter-spacing:.06em}
+  .cover .foot{font-size:8.6pt;color:#5b6271;border-top:.3mm solid #d5d9e0;padding-top:3mm}
+  .toc{page-break-after:always}.toc h2,.grp h2{font-size:20pt;color:#1d2b4f;margin:0 0 6mm;letter-spacing:-.01em}
+  .toc .g{margin:0 0 4mm;break-inside:avoid}.toc .g b{display:block;font-size:9pt;text-transform:uppercase;letter-spacing:.08em;color:#1d2b4f;border-bottom:.3mm solid #1d2b4f;padding-bottom:1mm;margin-bottom:1.5mm}
+  .toc .it{display:flex;gap:3mm;font-size:10pt;padding:.6mm 0}.toc .it i{font-style:normal;color:#6b7280;width:9mm;flex:none;font-variant-numeric:tabular-nums}
+  .toc .cols{columns:2;column-gap:10mm}
+  .grp{page-break-before:always}.grp:first-of-type{page-break-before:auto}
+  .gh{display:flex;align-items:center;gap:4mm;border-bottom:.6mm solid #1d2b4f;padding-bottom:2.5mm;margin-bottom:5mm}
+  .gh .n{font-size:9pt;font-weight:700;color:#fff;background:#1d2b4f;border-radius:1.6mm;padding:1mm 2.4mm}.gh h2{margin:0}
+  section{margin:0 0 6mm}section h3{font-size:12.5pt;color:#1d2b4f;margin:0 0 2mm;break-after:avoid;page-break-after:avoid}
+  section h3 i{font-style:normal;color:#8a93a6;font-weight:600;margin-right:2mm;font-variant-numeric:tabular-nums}
+  p{margin:0 0 2.2mm;orphans:3;widows:3}ul,ol{margin:0 0 2.5mm;padding-left:5.5mm}li{margin:.6mm 0}
+  .hint,.note{color:#4b5263;font-size:9.4pt;background:#f3f5fa;border-left:.8mm solid #9aa6c2;padding:2mm 3mm;border-radius:0 1.5mm 1.5mm 0;break-inside:avoid}
+  .kbd{display:inline-block;border:.3mm solid #b9bec8;border-bottom-width:.6mm;border-radius:1.2mm;padding:0 1.4mm;font-size:8.6pt;font-family:inherit;background:#fff}
+  figure{margin:2mm 0 4mm;break-inside:avoid;text-align:center}figure img{max-width:125mm;max-height:72mm;margin:0 auto;border:.3mm solid #d5d9e0;border-radius:2mm;display:block}
+  table{border-collapse:collapse;width:100%;font-size:9pt;margin:1mm 0 3mm;break-inside:auto}th,td{border:.3mm solid #c9ced8;padding:1.2mm 2mm;text-align:left;vertical-align:top}th{background:#eef0f4}tr{break-inside:avoid}
+  .hCards{display:grid;grid-template-columns:1fr 1fr;gap:3mm}.hCards>div{border:.3mm solid #d5d9e0;border-radius:2.5mm;padding:2.5mm 3mm;break-inside:avoid}.hCards p{margin:1mm 0 0;font-size:9.4pt}
+  .srcDir{display:block}.srcGrp{margin:0 0 4mm}.srcGrp h4{font-size:9pt;text-transform:uppercase;letter-spacing:.07em;color:#1d2b4f;margin:4mm 0 1.5mm;break-after:avoid}
+  .srcItem{display:grid;grid-template-columns:7mm 1fr 40mm;gap:0 3mm;padding:1.1mm 0;border-top:.2mm solid #e2e5eb;break-inside:avoid}.srcItem b,.srcItem span{display:block}.srcNo{color:#6b7280;font-weight:700;font-size:8.6pt}.srcT{font-weight:400}.srcW{color:#444;font-size:9pt;margin-top:.6mm}.srcW em{font-style:normal;color:#6b7280}.srcF{color:#5b6271;font-size:8.2pt;text-align:right}.srcL{display:block;font-size:7.8pt;color:#1d2b4f;word-break:break-all;margin-top:.6mm}.srcS{display:block;font-style:normal;font-size:7.4pt;color:#5b6271;margin-top:.5mm}
+  a{color:#1d2b4f;text-decoration:none}`;
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${css}</style></head><body>
+  <div class="cover"><div>${icon ? `<img class="ic" src="${icon}" alt="">` : ''}<div class="ey">Handbuch · Version ${esc(APPV || '')}</div><h1>Libretto</h1><div class="sub">Notenverwaltung für Lehrkräfte am bayerischen Gymnasium (G9) – alles, was du zum Arbeiten brauchst.</div><div class="bar"></div>
+    <div class="facts"><div><b>${S.length}</b><span>Themen</span></div><div><b>${groups.length}</b><span>Bereiche</span></div><div><b>${esc(new Date().toLocaleDateString('de-DE'))}</b><span>Stand</span></div></div></div>
+    <div class="foot">${st.school ? esc(st.school) + ' · ' : ''}${st.teacher ? esc(st.teacher) + ' · ' : ''}Libretto ist kostenlos · theisapps.de · hallo@theisapps.de</div></div>
+  <div class="toc"><h2>Inhalt</h2><div class="cols">${groups.map((g, gi) => `<div class="g"><b>${gi + 1} · ${esc(g)}</b>${S.filter(x => x[2] === g).map(x => `<div class="it"><i>${num[x[0]]}</i><span>${esc(x[1])}</span></div>`).join('')}</div>`).join('')}</div></div>
+  ${groups.map((g, gi) => `<div class="grp"><div class="gh"><span class="n">${gi + 1}</span><h2>${esc(g)}</h2></div>${S.filter(x => x[2] === g).map(x => `<section><h3><i>${num[x[0]]}</i>${esc(x[1])}</h3>${body[x[0]]}</section>`).join('')}</div>`).join('')}
+  </body></html>`;
+  await N.savePdf('Libretto-Handbuch.pdf', html, false, Print.footer(st));
 }
 
 /* ======================================================================
@@ -3300,7 +4163,20 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 
 /* ---------- Über Libretto ---------- */
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
-const NEW_IN = 'Neu in 1.0.6: Fenster rollen deutlich flüssiger · Simulationen lassen sich drucken (PDF/Word) · Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit · „Gewertet: x von y“ zeigt, wer mitzählt · Fußzeile im Ausdruck gut lesbar · Simulationen zeigen die ganze Klassenliste – wer sich ändert, ist farbig markiert · neue Simulation direkt unter den Aufgaben: Was passiert, wenn eine Aufgabe halb oder doppelt zählt? · Ausdrucke ohne Umbruch mitten in der Auswertung, Oberstufen-Schlüssel kompakt · Oberstufe „Eigene Grenzen“ ab der untersten 4 (4 Punkte) · amtliche BE-Tabelle · Hilfe mit Quellenverzeichnis';
+/* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
+const CHANGES = [
+  ['1.1.0', ['Leistungsfach Sport: Fach Sport und Sporttheorie in einem Kurs – Libretto rechnet die Endpunktzahl nach der Bekanntmachung zum Sportunterricht in Q12/Q13 (Nr. 2.3.1): beide Teile gerundet, dann der Durchschnitt, keine Aufrundung auf 1 Punkt', 'Datenschutz: Hinweis in der Übersicht, wenn Kurse älter als zwei Schuljahre sind (LDO § 14a) – mit Löschen oder „Noch behalten“; Libretto löscht nie von selbst', 'Technik erneuert: aktuelle Electron-Version (45), PDF-Leser pdf.js 6 und Excel-Leser SheetJS 0.20.3 mit allen Sicherheitskorrekturen', 'Notentabelle: Tab und Enter springen ohne Verzögerung weiter – kein Tastendruck geht verloren', 'Punkte-Spalten zeigen groß die Note und klein die Punkte – beim Eintippen wie gewohnt die Punkte', 'Aufgabenblatt: Felder stehen in jeder Fenstergröße exakt unter ihren Spaltenköpfen', 'Neue Installation: DMG für den Mac mit Anleitung für den ersten Start, Installationsprogramm für Windows im neuen Design', 'Einstellungen → Termine: Schultermine aus Datei einlesen oder Schulkalender abonnieren; Einstellungen → Sicherheit: Klassen austauschen und alte Kurse', 'Hilfe und Handbuch ergänzt: Kalender-Abo Schritt für Schritt, Gastschüler, Zwischensumme, Speichern, Löschhinweis', '⌘S bzw. Strg+S speichert überall – auch in offenen Fenstern und mit gerade getipptem Wert; eine Sicherung höchstens alle zehn Minuten', 'Punkte je Aufgabe: Schreibaufgabe und Sprachmittlung zeigen ihre Zwischensumme mit Faktor (z. B. (4 + 6) × 2 = 20) – zum Übertragen auf den Korrekturbogen', 'Neu: macOS 13 (Ventura) oder neuer nötig']],
+  ['1.0.12', ['Aufgabenpunkte: Wird eine Aufgabe gelöscht, ergänzt oder werden Punkte eingefügt, rechnet die Summe immer neu – von Hand eingetragene Gesamtpunkte bleiben stehen und sind mit ✎ markiert', 'Passt der Notenschlüssel nicht mehr zur Summe (z. B. nur noch 1 BE), gibt es keine Note statt einer falschen – mit deutlichem Hinweis', 'Gleiche Namen: Notenblatt und Klassen-Abgleich ordnen nichts mehr unsicher zu (andere Klasse, gleicher Name ohne Kennung); beim Einfügen gleicher Namen fragt Libretto nach', 'Gast ohne Wertung und „ohne Note“ jetzt in allen Ausgaben gleich: Übertragsliste, Schülerblatt, Notenübersicht, CSV', 'Hörverstehen: nur ganze BE auch im Aufgabenblatt und beim Einfügen; Prüfungsteil „BE · Hörverstehen“ als eigene Art', 'Ersatz-Schulaufgabe in zwei Teilen zählt beim Verhältnis 1 : 1 / 2 : 1 als eine Arbeit', 'Ferienkalender bis Sommer 2030 (Ferienordnung vom 07.12.2022); danach schlägt Libretto keine Abgabefrist vor', 'Kalender-Abo: Zeit- und Größenlimit gelten für den ganzen Download', 'Quellenverzeichnis mit geprüften Links zu allen Originalen; W-Seminar: Prüfungsgespräch „ca. 25 Minuten“ laut ISB-Übersicht']],
+  ['1.0.11', ['Moderne Fremdsprachen: kein KMK-Raster mehr (KMS vom 08.03.2023: ausreichend je nach Aufgabe 50–60 %, ungenügend unter 33 %); ältere Arbeiten mit KMK-Raster werden einmal zur Prüfung angezeigt – nichts ändert sich von selbst', 'Schnellwahl 4 ab 50 / 55 / 60 %', 'W-Seminar: Leitfragen der Seminararbeit wörtlich nach Anlage 5a; Bewertungsbogen wieder auf einer Seite', 'Alle Ausdrucke geprüft: kein fast leeres letztes Blatt mehr (Liste wird bei Bedarf etwas enger gesetzt), Word im Querformat richtig, keine leere Seite zwischen Bögen, Zahl und Einheit nie getrennt, Q12/Q13 „BE“ und „Punkte“ einheitlich']],
+  ['1.0.10', ['Hörverstehen Q12/Q13 wie die ISB-Rechentabelle (Lösungsgrad, Grenzen ungerundet, nur ganze BE)', 'Prüfungsteile: Gesamtnote wird erst am Ende gerundet (wie die Rechentabelle); Vorlagen nach dem ISB-Leitfaden 04/2025; fehlende BE deutlich markiert', 'Sporttheorie als eigene Punktzahl (§ 29 Abs. 2 GSO)', 'Gastschüler: Zeitraum, Noten zählen oder nur dokumentieren', 'Schulkalender abonnieren (ICS/webcal-Link)', 'Gleichnamige Schüler werden beim Einlesen nicht mehr verwechselt', 'Festgelegte Zeugnisnote getrennt für Zwischen- und Jahreszeugnis', 'Mehr Sicherheit: Schließen nur nach erfolgreichem Speichern, Sperre auch bei Speicherfehler, Wiederherstellen in sicheren Schritten', 'Quellenverzeichnis mit Fundstellen, Links und Prüfstand', 'Notenschlüssel werden vor dem Speichern geprüft; Verhältnis 2 : 1 von Anfang an nach der Mindestzahl der Schulaufgaben']],
+  ['1.0.9', ['Einstellungen neu geordnet: Farbwelten und Schriften als Auswahl, Textgröße, „Effekte reduzieren“ für ältere Computer, Ansicht der Kursliste', 'Neues Anmeldefenster mit „Passwort anzeigen“ und Hinweis bei Feststelltaste', 'Hilfe überarbeitet und vollständig – auch als PDF zum Ausdrucken', 'Strukturiertes Quellenverzeichnis aller Rechtsgrundlagen, auch als PDF', 'Q12/Q13 mit amtlicher BE-Tabelle: Grenzen immer ganze BE']],
+  ['1.0.8', ['W- und P-Seminar mit Leitfach statt als „Fach“', 'Fach-Auswahl mit eigener, aufgeräumter Liste', 'Kursliste und Übersicht nach Stufen: Oberstufe ab Jahrgangsstufe 11, Seminare eigens']],
+  ['1.0.7', ['W-Seminar: Bewertungsbögen nach ISB-Vorlage für Seminararbeit und Prüfungsgespräch (auch leer zum Ausfüllen)', 'Beratungsgespräch mit Zielvereinbarung und Leitfragen', 'Terminliste der Prüfungsgespräche', 'Kurztitel fürs Abiturzeugnis', '„Prüfungsgespräch“ wie in der GSO 2026', 'Unterschriftsfeld im Ausdruck nie allein auf einer neuen Seite']],
+  ['1.0.6', ['Fristen fürs Notenmachen (Zwischenbericht, Halbjahr, Q12/Q13, Jahreszeugnis) – auch aus den Schulterminen', 'Simulationen lassen sich drucken', 'Nachtermin (NT) zählt für die Person, nicht im Notenspiegel der Arbeit', '„Gewertet: x von y“ zeigt, wer mitzählt', 'Fußzeile im Ausdruck gut lesbar, Fenster rollen flüssiger']],
+  ['1.0.5', ['Faktor-Simulation direkt im Fenster „Leistungsnachweis bearbeiten“']],
+  ['1.0.4', ['Simulationen mit ganzer Klassenliste – wer sich ändert, ist farbig markiert', 'Simulation: Was passiert, wenn eine Aufgabe halb oder doppelt zählt?', 'Ausdrucke ohne Umbruch mitten in der Auswertung']],
+  ['1.0.3', ['Amtliche BE-Tabelle für Q12/Q13', '„Eigene Grenzen“ in Q12/Q13 ab der untersten 4 (4 Punkte)', 'Hilfe mit Quellenverzeichnis']]];
+const NEW_IN = 'Neu in ' + CHANGES[0][0] + ': ' + CHANGES[0][1].join(' · ');
 async function openAbout() {
   const old = document.getElementById('abDlg'); if (old) { old.close(); old.remove(); }
   const v = await N.version();
@@ -3309,9 +4185,10 @@ async function openAbout() {
     <div class="abtop"><div class="abicon"><img src="icon.png" alt="" width="104" height="104"></div><h2 class="abname">Libretto</h2><div class="abver">Version ${esc(v)}</div>
       <p class="abline">Notenverwaltung für das bayerische Gymnasium – rechnet nach der GSO, verschlüsselt auf deinem Computer.</p></div>
     <div class="abacts"><a class="abbtn" href="${SITE_URL}" target="_blank" rel="noopener">Website</a><a class="abbtn pri" href="${SUPPORT_URL}" target="_blank" rel="noopener">☕ Einen Kaffee ausgeben</a></div>
-    <div class="abnew"><h3>Neu in ${esc(v.split('.').slice(0, 2).join('.'))}</h3><p>${esc(NEW_IN)}</p></div>
+    <div class="abnew"><h3>Neu in Version ${esc(CHANGES[0][0])}</h3><ul>${CHANGES[0][1].map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+      <details class="abold"><summary>Frühere Versionen</summary>${CHANGES.slice(1).map(([vv, it]) => `<h4>${esc(vv)}</h4><ul>${it.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}</details></div>
     <p class="abnote">Alle Daten bleiben auf diesem Gerät. · Berechnungen nach der GSO ohne Gewähr – die Verantwortung für die Notengebung liegt bei der Lehrkraft.</p>
-    <div class="ablinks"><button type="button" id="abLic">Lizenzen</button><button type="button" id="abHelp">Hilfe</button></div>
+    <div class="ablinks"><button type="button" id="abHelp">Hilfe</button><button type="button" id="abSrc">Quellenverzeichnis</button><button type="button" id="abLic">Lizenzen</button></div>
     <div class="abfoot"><span>© 2026</span>${window.THEISAPPS_LOGO}</div>`;
   document.body.appendChild(d);
   const close = () => { d.close(); d.remove(); };
@@ -3320,6 +4197,7 @@ async function openAbout() {
   d.addEventListener('cancel', e => { e.preventDefault(); close(); });
   d.querySelector('#abLic').onclick = () => { close(); openLicenses(); };
   d.querySelector('#abHelp').onclick = () => { close(); if (D) helpSheet(); };
+  d.querySelector('#abSrc').onclick = () => { close(); sourcesSheet(); };
   d.showModal();
 }
 $('#aboutBtn').innerHTML = window.THEISAPPS_LOGO;
@@ -3333,6 +4211,17 @@ $('#sideActs').addEventListener('click', e => {
 });
 
 /* Menü */
+/* ⌘S / Strg+S – überall, auch mit offenem Fenster: 1. gerade getippten Wert übernehmen (wie Enter), 2. sofort speichern,
+   3. eine Sicherung höchstens alle 10 Minuten (sonst verdrängen viele Sicherungen am selben Tag die älteren Stände). */
+let lastShortcutBk = 0;
+async function saveShortcut() {
+  const el = document.activeElement;
+  if (el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea') && !el.readOnly && !el.disabled && el.value !== el.defaultValue) el.dispatchEvent(new Event('change', { bubbles: true }));
+  try { await flush(); } catch (e) { toast('Speichern fehlgeschlagen – Libretto versucht es weiter', 6000); return; }
+  if (Date.now() - lastShortcutBk < 10 * 60e3) { toast('Gespeichert ✓', 1600); return; }
+  const r = await N.backupNow(); if (r && r.ok) lastShortcutBk = Date.now();
+  toast(r && r.ok ? 'Gespeichert und gesichert ✓' : bkMsg(r), r && r.ok ? 2200 : 6000);
+}
 N.onMenu(cmd => {
   if (!D) return;
   if (cmd === 'newCourse') courseSheet();
@@ -3340,7 +4229,7 @@ N.onMenu(cmd => {
   if (cmd === 'pdf' && course()) exportModel(modelCourse(course()), 'pdf');
   if (cmd === 'csv' && course()) exportModel(modelCourse(course()), 'csv');
   if (cmd === 'licenses') openLicenses();
-  if (cmd === 'backup') { flush().then(() => N.backupNow()).then(r => toast(bkMsg(r), r.ok ? 2600 : 6000)); }
+  if (cmd === 'backup') saveShortcut();
   if (cmd === 'lock') lockNow();
   if (cmd === 'settings') settingsSheet();
   if (cmd === 'help') helpSheet();
@@ -3351,7 +4240,7 @@ N.onMenu(cmd => { if (cmd === 'about') openAbout(); });
 (async () => {
   const pf = await N.platform(); if (pf === 'darwin') document.body.classList.add('mac');
   ST = await N.status();
-  applyLook(ST.skin, ST.mode, ST.font); setSideC(!!ST.sideC, false); applySideG(ST.sideG); document.body.classList.toggle('dense', !!ST.dense);
+  applyLook(ST.skin, ST.mode, ST.font); applyFx(ST.fx); applyZoom(ST.zoom); setSideC(!!ST.sideC, false); applySideG(ST.sideG); document.body.classList.toggle('dense', !!ST.dense);
   $('#sideKbd').textContent = pf === 'darwin' ? '⌘K' : 'Strg+K';
   if (!ST.exists) setupStep(1); else renderLock();
 })();

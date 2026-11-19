@@ -1,7 +1,9 @@
 /* Libretto · Ausdrucke (PDF über HTML, Word über docx.js) – ein Modell, zwei Ausgaben · © 2026 theis */
 'use strict';
 const Print = (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* Zahl und Einheit nie trennen („50 %“, „12 P.“, „24 BE“) – geschütztes Leerzeichen */
+  const nb = s => String(s ?? '').replace(/(\d) (%|P\.|BE\b|Min\.)/g, '$1\u00a0$2');
+  const esc = s => nb(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const DISCLAIMER = 'Libretto ersetzt nicht die Notendokumentation der Schule. Noten bitte zeitnah ins Infoportal bzw. Schulprogramm übertragen. Berechnung nach GSO ohne Gewähr – die Verantwortung für die Notengebung liegt bei der Lehrkraft.';
   const today = () => new Date().toLocaleDateString('de-DE');
 
@@ -17,7 +19,7 @@ const Print = (() => {
   function barsSvg(b, w, h) {
     const n = b.labels.length, max = Math.max(1, ...b.values), tot = b.values.reduce((x, y) => x + y, 0) || 1;
     const padL = 4, padR = 4, padT = 30, padB = 22, bw = (w - padL - padR) / n, small = n > 8;
-    let o = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="-apple-system,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif">`;
+    let o = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="max-width:100%;height:auto" font-family="-apple-system,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif">`;
     o += `<line x1="${padL}" y1="${h - padB + .5}" x2="${w - padR}" y2="${h - padB + .5}" stroke="#9aa1ad" stroke-width="1"/>`;
     b.values.forEach((v, i) => {
       const bh = Math.max(v ? 2 : 0, (h - padT - padB) * v / max), x = padL + i * bw + bw * (small ? .12 : .16), wd = bw * (small ? .76 : .68), y = h - padB - bh, cx = x + wd / 2;
@@ -31,6 +33,10 @@ const Print = (() => {
   const INK = '#1d2b4f';
   const CSS = `
       *{box-sizing:border-box}
+      /* „Auf weniger Seiten“: nur wenn sonst ein fast leeres letztes Blatt entstünde (siehe fitHtml in app.js) */
+      body.fit1 td{padding-top:1.6px!important;padding-bottom:1.6px!important} body.fit1 h2{margin-top:11px} body.fit1 .stats{margin-bottom:8px}
+      body.fit2{font-size:8.9pt} body.fit2 table{font-size:8.5pt} body.fit2 .hd{margin-bottom:8px}
+      body.fit3{font-size:8.5pt} body.fit3 table{font-size:8.1pt} body.fit3 td{padding-top:1.1px!important;padding-bottom:1.1px!important} body.fit3 h2{margin:8px 0 4px} body.fit3 .stats .v{font-size:14pt}
       body{margin:0;font:9.4pt/1.42 -apple-system,"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;color:#1b1d22;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:9px;margin-bottom:10px;border-bottom:2pt solid ${INK}}
       .hd .eyebrow{font-size:7.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#3f4552;margin-bottom:3px}
@@ -62,7 +68,7 @@ const Print = (() => {
       th{font-size:7pt;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#4b5160;border-bottom:1.25pt solid ${INK};padding:5px 5px 4px;text-align:center;vertical-align:bottom;background:#fff}
       tr.hg th{border-bottom:.75pt solid #c3c9d4;color:${INK};padding-bottom:2px}
       tr.hg th.e{border-bottom:none}
-      td{border-bottom:.5pt solid #e3e6ec;padding:3.6px 5px;text-align:center;vertical-align:middle}
+      td{border-bottom:.5pt solid #e3e6ec;padding:3.6px 5px;text-align:center;vertical-align:middle;overflow-wrap:break-word}
       table.small td{padding:2.6px 4px}
       table.dense td{padding-top:1.9px;padding-bottom:1.9px} table.dense td.big{font-size:10.5pt}
       tbody tr:nth-child(even) td{background:#f7f8fa}
@@ -79,6 +85,21 @@ const Print = (() => {
       .pb{page-break-after:always;height:0}
       .bars{margin:2px 0 6px;break-inside:avoid}
       table.kv th{width:27%;text-align:left;vertical-align:top;font-size:7.5pt;border-bottom:.5pt solid #e3e6ec;text-transform:none;letter-spacing:0} table.kv td{text-align:left;vertical-align:top;white-space:pre-wrap;background:none!important}
+      .keepT{break-inside:avoid;page-break-inside:avoid}
+      .crit{margin:0 0 10px}
+      .ci{border:.75pt solid #d5d9e0;border-radius:6px;padding:6px 10px 7px;margin:0 0 6px;break-inside:avoid;page-break-inside:avoid}
+      .cTop{display:grid;grid-template-columns:minmax(0,1fr) auto 58px;gap:14px;align-items:center}
+      .cName{min-width:0} .cName b{font-size:9.6pt;color:${INK};font-weight:700;line-height:1.25} .cName span{display:block;font-size:7.6pt;color:#3a3f4b;line-height:1.36;margin-top:1px}
+      .cName span.cW{display:inline-block;font-size:6.8pt;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#3f4552;background:#eef0f4;border-radius:3px;padding:1px 5px;margin-left:7px;vertical-align:1.5px;white-space:nowrap}
+      .cV{text-align:right;font-size:13pt;font-weight:750;color:${INK};line-height:1.05;white-space:nowrap} .cV small{display:block;font-size:7pt;font-weight:600;color:#3f4552;margin-top:2px}
+      .cScale{display:flex;gap:5px;flex-wrap:nowrap;align-items:flex-end}
+      .cG{display:flex;flex-direction:column;align-items:center;gap:1.5px} .cG i{font-style:normal;font-size:6.2pt;font-weight:700;color:#3f4552;letter-spacing:.04em;line-height:1}
+      .cG div{display:flex;gap:1.5px}
+      .cB{min-width:16px;height:15px;padding:0 3px;border:.75pt solid #aab1bd;border-radius:3px;font-size:7.2pt;font-weight:600;color:#3a3f4b;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+      .cB.on{background:${INK};border-color:${INK};color:#fff}
+      .cScale.wide{gap:4px} .cScale.wide .cB{min-width:30px;height:18px;font-size:8.6pt}
+      .cNote{margin-top:5px;padding-top:4px;border-top:.5pt dotted #c3c9d4;font-size:8.4pt;line-height:1.4;white-space:pre-wrap} .cNote em{font-style:normal;font-size:6.6pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#3f4552;margin-right:6px}
+      .cLines{margin-top:6px} .cLines div{border-bottom:.5pt solid #b9bec8;height:17px} .cLines.wr{margin:0 0 12px;break-inside:avoid} .cLines.wr div{height:22px}
       .sig{display:flex;gap:40px;margin-top:34px;break-inside:avoid} .split .sig{gap:18px;margin-top:30px} .sig div{flex:1;border-top:.75pt solid #1b1d22;padding-top:4px;font-size:7.6pt;color:#3a3f4b}`;
   /* Kopfbereich: Titel (+ kleine Zeile darüber), Untertitel, rechts Schule und Lehrkraft; darunter die Eckdaten als Marken (ohne die doppelte Lehrkraft) */
   function headHtml(mm, settings) {
@@ -95,10 +116,24 @@ const Print = (() => {
     const nameCol = t.head.indexOf('Name');
     const cellCls = (i, extra) => [al(i), i === nameCol ? 'nw' : '', (t.bold || []).includes(i) ? 'b' : '', (t.big || []).includes(i) ? 'big' : '', (t.muted || []).includes(i) ? 'mut' : '', edge(i), extra || ''].filter(Boolean).join(' ');
     const hg = t.headGroups ? `<tr class="hg">${t.headGroups.map(g => `<th colspan="${g.span || 1}" class="${g.label ? '' : 'e'}">${esc(g.label || '')}</th>`).join('')}</tr>` : '';
-    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense ? 'dense' : ''].join(' ')}"><thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
+    const cg = t.pct && t.widths ? `<colgroup>${t.widths.map(x => `<col style="width:${x}%">`).join('')}</colgroup>` : '';
+    /* lange Listen (ganze Klasse) etwas enger, damit bis gut 30 Namen auf eine Seite passen */
+    return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense || t.rows.length > 22 ? 'dense' : ''].join(' ')}"${cg ? ' style="table-layout:fixed"' : ''}>${cg}<thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
-        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
+  /* Bewertungsraster: je Kriterium eine Karte mit Beschreibung, Gewicht, Wert, Skala und Anmerkungen (leer: Linien zum Ausfüllen)
+     c = { scale: [{ g?:'1', v:['15','14','13'] } …] oder ['++','+','–','––'], items: [{ l, d, w, v, vs, sel, note }], lines } */
+  function critHtml(c) {
+    const grouped = c.scale.length && typeof c.scale[0] === 'object';
+    const sc = it => grouped ? `<div class="cScale">${c.scale.map(g => `<div class="cG"><i>${esc(g.g)}</i><div>${g.v.map(x => `<span class="cB ${String(it.sel) === String(x) ? 'on' : ''}">${esc(x)}</span>`).join('')}</div></div>`).join('')}</div>`
+      : `<div class="cScale wide">${c.scale.map(x => `<span class="cB ${String(it.sel) === String(x) ? 'on' : ''}">${esc(x)}</span>`).join('')}</div>`;
+    return `<div class="crit">${c.items.map(it => `<div class="ci"><div class="cTop"><div class="cName"><b>${esc(it.l)}</b>${it.w ? `<span class="cW">${esc(it.w)}</span>` : ''}${it.d ? `<span>${esc(it.d)}</span>` : ''}</div>${sc(it)}<div class="cV">${esc(it.v || '')}${it.vs ? `<small>${esc(it.vs)}</small>` : ''}</div></div>
+      ${it.note ? `<div class="cNote"><em>Anmerkungen</em>${esc(it.note)}</div>` : (c.lines ? `<div class="cNote"><em>Anmerkungen</em></div><div class="cLines">${'<div></div>'.repeat(c.lines)}</div>` : '')}</div>`).join('')}</div>`;
+  }
+  /* Unterschriftsfeld nie allein auf einer neuen Seite: mit dem Block davor zusammenhalten (auch in Spalten und Gruppen) */
+  const keepSig = list => { const out = []; list.forEach(b => { if (b.split) b = { ...b, split: b.split.map(keepSig) }; if (b.group) b = { group: keepSig(b.group) };
+    if (b.sig && out.length && !out[out.length - 1].pagebreak && !out[out.length - 1].head) out.push({ group: [out.pop(), b] }); else out.push(b); }); return out; };
   function html(m, settings) {
     const block = b => {
       if (b.h) return `<h2>${esc(b.h)}</h2>`;
@@ -112,10 +147,13 @@ const Print = (() => {
       if (b.kv) return `<table class="kv"><tbody>${b.kv.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table>`;
       if (b.sig) return `<div class="sig">${b.sig.map(s => `<div>${esc(s)}</div>`).join('')}</div>`;
       if (b.table) return tableHtml(b.table);
+      if (b.crit) return critHtml(b.crit);
+      if (b.group) return `<div class="keepT">${b.group.map(block).join('')}</div>`;
+      if (b.lines) return `<div class="cLines wr">${'<div></div>'.repeat(b.lines)}</div>`;
       return '';
     };
     return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}</style></head><body>
-      ${headHtml(m, settings)}${m.blocks.map(block).join('')}</body></html>`;
+      ${headHtml(m, settings)}${keepSig(m.blocks).map(block).join('')}</body></html>`;
   }
 
   /* Fußzeile für jede PDF-Seite (Chromium-Fußzeilenvorlage) */
@@ -142,7 +180,9 @@ const Print = (() => {
     const land = !!m.landscape;
     const W = land ? 15136 : 10206;
     const FONT = 'Arial';
-    const t = (text, o = {}) => new TextRun({ text: String(text ?? ''), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color });
+    const t = (text, o = {}) => new TextRun({ text: nb(text), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color });
+    /* mehrzeiliger Zellentext (\n = neue Zeile, z. B. Link unter dem Titel im Quellenverzeichnis) */
+    const tl = (text, o = {}) => String(text ?? '').split('\n').map((ln, k) => new TextRun({ text: nb(ln), font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color, break: k ? 1 : 0 }));
     /* Text mit Zeilenumbrüchen (z. B. Protokolle) */
     const lines = (text, o = {}) => String(text ?? '').split(/\r?\n/).map((ln, i) => new TextRun({ text: ln, font: FONT, size: o.size || 18, bold: !!o.bold, color: o.color, break: i ? 1 : 0 }));
     const p = (runs, o = {}) => new Paragraph({ children: Array.isArray(runs) ? runs : [runs], alignment: o.align, spacing: { before: o.before || 0, after: o.after ?? 60 }, keepNext: o.keepNext });
@@ -150,6 +190,9 @@ const Print = (() => {
     const B = { top: bd, bottom: bd, left: bd, right: bd };
     const none = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
     const NB = { top: none, bottom: none, left: none, right: none };
+    /* Linien zum Ausfüllen: eine Tabelle mit unterer Linie je Zeile (gleiche Absatzrahmen würde Word zusammenfassen) */
+    const ruled = (n, w) => new Table({ width: { size: w, type: WidthType.DXA }, columnWidths: [w], layout: TableLayoutType.FIXED, rows: Array.from({ length: n }, () => new TableRow({ cantSplit: true, height: { value: 400, rule: 'atLeast' },
+      children: [new TableCell({ borders: { ...NB, bottom: { style: BorderStyle.SINGLE, size: 4, color: 'B9BEC8' } }, width: { size: w, type: WidthType.DXA }, children: [new Paragraph({ keepNext: true, children: [t('')] })] })] })) });
     const bin = atob(window.THEIS_LOGO_PNG.split(',')[1]); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const logo = () => new ImageRun({ type: 'png', data: bytes, transformation: { width: 94, height: 22 } });
     const headBlock = mm => {
@@ -158,12 +201,17 @@ const Print = (() => {
         new TableCell({ borders: { ...NB, bottom: { style: BorderStyle.SINGLE, size: 16, color: '1D2B4F' } }, width: { size: 3400, type: WidthType.DXA }, children: [settings.school, settings.teacher].filter(Boolean).map(x => p(t(x, { size: 16, color: '444444' }), { align: AlignmentType.RIGHT, after: 0 })).concat([p(t(''), { after: 0 })]) }),
       ] })] })];
       const meta = (mm.meta || []).filter(([k]) => !(settings.teacher && /^Lehrkraft/.test(k)));
-      if (meta.length) out.push(p(meta.flatMap(([k, v], i) => [t((i ? '     ' : '') + k + ': ', { color: '555555' }), t(v, { bold: true })]), { before: 120, after: 160 }));
+      /* Umbruch nur zwischen den Angaben, nie innerhalb (z. B. „Kursleitung: J. Muster“) */
+      const keep = x => String(x ?? '').replace(/ /g, '\u00a0');
+      if (meta.length) out.push(p(meta.flatMap(([k, v], i) => [t((i ? '    ' : '') + keep(k + ': '), { color: '555555' }), t(keep(v), { bold: true })]), { before: 120, after: 160 }));
       return out;
     };
     const kids = [...headBlock(m)];
     /* split (zwei Spalten im PDF) wird in Word untereinander gesetzt */
-    const flat = list => list.flatMap(b => b.split ? b.split.flat() : [b]);
+    /* Word kennt keine zwei Spalten: lange Liste links → die rechte Spalte (Notenspiegel, Schlüssel, Unterschrift) geschlossen auf die nächste Seite,
+       statt dass nur ein Rest davon überläuft */
+    const longCol = col => col.some(x => x.table && x.table.rows && x.table.rows.length > 18);
+    const flat = list => list.flatMap(b => b.split ? (b.split.length > 1 && longCol(b.split[0]) ? [...b.split[0], { pagebreak: true }, ...b.split.slice(1).flat()] : b.split.flat()) : b.group ? b.group : [b]);
     for (const b of flat(m.blocks)) {
       if (b.stats) {   /* Kennzahlen als eine Zeile Kästchen; die erste (Durchschnitt) hervorgehoben */
         const n = b.stats.length, cw = Math.floor(W / n);
@@ -183,32 +231,63 @@ const Print = (() => {
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [w1, w2], layout: TableLayoutType.FIXED, rows: b.kv.map(([k, v]) => new TableRow({ cantSplit: false, children: [cell(k, w1, true), cell(v, w2, false)] })) }));
         kids.push(p(t(''), { after: 120 }));
       }
-      else if (b.pagebreak) kids.push(new Paragraph({ children: [new PageBreak()] }));
+      /* „Seitenumbruch davor“ statt Umbruchzeichen: füllt der vorige Bogen die Seite genau, entsteht so keine leere Seite */
+      else if (b.pagebreak) kids.push(new Paragraph({ pageBreakBefore: true, spacing: { before: 0, after: 0, line: 20, lineRule: 'exact' }, children: [new TextRun({ text: '', size: 2 })] }));
       else if (b.bars) { const wpx = b.bars.labels.length > 8 ? 420 : 320, png = await barsPng(b.bars, wpx, 130); if (png) kids.push(new Paragraph({ keepNext: true, children: [new ImageRun({ type: 'png', data: png, transformation: { width: wpx * .75, height: 130 * .75 } })], spacing: { before: 40, after: 120 }, keepNext: false })); }
       else if (b.head) kids.push(...headBlock(b.head));
-      else if (b.sig) kids.push(p(t(''), { after: 500 }), p(b.sig.map((s, i) => t((i ? '                              ' : '') + '______________________________')), {}), p(b.sig.map((s, i) => t((i ? '                                                       ' : '') + s, { size: 15, color: '555555' }))));
+      else if (b.sig) {   /* Unterschriftsfelder: Linie und Beschriftung in einer Tabellenzeile – nie getrennt */
+        const n = b.sig.length, gapW = 700, cw = Math.floor((W - gapW * (n - 1)) / n), line = { style: BorderStyle.SINGLE, size: 6, color: '1B1D22' };
+        const cells = []; b.sig.forEach((sg, i) => { if (i) cells.push(new TableCell({ borders: NB, width: { size: gapW, type: WidthType.DXA }, children: [p(t(''), { after: 0 })] }));
+          cells.push(new TableCell({ borders: { ...NB, top: line }, width: { size: cw, type: WidthType.DXA }, margins: { top: 50, left: 0, right: 0 }, children: [p(t(sg, { size: 15, color: '3A3F4B' }), { after: 0 })] })); });
+        kids.push(new Paragraph({ spacing: { before: 0, after: 0, line: 620 }, keepNext: true, children: [new TextRun({ text: '', size: 8 })] }));
+        kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: cells.map((_, i) => i % 2 ? gapW : cw), layout: TableLayoutType.FIXED, rows: [new TableRow({ cantSplit: true, children: cells })] }));
+      }
+      else if (b.lines) { kids.push(ruled(b.lines, W)); kids.push(p(t(''), { after: 120 })); }
+      else if (b.crit) {   /* Bewertungsraster: je Kriterium ein zusammenhängender Kasten, nie über einen Seitenumbruch getrennt */
+        const c = b.crit, grouped = c.scale.length && typeof c.scale[0] === 'object';
+        const w1 = Math.round(W * 0.66), w2 = Math.round(W * 0.14), w3 = W - w1 - w2;
+        const kb = { style: BorderStyle.SINGLE, size: 6, color: 'D5D9E0' };
+        const box = (x, on) => new TextRun({ text: ` ${x} `, font: FONT, size: 16, bold: on, color: on ? 'FFFFFF' : '3A3F4B', shading: on ? { type: ShadingType.CLEAR, color: 'auto', fill: '1D2B4F' } : { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } });
+        const gap = s2 => new TextRun({ text: s2, font: FONT, size: 16 });
+        c.items.forEach((it, ii) => {
+          const scaleRuns = grouped ? c.scale.flatMap((g, gi) => [gap(gi ? '   ' : ''), new TextRun({ text: 'Note ' + g.g + ' ', font: FONT, size: 13, bold: true, color: '1D2B4F' }), ...g.v.flatMap((x, xi) => [gap(xi ? ' ' : ''), box(x, String(it.sel) === String(x))])])
+            : c.scale.flatMap((x, xi) => [gap(xi ? '    ' : ''), box(x, String(it.sel) === String(x))]);
+          const cell = (children, w, span, o = {}) => new TableCell({ borders: { top: o.top ? kb : NB.top, bottom: o.bottom ? kb : NB.bottom, left: o.left ? kb : NB.left, right: o.right ? kb : NB.right }, width: { size: w, type: WidthType.DXA }, columnSpan: span, verticalAlign: VerticalAlign.TOP, margins: { top: o.mt ?? 60, bottom: o.mb ?? 30, left: 140, right: 140 }, children });
+          const last = !(it.note || c.lines);
+          const rows = [
+            new TableRow({ cantSplit: true, children: [
+              cell([p(t(it.l, { size: 20, bold: true, color: '1D2B4F' }), { after: 10, keepNext: true }), ...(it.d ? [p(t(it.d, { size: 15, color: '3A3F4B' }), { after: 0, keepNext: true })] : [])], w1, 1, { top: 1, left: 1, mt: 90 }),
+              cell([p(t(it.w ? String(it.w).toUpperCase() : '', { size: 13, bold: true, color: '3F4552' }), { after: 0, keepNext: true })], w2, 1, { top: 1, mt: 100 }),
+              cell([p(t(it.v || '', { size: 28, bold: true, color: '1D2B4F' }), { align: AlignmentType.RIGHT, after: 0, keepNext: true }), ...(it.vs ? [p(t(it.vs, { size: 14, color: '3F4552' }), { align: AlignmentType.RIGHT, after: 0, keepNext: true })] : [])], w3, 1, { top: 1, right: 1, mt: 80 })] }),
+            new TableRow({ cantSplit: true, children: [cell([p(scaleRuns, { after: 0, keepNext: !last })], W, 3, { left: 1, right: 1, bottom: last, mt: 70, mb: last ? 100 : 40 })] })];
+          if (!last) rows.push(new TableRow({ cantSplit: true, children: [cell([p([new TextRun({ text: 'ANMERKUNGEN  ', font: FONT, size: 13, bold: true, color: '3F4552' }), ...lines(it.note || '', { size: 17 })], { after: 0, keepNext: !!(!it.note && c.lines) }),
+            ...(!it.note && c.lines ? [ruled(c.lines, W - 280), p(t(''), { after: 0 })] : [])], W, 3, { left: 1, right: 1, bottom: 1, mt: 60, mb: 110 })] }));
+          kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [w1, w2, w3], layout: TableLayoutType.FIXED, rows }));
+          kids.push(new Paragraph({ spacing: { before: 0, after: 0, line: ii === c.items.length - 1 ? 200 : 110 }, children: [new TextRun({ text: '', size: 8 })] }));
+        });
+      }
       else if (b.table) {
         const tb = b.table, n = tb.head.length;
-        const nameW = tb.align && tb.align[0] === 'l' ? Math.min(3200, Math.round(W * 0.3)) : Math.round(W / n);
+        const nameW = tb.align && tb.align[0] === 'l' ? Math.min(n <= 4 ? 4400 : 3200, Math.round(W * (n <= 4 ? 0.42 : 0.3))) : Math.round(W / n);   /* wenige Spalten: Namen breiter, damit sie nicht umbrechen */
         const rest = n > 1 ? Math.floor((W - nameW) / (n - 1)) : W;
         const sumW = tb.widths ? tb.widths.reduce((a, x) => a + x, 0) : 0;
         const widths = tb.widths && tb.widths.length === n ? tb.widths.map(x => Math.floor(W * x / sumW)) : tb.head.map((_, i) => i === 0 ? nameW : rest);
         const sz = tb.small || n > 14 ? 14 : 17;
-        const lastRow = tb.rows.length - 1, keepT = !!tb.keep;
+        const lastRow = tb.rows.length - 1, keepT = !!tb.keep, mv = tb.dense || tb.rows.length > 22 ? 18 : 40;   /* lange Listen enger (wie im PDF) */
         const mk = (txt, i, head, rowIdx) => new TableCell({
           borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
           shading: head ? { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' } : (rowIdx % 2 ? { type: ShadingType.CLEAR, color: 'auto', fill: 'FAFBFC' } : undefined),
-          margins: { top: 40, bottom: 40, left: 70, right: 70 },
-          children: [p(t(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0, keepNext: keepT && (head || rowIdx < lastRow) })] });
+          margins: { top: mv, bottom: mv, left: 70, right: 70 },
+          children: [p(tl(txt, { size: head ? sz - 1 : ((tb.big || []).includes(i) ? 22 : sz), bold: head || (tb.bold || []).includes(i) || (tb.big || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0, keepNext: keepT && (head || rowIdx < lastRow) })] });
         /* Kopfgruppen (z. B. „Schreiben“ über Inhalt und Sprache) als eigene Kopfzeile */
         const hgRow = tb.headGroups ? [new TableRow({ tableHeader: true, children: (() => { let col = 0; return tb.headGroups.map(g => { const span = g.span || 1, w = widths.slice(col, col + span).reduce((x, y) => x + y, 0); col += span;
           return new TableCell({ borders: B, columnSpan: span, width: { size: w, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' }, margins: { top: 30, bottom: 30, left: 70, right: 70 }, children: [p(t(g.label || '', { size: sz - 1, bold: true, color: '1D2B4F' }), { align: AlignmentType.CENTER, after: 0 })] }); }); })() })] : [];
         const mkRow = (r, ri) => { const cells = Array.isArray(r) ? r : r.cells, foot = !Array.isArray(r) && r.cls === 'foot', tint = !Array.isArray(r) && ({ up: 'E5F4EA', down: 'FBE7E5' })[r.cls];
           return new TableRow({ cantSplit: true, children: cells.map((c, i) => { const cell = mk(c, i, false, ri);
-            if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
+            if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: mv, bottom: mv, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: (tb.bold || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
             if (!foot) return cell;
-            return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F6' }, margins: { top: 40, bottom: 40, left: 70, right: 70 },
+            return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F6' }, margins: { top: mv, bottom: mv, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: true, color: '1D2B4F' }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] }); }) }); };
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: widths, layout: TableLayoutType.FIXED, rows: [
           ...hgRow,
@@ -222,16 +301,17 @@ const Print = (() => {
     const who = [settings.teacher, settings.school].filter(Boolean).join(' · ');
     const footer = new Footer({ children: [p(t(`Erstellt am ${today()} · ${DISCLAIMER}`, { size: 14, color: '222222' }), { after: 40 }), p([t('Libretto · ', { size: 15, color: '222222' }), new ImageRun({ type: 'png', data: bytes, transformation: { width: 47, height: 11 } }), t(' · theisapps.de', { size: 15, color: '222222' })], { align: AlignmentType.RIGHT, after: 0 })] });
     const doc = new Document({ creator: 'Libretto (theisapps)', title: m.title, styles: { default: { document: { run: { font: FONT } } } },
-      sections: [{ properties: { page: { size: land ? { orientation: PageOrientation.LANDSCAPE, width: 16838, height: 11906 } : { width: 11906, height: 16838 }, margin: { top: 850, bottom: 1000, left: 850, right: 850 } } }, footers: { default: footer }, children: kids }] });
+      sections: [{ properties: { page: { size: land ? { orientation: PageOrientation.LANDSCAPE, width: 11906, height: 16838 } : { width: 11906, height: 16838 }   /* docx tauscht Breite und Höhe bei LANDSCAPE selbst */, margin: { top: 850, bottom: 1000, left: 850, right: 850 } } }, footers: { default: footer }, children: kids }] });
     return new Uint8Array(await (await Packer.toBlob(doc)).arrayBuffer());
   }
 
   /* CSV (Excel, Semikolon, UTF-8 mit BOM) */
   function csv(m) {
-    const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    /* Text, den Excel als Formel lesen würde (= + - @ am Anfang), bekommt ein Hochkomma davor; Zahlen und ein einzelnes „-“ bleiben unverändert */
+    const q = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s) && !/^[-+]?\d+([.,]\d+)?$/.test(s) && s !== '-') s = "'" + s; return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const lines = [];
-    const all = m.blocks.flatMap(b => b.split ? b.split.flat() : [b]);
-    all.forEach(b => { if (b.h) lines.push(q(b.h)); if (b.stats) { b.stats.forEach(x => lines.push([q(x.l), q(x.v), q(x.s || '')].join(';'))); lines.push(''); } if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : (Array.isArray(r) ? r : r.cells).map(q).join(';'))); lines.push(''); } });
+    const all = m.blocks.flatMap(b => b.split ? b.split.flat() : b.group ? b.group : [b]);
+    all.forEach(b => { if (b.crit) { b.crit.items.forEach(it => lines.push([q(it.l), q(it.w || ''), q(it.v || ''), q(it.sel ?? ''), q(it.note || '')].join(';'))); lines.push(''); } if (b.h) lines.push(q(b.h)); if (b.stats) { b.stats.forEach(x => lines.push([q(x.l), q(x.v), q(x.s || '')].join(';'))); lines.push(''); } if (b.table) { lines.push(b.table.head.map(q).join(';')); b.table.rows.forEach(r => lines.push(r.group != null ? q(r.group) : (Array.isArray(r) ? r : r.cells).map(q).join(';'))); lines.push(''); } });
     return new TextEncoder().encode('﻿' + lines.join('\r\n'));
   }
   return { html, footer, docx, csv, DISCLAIMER, barsSvg };

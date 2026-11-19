@@ -63,7 +63,7 @@
     const S = F.S, sg = F.suggestion();
     const done = S.sessions.filter((x) => x.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(x.status)).sort((a, b) => (a.session_date < b.session_date ? 1 : -1));
     const card = (ic, t, sub, act, extra = '') => `<button class="it" data-act="${act}" ${extra}><div class="ico">${ic}</div><div class="grow"><b>${t}</b><div class="small mute">${sub}</div></div>${arrow}</button>`;
-    return `<div class="h1" style="margin-bottom:4px">Training</div><p class="mute" style="margin-top:0">Hier startest du eine Einheit und siehst, was du schon gemacht hast.</p>
+    return `<div class="h1" style="margin-bottom:14px">Training</div>
       <div class="card list">
         ${sg.rest || sg.empty ? '' : card(F.icon.dumb, `Vorschlag starten: ${esc(sg.title)}`, `ca. ${sg.minutes} min · ${sg.items.length} ${sg.items.length === 1 ? 'Übung' : 'Übungen'}`, 'start')}
         ${card(F.icon.kalender, 'Anderen Tag wählen', esc((F.activeSplit() ? F.activeSplit().days.map((d) => d.name) : []).join(' · ') || 'Erst einen Split wählen'), 'pickDay')}
@@ -135,6 +135,15 @@
 
   /* Fokus: nur der nächste Satz, Werte vorgeschlagen, ein Tipp zum Abhaken. Danach läuft die Pause von selbst. */
   const enter = (key) => { const on = F.ui.tr.key !== key; F.ui.tr.key = key; return on ? ' fz-enter' : ''; };
+  /* Scheibenrechner für die Langhantel (Stange 20 kg): welche Scheiben je Seite */
+  F.platesTxt = (ex, kg) => {
+    if (!ex || ex.load_convention !== 'gesamt' || !(ex.equipment || []).includes('langhantel') || /landmine/i.test(ex.name) || !(kg > 20)) return '';
+    let side = (kg - 20) / 2; const out = [];
+    for (const p of [25, 20, 15, 10, 5, 2.5, 1.25]) while (side >= p - 1e-9) { out.push(p); side -= p; }
+    return `Je Seite: ${out.map((p) => F.fmt(p)).join(' + ')}${side > 0.01 ? ' (≈)' : ''} · Stange 20 kg`;
+  };
+  const lastTime = (ex) => { const l = E.lastWorkSets(F.S.sessions, ex.id, ex.load_convention === 'unterstuetzt'); if (!l) return '';
+    const d = F.dparse(l.date); return `Letztes Mal (${F.WD[d.getDay()]} ${F.dshort(l.date)}): ${l.sets.map((x) => (noLoad(ex) ? '' : F.fmt(Number(x.load_kg)) + '×') + x.reps).join(' · ')}`; };
   const focusView = (s) => {
     const exs = s.session_exercises, dnEx = exs.filter((e) => e.sets.length && !isOpen(e)).length;
     if (F.rest) return topBar(s, dnEx) + restScreen(s, enter('rest'));
@@ -151,8 +160,10 @@
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
-      ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : '<div class="small mute">Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.</div>'}
+      <div class="fz-plates" id="fz-plates" data-ex="${ex.id}">${F.platesTxt(ex, Number(tg.load_kg))}</div>
+      ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : (() => { const lt = lastTime(ex); return `<div class="small mute">${lt ? esc(lt) : 'Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.'}</div>`; })()}
       <button class="btn pri block fz-go" data-act="doneSet" data-s="${st.id}">${F.icon.check.replace('<svg', '<svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"')} Geschafft</button>
+      ${pf.rir ? `<div class="fz-feel" role="group" aria-label="Geschafft mit Gefühl"><span>oder gleich mit Gefühl:</span><button data-act="doneSet" data-s="${st.id}" data-rir="4">Leicht</button><button data-act="doneSet" data-s="${st.id}" data-rir="2">Passt</button><button data-act="doneSet" data-s="${st.id}" data-rir="0">Am Limit</button></div>` : ''}
       <div class="fz-tools"><button data-act="skipEx" data-id="${se.id}">${skipped ? 'Später' : 'Überspringen'}</button><button data-act="help" data-id="${se.exercise_id}">Hilfe</button><button data-act="swapAsk" data-id="${se.id}">Ersetzen</button><button data-act="addSet" data-id="${se.id}">+ Satz</button><button class="bad" data-act="painAsk" data-id="${se.id}">Schmerz</button></div>
       ${(() => { const prev = se.sets.filter((x) => x.done); return prev.length ? `<div class="small mute" style="margin-top:10px">Heute: ${setLine(se)}</div>` : ''; })()}</div>`;
   };
@@ -181,31 +192,47 @@
   const cv = document.createElement('canvas').getContext('2d');
   F.fit = (el) => { if (!el || !el.clientWidth) return; el.style.fontSize = ''; const cs = getComputedStyle(el); let size = parseFloat(cs.fontSize); const room = el.clientWidth - 6, text = el.value || el.placeholder || '';
     const w = (px) => { cv.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`; return cv.measureText(text).width; };
-    while (size > 14 && w(size) > room) size -= 1; el.style.fontSize = size + 'px'; };
+    while (size > 16 && w(size) > room) size -= 1; /* nie unter 16 px, sonst zoomt das iPhone beim Antippen */ el.style.fontSize = size + 'px'; };
   F.fitAll = () => document.querySelectorAll('.stepper input').forEach(F.fit);
   window.addEventListener('resize', () => F.fitAll && F.fitAll());
   document.addEventListener('input', (e) => { if (e.target.closest && e.target.closest('.stepper')) F.fit(e.target); });
-  F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); };
+  const updPlates = (f, fld) => { const el = document.getElementById('fz-plates'); if (el && fld === 'load_kg') el.textContent = F.platesTxt(F.S.exById[f.se.exercise_id], Number(f.st.load_kg)); };
+  F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); updPlates(f, t.dataset.f); };
   F.acts.step = (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const ex = F.S.exById[f.se.exercise_id], fld = t.dataset.f, d = Number(t.dataset.d);
     const inp = t.parentElement.querySelector('input'); let v = F.num(inp.value);
     const step = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? F.E.params(F.S.params).load_step_hand : F.E.params(F.S.params).load_step_total) : fld === 'seconds' ? 5 : 1;
     if (v === null) { const tg = F.setTarget(f.se, f.st); v = tg[fld] ?? (fld === 'reps' ? (E.PROFILES[ex.dosage_profile]?.reps?.[0] ?? 8) : fld === 'seconds' ? 20 : 0); if ((tg[fld] === null || tg[fld] === undefined) && d > 0 && fld !== 'load_kg') { f.st[fld] = v; inp.value = v; return; } }
     v = Math.max(0, v + d * step); f.st[fld] = fld === 'load_kg' ? v : Math.round(v); inp.value = F.fmt(v);
-    F.fit(inp); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
+    F.fit(inp); updPlates(f, fld); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
   };
+  /* + und − gedrückt halten: zählt schnell weiter (erst nach 0,4 s, dann alle 0,11 s) */
+  (() => { let tm = null, rep = false;
+    const stop = () => { clearTimeout(tm); clearInterval(tm); tm = null; };
+    document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('[data-act=step]'); if (!b) return; rep = false; stop();
+      tm = setTimeout(() => { tm = setInterval(() => { rep = true; F.acts.step(b); try { navigator.vibrate && navigator.vibrate(4); } catch {} }, 110); }, 400); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => document.addEventListener(ev, stop));
+    // nach dem Halten den abschließenden Klick schlucken, sonst käme ein Schritt zu viel
+    document.addEventListener('click', (e) => { if (rep && e.target.closest && e.target.closest('[data-act=step]')) { rep = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  })();
   F.acts.rir = (t) => { const f = findSet(t.dataset.s); if (!f) return; f.st.rir = f.st.rir === Number(t.dataset.v) ? null : Number(t.dataset.v); F.render(); };
   /* Vorschlag in die leeren Felder übernehmen (nur das, was du nicht selbst geändert hast) */
   const applyTarget = (se, st, ex) => { const tg = F.setTarget(se, st); if (st.load_kg === null && !noLoad(ex)) st.load_kg = tg.load_kg; if (tg.timed) { if (st.seconds === null || st.seconds === undefined) st.seconds = tg.seconds; } else if (st.reps === null || st.reps === undefined) st.reps = tg.reps; };
-  const saveDone = async (st) => { const r = await F.update('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() }); Object.assign(st, r); };
+  const saveDone = async (st) => { const r = await F.save('sets', st.id, { load_kg: st.load_kg, reps: st.reps ?? null, seconds: st.seconds ?? null, rir: st.rir ?? null, done: true, done_at: new Date().toISOString() }); Object.assign(st, r); };
   F.acts.doneSet = async (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const st = f.st, ex = F.S.exById[f.se.exercise_id] || {}, pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A;
     applyTarget(f.se, st, ex); F.sound.unlock(); try { navigator.vibrate && navigator.vibrate(12); } catch {} if (F.focusOn() && F.wake) F.wake(true);
     if (!noLoad(ex) && st.load_kg === null && pf.reps) { if (!confirm('Kein Gewicht eingetragen. Trotzdem abschließen? Das Gewicht bleibt dann „unbekannt“.')) return; }
+    if (t.dataset && t.dataset.rir !== undefined && t.dataset.rir !== '') st.rir = Number(t.dataset.rir);
+    const prevEi = F.ui.tr.ei;
     await saveDone(st); F.ui.tr.last = st.id;
+    // Versehentlich abgehakt? Ein paar Sekunden lang zurücknehmen können
+    if (F.toastAct) F.toastAct(`Satz ${st.set_no} abgehakt${st.rir !== null && st.rir !== undefined && t.dataset && t.dataset.rir !== undefined ? ' · ' + ({ 4: 'leicht', 2: 'passt', 0: 'am Limit' }[st.rir] || '') : ''}`, 'Rückgängig', async () => {
+      const r = await F.save('sets', st.id, { done: false, done_at: null }); Object.assign(st, r, { done: false }); F.rest = null; clearInterval(F._tk); F.ui.tr.ei = prevEi; F.render(); window.scrollTo(0, 0);
+    });
     // nächsten offenen Satz mit dem Gewicht vorbelegen (nie erfundene Werte: nur Kopie des gerade Eingegebenen)
     const nxt = f.se.sets.find((x) => !x.done);
-    if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.update('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
+    if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.save('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
     let rest = true;
     if (F.focusOn()) {
       // Superset: erst beide Übungen im Wechsel, Pause danach. Sonst weiter in derselben Übung bzw. zur nächsten offenen.
@@ -233,8 +260,8 @@
     if (i >= 0 && s.session_exercises[i] !== se) F.ui.tr.ei = i; else F.toast('Keine andere Übung mehr offen.');
     F.render(); window.scrollTo(0, 0);
   };
-  F.acts.rate = async (t) => { const f = F.ui.tr.last && findSet(F.ui.tr.last); if (!f) return; const v = Number(t.dataset.v), nv = f.st.rir === v ? null : v; f.st.rir = nv; F.render(); await F.update('sets', f.st.id, { rir: nv }); };
-  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.update('sets', f.st.id, { done: false, done_at: null }); Object.assign(f.st, r); F.render(); };
+  F.acts.rate = async (t) => { const f = F.ui.tr.last && findSet(F.ui.tr.last); if (!f) return; const v = Number(t.dataset.v), nv = f.st.rir === v ? null : v; f.st.rir = nv; F.render(); await F.save('sets', f.st.id, { rir: nv }); };
+  F.acts.undo = async (t) => { const f = findSet(t.dataset.s); const r = await F.save('sets', f.st.id, { done: false, done_at: null }); Object.assign(f.st, r); F.render(); };
   F.acts.addSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; const r = await F.insert('sets', { session_exercise_id: se.id, set_no: (last ? last.set_no : 0) + 1, load_kg: last ? last.load_kg : null, load_per_hand: last ? last.load_per_hand : false }); se.sets.push(r); F.render(); };
   F.acts.rmSet = async (t) => { const se = F.openSession().session_exercises.find((x) => x.id === t.dataset.id); const last = se.sets[se.sets.length - 1]; if (last.done) return; await F.del('sets', last.id); se.sets.pop(); F.render(); };
 
@@ -296,8 +323,11 @@
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), cur = F.S.exById[se.exercise_id];
     const ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
     const used = new Set(s.session_exercises.map((x) => x.exercise_id));
-    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && E.eligible(e, ctx)).sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern)).slice(0, 12);
-    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
+    // Alle passenden Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet): gleiches Muster, dann was du oft machst
+    const freq = F.exFreq(60), ok = (e) => e.dosage_profile !== 'M' && E.eligible(e, Object.assign({ allowDraft: true }, ctx));
+    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && ok(e))
+      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 20);
+    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}${freq[e.id] ? ' · ' + freq[e.id] + '× gemacht' : ''}${e.tier !== 'geprueft' && !(F.S.userEx[e.id] || {}).released ? ' · Entwurf' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);
@@ -323,12 +353,21 @@
   };
 
   /* Beenden */
+  /* Ende einer Einheit: normalerweise jetzt. War seit über einer Stunde nichts mehr los (Beenden vergessen),
+     zählt die letzte Aktivität plus 2 Minuten, damit Dauer und Statistik stimmen. */
+  F.sessEnd = (s) => {
+    const ts = s.session_exercises.flatMap((e) => e.sets.filter((x) => x.done && x.done_at).map((x) => new Date(x.done_at).getTime())), start = new Date(s.started_at).getTime();
+    // nur Aktivität im zeitlichen Zusammenhang mit dem Start: Abhaken am nächsten Tag zählt nicht als Trainingszeit
+    const near = ts.filter((t) => t - start < 4 * 3600000), last = Math.max(start, ...(near.length ? near : ts));
+    const stale = Date.now() - last > 3600000, end = stale ? last + 120000 : Date.now();
+    return { end, stale, last, mins: Math.max(1, Math.round((end - start) / 60000)) };
+  };
   F.acts.finishAsk = () => {
-    const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000)), n = s.session_exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
-    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div><label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button>${postureOffer(s)}<button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
+    const s = F.openSession(), se0 = F.sessEnd(s), mins = se0.mins, n = s.session_exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0);
+    F.modal(`<div class="h2">Training beenden?</div><div class="kv" style="margin-bottom:14px"><span class="mute">Abgeschlossene Sätze</span><b>${n}</b><span class="mute">Dauer</span><b>${mins} min</b></div>${se0.stale ? `<div class="small mute" style="margin:-6px 0 12px">Zuletzt aktiv ${F.WD[new Date(se0.last).getDay()]} ${new Date(se0.last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}: die Dauer zählt bis dahin, nicht bis jetzt.</div>` : ''}<label class="f"><span>Notiz (optional)</span><input id="f-n" type="text" placeholder="Wie war’s?"></label><button class="btn pri block" data-act="finish">Speichern und beenden</button>${postureOffer(s)}<button class="btn danger block" style="margin-top:8px" data-act="discard">Verwerfen</button>`);
   };
   F.acts.finish = async () => {
-    const s = F.openSession(), mins = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60000));
+    const s = F.openSession(), se0 = F.sessEnd(s), mins = se0.mins;
     // Kennzahlen vor dem Speichern: Sätze, Volumen, neue Bestwerte (nur wenn frühere Werte bekannt sind)
     let sets = 0, vol = 0; const prs = [];
     for (const se of s.session_exercises) {
@@ -341,8 +380,8 @@
       if (prev > 0 && best > prev + 0.01) prs.push(`${ex.name}: ca. ${F.fmt(Math.round(best * 10) / 10)} kg Maximalkraft (vorher ${F.fmt(Math.round(prev * 10) / 10)})`);
     }
     const wk = F.S.sessions.filter((o) => o.kind === 'kraft' && ['gefuehrt', 'bestaetigt'].includes(o.status) && o.session_date >= F.addDays(F.today(), -6)).length + 1;
-    await F.update('sessions', s.id, { status: 'bestaetigt', finished_at: new Date().toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null });
-    F.rest = null; F.ui.tr.skip = []; F.ui.tr.last = null; F.closeModal(); await F.load();
+    Object.assign(s, await F.save('sessions', s.id, { status: 'bestaetigt', finished_at: new Date(se0.end).toISOString(), duration_min: mins, note: document.getElementById('f-n').value || null }));
+    F.rest = null; F.ui.tr.skip = []; F.ui.tr.last = null; F.closeModal(); await F.load().catch(() => null);
     if (F.celebrate) F.celebrate({ title: s.title || 'Training', sets, minutes: mins, volume: Math.round(vol), prs, week: s.kind === 'kraft' ? wk : 0 }); else F.go('heute');
   };
   F.acts.discard = async () => { if (!confirm('Dieses Training wirklich verwerfen? Eingetragene Sätze gehen verloren.')) return; await F.del('sessions', F.openSession().id); F.rest = null; F.ui.tr.skip = []; F.closeModal(); await F.load(); F.go('heute'); };
@@ -360,6 +399,19 @@
   };
   const PAT = { kniebeuge: 'squat', horizontal_druecken: 'press', horizontal_ziehen: 'pull', huefte_beugen: 'hinge', kreuzheben: 'hinge', curl: 'curl', seitheben: 'raise' };
   F.acts.help = (t) => F.go('uebung/' + t.dataset.id);
+  /* Dein Verlauf mit dieser Übung: letzte Einheiten und Bestwert */
+  const exHistory = (ex) => {
+    const asst = ex.load_convention === 'unterstuetzt', rows = [];
+    for (const q of F.S.sessions) if (['gefuehrt', 'bestaetigt'].includes(q.status)) for (const se of q.session_exercises) if (se.exercise_id === ex.id) { const w = E.workSets(se.sets, asst); if (w.length) rows.push({ d: q.session_date, w }); }
+    if (!rows.length) return '';
+    rows.sort((a, b) => (a.d < b.d ? 1 : -1));
+    let best = null;
+    if (!asst && !noLoad(ex)) for (const r of rows) for (const x of r.w) { const e1 = x.load_kg !== null && x.reps ? E.e1rm(Number(x.load_kg), x.reps) : 0; if (e1 && (!best || e1 > best.e1)) best = { e1, x, d: r.d }; }
+    const line = (x) => (x.load_kg !== null && !noLoad(ex) ? F.fmt(Number(x.load_kg)) + '×' : '') + (x.reps ?? (x.seconds ? x.seconds + ' s' : '?'));
+    return `<div class="card"><div class="row between"><div class="eyebrow">Dein Verlauf</div><span class="small mute">${rows.length} ${rows.length === 1 ? 'Einheit' : 'Einheiten'}</span></div>
+      ${best ? `<div class="pr-line"><b>Bestwert ${F.fmt(Number(best.x.load_kg))} kg × ${best.x.reps}</b><span class="mute"> · ca. ${F.fmt(Math.round(best.e1 * 10) / 10)} kg Maximalkraft · ${F.dshort(best.d)}</span></div>` : ''}
+      <div class="hist-rows">${rows.slice(0, 6).map((r) => `<div class="mrow" style="grid-template-columns:62px 1fr"><span class="mute">${F.dshort(r.d)}</span><span>${r.w.map(line).join(' · ')}</span></div>`).join('')}</div></div>`;
+  };
   F.views.uebung = ([id]) => {
     const ex = F.S.exById[id]; if (!ex) return '<div class="card">Übung nicht gefunden.</div>';
     const T = (ex.code && window.FORZA_TEXTS[ex.code]) || null, c = ex.content || {}, st = F.S.userEx[id] || {};
@@ -368,6 +420,7 @@
     const checked = ex.tier === 'geprueft';
     return `<button class="back" data-act="back">${F.icon.back.replace('<svg', '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"')} Zurück</button>
       <div class="row between wrap" style="margin-bottom:10px"><div><div class="h1" style="font-size:26px">${esc(ex.name)}</div><div class="mute">${ex.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${ex.code ? ' · ' + ex.code : ''}</div></div><span class="badge ${checked ? 'ok' : 'warn'}">${checked ? 'fachlich geprüft' : st.released ? 'Entwurf, von dir freigegeben' : 'Entwurf, nicht fachlich geprüft'}</span></div>
+      ${exHistory(ex)}
       ${anim ? `<div class="card" style="padding:12px">${ANIM[anim]()}<div class="small mute" style="margin-top:8px;text-align:center">Vereinfachte Skizze der Bewegung, kein Ersatz für die Beschreibung.</div></div>` : `<div class="card small mute">Für diese Übung gibt es noch keine Animation. Die Beschreibung unten erklärt den Ablauf.</div>`}
       ${T ? sec('Funktion und Ausstattung', T.funktion) + sec('Ausführung', T.ausfuehrung) + sec('Kontrolle und typische Probleme', T.kontrolle) + sec('Anpassen und ersetzen', T.anpassen) + sec('Dosierung und Tracking', T.dosierung) + sec('Aussagegrenzen', T.grenzen) + sec('Technikquellen', T.quellen) : sec('Ausführung', c.ausfuehrung) + sec('Typische Fehler', c.fehler) + sec('Hinweis', c.hinweis) + `<div class="card small mute">Diese Beschreibung ist ein Entwurf und wurde nicht fachlich geprüft.</div>`}
       <div class="card"><div class="eyebrow" style="margin-bottom:6px">Ausstattung und Last</div><div class="small">${ex.equipment.map((e) => esc(F.itemLabel(e))).join(', ') || 'keine'}${ex.equipment_alt.length ? ' · Alternative: ' + ex.equipment_alt.map((e) => esc(F.itemLabel(e))).join(', ') : ''}<br>Lastangabe: ${{ gesamt: 'Gesamtgewicht', je_hand: 'je Hand', koerper: 'Körpergewicht', zusatz: 'Zusatzgewicht', unterstuetzt: 'Unterstützung (weniger Gewicht = schwerer)', zeit: 'Zeit', keine: 'ohne Last' }[ex.load_convention] || '–'}${pf ? '<br>Dosierungsprofil: ' + pf.label : ''}</div></div>

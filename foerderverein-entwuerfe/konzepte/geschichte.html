@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Damals & heute · Entwurf · Freunde des OvMG e.V.</title>
+<script src="../assets/zugang.js"></script>
+<link rel="icon" href="../assets/logos/icon-schwarz.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/schriften/jost-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/schriften/schriften.css">
+<link rel="stylesheet" href="../assets/konzepte.css">
+<link rel="stylesheet" href="../assets/praesentation.css">
+<style>
+:root { --k-titel: 'Source Serif 4', Georgia, serif; --k-titel-gewicht: 500; --k-akzent: #1c3d6e; --k-text: #1a1f2b; --k-text-2: #4f5563; --k-grund: #fbfaf6; --k-flaeche: #ffffff; --k-linie: #e6e2d9; --k-radius: 999px; }
+.k-ueber { color: #9a4a26; }
+.held { padding: clamp(40px, 6vw, 80px) 0 clamp(64px, 8vw, 104px); }
+.held .k-wrap { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(40px, 6vw, 80px); align-items: center; }
+.held .k-lead { margin: 24px 0 34px; }
+.held .k-h1 { font-size: clamp(38px, 4.8vw, 62px); }
+.schalter { display: inline-flex; gap: 4px; padding: 5px; border-radius: 999px; background: #efebe2; margin-bottom: 16px; }
+.schalter button { font: 600 15px/1 var(--k-schrift); border: 0; border-radius: 999px; padding: 0 20px; min-height: 44px; background: transparent; color: var(--k-text); cursor: pointer; transition: background .2s, color .2s; }
+.schalter button[aria-selected=true] { background: var(--k-akzent); color: #ffffff; }
+.betrachter { position: relative; aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; background: #e7e3da; }
+.betrachter img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .6s ease; }
+.betrachter img.aktiv { opacity: 1; }
+.unterschrift { margin-top: 12px; font-size: 14px; color: var(--k-text-2); }
+.chronik { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.chronik li { position: relative; padding: 36px 24px 0 0; }
+.chronik li::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--k-akzent); }
+.chronik li::after { content: ''; position: absolute; left: 0; top: -6px; width: 14px; height: 14px; border-radius: 50%; background: var(--k-grund); border: 2px solid var(--k-akzent); }
+.chronik li::before { transform-origin: 0 50%; }
+@media (prefers-reduced-motion: no-preference) {
+  .chronik li::before { transform: scaleX(0); transition: transform .7s cubic-bezier(.4,0,.2,1); }
+  .chronik li::after { transform: scale(0); transition: transform .45s cubic-bezier(.3,1.6,.5,1); }
+  .chronik.gezeichnet li::before { transform: none; }
+  .chronik.gezeichnet li::after { transform: none; }
+  .chronik li:nth-child(2)::before, .chronik li:nth-child(2)::after { transition-delay: .35s; }
+  .chronik li:nth-child(3)::before, .chronik li:nth-child(3)::after { transition-delay: .7s; }
+  .chronik li:nth-child(4)::before, .chronik li:nth-child(4)::after { transition-delay: 1.05s; }
+  .chronik li:nth-child(5)::before, .chronik li:nth-child(5)::after { transition-delay: 1.4s; }
+}
+.chronik li.wir::before { background: #9a4a26; } .chronik li.wir::after { border-color: #9a4a26; background: #9a4a26; }
+.chronik .jahr { font-family: var(--k-titel); font-size: clamp(30px, 3vw, 40px); font-weight: 600; color: var(--k-akzent); line-height: 1; }
+.chronik li.wir .jahr { color: #9a4a26; }
+.chronik p { margin: 12px 0 0; color: var(--k-text-2); font-size: 16px; }
+.details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.details figure { margin: 0; }
+.details .k-bild { aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; }
+.details figcaption { margin-top: 18px; }
+.details figcaption strong { display: block; font-family: var(--k-titel); font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+.details figcaption span { color: var(--k-text-2); }
+.band { background: var(--k-akzent); color: #ffffff; --k-text-2: rgba(255,255,255,0.78); }
+.band .k-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 88px); align-items: center; }
+.band .k-btn { background: #ffffff; color: var(--k-akzent); border-color: #ffffff; }
+.band .k-btn--rand { background: transparent; color: #ffffff; }
+.band .k-konto { background: #0f2647; }
+@media (max-width: 900px) {
+  .held .k-wrap, .band .k-wrap { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .details { grid-template-columns: 1fr; }
+  .details .k-bild { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 760px) {
+  .chronik { grid-template-columns: 1fr; gap: 0; }
+  .chronik li { padding: 0 0 28px 34px; }
+  .chronik li::before { left: 6px; right: auto; top: 6px; bottom: 0; width: 2px; height: auto; transform-origin: 50% 0; }
+  .chronik:not(.gezeichnet) li::before { transform: scaleY(0) !important; }
+  .chronik li::after { left: 0; top: 2px; }
+}
+</style>
+</head>
+<body>
+<header class="k-kopf">
+  <div class="k-wrap">
+    <a class="k-marke" href="#" aria-label="Freunde des OvMG – Startseite"><img class="k-logo" data-logo data-ton="schwarz" src="../assets/logos/modern-schwarz.svg" alt="Freunde des OvMG e.V."></a>
+    <button class="k-menue-knopf" type="button" aria-expanded="false" aria-controls="menue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menü</button>
+    <nav class="k-menue" id="menue" aria-label="Hauptmenü"><a href="#chronik">Chronik</a><a href="#details">Das Haus</a><a href="#mitmachen">Mitmachen</a><a href="#kontakt">Kontakt</a><a class="k-btn" href="#mitglied">Mitglied werden</a></nav>
+  </div>
+</header>
+
+<main>
+<section class="held">
+  <div class="k-wrap">
+    <div class="k-start">
+      <p class="k-ueber">Ein Haus, viele Generationen</p>
+      <h1 class="k-titel k-h1">Seit 1912 wird hier gelernt. Seit 1991 helfen wir dabei.</h1>
+      <p class="k-lead">Die Freunde des OvMG e.V. sind der Förderverein des Oskar-von-Miller-Gymnasiums – des früheren Alten Realgymnasiums in München.</p>
+      <div class="k-knoepfe"><a class="k-btn" href="#mitmachen">Mitglied werden</a><a class="k-btn k-btn--rand" href="#chronik">Zur Chronik</a></div>
+    </div>
+    <div class="k-start">
+      <div class="schalter" role="tablist" aria-label="Ansicht wählen">
+        <button type="button" role="tab" data-ansicht="damals" aria-selected="false">Vor der Sanierung</button>
+        <button type="button" role="tab" data-ansicht="heute" aria-selected="true">Heute</button>
+      </div>
+      <div class="betrachter">
+        <img data-ansicht-bild="damals" src="../assets/bilder/schulhaus-vorher.jpg" alt="Das Schulgebäude vor der Generalsanierung">
+        <img class="aktiv" data-ansicht-bild="heute" src="../assets/bilder/turm-kastanie.jpg" alt="Der Uhrturm nach der Sanierung, gerahmt von Kastanienblättern" style="object-position: 30% center">
+      </div>
+      <p class="unterschrift"><span data-ansicht-text="heute">Heute · Foto: Britta Mangold</span><span data-ansicht-text="damals" hidden>Vor der Generalsanierung</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="k-abschnitt k-abschnitt--flaeche" id="chronik">
+  <div class="k-wrap">
+    <div class="k-kopfzeile"><h2 class="k-titel k-h2">Chronik</h2><p class="k-lead">Die wichtigsten Stationen – Lücken ergänzt der Vorstand.</p></div>
+    <ol class="chronik" data-zeichnen>
+      <li class="k-einblenden"><span class="jahr">1912</span><p>Am 18. September wird das Schulgebäude an der Siegfriedstraße eingeweiht.</p></li>
+      <li class="k-einblenden"><span class="jahr"><span class="k-platzhalter">[Jahr]</span></span><p>Aus dem Alten Realgymnasium wird das Oskar-von-Miller-Gymnasium.</p></li>
+      <li class="k-einblenden wir"><span class="jahr">1991</span><p>Gründung der Freunde des OvMG e.V.</p></li>
+      <li class="k-einblenden"><span class="jahr"><span class="k-platzhalter">[Jahr]</span></span><p>Generalsanierung des Stammgebäudes.</p></li>
+      <li class="k-einblenden"><span class="jahr">Heute</span><p><span class="k-platzhalter">[Zahl]</span> Mitglieder unterstützen Schülerinnen, Schüler und Lehrkräfte.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="k-abschnitt" id="details">
+  <div class="k-wrap">
+    <div class="k-kopfzeile"><h2 class="k-titel k-h2">Was geblieben ist</h2><p class="k-lead">Neue Räume, alte Botschaften: Viele Details erzählen bis heute von der Geschichte der Schule.</p></div>
+    <div class="details">
+      <figure class="k-einblenden" data-lightbox><div class="k-bild k-zoom"><img src="../assets/bilder/woelfin.jpg" alt="Kapitolinische Wölfin auf dem Torbogen" loading="lazy"></div><figcaption><strong>Die Wölfin</strong><span>Unter ihr am Torbogen: „Pflege der Jugend schafft rüstiges Alter.“</span></figcaption></figure>
+      <figure class="k-einblenden" data-lightbox><div class="k-bild k-zoom"><img src="../assets/bilder/carpe-diem.jpg" alt="Bodenmosaik Carpe Diem" loading="lazy"></div><figcaption><strong>Carpe diem</strong><span>Das Bodenmosaik grüßt alle, die das Haus betreten.</span></figcaption></figure>
+      <figure class="k-einblenden" data-lightbox><div class="k-bild k-zoom"><img src="../assets/bilder/wendeltreppe.jpg" alt="Wendeltreppe mit lateinischer Inschrift" loading="lazy"><span class="k-bildnachweis">Fotos: Britta Mangold</span></div><figcaption><strong>Dies diem docet</strong><span>Lateinische Sprüche begleiten den Weg die Wendeltreppe hinauf.</span></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="k-abschnitt band" id="mitmachen">
+  <div class="k-wrap">
+    <div class="k-einblenden">
+      <h2 class="k-titel k-h2" style="margin-bottom: 18px">Schreiben Sie das nächste Kapitel mit.</h2>
+      <p class="k-text">Mitglied ab 10 € im Jahr (Schüler, Studierende, Auszubildende), regulär 30 €. Mitgliedsbeiträge und Spenden sind steuerlich absetzbar.</p>
+      <div class="k-knoepfe" style="margin-top: 30px"><a class="k-btn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Beitrittserklärung</a><a class="k-btn k-btn--rand" href="#kontakt">Kontakt</a></div>
+    </div>
+    <div class="k-einblenden" id="spenden"><div class="k-konto">
+  <dl>
+    <dt>Empfänger</dt><dd>Freunde des OvMG e.V.</dd>
+    <dt>IBAN</dt><dd class="k-iban">DE69 7015 0000 0111 1418 18</dd>
+    <dt>BIC</dt><dd>SSKMDEMM</dd>
+    <dt>Bank</dt><dd>Stadtsparkasse München</dd>
+  </dl>
+  <div class="k-konto-unten">
+    <div>
+      <button class="k-btn k-kopieren" type="button" data-iban-kopieren><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>IBAN kopieren</span></button>
+      <small>Zuwendungsbestätigung zu Beginn des Folgejahres. Für ein bestimmtes Projekt bitte das Kennwort im Verwendungszweck angeben.</small>
+    </div>
+    <figure class="k-qr"><img src="../assets/bilder/girocode.svg" alt="GiroCode mit der Bankverbindung des Vereins" width="120" height="120"><figcaption>Mit der Banking-App scannen</figcaption></figure>
+  </div>
+</div></div>
+  </div>
+</section>
+
+<section class="k-abschnitt" id="kontakt">
+  <div class="k-wrap">
+    <div class="k-kopfzeile"><h2 class="k-titel k-h2">Vorstand und Kontakt</h2></div>
+    <div class="k-kontakt">
+  <div>
+    <h3>Vorstand</h3>
+    <ul>
+      <li>Christian J. Hartmann<span>1. Vorsitzender</span></li>
+      <li>Dr. Stephan Ring<span>2. Vorsitzender</span></li>
+      <li>Moritz Pöllath<span>Kassenführung</span></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Anschrift</h3>
+    <p>Freunde des OvMG e.V.<br>c/o Oskar-von-Miller-Gymnasium<br>Siegfriedstraße 22<br>80803 München</p>
+  </div>
+  <div>
+    <h3>E-Mail</h3>
+    <p><a class="k-link" href="#">vorstand@freunde-ovmg.de</a></p>
+  </div>
+</div>
+  </div>
+</section>
+</main>
+<footer class="k-fuss">
+  <div class="k-wrap">
+    <div class="k-fuss-oben">
+      <img class="k-logo" data-logo data-ton="weiss" src="../assets/logos/modern-weiss.svg" alt="Freunde des OvMG e.V.">
+      <nav aria-label="Rechtliches"><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">Satzung (PDF)</a><a href="#">Beitrittserklärung (PDF)</a></nav>
+    </div>
+    <div class="k-fuss-unten"><span>© 2026 Freunde des OvMG e.V. · Förderverein des Oskar-von-Miller-Gymnasiums München</span><span>Fotos: Britta Mangold <span class="k-platzhalter">Nutzung klären</span></span></div>
+  </div>
+</footer>
+<script src="../assets/praesentation.js" data-konzept="geschichte"></script>
+</body>
+</html>

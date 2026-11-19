@@ -1,0 +1,294 @@
+Foliva verwendet die folgenden Open-Source-Komponenten bzw. frei lizenzierten Werke. Die Lizenzen der in Electron enthaltenen Chromium-Komponenten stehen in LICENSES.chromium.html.
+
+======================================================================
+Electron (MIT)
+======================================================================
+
+Copyright (c) Electron contributors
+Copyright (c) 2013-2020 GitHub Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+======================================================================
+Grundschrift (CC BY 3.0)
+======================================================================
+
+Grundschrift von Christian Urff
+https://urff.app/grundschrift/
+
+Lizenz: Creative Commons Namensnennung 3.0 (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/legalcode
+
+Verwendet werden die Schnitte Light, Regular, Bold, Punkt und Kontur in unveränderter Form.
+
+
+================================================================
+theis Schuldruck Süd (Schriftfamilie, Regular und Bold)
+================================================================
+© 2026 theis. Eigenständig konstruierte Schulschrift (Weiterentwicklung von theis Druck 02), Fontversion 0.105 (WOFF2).
+Dateien: Theis-Schuldruck-Sued-Regular.woff2 (SHA-256 8ece509df43db7ccbf299f17d3ae5d2db91208bdbb36d1de067eb2e1135cb235)
+         Theis-Schuldruck-Sued-Bold.woff2 (SHA-256 b5b55050edc541857cf73bcafe7c7e111c2a7753b04e37872524855c7a26bec0)
+Mitgeliefert zur Verwendung in Foliva. Keine Weitergabe der Fontdateien außerhalb von Foliva.
+
+================================================================
+Playwrite DE VA und Playwrite DE VA Guides (Vereinfachte Ausgangsschrift)
+================================================================
+Quelle: Google Fonts (ofl/playwritedeva, ofl/playwritedevaguides), Upstream https://github.com/TypeTogether/Playwrite (Version 1.003)
+Abgerufen: 2026-10-11 aus https://github.com/google/fonts
+Dateien (unverändert, nur umbenannt):
+  PlaywriteDEVA-wght.ttf  (Original: PlaywriteDEVA[wght].ttf, SHA-256 065c4685e85d16299620f76e8abbf67a5e250c7641e4806566747b26a474e1cb)
+  PlaywriteDEVAGuides-Regular.ttf (SHA-256 863ae1ed69e58f9fdd25a21efaf219b01a82ab1417b817664311bf4f5a1ca9cf)
+Lizenz: SIL Open Font License 1.1 – vollständiger Text:
+
+Copyright 2023 The Playwrite Project Authors (https://github.com/TypeTogether/Playwrite)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://openfontlicense.org
+
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+
+================================================================
+Bildbibliothek: Noto Emoji (Google)
+================================================================
+Quelle: https://github.com/googlefonts/noto-emoji (2D/svg), unverändert. Register aller Bilder mit SHA-256: bilder/REGISTER.json
+Lizenz der Bilder: Apache License 2.0 – vollständiger Text:
+
+Copyright 2013 Google, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Flaggen (third_party/region-flags):
+== Copying ==
+
+The flags in this package were downloaded from Wikipedia and checked to be in
+Public Domain or otherwise exempt from Copyright.  In particular, the following
+are not explicitly tagged as "public_domain" or were tagged according to some
+national law which made them Public Domain in that nation (e.g. `{{PD-AM-exempt}}`)
+
+	AM	https://commons.wikimedia.org/wiki/File:Flag_of_Armenia.svg
+	AZ	https://commons.wikimedia.org/wiki/File:Flag_of_Azerbaijan.svg
+	JE	https://commons.wikimedia.org/wiki/File:Flag_of_Jersey.svg
+	KG	https://commons.wikimedia.org/wiki/File:Flag_of_Kyrgyzstan.svg
+	KZ	https://commons.wikimedia.org/wiki/File:Flag_of_Kazakhstan.svg
+	MD	https://commons.wikimedia.org/wiki/File:Flag_of_Moldova.svg
+	MX	https://commons.wikimedia.org/wiki/File:Flag_of_Mexico.svg
+	MY	https://commons.wikimedia.org/wiki/File:Flag_of_Malaysia.svg
+	RS	https://commons.wikimedia.org/wiki/File:Flag_of_Serbia.svg
+	YT	https://commons.wikimedia.org/wiki/File:Flag_of_Mayotte_(local).svg
+
+	US-SD	https://commons.wikimedia.org/wiki/File:Flag_of_South_Dakota.svg
+	US-UT	https://commons.wikimedia.org/wiki/File:Flag_of_Utah.svg
+
+	MX-AGU	https://commons.wikimedia.org/wiki/File:Flag_of_Aguascalientes.svg
+	MX-BCN	https://commons.wikimedia.org/wiki/File:Flag_of_Baja_California.svg
+	MX-BCS	https://commons.wikimedia.org/wiki/File:Flag_of_Baja_California_Sur.svg
+	MX-CAM	https://commons.wikimedia.org/wiki/File:Flag_of_Campeche.svg
+	MX-CHH	https://commons.wikimedia.org/wiki/File:Flag_of_Chihuahua.svg
+	MX-CHP	https://commons.wikimedia.org/wiki/File:Flag_of_Chiapas.svg
+	MX-CMX	https://commons.wikimedia.org/wiki/File:Flag_of_Mexican_Federal_District.svg
+	MX-COA	https://commons.wikimedia.org/wiki/File:Flag_of_Coahuila.svg
+	MX-COL	https://commons.wikimedia.org/wiki/File:Flag_of_Colima.svg
+	MX-DUR	https://commons.wikimedia.org/wiki/File:Flag_of_Durango.svg
+	MX-GRO	https://commons.wikimedia.org/wiki/File:Flag_of_Guerrero.svg
+	MX-GUA	https://commons.wikimedia.org/wiki/File:Flag_of_Guanajuato.svg
+	MX-HID	https://commons.wikimedia.org/wiki/File:Flag_of_Hidalgo.svg
+	MX-JAL	https://commons.wikimedia.org/wiki/File:Flag_of_Jalisco.svg
+	MX-MEX	https://commons.wikimedia.org/wiki/File:Flag_of_México.svg
+	MX-MIC	https://commons.wikimedia.org/wiki/File:Flag_of_Michoacan.svg
+	MX-MOR	https://commons.wikimedia.org/wiki/File:Flag_of_Morelos.svg
+	MX-NAY	https://commons.wikimedia.org/wiki/File:Flag_of_Nayarit.svg
+	MX-NLE	https://commons.wikimedia.org/wiki/File:Flag_of_Nuevo_Leon.svg
+	MX-OAX	https://commons.wikimedia.org/wiki/File:Flag_of_Oaxaca.svg
+	MX-PUE	https://commons.wikimedia.org/wiki/File:Flag_of_Puebla.svg
+	MX-QUE	https://commons.wikimedia.org/wiki/File:Flag_of_Queretaro.svg
+	MX-ROO	https://commons.wikimedia.org/wiki/File:Flag_of_Quintana_Roo.svg
+	MX-SIN	https://commons.wikimedia.org/wiki/File:Flag_of_Sinaloa.svg
+	MX-SLP	https://commons.wikimedia.org/wiki/File:Flag_of_San_Luis_Potosi.svg
+	MX-SON	https://commons.wikimedia.org/wiki/File:Flag_of_Sonora.svg
+	MX-TAB	https://commons.wikimedia.org/wiki/File:Flag_of_Tabasco.svg
+	MX-TAM	https://commons.wikimedia.org/wiki/File:Flag_of_Tamaulipas.svg
+	MX-TLA	https://commons.wikimedia.org/wiki/File:Flag_of_Tlaxcala.svg
+	MX-VER	https://commons.wikimedia.org/wiki/File:Flag_of_Veracruz.svg
+	MX-YUC	https://commons.wikimedia.org/wiki/File:Flag_of_Yucatan.svg
+	MX-ZAC	https://commons.wikimedia.org/wiki/File:Flag_of_Zacatecas.svg
+
+For individual details, revision history, and information on contributors, see 
+files in `html/`.
+
+
+================================================================
+Deutsche Bildnamen: emojibase-data 16.0.3 (MIT)
+================================================================
+MIT License
+
+Copyright (c) 2017-2019 Miles Johnson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================================
+qrcode-generator 1.4.4 (QR-Codes)
+================================================================
+Copyright (c) 2009 Kazuhiko Arase. Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+The word "QR Code" is registered trademark of DENSO WAVE INCORPORATED.
+
+----------------------------------------------------------------------
+Euro-Banknoten und Euro-Münzen (Ordner bilder/euro)
+----------------------------------------------------------------------
+Banknoten: Abbildungen der Europäischen Zentralbank (Europa-Serie, Fassung „Specimen“ 72 dpi,
+ecb.europa.eu). Verwendet gemäß den Reproduktionsregeln der EZB (Beschluss EZB/2013/10 in der
+geltenden Fassung): digitale Abbildungen mit dem Aufdruck „SPECIMEN“ und höchstens 72 dpi bei
+Originalgröße; auf dem Blatt einseitig und auf etwa 24 % der Originalgröße verkleinert.
+Münzen: Abbildungen der gemeinsamen (europäischen) Wertseite, Europäische Zentralbank
+(ecb.europa.eu). Urheberrecht der gemeinsamen Seite: Europäische Union; die Wiedergabe in
+Formaten ohne Relief ist nach der Mitteilung der Europäischen Kommission zulässig.
+
+Gedichte im Baustein „Gedicht“ (ab 0.9.12)
+Die Gedichte der Sammlung sind gemeinfrei (Verfasser vor mehr als 70 Jahren gestorben, Erstveröffentlichung vor 1929):
+Johann Wolfgang von Goethe, Eduard Mörike, Heinrich Heine, Hoffmann von Fallersleben, Christian Morgenstern, Joachim Ringelnatz,
+Wilhelm Busch, Friedrich Güll, Joseph von Eichendorff, Friedrich Hebbel, Matthias Claudius – in heutiger Rechtschreibung.
+Gedichte und Elfchen ohne Verfasserangabe sind für Foliva selbst geschrieben (© 2026 theis).
+
+Grundschrift als TrueType (ab 0.9.12): aus den OTF-Dateien von Christian Urff umgewandelt (CC BY 3.0), siehe fonts/SCHRIFTEN-REGISTER.md.
+
+Text-Bibliothek (ab 0.9.13)
+Alle kleinen Geschichten sind für Foliva selbst geschrieben (© 2026 theis), alle Namen sind erfunden.
+Märchen und Fabeln sind eigene, gekürzte Nacherzählungen nach gemeinfreien Vorlagen (Kinder- und Hausmärchen der Brüder Grimm,
+Hans Christian Andersen, Fabeln nach Äsop). Der Foliva-Lernwortschatz ist eine eigene Zusammenstellung, nicht die amtliche Liste des ISB.
+
+Grundwortschatz (ab 0.9.13): Wortliste „Grundwortschatz für die Jahrgangsstufen 1 und 2“ bzw. „3 und 4“,
+Staatsinstitut für Schulqualität und Bildungsforschung (ISB), LehrplanPLUS Grundschule Bayern, Ergänzende Informationen,
+lehrplanplus.bayern.de (abgerufen am 13.10.2026). Wird nur auf Knopfdruck in die Lernwörterliste der Schule übernommen.
+Textaufgaben und weitere Geschichten der Bibliothek: für Foliva selbst geschrieben (© 2026 theis), Namen erfunden.

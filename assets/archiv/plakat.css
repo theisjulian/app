@@ -1,0 +1,145 @@
+/* ARCHIV – Stil „Plakat“ (bis November 2026 auf theisapps.de)
+   Wird NICHT geladen. Zum Wiederherstellen:
+   1. Die CSS-Regeln unten wieder ans Ende von assets/site.css hängen.
+   2. Den JS-Teil (ganz unten im Kommentar) in assets/site.js in ready() vor „if(dk){var ly=…“ einsetzen.
+   3. In site.js „plakat“ wieder in STILE, LEISTE (['#1d35c8','#1d35c8']) und den Stil-Hinweis aufnehmen,
+      in allen Seiten den Umschalter-Knopf <button … data-s="plakat" …><i class="p"></i><span>Plakat</span></button>
+      und im Kopf-Skript ||s==="plakat" ergänzen; bei den Glas-Regeln :not([data-style=plakat]) ergänzen.
+   4. Datenschutzerklärung (Nr. 2a) um den Plakat-Stil ergänzen.
+   Letzter Stand mit Plakat im Git-Verlauf: Commit fd87063. */
+.pick .p,#tip .p{background:radial-gradient(circle at 70% 30%,#ff4b2b 0 24%,transparent 26%),#1d35c8;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+/* ===================================================================
+   Stil „Plakat“ – Farben aus OVMG-Konzept 7: die ganze Seite in kräftigem
+   Ultramarin, Papierweiß als Schrift, Signalorange als Akzent, Tinte für
+   Leisten. Eine Fassung, unabhängig von Hell/Dunkel des Geräts.
+   =================================================================== */
+:root[data-style=plakat]{--bg:#1d35c8;--ink:#f5f3ee;--grey:#d6daf3;--line:rgba(245,243,238,.28);--surf:#1a2fb4;--blue:#ff4b2b;--blueSoft:#2a42d4;--onblue:#0e1230;--dot:#ff4b2b;--hot:#ff4b2b;--tinte:#0e1230;--tint:#1529a3;--ntint:#1529a3;--app:#ff4b2b;--shadow:0 30px 60px -28px rgba(8,10,40,.7);--shot:0 18px 40px -18px rgba(8,10,40,.7);color-scheme:dark}
+:root[data-style=plakat] [class*="a-"]{--tint:#1529a3;--app:#ff4b2b}
+:root[data-style=plakat] body{background:#1d35c8}
+/* Papierkorn auf dem Blau und Passermarken in den Ecken wie auf einem Druckbogen */
+:root[data-style=plakat] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.10;mix-blend-mode:screen;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@media(min-width:900px){:root[data-style=plakat] body::before{content:"";position:fixed;inset:14px;z-index:40;pointer-events:none;--m:rgba(245,243,238,.7);
+ background:
+  linear-gradient(var(--m),var(--m)) 0 0/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 0 0/1px 16px no-repeat,
+  linear-gradient(var(--m),var(--m)) 100% 0/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 100% 0/1px 16px no-repeat,
+  linear-gradient(var(--m),var(--m)) 0 100%/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 0 100%/1px 16px no-repeat,
+  linear-gradient(var(--m),var(--m)) 100% 100%/16px 1px no-repeat,linear-gradient(var(--m),var(--m)) 100% 100%/1px 16px no-repeat}}
+/* Kopfzeile: Blau mit Papierlinie, Programmleiste in Tinte */
+:root[data-style=plakat] .bar,:root[data-style=plakat] .bar.on{background:#1d35c8;border-bottom:1px solid transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=plakat] .bar.on{border-bottom-color:rgba(245,243,238,.35)}
+:root[data-style=plakat] .bar .brand .dot,:root[data-style=plakat] .brand .dot{fill:#ff4b2b}
+:root[data-style=plakat] .bar nav a.l{color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .bar .btn.line{border-radius:0;background:#ff4b2b;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .bar .btn.line:hover{background:#f5f3ee;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .pick{background:transparent;box-shadow:none;border-radius:0;padding:0;gap:4px}
+:root[data-style=plakat] .pick button{border-radius:0;color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .pick button[aria-checked=true]{background:transparent;color:#f5f3ee;box-shadow:none}
+:root[data-style=plakat] .pick button:hover{color:#f5f3ee}
+:root[data-style=plakat] .pick i{box-shadow:inset 0 0 0 1px rgba(14,18,48,.18)}
+:root[data-style=plakat] .appstrip{background:#0e1230}
+/* Schrift: groß, eng, plakativ; das markierte Wort steht auf einem orangen Block */
+:root[data-style=plakat] :is(h1,h2){letter-spacing:-.045em}
+:root[data-style=plakat] h1{line-height:1.04}
+:root[data-style=plakat] .hl{background:linear-gradient(transparent 17%,#ff4b2b 17%,#ff4b2b 93%,transparent 93%);color:#0e1230;-webkit-text-fill-color:#0e1230;padding:0 .12em .02em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+:root[data-style=plakat] ::selection{background:#ff4b2b;color:#0e1230}
+:root[data-style=plakat] a{text-decoration-color:rgba(245,243,238,.5)}
+/* Nummerierte Abschnitte mit kräftiger Linie */
+:root[data-style=plakat] main{counter-reset:pk}
+:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2){counter-increment:pk;border-top:3px solid #f5f3ee;padding-top:16px}
+:root[data-style=plakat] :is(section.s>h2,.fx .tx>h2,.basis-in h2,.reads h2)::before{content:counter(pk,decimal-leading-zero);display:block;font-size:14px;font-weight:600;letter-spacing:.08em;color:#ff4b2b;margin-bottom:10px}
+/* Flächen: Tinte auf Blau, eckig, Papierlinien */
+:root[data-style=plakat] :is(.steps li,.grid>div,.box,.inst li,.mail,.next,.reads a,.safe,details.q){background:rgba(14,18,48,.22);border:1px solid rgba(245,243,238,.22);border-radius:0;box-shadow:none;color:#f5f3ee}
+:root[data-style=plakat] .grid>div{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] :is(.pic,.stage,.app-stage,.vid){border-radius:0;border:0}
+/* Bildflächen als Rasterdruck */
+:root[data-style=plakat] :is(.stage,.app-stage,.fx .pic,.pair .pic,.basis .pic,.panel .pic){background-color:#1529a3;background-image:radial-gradient(rgba(245,243,238,.18) 1.2px,transparent 1.6px);background-size:9px 9px}
+:root[data-style=plakat] .fx .pic.t{background-color:#0e1230;background-image:radial-gradient(rgba(255,75,43,.4) 1.2px,transparent 1.6px)}
+:root[data-style=plakat] :is(.fx .pic img,.pair .pic img,.basis .pic img){border-radius:0;box-shadow:0 18px 40px -16px rgba(8,10,40,.8)}
+:root[data-style=plakat] .pair figcaption{border-top:1px solid rgba(245,243,238,.5);padding-top:8px;font-size:15px;color:#d6daf3}
+/* Knöpfe: Signalorange mit Tinte, zweite Wahl als Papierrahmen */
+:root[data-style=plakat] .btn{border-radius:0;font-weight:600}
+:root[data-style=plakat] .btn:not(.sec):not(.line):not(.off){background:#ff4b2b;color:#0e1230;box-shadow:none}
+:root[data-style=plakat] .btn:not(.sec):not(.line):not(.off):hover{background:#f5f3ee;color:#0e1230}
+:root[data-style=plakat] .btn.sec{background:transparent;color:#f5f3ee;box-shadow:inset 0 0 0 2px #f5f3ee}
+:root[data-style=plakat] .btn.sec:hover{background:#f5f3ee;color:#0e1230}
+:root[data-style=plakat] .btn.line{border-radius:0;color:#f5f3ee}
+:root[data-style=plakat] .seg{background:rgba(14,18,48,.3);border-radius:0;box-shadow:none}
+:root[data-style=plakat] .seg button{border-radius:0;color:rgba(245,243,238,.8)}
+:root[data-style=plakat] .seg button[aria-selected=true]{background:#f5f3ee;color:#0e1230;box-shadow:none}
+/* Kennzeichen, Zahlen, Listen */
+:root[data-style=plakat] .badge{background:#ff4b2b;color:#0e1230;border-radius:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+:root[data-style=plakat] :is(.steps li,.inst li)::before{background:none;box-shadow:none;width:auto;justify-content:flex-start;font-size:54px;font-weight:700;line-height:1;color:transparent;-webkit-text-stroke:1.5px #ff4b2b}
+:root[data-style=plakat] .facts{background:none;border:0;border-top:3px solid #f5f3ee;border-bottom:1px solid #f5f3ee;border-radius:0;padding:0}
+:root[data-style=plakat] .facts div+div{border-left-color:rgba(245,243,238,.3)}
+:root[data-style=plakat] .ticks li{border-top-color:rgba(245,243,238,.22)}
+:root[data-style=plakat] .ticks li::before{border-color:#ff4b2b}
+:root[data-style=plakat] details.q{background:none;border-width:0 0 1px;border-color:rgba(245,243,238,.5);margin:0}
+:root[data-style=plakat] details.q:first-of-type{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] details.q summary::after{border-color:#f5f3ee}
+:root[data-style=plakat] .why>div{border-top:3px solid #f5f3ee}
+:root[data-style=plakat] :is(.kick,.refs li::before){color:#ff4b2b}
+:root[data-style=plakat] .refs li{border-color:rgba(245,243,238,.22)}
+:root[data-style=plakat] .refs b{color:#f5f3ee}
+:root[data-style=plakat] .reads .ft{background:#ff4b2b;color:#0e1230}
+:root[data-style=plakat] .idx a.on{background:rgba(14,18,48,.3);box-shadow:inset 3px 0 0 #ff4b2b;border-radius:0}
+:root[data-style=plakat] .crumb{text-transform:uppercase;letter-spacing:.08em;font-size:13px;font-weight:600}
+/* Unterstützen: Tinte mit oranger Kante */
+:root[data-style=plakat] .cup{background:#0e1230;color:#f5f3ee;border-radius:0;box-shadow:inset 0 3px 0 #ff4b2b}
+:root[data-style=plakat] .cup .btn{background:#ff4b2b!important;color:#0e1230}
+/* Fußzeile und Leiste unten */
+:root[data-style=plakat] footer{background:#0e1230;border-top:0}
+/* Plakat: statt Leiste ein Sticker „Programme“, der einen Programm-Index aufklappt */
+.appdock .pk-tog,.appdock em{display:none}
+@media(max-width:820px){
+:root[data-style=plakat] .appdock{left:auto;right:14px;transform:none;background:none;box-shadow:none;padding:0;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none;display:block;max-width:none}
+:root[data-style=plakat] .appdock.hide{transform:translateY(calc(100% + 30px))}
+:root[data-style=plakat] .appdock>a{display:none}
+:root[data-style=plakat] .appdock .pk-tog{display:flex;align-items:center;gap:10px;margin-left:auto;padding:12px 16px 12px 13px;border:0;border-radius:0;background:#ff4b2b;color:#0e1230;font:700 15px/1 inherit;font-family:inherit;letter-spacing:.02em;text-transform:uppercase;box-shadow:4px 4px 0 #0e1230;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s,box-shadow .15s}
+:root[data-style=plakat] .appdock .pk-tog:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #0e1230}
+:root[data-style=plakat] .pk-sq{display:grid;grid-template-columns:repeat(2,7px);gap:2px}
+:root[data-style=plakat] .pk-sq i{width:7px;height:7px;background:#0e1230}
+:root[data-style=plakat] .pk-sq i:nth-child(2){background:#f5f3ee}
+:root[data-style=plakat] .appdock.open{left:12px;right:12px;padding:18px 16px 14px;background:#0e1230;box-shadow:6px 6px 0 #ff4b2b;counter-reset:pd;animation:pkin .22s cubic-bezier(.2,.7,.2,1)}
+:root[data-style=plakat] .appdock.open::before{content:"Programme";display:block;margin:0 0 8px 2px;color:#ff4b2b;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+:root[data-style=plakat] .appdock.open>a{counter-increment:pd;display:grid;grid-template-columns:30px 38px 1fr;align-items:center;gap:0 12px;width:auto;padding:9px 4px;border-radius:0;border-top:1px solid rgba(245,243,238,.14);color:#f5f3ee;font-size:19px;font-weight:700;line-height:1.15;text-align:left}
+:root[data-style=plakat] .appdock.open>a::before{content:counter(pd,decimal-leading-zero);color:rgba(245,243,238,.45);font-size:13px;font-weight:700;letter-spacing:.04em}
+:root[data-style=plakat] .appdock.open>a img{width:38px;height:38px;border-radius:9px}
+:root[data-style=plakat] .appdock.open span{overflow:visible}
+:root[data-style=plakat] .appdock.open em{display:block;grid-column:3;margin-top:-2px;font-style:normal;font-size:13px;font-weight:500;color:rgba(245,243,238,.62)}
+:root[data-style=plakat] .appdock.open>a[aria-current]{color:#ff4b2b}
+:root[data-style=plakat] .appdock.open>a[aria-current]::after{display:none}
+:root[data-style=plakat] .appdock.open>a:active{background:rgba(245,243,238,.06)}
+:root[data-style=plakat] .appdock.open .pk-tog{margin-top:12px;background:#f5f3ee;box-shadow:none}
+:root[data-style=plakat] .appdock.open .pk-sq{display:none}
+:root[data-style=plakat] .appdock.open .pk-tog::before{content:"✕";font-size:13px}
+}
+@keyframes pkin{from{opacity:0;transform:translateY(16px)}}
+@media(prefers-reduced-motion:reduce){:root[data-style=plakat] .appdock.open{animation:none}}
+/* Bewegung: Karten rücken beim Darüberfahren, mit orangem Druckversatz */
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ :root[data-style=plakat] :is(.grid>div,.next,.reads a){transition:transform .2s,box-shadow .2s}
+ :root[data-style=plakat] :is(.grid>div,.next,.reads a):hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #ff4b2b}}
+:root[data-style=plakat] #tip{border-radius:0;border:2px solid #f5f3ee;background:#0e1230;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=plakat] .tip-s button{border-radius:0;background:transparent;box-shadow:inset 0 0 0 1px rgba(245,243,238,.4);color:#f5f3ee}
+:root[data-style=plakat] .pick button[aria-checked=true] i{box-shadow:inset 0 0 0 1px rgba(14,18,48,.18),0 0 0 2.5px #1d35c8,0 0 0 5px #ff4b2b}
+
+:root[data-style=plakat] .try{border-radius:0;background:#1529a3}
+:root[data-style=plakat] .try .shot{border-radius:0;box-shadow:8px 8px 0 #ff4b2b}
+:root[data-style=plakat] .try .shot:hover{transform:translate(-3px,-3px);box-shadow:11px 11px 0 #ff4b2b}
+:root[data-style=plakat] .try .chrome{background:#0e1230;border-color:#0e1230}
+:root[data-style=plakat] .try .chrome b{background:#1d35c8;color:#f5f3ee;border-radius:0}
+
+/* JS-Teil aus site.js (ready()):
+    /* Plakat: Sticker „Programme“ klappt den Programm-Index auf (in den anderen Stilen per CSS ausgeblendet) * /
+    if(dk){var DS={libretto:'Noten',voce:'Mündliche Prüfungen',foliva:'Arbeitsblätter',aula:'Gruppen, Timer, Sitzplan',sportwahl:'Sportwahl Oberstufe',namo:'Schülerfahrten'};
+      dk.querySelectorAll('a').forEach(function(a){var m=(a.getAttribute('href')||'').match(/([a-z]+)\/?$/);if(m&&DS[m[1]]){var em=document.createElement('em');em.textContent=DS[m[1]];a.appendChild(em)}});
+      var tg=document.createElement('button');tg.type='button';tg.className='pk-tog';tg.setAttribute('aria-expanded','false');
+      tg.innerHTML='<span class="pk-sq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Programme</b>';dk.appendChild(tg);
+      var setOpen=function(o){dk.classList.toggle('open',o);tg.setAttribute('aria-expanded',o?'true':'false');tg.querySelector('b').textContent=o?'Schließen':'Programme';if(!o)dk.classList.remove('hide')};
+      tg.addEventListener('click',function(e){e.stopPropagation();setOpen(!dk.classList.contains('open'))});
+      document.addEventListener('click',function(e){if(dk.classList.contains('open')&&!dk.contains(e.target))setOpen(false)});
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dk.classList.contains('open')){setOpen(false);tg.focus()}});
+      new MutationObserver(function(){if(dk.classList.contains('hide')&&dk.classList.contains('open'))dk.classList.remove('hide')}).observe(dk,{attributes:true,attributeFilter:['class']});
+    }
+*/

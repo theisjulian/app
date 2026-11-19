@@ -1,5 +1,7 @@
 /* Libretto · Ferien und Feiertage in Bayern · © 2026 theis
-   Ferientermine laut Kultusministerium (km.bayern.de, Stand Oktober 2026) – ohne Gewähr, in der App ergänzbar. */
+   Ferientermine nach der KMBek „Ferienordnung und schulfreie Samstage für die Schuljahre 2024/2025 bis 2029/2030“ vom 07.12.2022
+   (IV.7-BS4407/521/59, BayMBl. 2022 Nr. 747), abgeglichen am 17.11.2026 – genehmigte Abweichungen einzelner Schulen (Nr. 1.3/1.4) in der App ergänzbar.
+   COVERED_UNTIL: letzter hinterlegter Tag. Danach liefert Libretto keine kalendergestützten Fristen. */
 (function (root) {
   'use strict';
   const FERIEN = [
@@ -9,8 +11,12 @@
     // Schuljahr 2027/28
     ['Herbstferien', '2027-11-02', '2027-11-05'], ['Buß- und Bettag', '2027-11-17', '2027-11-17'], ['Weihnachtsferien', '2027-12-24', '2028-01-07'],
     ['Frühjahrsferien', '2028-02-28', '2028-03-03'], ['Osterferien', '2028-04-10', '2028-04-21'], ['Pfingstferien', '2028-06-06', '2028-06-16'], ['Sommerferien', '2028-07-31', '2028-09-11'],
-    // Schuljahr 2028/29 (Beginn)
+    // Schuljahr 2028/29
     ['Herbstferien', '2028-10-30', '2028-11-03'], ['Buß- und Bettag', '2028-11-22', '2028-11-22'], ['Weihnachtsferien', '2028-12-23', '2029-01-05'],
+    ['Frühjahrsferien', '2029-02-12', '2029-02-16'], ['Osterferien', '2029-03-26', '2029-04-06'], ['Pfingstferien', '2029-05-22', '2029-06-01'], ['Sommerferien', '2029-07-30', '2029-09-10'],
+    // Schuljahr 2029/30
+    ['Herbstferien', '2029-10-29', '2029-11-02'], ['Buß- und Bettag', '2029-11-21', '2029-11-21'], ['Weihnachtsferien', '2029-12-24', '2030-01-04'],
+    ['Frühjahrsferien', '2030-03-04', '2030-03-08'], ['Osterferien', '2030-04-15', '2030-04-26'], ['Pfingstferien', '2030-06-11', '2030-06-21'], ['Sommerferien', '2030-07-29', '2030-09-09'],
   ].map(([name, from, to]) => ({ name, from, to }));
 
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -41,5 +47,6 @@
     });
     return out;
   }
-  root.Cal = { FERIEN, holidays, freeDays, easter, iso, add };
+  const COVERED_UNTIL = '2030-09-09';
+  root.Cal = { FERIEN, COVERED_UNTIL, holidays, freeDays, easter, iso, add };
 })(typeof self !== 'undefined' ? self : this);

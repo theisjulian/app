@@ -47,6 +47,16 @@ const Export = (() => {
       sigT: 'Fecha, firma del docente', sigP: 'Enterado (padres o tutores)', cap: 'Un ámbito se ha valorado con 0 puntos; la valoración global queda por ello limitada.', cap4: 'Un ámbito se ha valorado con 3 puntos como máximo; la valoración global queda por ello limitada.', dec: ',', locale: 'es-ES',
       subj: { Englisch: 'inglés', Italienisch: 'italiano', Französisch: 'francés', Spanisch: 'español', Russisch: 'ruso', Chinesisch: 'chino' } },
   };
+  /* Referat (monologisches Raster): eigene Überschrift, Bereich „Aussprache / Intonation / Flüssigkeit“, Thema */
+  const REF = {
+    de: { head: 'Referat – kleiner mündlicher Leistungsnachweis im Fach', topic: 'Thema', flu: 'Aussprache / Intonation / Flüssigkeit', grp: 'Gruppenreferat mit', and: 'und' },
+    en: { head: 'Oral presentation in', topic: 'Topic', flu: 'Pronunciation / Intonation / Fluency', grp: 'Group presentation with', and: 'and' },
+    it: { head: 'Presentazione orale di', topic: 'Tema', flu: 'Pronuncia / Intonazione / Scorrevolezza', grp: 'Presentazione di gruppo con', and: 'e' },
+    fr: { head: 'Exposé oral', topic: 'Sujet', flu: 'Prononciation / Intonation / Aisance', grp: 'Exposé de groupe avec', and: 'et' },
+    es: { head: 'Presentación oral de', topic: 'Tema', flu: 'Pronunciación / Entonación / Fluidez', grp: 'Presentación en grupo con', and: 'y' },
+  };
+  for (const [k, l] of Object.entries(LBL)) { l.cats.flu = REF[k].flu; l.topic = REF[k].topic; l.grp = REF[k].grp; l.and = REF[k].and;
+    l.hsRef = subj => k === 'fr' ? `Exposé oral ${/^[aeiouyéèh]/i.test(subj) ? 'd’' : 'de '}${subj}` : `${REF[k].head} ${subj}`; }
   /* Überschrift „Prüfung in/di/de …“ – im Französischen mit Elision (d’anglais, d’italien, d’espagnol) */
   for (const [k, l] of Object.entries(LBL)) l.hs = subj => k === 'fr' ? `Épreuve orale ${/^[aeiouyéèh]/i.test(subj) ? 'd’' : 'de '}${subj}` : `${l.head} ${subj}`;
   let L = LBL.de; let TIGHT = false;
@@ -60,19 +70,27 @@ const Export = (() => {
   }
 
   /* Kopf wie ISB-Bogen: Fach/Prüfer/Schule/Schuljahr/Klasse/Datum/Name, rechts Logo */
-  function header(ex, settings, student, levelLabel) {
+  function header(ex, settings, student, levelLabel, item) {
     const lw = 2800, a = 3703, b = 3703;
     const logo = logoRun(settings);
-    const dateTxt = ex.date ? new Date(ex.date + 'T12:00').toLocaleDateString(L.locale) : '';
+    const ref = ex.kind === 'ref'; const day = ref && item && item.date ? item.date : ex.date;
+    const dateTxt = day ? new Date(day + 'T12:00').toLocaleDateString(L.locale) : '';
     const isOS = SCHEMES[ex.scheme].type !== 'be';
     const rows = [
-      new TableRow({ children: [cell(p(t(L.hs(L.subj[ex.subject] || ex.subject), { bold: true })), { w: a + b, span: 2 }),
+      new TableRow({ children: [cell(p(t((ref ? L.hsRef : L.hs)(L.subj[ex.subject] || ex.subject), { bold: true })), { w: a + b, span: 2 }),
         cell(logo ? p(logo, { align: AlignmentType.CENTER }) : p(t(''), {}), { w: lw, rowSpan: 4 })] }),
       new TableRow({ children: [cell(p([t(L.examiner + ': '), t(settings.examiner)]), { w: a }), cell(p([t(L.school + ': '), t(settings.school)]), { w: b })] }),
       new TableRow({ children: [cell(p([t((isOS ? L.course : L.year) + ': '), t(isOS ? ex.cls : settings.year)]), { w: a }), cell(p([t((isOS ? L.section : L.cls) + ': '), t(isOS ? (settings.year || '') : ex.cls)]), { w: b })] }),
       new TableRow({ children: [cell(p([t(L.date + ': '), t(dateTxt)]), { w: a }), cell(p([t(L.name + ': '), t(`${student.first} ${student.last}`.trim(), { bold: true })]), { w: b })] }),
     ];
     const badge = table([new TableRow({ children: [cell(p(t(levelLabel, { bold: true, size: 24, color: 'FFFFFF' }), { align: AlignmentType.CENTER }), { w: 1300, fill: '000000', borders: NONE })] })], [1300], { align: AlignmentType.RIGHT });
+    if (ref) {
+      /* Referat: Thema statt Prüfungsbezeichnung (die Art steht schon in der Überschrift) */
+      const tl = /^referat$/i.test(String(ex.title || '').trim()) ? '' : titleIn(ex.title, ex.wlang); const tp = item && item.topic ? String(item.topic).trim() : '';
+      const w = item && item.with && item.with.length ? item.with : null; const wt = w ? (w.length > 1 ? w.slice(0, -1).join(', ') + ' ' + L.and + ' ' + w[w.length - 1] : w[0]) : '';
+      const runs = [tl ? t(tl + (tp || w ? ' · ' : ''), { color: '555555' }) : null, tp ? t(L.topic + ': ', { bold: true }) : null, tp ? t(tp) : null, w ? t((tp ? ' · ' : '') + L.grp + ' ' + wt, { color: '555555' }) : null].filter(Boolean);
+      return [badge, gap(80), table(rows, [a, b, lw]), p(runs.length ? runs : t(''), { before: 60, after: 120 })];
+    }
     return [badge, gap(80), table(rows, [a, b, lw]), p(t(titleIn(ex.title, ex.wlang), { color: '555555' }), { before: 60, after: 120 })];
   }
 
@@ -98,7 +116,7 @@ const Export = (() => {
       const key = (ex.pct && ex.pct !== 50) ? keyFromPercent(ex.scheme, ex.pct) : sc.key;
       const rg = keyRanges(ex.scheme, key); const cw = Math.floor((W - 1600) / 6);
       const keyT = table([
-        new TableRow({ children: [cell(p(t(sc.label, { bold: true, color: 'FFFFFF' })), { w: 1000, fill: '000000' }), cell(p(t(L.be)), { w: 600 }), ...rg.map(x => cell(p(t(`${fmt(x.from)}–${fmt(x.to)}`), { align: AlignmentType.CENTER }), { w: cw, fill: x.grade === e.grade ? GREY : undefined }))] }),
+        new TableRow({ children: [cell(p(t(sc.badge || sc.label, { bold: true, color: 'FFFFFF' })), { w: 1000, fill: '000000' }), cell(p(t(L.be)), { w: 600 }), ...rg.map(x => cell(p(t(`${fmt(x.from)}–${fmt(x.to)}`), { align: AlignmentType.CENTER }), { w: cw, fill: x.grade === e.grade ? GREY : undefined }))] }),
         new TableRow({ children: [cell(p(t(L.grade)), { w: 1000 }), cell(p(t('')), { w: 600 }), ...rg.map(x => cell(p(t(String(x.grade), { bold: x.grade === e.grade }), { align: AlignmentType.CENTER }), { w: cw, fill: x.grade === e.grade ? GREY : undefined }))] }),
       ], [1000, 600, ...rg.map(() => cw)]);
       const resT = table([
@@ -140,8 +158,8 @@ const Export = (() => {
     const { s, r, e, verdict } = item; const sc = SCHEMES[ex.scheme];
     /* Viel Text (lange Notizen + Worturteil): etwas engere Abstände, damit der Bogen auf eine Seite passt */
     TIGHT = Object.values(r.notes || {}).join('').length + String(verdict || '').length > 650;
-    const level = sc.type === 'np' ? 'Q 12/13' : sc.type === 'bep' ? 'B1' : sc.label;
-    return [...header(ex, settings, s, level), ...catsOf(ex.scheme).flatMap(c => catBlock(ex, settings, c, r)), ...verdictBlock(verdict), ...totals(ex, e), ...signatures(settings)];
+    const level = sc.type === 'np' ? 'Q 12/13' : sc.type === 'bep' ? 'B1' : (sc.badge || sc.label);
+    return [...header(ex, settings, s, level, item), ...catsOf(ex.scheme).flatMap(c => catBlock(ex, settings, c, r)), ...verdictBlock(verdict), ...totals(ex, e), ...signatures(settings)];
   }
 
   const PAGE = { page: { size: { width: 11906, height: 16838 }, margin: { top: 794, bottom: 794, left: 850, right: 850 } } };
@@ -156,8 +174,15 @@ const Export = (() => {
   };
   /* Bewertungsbögen: statt theis-Fußzeile die Quellenangabe des ISB (mit Link zur Fundstelle) */
   const SRC = { de: 'Bewertungsraster und Notenschlüssel:', en: 'Assessment grids and grading scale:', it: 'Griglie di valutazione e tabella dei voti:', fr: 'Grilles d’évaluation et barème :', es: 'Rúbricas de evaluación y baremo:' };
+  /* Eigener Notenschlüssel (Notengrenze ≠ 50 %): Raster vom ISB, Schlüssel von der Lehrkraft angepasst – so auch in der Quellenangabe */
+  const SRCK = { de: (n, pc) => `Bewertungsraster: ${n}. Notenschlüssel von der Lehrkraft angepasst (Grenze für die Note 4: ${pc} %).`,
+    en: (n, pc) => `Assessment grids: ${n}. Grading scale adjusted by the teacher (pass mark: ${pc} %).`,
+    it: (n, pc) => `Griglie di valutazione: ${n}. Tabella dei voti adattata dal docente (soglia della sufficienza: ${pc} %).`,
+    fr: (n, pc) => `Grilles d’évaluation : ${n}. Barème adapté par l’enseignant(e) (seuil de la moyenne : ${pc} %).`,
+    es: (n, pc) => `Rúbricas de evaluación: ${n}. Baremo adaptado por el docente (umbral del aprobado: ${pc} %).` };
+  let SRCEX = null;
   const SRCFOOT = lang => ({ default: new Footer({ children: [
-    p(t(`${SRC[lang] || SRC.de} ${ISB.name}`, { size: 13, color: '888888' }), { align: AlignmentType.CENTER }),
+    p(t(SRCEX && SCHEMES[SRCEX.scheme].type === 'be' && SRCEX.pct && SRCEX.pct !== 50 ? (SRCK[lang] || SRCK.de)(ISB.name, SRCEX.pct) : `${SRC[lang] || SRC.de} ${ISB.name}`, { size: 13, color: '888888' }), { align: AlignmentType.CENTER }),
     p(new D.ExternalHyperlink({ link: ISB.url, children: [new TextRun({ text: ISB.url, font: FONT, size: 13, color: '5A6B8C' })] }), { align: AlignmentType.CENTER })] }) });
   /* foot === false: ohne theis-Fußzeile (Bewertungsbögen gehen an Schüler und Eltern – dort kein theis-Logo), dafür Quellenangabe ISB */
   function doc(children, many, foot) {
@@ -182,13 +207,43 @@ const Export = (() => {
   function toastMsg(m) { const el = document.getElementById('toast'); if (!el) return; el.textContent = m; el.classList.add('show'); clearTimeout(toastMsg._t); toastMsg._t = setTimeout(() => el.classList.remove('show'), 2400); }
 
   async function sheets(ex, settings, items, all) {
-    L = LBL[ex.wlang] || LBL.de;
+    L = LBL[ex.wlang] || LBL.de; SRCEX = ex;
     const blob = await Packer.toArrayBuffer(doc(null, items.map(it => sheet(ex, settings, it)), false));
-    const name = fileBase(ex, all ? 'Bewertungsbögen' : `Bewertungsbogen ${items[0].s.last} ${items[0].s.first}`) + '.docx';
+    const ref = ex.kind === 'ref';
+    const name = fileBase(ex, all ? (ref ? 'Bewertungsbögen Referate' : 'Bewertungsbögen') : `Bewertungsbogen ${ref ? 'Referat ' : ''}${items[0].s.last} ${items[0].s.first}`) + '.docx';
     return saveBytes(new Uint8Array(blob), name, 'docx');
   }
 
+  /* Referatsliste als Word: Nr., Datum, Uhrzeit, Name, Thema */
+  async function refList(ex, settings, students) {
+    L = LBL.de;
+    const byId = id => students.find(s => s.id === id);
+    const [h0, m0] = (ex.start || '08:00').split(':').map(Number); let day = null, tt = 0;
+    const sch = ex.groups.map(g => { const d = g.date || ex.date || ''; if (d !== day) { day = d; tt = h0 * 60 + m0; } const st = tt, en = tt + ((g.dur != null && g.dur !== '' && +g.dur > 0) ? Math.round(+g.dur) : (+ex.dur || 0) * Math.max(1, g.members.length)); tt = en + (+ex.gap || 0) + (g.breakAfter ? Math.max(0, g.brk != null ? +g.brk || 0 : +ex.brk || 0) : 0); return { g, st, en, d }; });
+    const hm = x => `${String(Math.floor(x / 60) % 24).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`;
+    const dd = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    const logo = logoRun(settings, 140, 60);
+    const head = table([new TableRow({ children: [
+      cell([p(t('Referate', { bold: true, size: 36 })), p(t(`${/^referat$/i.test(String(ex.title || '').trim()) ? '' : ex.title + ' · '}${ex.subject} · ${ex.cls}`, { size: 22 }), { before: 60 }), p(t([`${ex.dur} Minuten je ${ex.groups.some(g => g.members.length > 1) ? 'Person' : 'Referat'}`, ex.room ? 'Raum ' + ex.room : ''].filter(Boolean).join(' · '), { size: 22 }), { before: 40 })], { w: 7606, borders: NONE, v: VerticalAlign.TOP }),
+      cell(logo ? p(logo, { align: AlignmentType.RIGHT }) : p(t('')), { w: 2600, borders: NONE, v: VerticalAlign.TOP })] })], [7606, 2600]);
+    const w = [700, 1700, 1500, 2700, 3606];
+    const H = ['Nr.', 'Datum', 'Uhrzeit', 'Name', 'Thema'];
+    const rows = [new TableRow({ tableHeader: true, children: H.map((x, i) => cell(p(t(x, { bold: true })), { w: w[i], fill: GREY })) })];
+    sch.forEach(({ g, st, en, d }, i) => {
+      const ss = g.members.map(byId).filter(Boolean);
+      rows.push(new TableRow({ cantSplit: true, children: [cell(p(t(String(i + 1), { bold: true }), { align: AlignmentType.CENTER }), { w: w[0] }), cell(p(t(dd(d))), { w: w[1] }), cell(p(t(`${hm(st)} – ${hm(en)}`)), { w: w[2] }),
+        cell(ss.length ? ss.map(s => p(t(`${s.first} ${s.last}`.trim()))) : p(t('')), { w: w[3] }), cell(p(t(g.topic || '')), { w: w[4] })] }));
+      const nx = sch[i + 1];
+      if (g.breakAfter && nx && nx.d === d) rows.push(new TableRow({ children: [cell(p(t(`Pause · ${g.brk != null ? +g.brk : (+ex.brk || 0)} Min.`, { italics: true, size: 18 }), { align: AlignmentType.CENTER }), { w: W, span: 5, fill: 'F2F2F2' })] }));
+    });
+    const children = [head, gap(240), table(rows, w)];
+    if (ex.planNote) children.push(p(t(ex.planNote), { before: 240 }));
+    const buf = await Packer.toArrayBuffer(doc(children));
+    return saveBytes(new Uint8Array(buf), fileBase(ex, 'Referatsliste') + '.docx', 'docx');
+  }
+
   async function plan(ex, settings, students) {
+    if (ex.kind === 'ref') return refList(ex, settings, students);
     L = LBL.de;
     const byId = id => students.find(s => s.id === id);
     const sch = (() => { const [h, m] = (ex.start || '08:00').split(':').map(Number); let tt = h * 60 + m; return ex.groups.map(g => { const st = tt, en = tt + (+ex.dur || 0); tt = en + (+ex.gap || 0) + (g.breakAfter ? Math.max(0, g.brk != null ? +g.brk || 0 : +ex.brk || 0) : 0); return { g, st, en }; }); })();

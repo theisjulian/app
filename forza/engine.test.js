@@ -67,6 +67,10 @@ assert(!E.suggest({ ...habBase, sessions: [pushDay('2026-10-24', [added('k')])] 
 const swapped = { exercise_id: 'b2', replaced_from: 'b', why: 'Ersetzt', sets: [{ done: true, load_kg: 40, reps: 10 }] };
 const sw = E.suggest({ ...habBase, sessions: [pushDay('2026-10-20', [swapped]), pushDay('2026-10-24', [swapped])] });
 assert(sw.items.some((i) => i.name === 'Brustpresse') && !sw.items.some((i) => i.name === 'Bank flach'), 'ersetzte Übung weicht der Wahl');
+// Entwurf: ohne Freigabe nicht vorgeschlagen, nach zweimal selbst gemacht schon
+const draft = Object.assign(mk('dr', 'Hip Thrust', 'gesaess', 'huefte_strecken', 'G'), { tier: 'entwurf' });
+assert(!E.eligible(draft, { items: ['kabelzug'], userEx: {}, painEx: new Set() }));
+assert(E.eligible(draft, { items: ['kabelzug'], userEx: {}, painEx: new Set(), tried: new Set(['dr']) }));
 console.log('eigenständige Tests ok');
 
 const katalog = process.argv[2];

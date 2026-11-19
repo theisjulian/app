@@ -209,26 +209,30 @@ ${m.sections.map((s, i) => { const n = s.n || i + 1; return `<section class="sec
   /* Prüfungsplan: jedes Design mit eigenem Aufbau */
   const tasksOf = (s, teacher) => teacher && s.tasks ? (Array.isArray(s.tasks) ? s.tasks : [s.tasks]) : [];
   const peopleOf = s => (s.people && s.people.length ? s.people : String(s.names || '').split(', ').filter(Boolean));
+  /* Referat (d.ref): Einheit „Referat“, Thema für alle sichtbar, Tag je Eintrag (s.day) */
+  const dayOf = s => s.day ? `<small class="dy" style="display:block;font-size:.62em;font-weight:600;opacity:.75;margin:0 0 .5mm">${esc(s.day)}</small>` : '';
   function planSlots(d, teacher, design) {
+    const U = d.unit || 'Gruppe';
+    if (d.ref) teacher = true;
     if (design === 'nuechtern') {
       /* Tabelle wie ein amtliches Formular */
-      const rows = d.slots.map(s => `<tr><td class="tt">${hm(s.start)}–${hm(s.end)}</td><td class="gn">${s.i + 1}</td><td class="pp">${peopleOf(s).map(esc).join('<br>') || '—'}</td>${teacher ? `<td class="tk">${tasksOf(s, true).map(esc).join('<br>')}</td>` : ''}</tr>${s.brk ? `<tr class="pz"><td colspan="${teacher ? 4 : 3}">Pause · ${s.brk} Min.</td></tr>` : ''}`).join('');
-      return `<table class="ptab"><thead><tr><th style="width:27mm">Zeit</th><th style="width:16mm">Gruppe</th><th>Prüflinge</th>${teacher ? '<th style="width:46%">Aufgaben</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>`;
+      const rows = d.slots.map(s => `<tr><td class="tt">${s.day ? esc(s.day) + '<br>' : ''}${hm(s.start)}–${hm(s.end)}</td><td class="gn">${s.i + 1}</td><td class="pp">${peopleOf(s).map(esc).join('<br>') || '—'}</td>${teacher ? `<td class="tk">${tasksOf(s, true).map(esc).join('<br>')}</td>` : ''}</tr>${s.brk ? `<tr class="pz"><td colspan="${teacher ? 4 : 3}">Pause · ${s.brk} Min.</td></tr>` : ''}`).join('');
+      return `<table class="ptab"><thead><tr><th style="width:27mm">Zeit</th><th style="width:16mm">${U}</th><th>${d.ref ? 'Name' : 'Prüflinge'}</th>${teacher ? `<th style="width:46%">${d.ref ? 'Thema' : 'Aufgaben'}</th>` : ''}</tr></thead><tbody>${rows}</tbody></table>`;
     }
     if (design === 'modern') {
       /* Zeitleiste: Uhrzeit links, Linie mit Punkten, Namen rechts */
-      return `<div class="tl">${d.slots.map(s => `<div class="ti"><div class="tt">${hm(s.start)}<small>${hm(s.end)}</small></div><i class="dot"></i><div class="tc"><div class="gl">Gruppe ${s.i + 1}</div><div class="who">${peopleOf(s).map(esc).join('<span class="sep"></span>') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div></div>${s.brk ? `<div class="ti tp"><div class="tt"></div><i class="dot"></i><div class="tc">Pause · ${s.brk} Min.</div></div>` : ''}`).join('')}</div>`;
+      return `<div class="tl">${d.slots.map(s => `<div class="ti"><div class="tt">${dayOf(s)}${hm(s.start)}<small>${hm(s.end)}</small></div><i class="dot"></i><div class="tc"><div class="gl">${U} ${s.i + 1}</div><div class="who">${peopleOf(s).map(esc).join('<span class="sep"></span>') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div></div>${s.brk ? `<div class="ti tp"><div class="tt"></div><i class="dot"></i><div class="tc">Pause · ${s.brk} Min.</div></div>` : ''}`).join('')}</div>`;
     }
     if (design === 'freundlich') {
       /* bunte Kacheln, zwei Spalten */
-      return `<div class="kach">${d.slots.map(s => `<div class="ka c${s.i % 6}"><div class="kt"><span class="kn">${s.i + 1}</span><b>${hm(s.start)}</b><small>bis ${hm(s.end)} Uhr</small></div><div class="who">${peopleOf(s).map(n => `<span>${esc(n)}</span>`).join('') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div>${s.brk ? `<div class="kp">☕ Pause · ${s.brk} Min.</div>` : ''}`).join('')}</div>`;
+      return `<div class="kach">${d.slots.map(s => `<div class="ka c${s.i % 6}"><div class="kt"><span class="kn">${s.i + 1}</span><b>${hm(s.start)}</b><small>${s.day ? esc(s.day) + ' · ' : ''}bis ${hm(s.end)} Uhr</small></div><div class="who">${peopleOf(s).map(n => `<span>${esc(n)}</span>`).join('') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div>${s.brk ? `<div class="kp">☕ Pause · ${s.brk} Min.</div>` : ''}`).join('')}</div>`;
     }
     /* Heft: Einträge auf Karopapier, Gruppennummer im roten Kreis, Pause mit Textmarker */
-    return `<div class="hl">${d.slots.map(s => `<div class="he"><span class="hn">${s.i + 1}</span><div class="ht">${hm(s.start)}<small>bis ${hm(s.end)}</small></div><div class="hc"><div class="who">${peopleOf(s).map(esc).join(', ') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div></div>${s.brk ? `<div class="hp"><mark>Pause · ${s.brk} Min.</mark></div>` : ''}`).join('')}</div>`;
+    return `<div class="hl">${d.slots.map(s => `<div class="he"><span class="hn">${s.i + 1}</span><div class="ht">${dayOf(s)}${hm(s.start)}<small>bis ${hm(s.end)}</small></div><div class="hc"><div class="who">${peopleOf(s).map(esc).join(', ') || '—'}</div>${tasksOf(s, teacher).map(x => `<div class="tk">${esc(x)}</div>`).join('')}</div></div>${s.brk ? `<div class="hp"><mark>Pause · ${s.brk} Min.</mark></div>` : ''}`).join('')}</div>`;
   }
   function planPage(d, teacher, design) {
-    return `<div class="page"><div class="pin">${kopf(`Prüfungsplan · ${d.title}`, `${d.subject} · ${d.cls}`, [d.date, d.span, d.room ? ['Raum ' + d.room, 'hi'] : '', `${d.dur} Min. je Gruppe${d.gap ? ` · ${d.gap} Min. Wechsel` : ''}`], d.logo, d.level)}
-${teacher ? '<div class="tbanner">Nur für die Lehrkraft – enthält die Aufgaben. Bitte nicht an die Prüflinge weitergeben.</div>' : ''}
+    return `<div class="page"><div class="pin">${kopf(d.ref ? 'Referate' + (d.title ? ' · ' + d.title : '') : `Prüfungsplan · ${d.title}`, `${d.subject} · ${d.cls}`, [d.date, d.span, d.room ? ['Raum ' + d.room, 'hi'] : '', `${d.durTxt || `${d.dur} Min. je ${d.unit || 'Gruppe'}`}${d.gap ? ` · ${d.gap} Min. Wechsel` : ''}`], d.logo, d.level)}
+${teacher && !d.ref ? '<div class="tbanner">Nur für die Lehrkraft – enthält die Aufgaben. Bitte nicht an die Prüflinge weitergeben.</div>' : ''}
 <div class="slots${d.slots.length <= 6 && !teacher ? ' roomy' : ''}">${planSlots(d, teacher, design)}</div>
 <div class="notes">${d.parts ? `<p><b>Ablauf:</b> ${esc(d.parts)}</p>` : ''}${d.note ? `<p>${esc(d.note)}</p>` : ''}</div></div>${foot()}</div>`;
   }
@@ -310,6 +314,9 @@ body{--fs:${fs.toFixed(2)}pt}${CSS[design]}${job.kind !== 'tasks' ? EXTRA + PLAN
       h += `<div class="prLab">Format</div><div class="seg" id="prFmt"><button type="button" data-f="a4" aria-pressed="${!OPT.a5}">A4</button><button type="button" data-f="a5" aria-pressed="${!!OPT.a5}">A5 · 2 pro Blatt</button></div>
       <label class="prChk"><input type="checkbox" class="sw" id="prBig" ${OPT.big ? 'checked' : ''}> Große Schrift</label>
       ${JOB.canSplit ? `<label class="prChk"><input type="checkbox" class="sw" id="prSplit" ${OPT.split ? 'checked' : ''}> Monolog und Dialog auf getrennten Blättern</label><p class="hint" style="margin:0">Erst alle Monolog-Karten, dann alle Dialog-Karten – so kann der Dialog erst nach dem Monolog ausgeteilt werden.</p>` : ''}`;
+    } else if (k === 'plan' && JOB.data && JOB.data.ref) {
+      /* Referatsliste: kein Türaushang, keine getrennte Lehrkraft-Fassung (Themen sind für alle) */
+      h += '';
     } else if (k === 'plan') {
       h += `<div class="prLab">Was drucken?</div><div class="seg" id="prWhat"><button type="button" data-w="plan" aria-pressed="${!OPT.door}">Prüfungsplan</button><button type="button" data-w="door" aria-pressed="${!!OPT.door}">Türaushang</button></div>
       ${OPT.door ? '' : `<div class="prLab">Für wen?</div><div class="seg" id="prWho"><button type="button" data-t="0" aria-pressed="${!OPT.teacher}">Prüflinge</button><button type="button" data-t="1" aria-pressed="${!!OPT.teacher}">Lehrkraft</button></div><p class="hint" style="margin:0">${OPT.teacher ? 'Mit den Aufgaben je Prüfling – nicht an die Prüflinge weitergeben.' : 'Ohne Aufgaben: kann ausgehängt oder verteilt werden.'}</p>`}
