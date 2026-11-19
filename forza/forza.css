@@ -487,3 +487,14 @@ body:has(.modal){overflow:hidden}
 button,.chip,.btn,.it,.wu{-webkit-touch-callout:none}
 html,body{overscroll-behavior-y:none}
 input,select,textarea{font-size:max(16px,1em)}
+/* Scheiben, Gefühl, Rückgängig */
+.fz-plates{font-size:14px;font-weight:600;color:var(--mute);margin-top:-2px;min-height:0}.fz-plates:empty{display:none}
+.fz-feel{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:-2px}
+.fz-feel span{font-size:12px;color:var(--mute);width:100%;text-align:center}
+.fz-feel button{padding:10px 16px;border-radius:99px;background:var(--card2);font-weight:600;font-size:15px;box-shadow:inset 0 0 0 1px var(--line);transition:transform .12s}
+.fz-feel button:active{transform:scale(.95)}
+.toast.act{display:flex;align-items:center;gap:14px;pointer-events:auto}
+.toast-act{font-weight:700;color:var(--a);padding:4px 2px}
+html[data-theme=glas] .fz-feel button{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:inset 0 1px 0 var(--ghi),inset 0 0 0 1px var(--gline)}
+.pr-line{margin:8px 0 6px;font-size:15px}.hist-rows .mrow{font-size:14px;margin:6px 0}
+.pr-card .mrow{margin:10px 0}.pr-up{color:var(--ok);font-variant-numeric:tabular-nums}

@@ -21,7 +21,13 @@
   F.dlabel = (s) => { const d = F.dparse(s); return `${WD[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()].slice(0, 3)}.`; };
   F.dshort = (s) => `${s.slice(8, 10)}.${s.slice(5, 7)}.`;
   F.addDays = (s, n) => { const d = F.dparse(s); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
-  F.toast = (m, ms = 2600) => { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(F._tt); F._tt = setTimeout(() => t.classList.remove('show'), ms); };
+  F.toast = (m, ms = 2600) => { const t = document.getElementById('toast'); t.textContent = m; t.classList.remove('act'); t.classList.add('show'); clearTimeout(F._tt); F._tt = setTimeout(() => t.classList.remove('show'), ms); };
+  /* Hinweis mit einer Aktion (z. B. „Rückgängig“), verschwindet nach 4,5 s */
+  F.toastAct = (m, label, fn, ms = 4500) => {
+    const t = document.getElementById('toast'); t.innerHTML = ''; const sp = document.createElement('span'); sp.textContent = m; const b = document.createElement('button'); b.className = 'toast-act'; b.textContent = label;
+    b.addEventListener('click', async () => { t.classList.remove('show'); clearTimeout(F._tt); try { await fn(); } catch (e) { F.err(e); } }, { once: true });
+    t.append(sp, b); t.classList.add('show', 'act'); clearTimeout(F._tt); F._tt = setTimeout(() => t.classList.remove('show', 'act'), ms);
+  };
   F.err = (e, where) => { console.error(where, e); F.toast('Fehler' + (where ? ' bei ' + where : '') + ': ' + (e && e.message ? e.message : e), 4500); };
   F.ls = { get(k, d) { try { const v = localStorage.getItem('forza-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('forza-' + k, JSON.stringify(v)); } catch {} } };
 
@@ -146,7 +152,8 @@
     if (!F.user) { F.views.auth(root); return; }
     const [main, ...rest] = F.route();
     const nav = [['heute', 'Heute'], ['training', 'Training'], ['kalender', 'Kalender'], ['fortschritt', 'Fortschritt'], ['mehr', 'Einstellungen']];
-    const cur = ['uebung', 'katalog'].includes(main) ? 'mehr' : main;
+    // Übungsseite: der Tab, aus dem man kam (im Training: Training, sonst Einstellungen)
+    const cur = main === 'uebung' ? (F.openSession() ? 'training' : 'mehr') : main === 'katalog' ? 'mehr' : main;
     const view = F.views[main] || F.views.heute;
     const body = view(rest) || '';
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><img src="assets/forza.svg" alt="">forza</div>${nav.map(([k, l]) => `<button class="nv ${cur === k ? 'on' : ''}" data-act="nav" data-r="${k}">${F.icon[k]}${l}</button>`).join('')}</aside>
