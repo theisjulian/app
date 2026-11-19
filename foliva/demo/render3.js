@@ -253,12 +253,13 @@
 
   /* Kästchenrechnung: frei beschriftbares Karofeld; [Lösung] in eckigen Klammern, Zeile aus --- = Strich */
   /* Schriftliche Division im Karofeld */
-  T('wdiv', it => {
+  T('wdiv', (it, ctx) => {
     const d = it.data; if (!d || d.error) return err(d);
     const k = Math.max(4, Math.min(9, +it.cell || 6));
     const w = Math.max(...d.tasks.map(t => Math.max(...t.rows.map(r => r.length)))) + 1;
     const one = t => { const rows = [...t.rows, []]; return `<div class="kae wdv" style="--k:${k}mm;grid-template-columns:repeat(${w},var(--k))">${rows.map(r => Array.from({ length: w }, (_, i) => { const c = r[i]; const v = c && c.ch ? (c.sol ? S(c.ch) : esc(c.ch)) : ''; return `<span class="${c && c.line ? 'lt sl' : ''}">${v}</span>`; }).join('')).join('')}</div>`; };
-    return `<div class="wdvs" style="${grid(cols(it.cols, 1, 3), 'max-content')}">${d.tasks.map(one).join('')}</div>`;
+    const iw = (ctx && ctx.dim && ctx.dim.iw) || 170; const fit = Math.max(1, Math.floor((iw + 8) / (w * k + 8))); /* nur so viele Spalten, wie nebeneinander passen */
+    return `<div class="wdvs" style="${grid(Math.min(cols(it.cols, 1, 3), fit), 'max-content')}">${d.tasks.map(one).join('')}</div>`;
   });
 
   T('kaestchen', (it, ctx) => {

@@ -465,3 +465,6 @@ dialog.xwide{width:min(1240px,96vw)}
 .frPz .pf{display:none}
 
 .tclipEdit{position:relative;z-index:30;background:var(--paper,#fff);box-shadow:0 0 0 2px var(--accent,#2F5BEA),0 8px 30px rgba(0,0,0,.18);border-radius:2px}
+/* Hinweise vor dem Drucken */
+.warnHint{background:#FFF4E0;color:#7A4A00;border-radius:8px;padding:7px 10px;margin:6px 0 10px}
+@media (prefers-color-scheme:dark){.warnHint{background:#3A2A0E;color:#FFD9A0}}
