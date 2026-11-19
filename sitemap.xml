@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://theisapps.de/</loc></url>
-  <url><loc>https://theisapps.de/aula/</loc></url>
-  <url><loc>https://theisapps.de/libretto/</loc></url>
-  <url><loc>https://theisapps.de/libretto/demo/</loc></url>
-  <url><loc>https://theisapps.de/voce/</loc></url>
-  <url><loc>https://theisapps.de/foliva/</loc></url>
-  <url><loc>https://theisapps.de/namo/</loc></url>
-  <url><loc>https://theisapps.de/sportwahl/</loc></url>
-  <url><loc>https://theisapps.de/sportwahl/app.html</loc></url>
-  <url><loc>https://theisapps.de/lizenz</loc></url>
-  <url><loc>https://theisapps.de/impressum</loc></url>
-  <url><loc>https://theisapps.de/datenschutz</loc></url>
+  <url><loc>https://theisapps.de/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/aula/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/libretto/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/libretto/demo/</loc><lastmod>2026-11-18</lastmod></url>
+  <url><loc>https://theisapps.de/voce/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/foliva/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/namo/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/sportwahl/</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/sportwahl/app.html</loc><lastmod>2026-11-13</lastmod></url>
+  <url><loc>https://theisapps.de/lizenz</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/impressum</loc><lastmod>2026-11-19</lastmod></url>
+  <url><loc>https://theisapps.de/datenschutz</loc><lastmod>2026-11-19</lastmod></url>
 </urlset>
