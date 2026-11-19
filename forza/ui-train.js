@@ -135,6 +135,15 @@
 
   /* Fokus: nur der nächste Satz, Werte vorgeschlagen, ein Tipp zum Abhaken. Danach läuft die Pause von selbst. */
   const enter = (key) => { const on = F.ui.tr.key !== key; F.ui.tr.key = key; return on ? ' fz-enter' : ''; };
+  /* Scheibenrechner für die Langhantel (Stange 20 kg): welche Scheiben je Seite */
+  F.platesTxt = (ex, kg) => {
+    if (!ex || ex.load_convention !== 'gesamt' || !(ex.equipment || []).includes('langhantel') || /landmine/i.test(ex.name) || !(kg > 20)) return '';
+    let side = (kg - 20) / 2; const out = [];
+    for (const p of [25, 20, 15, 10, 5, 2.5, 1.25]) while (side >= p - 1e-9) { out.push(p); side -= p; }
+    return `Je Seite: ${out.map((p) => F.fmt(p)).join(' + ')}${side > 0.01 ? ' (≈)' : ''} · Stange 20 kg`;
+  };
+  const lastTime = (ex) => { const l = E.lastWorkSets(F.S.sessions, ex.id, ex.load_convention === 'unterstuetzt'); if (!l) return '';
+    const d = F.dparse(l.date); return `Letztes Mal (${F.WD[d.getDay()]} ${F.dshort(l.date)}): ${l.sets.map((x) => (noLoad(ex) ? '' : F.fmt(Number(x.load_kg)) + '×') + x.reps).join(' · ')}`; };
   const focusView = (s) => {
     const exs = s.session_exercises, dnEx = exs.filter((e) => e.sets.length && !isOpen(e)).length;
     if (F.rest) return topBar(s, dnEx) + restScreen(s, enter('rest'));
@@ -151,8 +160,10 @@
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
-      ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : '<div class="small mute">Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.</div>'}
+      <div class="fz-plates" id="fz-plates" data-ex="${ex.id}">${F.platesTxt(ex, Number(tg.load_kg))}</div>
+      ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : (() => { const lt = lastTime(ex); return `<div class="small mute">${lt ? esc(lt) : 'Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.'}</div>`; })()}
       <button class="btn pri block fz-go" data-act="doneSet" data-s="${st.id}">${F.icon.check.replace('<svg', '<svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"')} Geschafft</button>
+      ${pf.rir ? `<div class="fz-feel" role="group" aria-label="Geschafft mit Gefühl"><span>oder gleich mit Gefühl:</span><button data-act="doneSet" data-s="${st.id}" data-rir="4">Leicht</button><button data-act="doneSet" data-s="${st.id}" data-rir="2">Passt</button><button data-act="doneSet" data-s="${st.id}" data-rir="0">Am Limit</button></div>` : ''}
       <div class="fz-tools"><button data-act="skipEx" data-id="${se.id}">${skipped ? 'Später' : 'Überspringen'}</button><button data-act="help" data-id="${se.exercise_id}">Hilfe</button><button data-act="swapAsk" data-id="${se.id}">Ersetzen</button><button data-act="addSet" data-id="${se.id}">+ Satz</button><button class="bad" data-act="painAsk" data-id="${se.id}">Schmerz</button></div>
       ${(() => { const prev = se.sets.filter((x) => x.done); return prev.length ? `<div class="small mute" style="margin-top:10px">Heute: ${setLine(se)}</div>` : ''; })()}</div>`;
   };
@@ -185,14 +196,15 @@
   F.fitAll = () => document.querySelectorAll('.stepper input').forEach(F.fit);
   window.addEventListener('resize', () => F.fitAll && F.fitAll());
   document.addEventListener('input', (e) => { if (e.target.closest && e.target.closest('.stepper')) F.fit(e.target); });
-  F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); };
+  const updPlates = (f, fld) => { const el = document.getElementById('fz-plates'); if (el && fld === 'load_kg') el.textContent = F.platesTxt(F.S.exById[f.se.exercise_id], Number(f.st.load_kg)); };
+  F.ins.setVal = (t) => { const f = findSet(t.dataset.s); if (!f) return; const v = F.num(t.value); f.st[t.dataset.f] = t.dataset.f === 'load_kg' ? v : v === null ? null : Math.round(v); updPlates(f, t.dataset.f); };
   F.acts.step = (t) => {
     const f = findSet(t.dataset.s); if (!f) return; const ex = F.S.exById[f.se.exercise_id], fld = t.dataset.f, d = Number(t.dataset.d);
     const inp = t.parentElement.querySelector('input'); let v = F.num(inp.value);
     const step = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? F.E.params(F.S.params).load_step_hand : F.E.params(F.S.params).load_step_total) : fld === 'seconds' ? 5 : 1;
     if (v === null) { const tg = F.setTarget(f.se, f.st); v = tg[fld] ?? (fld === 'reps' ? (E.PROFILES[ex.dosage_profile]?.reps?.[0] ?? 8) : fld === 'seconds' ? 20 : 0); if ((tg[fld] === null || tg[fld] === undefined) && d > 0 && fld !== 'load_kg') { f.st[fld] = v; inp.value = v; return; } }
     v = Math.max(0, v + d * step); f.st[fld] = fld === 'load_kg' ? v : Math.round(v); inp.value = F.fmt(v);
-    F.fit(inp); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
+    F.fit(inp); updPlates(f, fld); inp.classList.remove('bump', 'up', 'dn'); void inp.offsetWidth; inp.classList.add('bump', d > 0 ? 'up' : 'dn');
   };
   /* + und − gedrückt halten: zählt schnell weiter (erst nach 0,4 s, dann alle 0,11 s) */
   (() => { let tm = null, rep = false;
@@ -211,7 +223,13 @@
     const f = findSet(t.dataset.s); if (!f) return; const st = f.st, ex = F.S.exById[f.se.exercise_id] || {}, pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A;
     applyTarget(f.se, st, ex); F.sound.unlock(); try { navigator.vibrate && navigator.vibrate(12); } catch {} if (F.focusOn() && F.wake) F.wake(true);
     if (!noLoad(ex) && st.load_kg === null && pf.reps) { if (!confirm('Kein Gewicht eingetragen. Trotzdem abschließen? Das Gewicht bleibt dann „unbekannt“.')) return; }
+    if (t.dataset && t.dataset.rir !== undefined && t.dataset.rir !== '') st.rir = Number(t.dataset.rir);
+    const prevEi = F.ui.tr.ei;
     await saveDone(st); F.ui.tr.last = st.id;
+    // Versehentlich abgehakt? Ein paar Sekunden lang zurücknehmen können
+    if (F.toastAct) F.toastAct(`Satz ${st.set_no} abgehakt${st.rir !== null && st.rir !== undefined && t.dataset && t.dataset.rir !== undefined ? ' · ' + ({ 4: 'leicht', 2: 'passt', 0: 'am Limit' }[st.rir] || '') : ''}`, 'Rückgängig', async () => {
+      const r = await F.save('sets', st.id, { done: false, done_at: null }); Object.assign(st, r, { done: false }); F.rest = null; clearInterval(F._tk); F.ui.tr.ei = prevEi; F.render(); window.scrollTo(0, 0);
+    });
     // nächsten offenen Satz mit dem Gewicht vorbelegen (nie erfundene Werte: nur Kopie des gerade Eingegebenen)
     const nxt = f.se.sets.find((x) => !x.done);
     if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.save('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
@@ -381,6 +399,19 @@
   };
   const PAT = { kniebeuge: 'squat', horizontal_druecken: 'press', horizontal_ziehen: 'pull', huefte_beugen: 'hinge', kreuzheben: 'hinge', curl: 'curl', seitheben: 'raise' };
   F.acts.help = (t) => F.go('uebung/' + t.dataset.id);
+  /* Dein Verlauf mit dieser Übung: letzte Einheiten und Bestwert */
+  const exHistory = (ex) => {
+    const asst = ex.load_convention === 'unterstuetzt', rows = [];
+    for (const q of F.S.sessions) if (['gefuehrt', 'bestaetigt'].includes(q.status)) for (const se of q.session_exercises) if (se.exercise_id === ex.id) { const w = E.workSets(se.sets, asst); if (w.length) rows.push({ d: q.session_date, w }); }
+    if (!rows.length) return '';
+    rows.sort((a, b) => (a.d < b.d ? 1 : -1));
+    let best = null;
+    if (!asst && !noLoad(ex)) for (const r of rows) for (const x of r.w) { const e1 = x.load_kg !== null && x.reps ? E.e1rm(Number(x.load_kg), x.reps) : 0; if (e1 && (!best || e1 > best.e1)) best = { e1, x, d: r.d }; }
+    const line = (x) => (x.load_kg !== null && !noLoad(ex) ? F.fmt(Number(x.load_kg)) + '×' : '') + (x.reps ?? (x.seconds ? x.seconds + ' s' : '?'));
+    return `<div class="card"><div class="row between"><div class="eyebrow">Dein Verlauf</div><span class="small mute">${rows.length} ${rows.length === 1 ? 'Einheit' : 'Einheiten'}</span></div>
+      ${best ? `<div class="pr-line"><b>Bestwert ${F.fmt(Number(best.x.load_kg))} kg × ${best.x.reps}</b><span class="mute"> · ca. ${F.fmt(Math.round(best.e1 * 10) / 10)} kg Maximalkraft · ${F.dshort(best.d)}</span></div>` : ''}
+      <div class="hist-rows">${rows.slice(0, 6).map((r) => `<div class="mrow" style="grid-template-columns:62px 1fr"><span class="mute">${F.dshort(r.d)}</span><span>${r.w.map(line).join(' · ')}</span></div>`).join('')}</div></div>`;
+  };
   F.views.uebung = ([id]) => {
     const ex = F.S.exById[id]; if (!ex) return '<div class="card">Übung nicht gefunden.</div>';
     const T = (ex.code && window.FORZA_TEXTS[ex.code]) || null, c = ex.content || {}, st = F.S.userEx[id] || {};
@@ -389,6 +420,7 @@
     const checked = ex.tier === 'geprueft';
     return `<button class="back" data-act="back">${F.icon.back.replace('<svg', '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"')} Zurück</button>
       <div class="row between wrap" style="margin-bottom:10px"><div><div class="h1" style="font-size:26px">${esc(ex.name)}</div><div class="mute">${ex.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${ex.code ? ' · ' + ex.code : ''}</div></div><span class="badge ${checked ? 'ok' : 'warn'}">${checked ? 'fachlich geprüft' : st.released ? 'Entwurf, von dir freigegeben' : 'Entwurf, nicht fachlich geprüft'}</span></div>
+      ${exHistory(ex)}
       ${anim ? `<div class="card" style="padding:12px">${ANIM[anim]()}<div class="small mute" style="margin-top:8px;text-align:center">Vereinfachte Skizze der Bewegung, kein Ersatz für die Beschreibung.</div></div>` : `<div class="card small mute">Für diese Übung gibt es noch keine Animation. Die Beschreibung unten erklärt den Ablauf.</div>`}
       ${T ? sec('Funktion und Ausstattung', T.funktion) + sec('Ausführung', T.ausfuehrung) + sec('Kontrolle und typische Probleme', T.kontrolle) + sec('Anpassen und ersetzen', T.anpassen) + sec('Dosierung und Tracking', T.dosierung) + sec('Aussagegrenzen', T.grenzen) + sec('Technikquellen', T.quellen) : sec('Ausführung', c.ausfuehrung) + sec('Typische Fehler', c.fehler) + sec('Hinweis', c.hinweis) + `<div class="card small mute">Diese Beschreibung ist ein Entwurf und wurde nicht fachlich geprüft.</div>`}
       <div class="card"><div class="eyebrow" style="margin-bottom:6px">Ausstattung und Last</div><div class="small">${ex.equipment.map((e) => esc(F.itemLabel(e))).join(', ') || 'keine'}${ex.equipment_alt.length ? ' · Alternative: ' + ex.equipment_alt.map((e) => esc(F.itemLabel(e))).join(', ') : ''}<br>Lastangabe: ${{ gesamt: 'Gesamtgewicht', je_hand: 'je Hand', koerper: 'Körpergewicht', zusatz: 'Zusatzgewicht', unterstuetzt: 'Unterstützung (weniger Gewicht = schwerer)', zeit: 'Zeit', keine: 'ohne Last' }[ex.load_convention] || '–'}${pf ? '<br>Dosierungsprofil: ' + pf.label : ''}</div></div>
