@@ -59,6 +59,11 @@ async function lock() {
   await keyDrop(); frame.src = 'about:blank'; if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null; viewer.hidden = true; gate.hidden = false; (ADM && !user.value ? user : password).focus();
 }
 document.querySelector('#lock').addEventListener('click', lock);
+/* Admin: Druckvorlagen (z. B. Abstimmungs-Kärtchen) in einem eigenen Tab öffnen – aus dem geschützten Rahmen heraus geht das nicht */
+addEventListener('message', e => { if (!ADM || e.source !== frame.contentWindow || !e.data || e.data.type !== 'ovmg-print' || typeof e.data.html !== 'string') return;
+  const url = URL.createObjectURL(new Blob([e.data.html], { type: 'text/html' })); const w = window.open(url, '_blank');
+  if (!w) { const a = document.createElement('a'); a.href = url; a.download = e.data.name || 'Druckvorlage.html'; document.body.append(a); a.click(); a.remove(); }
+  setTimeout(() => URL.revokeObjectURL(url), 300000); });
 /* Admin: „Abmelden“ im Admin-Bereich meldet hier ab, statt zur Ansichtsseite zu führen */
 addEventListener('message', e => { if (ADM && e.source === frame.contentWindow && e.data && e.data.type === 'ovmg-logout') { lock(); if (e.data.fail) status.textContent = 'Bitte erneut anmelden.'; } });
 /* QR-Zugang: Schlüssel steht hinter „#zugang=“ (wird nie an den Server geschickt) und wird sofort aus der Adresse entfernt */
