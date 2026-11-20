@@ -3,11 +3,11 @@
    Ablauf: Code prüfen (Supabase vote_check) → nur bei gültigem, unbenutztem Code in einem offenen Durchgang kommt
    der Schlüssel für die Entwürfe zurück → Entwürfe entschlüsseln → Rundgang und Rangliste → Stimme (vote_cast).
    Der Code verlässt das Gerät nur für die Prüfung und die Stimmabgabe. Keine Cookies, nichts wird gespeichert. */
-const SB = 'https://ocaepkslxqjnyknslicc.supabase.co', SBK = 'sb_publishable_Vq4ojxY2PVXcLHSTpOMD6g_43ZgqpZA', BASE = '../ovmg-konzepte/', T_AB = 5;
+const SB = 'https://ocaepkslxqjnyknslicc.supabase.co', SBK = 'sb_publishable_Vq4ojxY2PVXcLHSTpOMD6g_43ZgqpZA', BASE = '../ovmg-konzepte/', T_AB = 5, T_QR = 1;
 const $ = s => document.querySelector(s);
 const form = $('form'), input = $('#password'), status = $('#status'), gate = $('#gate'), card = $('.card'), viewer = $('#viewer'), frame = $('#viewer iframe'),
   load = $('#load'), bar = $('#load-bar'), ltext = $('#load-t'), lsub = $('#load-s');
-let busy = false, AB = null, CODE = '', objectURL = null;
+let busy = false, AB = null, CODE = '', objectURL = null, TEST = null;
 const norm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const fmt = c => c.length === 8 ? c.slice(0, 4) + '-' + c.slice(4) : c;
 const supported = () => !!(window.crypto && crypto.subtle && window.DecompressionStream);
@@ -46,9 +46,9 @@ function slots(bytes) {
   for (let i = 0; i < n; i++) { out.push({ type: bytes[p], salt: bytes.slice(p + 1, p + 17), iv: bytes.slice(p + 17, p + 29), wrapped: bytes.slice(p + 29, p + 77) }); p += 77 }
   return { list: out, iv: bytes.slice(p, p + 12), off: p + 12 };
 }
-async function openKey(secret, head) {
+async function openKey(secret, head, type = T_AB) {
   const m = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), 'PBKDF2', false, ['deriveKey']);
-  for (const s of slots(head).list.filter(x => x.type === T_AB)) {
+  for (const s of slots(head).list.filter(x => x.type === type)) {
     const kek = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: s.salt, iterations: 600000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
     try { const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: s.iv }, kek, s.wrapped); return await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['decrypt']) } catch (e) { }
   }
@@ -78,10 +78,14 @@ async function open(code) {
     let r; try { r = await rpc('vote_check', { p_code: CODE }) } catch (e) { throw new Error('network') }
     if (!r || !r.k) { fail(MSG.invalid); return }
     const k = r.k; delete r.k; AB = Object.assign(r, { code: fmt(CODE) });
+    await show(k, T_AB);
+  } catch (e) { viewer.hidden = true; fail(MSG[e.message] || MSG.format) }
+}
+async function show(secret, type) {
     phase('dl', 'Die Entwürfe werden geladen …'); progress();
     const { ps } = await startMain(); const bytes = concat(await Promise.all(ps)); const S = slots(bytes);
     phase('open', 'Wird geöffnet …');
-    const key = await openKey(k, bytes);
+    const key = await openKey(secret, bytes, type);
     let plain; try { plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: S.iv }, key, bytes.subarray(S.off)) } catch (e) { throw new Error('format') }
     const html = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).blob();
     if (objectURL) URL.revokeObjectURL(objectURL);
@@ -94,7 +98,6 @@ async function open(code) {
     gate.classList.add('is-out'); await new Promise(res => setTimeout(res, 260));
     gate.hidden = true; gate.classList.remove('is-out'); busyOff(); input.value = '';
     try { frame.focus() } catch (e) { }
-  } catch (e) { viewer.hidden = true; fail(MSG[e.message] || MSG.format) }
 }
 form.addEventListener('submit', e => { e.preventDefault(); open(input.value) });
 form.addEventListener('focusin', () => { if (supported()) startMain().catch(() => { }) }, { once: true });
@@ -104,6 +107,7 @@ input.addEventListener('input', () => { const c = norm(input.value).slice(0, 8);
 addEventListener('message', async e => {
   if (e.source !== frame.contentWindow || !e.data || e.data.type !== 'ovmg-vote') return;
   const d = e.data; let res;
+  if (TEST) { await new Promise(r => setTimeout(r, 500)); try { frame.contentWindow.postMessage({ type: 'ovmg-vote-res', ok: true }, '*') } catch (x) { } return }
   try { const ok = await rpc('vote_cast', { p_code: CODE, p_web: d.web, p_stu: d.stu || null, p_unveraendert: !!d.unv }); res = { ok: ok === true, err: ok === true ? '' : 'used' } }
   catch (x) { res = { ok: false, err: x.message === 'server' ? 'invalid' : 'network' } }
   if (res.ok) { CODE = '' }
@@ -114,7 +118,22 @@ function lock() { frame.src = 'about:blank'; if (objectURL) URL.revokeObjectURL(
 $('#lock').addEventListener('click', lock);
 
 /* Code aus dem QR-Code (#K7TM4QXR) übernehmen und sofort aus der Adresse entfernen */
+const GN = { schueler: 'Schüler/in', lehrkraft: 'Lehrkraft', schulleitung: 'Schulleitung', elternbeirat: 'Elternbeirat' };
+async function openTest(cfg, tok) {
+  if (!supported()) { fail(MSG.browser); return }
+  TEST = cfg; busyOn('Testansicht wird geöffnet …'); startMain().catch(() => { });
+  AB = { gruppe: cfg.g || 'schueler', titel: cfg.t || 'Testansicht', optionen: cfg.w || [], optionen_stu: cfg.s || [], texte: cfg.x || {}, test: true };
+  const hd = $('#viewer header');
+  hd.querySelector('span').innerHTML = 'Testansicht <em class="ab-tz">zählt nicht</em>';
+  if (!hd.querySelector('select')) {
+    $('#lock').insertAdjacentHTML('beforebegin', `<label class="ab-role">Rolle <select>${Object.entries(GN).map(([k, l]) => `<option value="${k}"${k === AB.gruppe ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`);
+    hd.querySelector('select').addEventListener('change', e => { AB = Object.assign({}, AB, { gruppe: e.target.value }); try { frame.contentWindow.postMessage({ type: 'ovmg-mode', mode: 'abstimmung', ab: AB }, '*') } catch (x) { } });
+  }
+  try { await show(tok, T_QR) } catch (e) { viewer.hidden = true; TEST = null; fail(e.message === 'format' ? 'Die Testansicht ist abgelaufen. Bitte im Admin-Bereich neu öffnen.' : MSG[e.message] || MSG.format) }
+}
 const fromHash = () => {
+  const t = location.hash.match(/^#test=([A-Za-z0-9_-]+)&zugang=([A-Za-z0-9_-]{16,})$/);
+  if (t) { history.replaceState(null, '', location.pathname + location.search); let cfg = {}; try { cfg = JSON.parse(decodeURIComponent(escape(atob(t[1].replace(/-/g, '+').replace(/_/g, '/'))))) } catch (e) { } openTest(cfg, t[2]); return true }
   const m = location.hash.match(/^#([A-Za-z0-9-]{8,12})$/);
   if (m) { history.replaceState(null, '', location.pathname + location.search); if (!gate.hidden) { input.value = fmt(norm(m[1])); open(m[1]) } return true }
   return false;
