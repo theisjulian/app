@@ -383,6 +383,14 @@ th.hj-done{color:var(--muted)}
 @media(max-width:640px){.help-gloss{grid-template-columns:1fr}}
 .help-body [hidden]{display:none!important}
 
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer}
+.srctbl td{vertical-align:top}
+.srctbl td:nth-child(2){min-width:220px;max-width:300px}
+.srctbl td:nth-child(3){min-width:200px}
+.srctbl td:nth-child(4){min-width:120px}
+.srcurl{word-break:break-all;color:var(--accent)}
+.srcwrap td:first-child,.srcwrap th:first-child{position:static}
+@media(max-width:640px){.srctbl thead{display:none}.srctbl tr{display:grid;gap:4px;padding:8px 0;border-bottom:1px solid var(--line)}.srctbl td{border:0;padding:2px 8px;max-width:none!important;min-width:0!important;text-align:left!important}}
 /* Ablauf: Fortschritt, Mebis-Schritte, Weiter-Knöpfe */
 @media(min-width:1000px){.start-cols{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}}
 @media(max-width:999px){.start-cols{grid-template-columns:minmax(0,1fr)}}
@@ -466,6 +474,7 @@ textarea.msg{font:14px/1.5 var(--f-body);min-height:380px}
       <div class="mk-meta">Apps für die Schule · <a href="https://theisapps.de/" target="_blank" rel="noopener">theisapps.de</a><br>Sportivo – Sportwahl · Version 1.7.0 · © 2026 theisapps. Alle Rechte vorbehalten.<br><a href="https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000" target="_blank" rel="noopener" style="font-weight:600">☕ Einen Kaffee ausgeben</a> · freiwillig</div>
     </div>
     <span>Alle Daten bleiben auf diesem Rechner. Nichts wird ins Internet gesendet.<span class="mk-view"> · <a href="?beispiel" target="_blank" rel="noopener">Beispieldaten ansehen</a> (neues Fenster, das eigene Projekt bleibt unberührt)</span></span>
+    <span><button class="linkbtn" type="button" data-src>Quellenverzeichnis</button> · Rechtsgrundlagen und Vorgaben, auf denen Sportivo beruht</span>
     <details class="fontlic"><summary>Schriften und Lizenzen</summary><p>Wählbare Schriften: Nunito, Lora, Space Grotesk, Atkinson Hyperlegible und Jost, jeweils unter der SIL Open Font License 1.1 (openfontlicense.org). Sie sind in diese Datei eingebettet; es werden keine Schriften aus dem Internet geladen.</p><ul><li>Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito)</li><li>Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name &quot;Lora&quot;.</li><li>Copyright 2020 The Space Grotesk Project Authors (https://github.com/floriankarsten/space-grotesk)</li><li>Copyright 2020 Braille Institute of America, Inc.</li><li>Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type/Jost)</li></ul><pre>SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 -----------------------------------------------------------
 
@@ -622,7 +631,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
   <ol>
     <li>Im Mebis-Kurs der 11. Klassen den Bearbeitungsmodus einschalten.</li>
     <li><b>Aktivität oder Material anlegen</b> → <b>Datei</b>, Name „Sportwahl – Wahlbogen“, die HTML-Datei hochladen.</li>
-    <li>Bei <b>Darstellung</b> → <b>Anzeige</b> „In neuem Fenster“ wählen (gibt es das nicht: „Öffnen“), dann <b>Speichern und zum Kurs</b>.</li>
+    <li>Bei <b>Darstellung</b> → <b>Anzeige</b> „Öffnen“ wählen (wird „Neues Fenster“ angeboten, geht auch das), dann <b>Speichern und zum Kurs</b>.</li>
   </ol>
   <div class="help-note warn"><b>Nur als Datei einbinden.</b> Den Inhalt der HTML-Datei nicht in eine Textseite kopieren und nicht einbetten: Mebis entfernt dabei Gestaltung und Funktionen.</div>
   <h4>Schritt 3: Abgabe anlegen</h4>
@@ -735,7 +744,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.</pre></details>
     <dt>Schüler „ohne vollständigen Platz“.</dt><dd>Im Reiter 5 „nur Abweichungen“ anhaken. Meist fehlt eine Sportart in einem passenden Halbjahr: im Reiter 4 ergänzen und neu verteilen, oder den Schüler von Hand umsetzen.</dd>
     <dt>Ein Kurs ist rot.</dt><dd>Der Kurs ist überbelegt, meist nach einem Umsetzen von Hand. Sportivo verschiebt dann nichts automatisch. Jemanden umsetzen oder die Plätze erhöhen.</dd>
     <dt>Ein Schüler wird bei neuer Verteilung nicht verändert.</dt><dd>Er ist fixiert (Häkchen in der Spalte „Fix“). Wer von Hand umgesetzt wird, ist automatisch fixiert. Häkchen entfernen, dann teilt Sportivo ihn wieder mit ein.</dd>
-    <dt>Der Wahlbogen sieht in Mebis kaputt aus.</dt><dd>Er muss als <b>Datei</b> hochgeladen werden, Anzeige „In neuem Fenster“. In eine Textseite kopiert, entfernt Mebis Gestaltung und Funktionen.</dd>
+    <dt>Der Wahlbogen sieht in Mebis kaputt aus.</dt><dd>Er muss als <b>Datei</b> hochgeladen werden, Anzeige „Öffnen“ oder „Neues Fenster“. In eine Textseite kopiert, entfernt Mebis Gestaltung und Funktionen.</dd>
     <dt>Namen mit besonderen Buchstaben.</dt><dd>Namen wie Yılmaz, Kovačević, Hodžić, Şahin oder Wiśniewski werden in Sportivo, in den Kurslisten und in den PDFs richtig ausgegeben. Die CSV-Dateien öffnen sich in Excel per Doppelklick mit allen Zeichen.</dd>
     <dt>Die Beispieldaten sind weg.</dt><dd>Nach „Leeres Projekt anlegen“ arbeitet Sportivo mit den eigenen Daten. Die Beispieldaten gibt es weiter über <b>Beispieldaten ansehen</b> (Reiter 6 oder ganz unten), in einem eigenen Fenster.</dd>
   </dl>
@@ -1576,6 +1585,46 @@ const PDFKIT = (() => {
 
 </script>
 <script>
+/* Quellenverzeichnis: eine Liste für Hilfe und PDF. Prüfstand: „Original gelesen“, „Stelle geprüft“, „nur Bezeichnung geprüft“ */
+const SOURCES = {
+  stand: '21.11.2026',
+  groups: [
+    { title: 'Bekanntmachungen des Kultusministeriums', items: [
+      { q: 'KMBek Sport 12/13, Nr. 1.1.1 – Voraussetzungen der Schule', d: 'Bekanntmachung des Bayerischen Staatsministeriums für Unterricht und Kultus „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, Az. VII.7-BK7400-3.39 147, BayMBl. 2022 Nr. 485 (2235.1.1.5-K)', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
+        use: 'Hinweis „Qualifikation“ bei Rudern, Sportklettern und Bewegungskünste; Hinweis auf vertiefte Kenntnisse bei Rückschlagspielen; Basketball, Fußball, Handball und Gerätturnen sind auf „getrennt nach Geschlecht“ voreingestellt, abwählbar bei Ausnahmegenehmigung der Schulleitung', at: 'Nr. 1.1.1', st: 'Original gelesen' },
+      { q: 'KMBek Sport 12/13, Nr. 1.1.2 – Wahlmöglichkeiten', d: 'wie Nr. 1, Tabelle „Sportliche Handlungsfelder“ mit den Gruppen A, B und C und „Prämissen“', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
+        use: 'Liste der Sportarten und ihre Gruppen A, B, C; je Halbjahr eine Sportart; mindestens zwei Gruppen; höchstens zweimal dasselbe Handlungsfeld, Badminton, Tennis und Tischtennis zählen zusammen als Rückschlagspiele; weitere vom Kultusministerium im Einzelfall genehmigte Sportarten (Gruppe C, nur mit zusätzlicher Qualifikation der Lehrkraft). Diese Regeln prüfen der Wahlbogen, die Verteilung und die Warnungen', at: 'Nr. 1.1.2', st: 'Original gelesen' },
+      { q: 'KMBek Sport 12/13, Nr. 1.1.2 und Nr. 2 – Leistungsfach Sport', d: 'wie Nr. 1, Nr. 1.1.2 (Leistungsfach), Nr. 2 Einleitung, Nr. 2.1 Zeitlicher Umfang und Struktur, Nr. 2.2 Voraussetzungen', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
+        use: 'Leistungsfach: zwei Handlungsfelder aus zwei verschiedenen Gruppen für je zwei Halbjahre; Unterricht grundsätzlich in einer Kursgruppe, in begründeten Ausnahmefällen Verzicht auf eine eigene Kursgruppe (in Sportivo: „Eigene Kursgruppe“ oder „Mit Vorrang in die normalen Kurse“); Voraussetzung mindestens „befriedigend“ im Zwischenzeugnis der Jahrgangsstufe 11; Wahl bis 15. April', at: 'Nr. 1.1.2 Satz 1–3, Nr. 2, 2.1, 2.2', st: 'Original gelesen' },
+      { q: 'KMBek Sport 12/13, Nr. 3 – Inkrafttreten', d: 'wie Nr. 1', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
+        use: 'Geltung für das neunjährige Gymnasium mit Wirkung vom 1. August 2022; Sportivo ist nur für die Jahrgangsstufen 12 und 13 des G9 gedacht', at: 'Nr. 3', st: 'Original gelesen' }
+    ] },
+    { title: 'Gesetze und Verordnungen', items: [
+      { q: 'GSO § 17 – Wahl des Kursprogramms und der Abiturprüfungsfächer', d: 'Schulordnung für die Gymnasien in Bayern (Gymnasialschulordnung – GSO) vom 23. Januar 2007 (GVBl. S. 68), BayRS 2235-1-1-1-K, Text gilt ab 01.08.2026', url: 'https://www.gesetze-bayern.de/Content/Document/BayGSO-17',
+        use: 'Wahl des Kursprogramms in der Jahrgangsstufe 11 spätestens bis zum 15. April; für die besondere Fachprüfung im Leistungsfach Sport gilt derselbe Zeitpunkt (Zeitplan in der Hilfe, Regeln im Reiter 0)', at: '§ 17 Abs. 1 Satz 1, Abs. 3 Satz 3', st: 'Original gelesen' },
+      { q: 'GSO Anlage 5 – Belegungsverpflichtung (Gymnasium)', d: 'wie Nr. 5, Anlage 5 (zu § 15 Abs. 2), Zeile 6 „Sport“', url: 'https://www.gesetze-bayern.de/Content/Document/BayGSO-ANL_6',
+        use: 'Sport ist in allen vier Ausbildungsabschnitten 12/1 bis 13/2 mit je zwei Wochenstunden zu belegen: Darum plant Sportivo für jeden Schüler genau vier Halbjahre', at: 'Anlage 5 Nr. 6', st: 'Stelle geprüft' }
+    ] },
+    { title: 'Mebis (Moodle): Bezeichnungen in der Anleitung', note: 'Mebis, die Lernplattform der Bayerischen Schulcloud, beruht auf Moodle. Geprüft sind die englischen Originalbezeichnungen im Quellcode von Moodle 4.5. Die deutschen Beschriftungen in Mebis können abweichen; deshalb weist der Reiter 2 darauf hin.', items: [
+      { q: 'Moodle – Material „Datei“, Einstellung „Anzeige“', d: 'Moodle 4.5, mod/resource: Sprachdatei (displayselect, displayselect_help) und Voreinstellungen (settings.php)', url: 'https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/mod/resource/lang/en/resource.php',
+        use: 'Wahlbogen als Datei hochladen; Anzeige „Öffnen“ (Open) oder, falls freigeschaltet, „Neues Fenster“ (New window), nicht „Herunterladen erzwingen“ (Force download). Laut settings.php sind „Neues Fenster“ und „Im Frame“ standardmäßig nicht freigeschaltet, „Öffnen“ ist es', at: 'resource.php; settings.php Z. 31–44', st: 'Stelle geprüft' },
+      { q: 'Moodle – Aktivität „Feedback“', d: 'Moodle 4.5, mod/feedback: Sprachdatei und Formular (mod_form.php)', url: 'https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/mod/feedback/lang/en/feedback.php',
+        use: 'Abgabe der Wahlcodes: Namen aufzeichnen (Record user names: „User’s name will be logged and shown with answers“); mehrfache Abgabe (Allow multiple submissions: bei nicht anonymem Feedback wird nur die letzte Antwort gespeichert); Fragetyp „Eingabebereich“ (Longer text answer) statt „Eingabezeile“ (Short text answer); „Erforderlich“ (Required); „Antworten anzeigen“ (Show responses) zum Einlesen', at: 'multiplesubmit_help, anonymous_edit, non_anonymous, textarea, show_entries', st: 'Stelle geprüft' },
+      { q: 'Moodle – Rolle wechseln', d: 'Moodle 4.5, Sprachdatei lang/en/moodle.php', url: 'https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/lang/en/moodle.php',
+        use: 'Test mit Schülersicht: „Rolle wechseln“ (Switch role to…) und „Zur normalen Rolle zurückkehren“ (Return to my normal role)', at: 'switchroleto, switchrolereturn', st: 'Stelle geprüft' }
+    ] },
+    { title: 'Eigene Inhalte von theisapps', items: [
+      { q: 'Verteilung, Kursvorschlag und Zufriedenheitswert', d: 'eigene Entwicklung, keine amtliche Vorgabe', use: 'Automatisches Verteilen (Leistungsfach zuerst, dann möglichst nach Wunsch), „Kursangebot vorschlagen“, Zufriedenheitswert bei der Rangliste, Hinweise in der Auswertung', at: '–', st: 'eigener Inhalt' },
+      { q: 'Wahlcode, Prüfziffer und Namensabgleich', d: 'eigene Entwicklung', use: 'Aufbau der Wahlcodes SPW1 und SPW2, Prüfziffer gegen Kopierfehler, einheitliche Schreibweise „Nachname, Vorname“ mithilfe des Mebis-Namens', at: '–', st: 'eigener Inhalt' },
+      { q: 'Texte, Vorlagen und Beispieldaten', d: 'eigene Formulierungen', use: 'Anleitung, Hilfe, Nachricht an die Schüler, Wahlverfahren „Rangliste“; alle Namen in den Beispieldaten sind frei erfunden', at: '–', st: 'eigener Inhalt' }
+    ] },
+    { title: 'Schriften und Technik', items: [
+      { q: 'Schriften Nunito, Lora, Space Grotesk, Atkinson Hyperlegible, Jost', d: 'SIL Open Font License 1.1; Urheberangaben unten unter „Schriften und Lizenzen“', url: 'https://openfontlicense.org', use: 'Wählbare Schriften unter „Design“, in diese Datei und in den Wahlbogen eingebettet', at: '–', st: 'Lizenz geprüft' },
+      { q: 'PDF-Standardschrift Helvetica', d: 'eine der 14 Standardschriften des PDF-Formats, wird nicht eingebettet', use: 'Kurslisten und Auswertung als PDF; Sportivo erzeugt die PDF-Dateien selbst, ohne fremde Programmbibliothek', at: '–', st: 'eigener Inhalt' }
+    ] }
+  ]
+};
+
 /* Beispieldaten (frei erfunden) zum Ausprobieren */
 const EXAMPLE = (() => {
   function defaults(o) {
@@ -1916,7 +1965,7 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
         <li>Rudern, Sportklettern und Bewegungskünste nur mit <b>Zusatzqualifikation</b> der Lehrkraft; Rückschlagspiele setzen vertiefte Kenntnisse voraus.</li>
       </ul>
       <p class="small muted">Sportivo hält diese Regeln überall automatisch ein: im Wahlbogen der Schüler und bei der Verteilung.</p>
-      <p class="small muted">Quelle: KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, BayMBl. 2022 Nr. 485, Nr. 1.1.1, 1.1.2 und 2.</p>
+      <p class="small muted">Quelle: KMBek „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, BayMBl. 2022 Nr. 485, Nr. 1.1.1, 1.1.2 und 2; § 17 GSO. <button class="linkbtn" type="button" data-src>Zum Quellenverzeichnis</button></p>
     </section>
     <section class="panel prose">
       <h3>Datenschutz und Sicherung</h3>
@@ -1995,7 +2044,7 @@ Eure Fachschaft Sport`;
           <li>Im gewünschten Abschnitt auf <b>Aktivität oder Material anlegen</b> klicken und <b>Datei</b> wählen.</li>
           <li>Als Name eintragen: ${copy('Sportwahl – Wahlbogen')}</li>
           <li>Die Datei <span class="code-inline">${esc(wbName())}</span> aus dem Ordner Downloads in das Feld <b>Dateien auswählen</b> ziehen (oder auf das Feld klicken und die Datei auswählen).</li>
-          <li>Weiter unten bei <b>Darstellung</b> unter <b>Anzeige</b> die Einstellung <b>In neuem Fenster</b> wählen. Gibt es sie nicht, <b>Öffnen</b> wählen. Auf keinen Fall „Herunterladen erzwingen“.</li>
+          <li>Weiter unten bei <b>Darstellung</b> unter <b>Anzeige</b> die Einstellung <b>Öffnen</b> wählen. Wird <b>Neues Fenster</b> angeboten, geht auch das. Nicht „Herunterladen erzwingen“ und nicht „Einbetten“.</li>
           <li>Unten auf <b>Speichern und zum Kurs</b> klicken.</li>
         </ol>
         <div class="help-note warn"><b>Nur als Datei hochladen.</b> Den Inhalt der Datei nicht in eine Textseite oder ein Textfeld kopieren. Mebis entfernt dabei Gestaltung und Funktionen, und der Wahlbogen funktioniert nicht mehr.</div>`)}
@@ -2007,7 +2056,7 @@ Eure Fachschaft Sport`;
           <li>Als Name eintragen: ${copy('Sportwahl – Abgabe')}</li>
           <li>Bei den Einstellungen zu Fragen und Einträgen:
             <ul><li>Die Namen der Teilnehmenden <b>aufzeichnen und anzeigen</b>, also <b>nicht anonym</b>. Sonst sehen Sie nicht, wer abgegeben hat.</li>
-            <li><b>Mehrfache Abgabe</b> erlauben. Dann können Schüler ihre Wahl später ändern.</li></ul></li>
+            <li><b>Mehrfache Abgabe</b> erlauben. Dann können Schüler ihre Wahl später ändern. Bei nicht anonymem Feedback speichert Mebis nur die letzte Abgabe.</li></ul></li>
           <li>Wer mag, stellt unter <b>Verfügbarkeit</b> die Abgabefrist ein${P.meta.frist ? ` (${esc(P.meta.frist)})` : ''}. Dann auf <b>Speichern und anzeigen</b> klicken.</li>
           <li>Im Feedback auf <b>Fragen bearbeiten</b> gehen und eine Frage vom Typ <b>Eingabebereich</b> (langer Text) hinzufügen.</li>
           <li>Als Frage eintragen: ${copy('Dein Wahlcode')} Dann <b>Erforderlich</b> anhaken und die Frage speichern.</li>
@@ -2054,7 +2103,7 @@ Eure Fachschaft Sport`;
     const { cat } = C();
     const rows = cat.map(s => {
       const o = P.sports[s.id] || (P.sports[s.id] = { offered: false, lf: false, split: false, cap: 0 });
-      const note = s.qual ? '<span class="pill warn" title="Nur mit Zusatzqualifikation der Lehrkraft">Qualifikation</span>' : (s.hf === 'RS' ? '<span class="pill info">Rückschlagspiele</span>' : (s.custom ? '<span class="pill info">genehmigt</span>' : ''));
+      const note = s.qual ? '<span class="pill warn" title="Nur mit Zusatzqualifikation der Lehrkraft">Qualifikation</span>' : (s.hf === 'RS' ? '<span class="pill info">Rückschlagspiele</span>' : (s.custom ? '<span class="pill info">genehmigt</span> <span class="pill warn" title="Nur mit zusätzlicher Qualifikation der Lehrkraft (KMBek Nr. 1.1.2)">Qualifikation</span>' : ''));
       return `<tr data-id="${s.id}">
         <td><span class="gdot" style="background:var(--g${s.group})"></span>${esc(s.name)} ${note}</td>
         <td class="c">${s.group}</td>
@@ -2870,6 +2919,86 @@ Eure Fachschaft Sport`;
   // ---------- Hilfe ----------
   const helpDlg = $('help'), helpBody = $('help-body');
   const HELP_FOR = { angebot: 'h-angebot', mebis: 'h-wahlbogen', wahlen: 'h-wahlen', kurse: 'h-kurse', verteilung: 'h-verteilung', export: 'h-export' };
+  // ---------- Quellenverzeichnis (Hilfe und PDF) ----------
+  const srcNo = () => { let n = 0; return SOURCES.groups.map(g => g.items.map(() => ++n)); };
+  function buildSourcesSection() {
+    const nos = srcNo(); const L = 'ABCDEFGH';
+    const sec = document.createElement('section'); sec.id = 'h-quellen';
+    sec.innerHTML = `<h3>Quellenverzeichnis</h3>
+      <p>Sportivo stützt sich auf die folgenden Vorschriften und Unterlagen (Stand ${SOURCES.stand}). Sportivo ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule.</p>
+      <p class="small muted"><b>Prüfstand:</b> „Original gelesen“ = ganzer Abschnitt im Original gelesen · „Stelle geprüft“ = die genannte Stelle im Original geprüft · „eigener Inhalt“ = keine amtliche Vorgabe. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an <a href="mailto:hallo@theisapps.de">hallo@theisapps.de</a>.</p>
+      <div class="row"><button class="btn ghost" type="button" id="src-pdf">Quellenverzeichnis als PDF</button></div>
+      ${SOURCES.groups.map((g, gi) => `<h4>${L[gi]} · ${esc(g.title)}</h4>${g.note ? `<p class="small muted">${esc(g.note)}</p>` : ''}
+        <div class="tbl-wrap srcwrap"><table class="srctbl"><thead><tr><th class="c">Nr.</th><th>Quelle</th><th>In Sportivo verwendet für</th><th>Fundstelle · Prüfstand</th></tr></thead><tbody>
+        ${g.items.map((it, i) => `<tr><td class="c">${nos[gi][i]}</td><td><b>${esc(it.q)}</b><div class="small muted">${esc(it.d)}</div>${it.url ? `<a class="small srcurl" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a>` : ''}</td><td class="small">${esc(it.use)}</td><td class="small">${it.at !== '–' ? esc(it.at) + '<br>' : ''}<span class="pill ${/Original|Stelle|Lizenz/.test(it.st) ? 'ok' : 'info'}">${esc(it.st)}</span></td></tr>`).join('')}
+        </tbody></table></div>`).join('')}`;
+    return sec;
+  }
+  function quellenPdf() {
+    const INK = '#16171a', GR = '#5b6270', LINE = '#d9dce2', L = 14, R = 196;
+    const doc = PDFKIT.create({ title: 'Sportivo Quellenverzeichnis', logo: PDFKIT.logoFrom(document.querySelector('.maker .theislogo'), INK, '#2F5BEA') });
+    const wrap = (str, w, size, bold) => { const out = []; let line = ''; String(str).split(' ').forEach(wd => { const t = line ? line + ' ' + wd : wd; if (doc.width(t, size, bold) <= w || !line) line = t; else { out.push(line); line = wd; } }); if (line) out.push(line); return out; };
+    // URLs ohne Leerzeichen an / umbrechen
+    const wrapUrl = (u, w, size) => { const out = []; let line = ''; u.split(/(?<=\/)/).forEach(p => { if (doc.width(line + p, size) <= w || !line) line += p; else { out.push(line); line = p; } }); if (line) out.push(line); return out; };
+    const C = { no: L, q: L + 9, use: L + 86, at: L + 146 }, Wq = 74, Wu = 57, Wa = R - C.at - 1;
+    let y = 0;
+    const head = first => {
+      doc.page();
+      doc.text(L, 18, 'SPORTIVO · SPORTWAHL Q12/Q13 · GYMNASIUM BAYERN', { size: 7.5, color: GR, bold: true });
+      doc.text(L, 26, 'Quellenverzeichnis', { size: 18, bold: true });
+      doc.text(L, 31.5, `Rechtsgrundlagen und Vorgaben, Stand ${SOURCES.stand}`, { size: 9, color: GR });
+      doc.line(L, 35, R, 35, { lw: .45 });
+      y = 41;
+      if (first) {
+        [`Sportivo stützt sich auf diese Vorschriften und Unterlagen (Stand ${SOURCES.stand}). Sportivo ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule.`,
+         `„Prüfstand“: Original gelesen · Stelle geprüft · eigener Inhalt. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.`]
+          .forEach((t, i) => { wrap(t, R - L, 8.6).forEach(l => { doc.text(L, y, l, { size: 8.6, color: i ? GR : INK }); y += 4; }); y += 1.5; });
+        y += 2;
+      }
+    };
+    const tHead = () => {
+      doc.rect(L, y, R - L, 6.5, { fill: '#eef0f4' });
+      [['NR.', C.no + 1.5], ['QUELLE', C.q], ['IN SPORTIVO VERWENDET FÜR', C.use], ['FUNDSTELLE · PRÜFSTAND', C.at]].forEach(([t, x]) => doc.text(x, y + 4.3, t, { size: 6.8, bold: true, color: '#3c414b' }));
+      y += 6.5;
+    };
+    head(true);
+    let n = 0;
+    SOURCES.groups.forEach((g, gi) => {
+      const noteL = g.note ? wrap(g.note, R - L, 8) : [];
+      if (y + 14 + noteL.length * 3.7 > 270) head(false);
+      y += 3; doc.text(L, y + 3, `${'ABCDEFGH'[gi]} · ${g.title.toUpperCase()}`, { size: 9, bold: true }); y += 7;
+      noteL.forEach(l => { doc.text(L, y + 1, l, { size: 8, color: GR }); y += 3.7; }); if (noteL.length) y += 2;
+      tHead();
+      g.items.forEach(it => {
+        n++;
+        const ql = wrap(it.q, Wq, 8.6, true), dl = wrap(it.d, Wq, 7.6), ul = it.url ? wrapUrl(it.url, Wq, 7.2) : [];
+        const usel = wrap(it.use, Wu, 7.8), atl = [...(it.at !== '–' ? wrap(it.at, Wa, 7.8) : []), ...wrap(it.st, Wa, 7.8, true)];
+        const h = Math.max(ql.length * 3.9 + dl.length * 3.4 + ul.length * 3.3, usel.length * 3.5, atl.length * 3.5) + 4;
+        if (y + h > 272) { head(false); tHead(); }
+        let yy = y + 4.2;
+        doc.text(C.no + 2.5, yy, String(n), { size: 8.6, bold: true });
+        ql.forEach(l => { doc.text(C.q, yy, l, { size: 8.6, bold: true }); yy += 3.9; });
+        dl.forEach(l => { doc.text(C.q, yy, l, { size: 7.6, color: GR }); yy += 3.4; });
+        ul.forEach(l => { doc.text(C.q, yy, l, { size: 7.2, color: '#1f5fbf' }); yy += 3.3; });
+        yy = y + 4.2; usel.forEach(l => { doc.text(C.use, yy, l, { size: 7.8 }); yy += 3.5; });
+        yy = y + 4.2; atl.forEach((l, i) => { doc.text(C.at, yy, l, { size: 7.8, bold: i >= atl.length - wrap(it.st, Wa, 7.8, true).length, color: INK }); yy += 3.5; });
+        y += h; doc.line(L, y, R, y, { color: LINE, lw: .2 });
+      });
+      y += 3;
+    });
+    doc.forPages((i, tot) => {
+      const lh = 3.6, lw = doc.logoWidth(lh), fy = 281;
+      doc.line(L, fy - 3, R, fy - 3, { color: LINE, lw: .25 });
+      doc.text(L, fy + 2.7, `Erstellt am ${new Date().toLocaleDateString('de-DE')} · Sportivo ${SPW.VERSION} · ohne Gewähr`, { size: 7.6, color: '#3c414b' });
+      doc.text((L + R) / 2 + 14, fy + 2.7, `Seite ${i + 1} / ${tot}`, { size: 7.6, color: '#3c414b', align: 'c' });
+      doc.logo(R, fy, lh); doc.text(R - lw - 1.6, fy + 2.7, '© 2026', { size: 7.6, color: '#3c414b', align: 'r' });
+    });
+    return doc.finish();
+  }
+  helpBody.appendChild(buildSourcesSection());
+  $('src-pdf').onclick = () => { download('Sportivo-Quellenverzeichnis.pdf', quellenPdf(), 'application/pdf'); toast('Quellenverzeichnis als PDF erstellt.'); };
+  document.addEventListener('click', e => { const b = e.target.closest('[data-src]'); if (b) { e.preventDefault(); openHelp('h-quellen'); } });
+
   helpBody.querySelectorAll('section').forEach(sec => {
     const b = document.createElement('button'); b.type = 'button';
     b.textContent = sec.querySelector('h3').textContent.replace(/^\d+/, '').trim();
