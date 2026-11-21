@@ -66,6 +66,7 @@ jobs:
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           cd /tmp/out && sha256sum Libretto-* | tee SHA256.txt
+          gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Libretto ${{ steps.req.outputs.version }}" --notes "Libretto ${{ steps.req.outputs.version }}" --latest=false
           for i in 1 2 3; do gh release upload "${{ steps.req.outputs.tag }}" Libretto-* --clobber -R "$GITHUB_REPOSITORY" && break; echo "Hochladen fehlgeschlagen – neuer Versuch"; sleep 20; done
           # Kontrolle: Größe jeder Datei im Release = gebaute Datei
           for f in Libretto-*; do s=$(gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets --jq ".assets[] | select(.name==\"$f\") | .size"); [ "$s" = "$(stat -c %s "$f")" ] || { echo "Kontrolle fehlgeschlagen: $f"; exit 1; }; done
