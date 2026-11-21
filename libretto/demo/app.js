@@ -206,19 +206,18 @@ function pwWire(input) {
   const cap = e => { if (caps && e.getModifierState) caps.hidden = !e.getModifierState('CapsLock'); };
   input.addEventListener('keydown', cap); input.addEventListener('keyup', cap);
 }
-function renderLock(mode = 'pw', info = '') {
-  const code = mode === 'code';
+function renderLock(mode = 'pw', info = '', opts = {}) {
+  const code = mode === 'code', tidOn = !code && ST.touchId === 'on';
   const now = new Date(), h = now.getHours();
   const hello = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
   gate(`<div class="lockTop"><span>${esc(now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }))}</span></div>
     <div class="lockIcon">${ICON}</div>
-    <h2>${code ? 'Mit Notfallschlüssel öffnen' : esc(hello)}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : 'Libretto ist gesperrt. Gib dein Passwort ein, um deine Noten zu öffnen.'}</p>
-    <div class="pwField${code ? ' code' : ''}"><i class="pwIc">${code ? SVG_KEY : SVG_LOCK}</i>
+    <h2>${code ? 'Mit Notfallschlüssel öffnen' : esc(hello)}</h2><p>${code ? 'Gib den Notfallschlüssel ein. Danach legst du ein neues Passwort fest.' : (tidOn ? 'Libretto ist gesperrt. Lege den Finger auf Touch ID oder gib dein Passwort ein.' : 'Libretto ist gesperrt. Gib dein Passwort ein, um deine Noten zu öffnen.')}</p>
+    <div class="pwField${code ? ' code' : ''}${tidOn ? ' hasTid' : ''}"><i class="pwIc">${code ? SVG_KEY : SVG_LOCK}</i>
       <input class="pwInput" id="pw" type="${code ? 'text' : 'password'}" placeholder="${code ? 'XXXXXX-XXXXXX-XXXXXX-XXXXXX' : 'Passwort'}" autocomplete="${code ? 'off' : 'current-password'}" spellcheck="false" aria-label="${code ? 'Notfallschlüssel' : 'Passwort'}">
-      ${code ? '' : `<button type="button" class="pwEye" aria-label="Passwort anzeigen" title="Passwort anzeigen">${SVG_EYE}</button>`}</div>
+      ${tidOn ? `<button type="button" class="pwTid" id="tid" aria-label="Mit Touch ID entsperren" title="Mit Touch ID entsperren">${SVG_TOUCH}</button>` : ''}${code ? '' : `<button type="button" class="pwEye" aria-label="Passwort anzeigen" title="Passwort anzeigen">${SVG_EYE}</button>`}</div>
     <div class="capsHint" hidden>⇪ Feststelltaste ist an</div>
     <p class="gateErr" id="err" role="alert">${esc(info)}</p><button class="go" id="open"><span>${code ? 'Öffnen' : 'Entsperren'}</span></button>
-    ${!code && ST.touchId === 'on' ? `<button type="button" class="go secondary tidBtn" id="tid">${SVG_TOUCH}<span>Mit Touch ID entsperren</span></button>` : ''}
     <div class="gateLinks">${code ? '<button id="back">Zurück zum Passwort</button>' : '<button id="useCode">Passwort vergessen?</button>'}<i></i><button id="restore">Sicherung wiederherstellen …</button></div>
     <div class="lockSafe">${SVG_SHIELD}<span>Verschlüsselt mit AES-256 · Daten nur auf diesem Computer</span></div>`);
   $('#gateCard').classList.add('lockCard');
@@ -233,11 +232,12 @@ function renderLock(mode = 'pw', info = '') {
     opened(r);
   };
   /* Touch ID (Mac, freiwillig): Fingerabdruck statt Tippen – das Passwort-Feld bleibt immer daneben */
-  const tid = async () => { const b = $('#tid'); if (!b || b.disabled) return; b.disabled = true;
+  const tid = async () => { const b = $('#tid'); if (!b || b.disabled) return; b.disabled = true; b.classList.add('wait');
     const r = await N.tidUnlock().catch(() => ({ ok: false, error: '' }));
     if (!$('#tid')) return;
     if (r.ok) return opened(r);
-    b.disabled = false; if (r.error) { $('#err').textContent = r.error; ST.touchId = 'off'; b.remove(); }
+    b.disabled = false; b.classList.remove('wait');
+    if (r.error) { $('#err').textContent = r.error; ST.touchId = 'off'; b.remove(); $('.pwField').classList.remove('hasTid'); }
     $('#pw').focus();
   };
   const opened = r => {
@@ -248,7 +248,9 @@ function renderLock(mode = 'pw', info = '') {
     enterApp();
   };
   $('#open').onclick = go; $('#pw').onkeydown = e => { if (e.key === 'Enter') go(); };
-  if ($('#tid')) { $('#tid').onclick = tid; if (!info && !renderLock.tidAsked) { renderLock.tidAsked = true; setTimeout(tid, 350); } }
+  /* Fingerabdruck von selbst abfragen: beim Start und nach dem automatischen Sperren – sobald das Fenster vorne ist (nicht nach „Sperren“ von Hand) */
+  if ($('#tid')) { $('#tid').onclick = tid;
+    if (opts.autoTid && !info) { const ask = () => setTimeout(tid, 300); if (document.hasFocus()) ask(); else window.addEventListener('focus', ask, { once: true }); } }
   if ($('#useCode')) $('#useCode').onclick = () => renderLock('code');
   if ($('#back')) $('#back').onclick = () => renderLock('pw');
   $('#restore').onclick = () => restoreFlow(true);
@@ -281,7 +283,7 @@ async function restoreFlow(fromLock) {
     } });
   dlg.querySelector('#rsPw').focus();
 }
-async function lockNow() {
+async function lockNow(auto = false) {
   if (!D) return;
   try { await flush(); } catch (e) {
     /* Speichern klappt gerade nicht: trotzdem sperren (Sichtschutz), den ungespeicherten Stand im Speicher behalten und nach dem Entsperren erneut speichern */
@@ -292,11 +294,11 @@ async function lockNow() {
   }
   await N.lock(); D = null;
   $('#main').innerHTML = ''; $$('dialog').forEach(d => d.remove()); document.body.classList.remove('modal');
-  renderLock();
+  renderLock('pw', '', { autoTid: auto });
 }
 /* Automatisch sperren bei Inaktivität */
 ['mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
-setInterval(() => { if (D && (+D.settings.autoLock || 0) > 0 && Date.now() - lastAct > D.settings.autoLock * 60000) lockNow(); }, 15000);
+setInterval(() => { if (D && (+D.settings.autoLock || 0) > 0 && Date.now() - lastAct > D.settings.autoLock * 60000) lockNow(true); }, 15000);
 
 function migrate() {
   D.settings = { ...blankData().settings, ...(D.settings || {}) };
@@ -3830,7 +3832,7 @@ function helpSheet(opts) {
       <li><b>Speichern:</b> Libretto speichert jede Eingabe sofort von selbst. Wer es gewohnt ist, drückt trotzdem ${kbd(K + 'S')}: Das übernimmt auch einen gerade getippten Wert, speichert und legt höchstens alle zehn Minuten zusätzlich eine Sicherung an.</li>
       <li><b>Sicherungsordner wählen:</b> Unter „Sicherung“ einen USB-Stick oder Cloud-Ordner wählen. Ab dann sichert Libretto automatisch und verschlüsselt.</li>
     </ol>${fig('kurs', 'Kurs anlegen')}
-    <p><b>Kurs aus mehreren Klassen</b> (z. B. Italienisch aus 8A und 8B, Religion aus 6A bis 6E): Steht die Klasse in der Liste, übernimmt Libretto sie beim Einlesen; sonst „Klassen eintragen“ wählen und die Klasse je Namen ergänzen. Notentabelle und Ausdrucke – auch die Übertragsliste – sind dann nach Klassen unterteilt, und die Terminprüfung gilt für jede der Klassen.</p>
+    <p><b>Kurs aus mehreren Klassen</b> (z. B. Italienisch aus 8A und 8B, Religion aus 6A bis 6E): Steht die Klasse in der Liste, übernimmt Libretto sie beim Einlesen; sonst „Klassen eintragen“ wählen und die Klasse je Namen ergänzen. Notentabelle und Ausdrucke – auch die Übertragsliste – sind dann nach Klassen unterteilt, und die Terminprüfung gilt für jede der Klassen.</p>${fig('gemischt', 'Kurs aus zwei Klassen: Notentabelle nach Klassen gegliedert')}
     <p><b>Einstieg mitten im Schuljahr:</b> Im Infoportal das Notenblatt als PDF speichern und im Fenster „Neuer Kurs“ ins Einlesefeld ziehen. Libretto zeigt eine Vorschau (Schüler, Schulaufgaben, Stegreifaufgaben/Kurzarbeiten, mündliche Einzelnoten mit Datum) und übernimmt alles als „schon übertragen“. RA, UB, RF und PN passen zu Librettos Arten; GR, WZ, WS, EP, PF, LN und KSL werden „Sonstiger kleiner LN“ mit dem Kürzel als Notiz; „N“ (Nachschrift) wird Nachtermin „E“. Vorhandene Noten überschreibt Libretto nie.</p>`],
   ['wer', 'Wer nutzt was? Wege für verschiedene Aufgaben', 'Erste Schritte', `
     <div class="hCards">
@@ -3959,7 +3961,7 @@ function helpSheet(opts) {
       <li><b>Speichern:</b> geschieht nach jeder Eingabe von selbst. ${kbd(K + 'S')} speichert sofort (auch einen gerade getippten Wert, auch in offenen Fenstern) und sichert höchstens alle zehn Minuten zusätzlich. Libretto behält die 30 neuesten Sicherungen und eine je Tag für 90 Tage – der Sicherungsordner bleibt klein (eine Sicherung ist meist nur einige Kilobyte bis wenige hundert Kilobyte groß).</li>
       <li><b>Alte Kurse löschen (Datenschutz):</b> Nach § 14a Abs. 2 der Lehrerdienstordnung sind eigene Notenaufzeichnungen spätestens zwei Jahre nach Ende des Schuljahres zu löschen, sofern nichts anderes bestimmt ist. Libretto zeigt solche Kurse in der Übersicht unter „Zu erledigen“ (oder unter Einstellungen → Sicherheit → „Alte Kurse“): „Löschen“ legt sie für 60 Tage in den Papierkorb, „Noch behalten“ blendet den Hinweis für ein Jahr aus. Von selbst löscht Libretto nie.</li>
       <li><b>Sperre:</b> nach 5, 10 oder spätestens 15 Minuten ohne Eingabe (Mindestsicherheitsstandards des Kultusministeriums; einstellbar unter Einstellungen); „Jetzt sperren“ ebenda.</li>
-      <li><b>Touch ID (Mac):</b> Unter Einstellungen → Sicherheit lässt sich „Mit Touch ID entsperren“ einschalten (nur auf Macs mit Fingerabdrucksensor). Das Passwort wird dafür im Schlüsselbund dieses Mac verschlüsselt abgelegt, nie im Sicherungsordner. Es bleibt immer gültig: Auf dem Sperrbildschirm steht das Passwortfeld weiter zur Verfügung, und zum Wiederherstellen einer Sicherung brauchst du es weiterhin. Nach einer Passwortänderung passt sich Touch ID von selbst an. Unter Windows gibt es diese Möglichkeit (Windows Hello) derzeit nicht.</li>
+      <li><b>Touch ID (Mac):</b> Unter Einstellungen → Sicherheit lässt sich „Mit Touch ID entsperren“ einschalten (nur auf Macs mit Fingerabdrucksensor). Das Passwort wird dafür im Schlüsselbund dieses Mac verschlüsselt abgelegt, nie im Sicherungsordner. Beim Start und nach dem automatischen Sperren fragt der Mac gleich nach dem Fingerabdruck; sonst genügt ein Klick auf das Fingerabdruck-Zeichen im Passwortfeld. Das Passwort bleibt immer gültig: Auf dem Sperrbildschirm steht das Passwortfeld weiter zur Verfügung, und zum Wiederherstellen einer Sicherung brauchst du es weiterhin. Nach einer Passwortänderung passt sich Touch ID von selbst an. Unter Windows gibt es diese Möglichkeit (Windows Hello) derzeit nicht.</li>
       <li><b>Installieren:</b> Mac – die DMG-Datei öffnen und Libretto auf „Programme“ ziehen; beim ersten Öffnen meldet macOS, die App sei nicht überprüft: Das Blatt „Erster Start.pdf“ im selben Fenster zeigt in vier Schritten, wie man sie trotzdem öffnet (nur einmal nötig). Windows – „Libretto-Windows-Setup.exe“ ausführen; erscheint „Der Computer wurde durch Windows geschützt“, auf „Weitere Informationen“ und dann „Trotzdem ausführen“ klicken. Administratorrechte sind nicht nötig.</li>
       <li><b>Updates:</b> neue Version einfach über die alte installieren. Die Daten liegen getrennt von der App und bleiben erhalten; beim ersten Start einer neuen Version legt Libretto zusätzlich eine Sicherung an.</li>
       <li><b>Systemvoraussetzungen:</b> macOS 13 (Ventura) oder neuer – Apple-Chip oder Intel; Windows 10 oder 11 (64 Bit).</li>
@@ -4215,6 +4217,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.2', ['Touch ID schöner eingebunden: Fingerabdruck-Zeichen direkt im Passwortfeld statt eigener Schaltfläche; der Mac fragt beim Start und nach dem automatischen Sperren von selbst; klarere Abfrage („Libretto“ möchte deine Noten öffnen)', 'Schärfere Bilder in Hilfe und Handbuch, neues Bild „Kurs aus mehreren Klassen“']],
   ['1.1.1', ['Touch ID am Mac: Libretto lässt sich mit dem Fingerabdruck entsperren (freiwillig, unter Einstellungen → Sicherheit) – das Passwort bleibt immer gültig', 'Notentabelle: Noten stehen exakt untereinander – der Hinweis-Punkt bei gefährdeten Schülern verschiebt die Note nicht mehr', 'Übersicht: Notenverteilung je Kurs als schmaler Farbbalken, beide Spalten gleich hoch, klarere Hinweise', 'Farbwelten aufgeräumt: acht statt elf (Klar, Terrakotta und Salbei waren fast gleich wie Apple, Glut und Wald – wer sie gewählt hatte, bekommt automatisch die ähnliche)', 'Schalter im Dunkelmodus besser erkennbar', 'Neuer Leistungsnachweis: In Fächern mit Schulaufgaben ist „Schulaufgabe“ vorausgewählt, bis die Mindestzahl erreicht ist', 'Hinweis, wenn das Datum eines Leistungsnachweises in die Ferien, auf einen Feiertag oder ein Wochenende fällt', 'W-Seminar und 13/2 ohne Schulaufgabe: keine leere Spalte „Ø SA“ mehr', 'Zweigeteilte Schulaufgabe (Latein, Griechisch): leere Felder zeigen „…“ – Klick öffnet die Eingabe der Teile', 'Hilfe und Handbuch überarbeitet: 18 aktuelle Bildschirmfotos, neue Funktionen beschrieben, Voce statt Viva; Quellenverzeichnis ergänzt (GSO § 19, Feiertagsgesetz), alle Links am 21.11.2026 geprüft', 'Handbuch als PDF speichern klappt jetzt auch mit vielen Bildern (vorher konnte es bei großen Ausdrucken scheitern)']],
   ['1.1.0', ['Leistungsfach Sport: Fach Sport und Sporttheorie in einem Kurs – Libretto rechnet die Endpunktzahl nach der Bekanntmachung zum Sportunterricht in Q12/Q13 (Nr. 2.3.1): beide Teile gerundet, dann der Durchschnitt, keine Aufrundung auf 1 Punkt', 'Datenschutz: Hinweis in der Übersicht, wenn Kurse älter als zwei Schuljahre sind (LDO § 14a) – mit Löschen oder „Noch behalten“; Libretto löscht nie von selbst', 'Technik erneuert: aktuelle Electron-Version (45), PDF-Leser pdf.js 6 und Excel-Leser SheetJS 0.20.3 mit allen Sicherheitskorrekturen', 'Notentabelle: Tab und Enter springen ohne Verzögerung weiter – kein Tastendruck geht verloren', 'Punkte-Spalten zeigen groß die Note und klein die Punkte – beim Eintippen wie gewohnt die Punkte', 'Aufgabenblatt: Felder stehen in jeder Fenstergröße exakt unter ihren Spaltenköpfen', 'Neue Installation: DMG für den Mac mit Anleitung für den ersten Start, Installationsprogramm für Windows im neuen Design', 'Einstellungen → Termine: Schultermine aus Datei einlesen oder Schulkalender abonnieren; Einstellungen → Sicherheit: Klassen austauschen und alte Kurse', 'Hilfe und Handbuch ergänzt: Kalender-Abo Schritt für Schritt, Gastschüler, Zwischensumme, Speichern, Löschhinweis', '⌘S bzw. Strg+S speichert überall – auch in offenen Fenstern und mit gerade getipptem Wert; eine Sicherung höchstens alle zehn Minuten', 'Punkte je Aufgabe: Schreibaufgabe und Sprachmittlung zeigen ihre Zwischensumme mit Faktor (z. B. (4 + 6) × 2 = 20) – zum Übertragen auf den Korrekturbogen', 'Neu: macOS 13 (Ventura) oder neuer nötig']],
   ['1.0.12', ['Aufgabenpunkte: Wird eine Aufgabe gelöscht, ergänzt oder werden Punkte eingefügt, rechnet die Summe immer neu – von Hand eingetragene Gesamtpunkte bleiben stehen und sind mit ✎ markiert', 'Passt der Notenschlüssel nicht mehr zur Summe (z. B. nur noch 1 BE), gibt es keine Note statt einer falschen – mit deutlichem Hinweis', 'Gleiche Namen: Notenblatt und Klassen-Abgleich ordnen nichts mehr unsicher zu (andere Klasse, gleicher Name ohne Kennung); beim Einfügen gleicher Namen fragt Libretto nach', 'Gast ohne Wertung und „ohne Note“ jetzt in allen Ausgaben gleich: Übertragsliste, Schülerblatt, Notenübersicht, CSV', 'Hörverstehen: nur ganze BE auch im Aufgabenblatt und beim Einfügen; Prüfungsteil „BE · Hörverstehen“ als eigene Art', 'Ersatz-Schulaufgabe in zwei Teilen zählt beim Verhältnis 1 : 1 / 2 : 1 als eine Arbeit', 'Ferienkalender bis Sommer 2030 (Ferienordnung vom 07.12.2022); danach schlägt Libretto keine Abgabefrist vor', 'Kalender-Abo: Zeit- und Größenlimit gelten für den ganzen Download', 'Quellenverzeichnis mit geprüften Links zu allen Originalen; W-Seminar: Prüfungsgespräch „ca. 25 Minuten“ laut ISB-Übersicht']],
@@ -4294,5 +4297,5 @@ N.onMenu(cmd => { if (cmd === 'about') openAbout(); });
   if (SKIN_OLD[ST.skin]) { ST.skin = SKIN_OLD[ST.skin]; N.setCfg({ skin: ST.skin }).catch(() => {}); }
   applyLook(ST.skin, ST.mode, ST.font); applyFx(ST.fx); applyZoom(ST.zoom); setSideC(!!ST.sideC, false); applySideG(ST.sideG); document.body.classList.toggle('dense', !!ST.dense);
   $('#sideKbd').textContent = pf === 'darwin' ? '⌘K' : 'Strg+K';
-  if (!ST.exists) setupStep(1); else renderLock();
+  if (!ST.exists) setupStep(1); else renderLock('pw', '', { autoTid: true });
 })();

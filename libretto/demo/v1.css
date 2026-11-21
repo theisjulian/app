@@ -821,10 +821,15 @@ td.res .flag ~ .flag{margin-top:6px}
 /* Schalter im Dunkelmodus deutlich erkennbar (alle Farbwelten) */
 html[data-theme="dark"] .sw::after{background:#f2f2f7}
 html[data-theme="dark"] .sw:not(:checked){box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
-/* Touch ID auf dem Sperrbildschirm */
-.go.tidBtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
-.go.tidBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
-.lockCard .go.tidBtn span::after{content:none}
+/* Touch ID auf dem Sperrbildschirm: Fingerabdruck-Knopf direkt im Passwortfeld (neben dem Auge) */
+.lockCard .pwField.hasTid .pwInput{padding-right:84px}
+.pwTid{position:absolute;right:44px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:9px;background:color-mix(in srgb,var(--blue) 12%,transparent);display:grid;place-items:center;cursor:pointer;padding:6px}
+.pwTid:hover{background:color-mix(in srgb,var(--blue) 20%,transparent)}
+.pwTid:disabled{cursor:default}
+.pwField .pwTid svg{stroke:var(--blue);stroke-width:1.7}
+.pwTid.wait svg{animation:tidPulse 1.3s ease-in-out infinite}
+@keyframes tidPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.9)}}
+@media (prefers-reduced-motion:reduce){.pwTid.wait svg{animation:none;opacity:.6}}
 /* Halbjahr ohne Schulaufgabe: Spalte „Ø SA“ ausgeblendet, Trennlinie wandert zu „Ø klein“ */
 table.grid.noSA th.hSA,table.grid.noSA td[data-sum="sa"],table.grid.noSA td.fSA{display:none}
 table.grid.noSA th.hSm,table.grid.noSA td[data-sum="sm"],table.grid.noSA td.fSm{border-left:.5px solid var(--hairline)}
