@@ -21,9 +21,9 @@
   "url": "https://theisapps.de/sportwahl/"
  },
  "viva": {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "url": "https://theisapps.de/voce/",
-  "notes": "Voce 2.0: auf aktueller Technik neu aufgebaut, schneller und sicherer, mit verfeinerter Oberfläche. Für den Mac jetzt als einfaches Installationsfenster (DMG) mit Anleitung. Voraussetzung am Mac ist ab jetzt macOS 13 Ventura oder neuer – auf älteren Macs bitte Voce 1.10.0 weiter verwenden (theisapps.de/voce). Ihre Klassen und Prüfungen bleiben beim Update erhalten. Die Raster der Schulaufgaben bleiben unverändert."
+  "notes": "Voce 2.0.1: Worturteile je Niveau (A1, A2, B1, Oberstufe) noch genauer an den ISB-Rastern, sehr volle Bewertungsbögen sicher auf einer Seite, neu gestaltetes Handbuch mit ausführlichem Quellenverzeichnis. Voce 2.0 ist auf aktueller Technik neu aufgebaut; Voraussetzung am Mac ist macOS 13 Ventura oder neuer – auf älteren Macs bitte Voce 1.10.0 weiter verwenden (theisapps.de/voce). Ihre Klassen und Prüfungen bleiben beim Update erhalten. Die Raster der Schulaufgaben bleiben unverändert."
  },
  "foliva": {
   "version": "0.9.16",
