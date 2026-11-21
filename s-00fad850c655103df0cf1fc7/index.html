@@ -222,7 +222,7 @@ footer{border-top:1px solid var(--line);padding-top:18px}
 
 <section class="tab" id="t-versionen">
   <section class="card" style="margin-bottom:14px"><h2>Veröffentlichungsstand <span class="pill" id="vs-hint"></span></h2><div class="apps" id="apps"></div>
-    <p class="note" style="margin-top:8px">Verglichen werden die Version in <b>versions.json</b> (das, was die Apps als „neueste Version“ sehen), das neueste Release bei GitHub und die erwarteten Dateien. Die Versionsnummer wird aus dem Release-Namen oder Tag gelesen (z. B. „Libretto 1.1“ = 1.1.0); als neuestes Release zählt die höchste Version, nicht das zuletzt hochgeladene.</p></section>
+    <p class="note" style="margin-top:8px">Verglichen werden die Version in <b>versions.json</b> (das, was die Apps als „neueste Version“ sehen), das neueste Release bei GitHub und die erwarteten Dateien. Die Versionsnummer wird aus Release-Name, Tag und dem Anfang des Release-Textes gelesen, die höchste zählt (Titel „Libretto 1.1“ mit Text „Libretto 1.1.1 – …“ = 1.1.1); als neuestes Release zählt die höchste Version, nicht das zuletzt hochgeladene.</p></section>
   <section class="card"><h2>Seiten erreichbar? <span class="pill" id="pg-hint"></span></h2><div class="pg" id="pages"></div></section>
 </section>
 
@@ -322,7 +322,7 @@ var APPS=[
  {id:'gruppo',name:'Aula',vkey:'gruppen',c:['#ff5f7e','#d6204a'],img:'data:image/png;base64,'+ICONS.gruppi,re:/^(aula|gruppen|gruppo|gruppi)/i,files:[['Mac','Aula-Mac.dmg|Aula-Mac.zip'],['Mac Intel','Aula-Mac-Intel.dmg|Aula-Mac-Intel.zip'],['Windows','Aula-Windows-Setup.exe']],page:'/aula/'},
  {id:'libretto',name:'Libretto',vkey:'libretto',c:['#22cf78','#0a8a4a'],img:'data:image/png;base64,'+ICONS.libretto,re:/^libretto/i,files:[['Mac','Libretto-Mac.dmg|Libretto-Mac.zip'],['Mac Intel','Libretto-Mac-Intel.dmg|Libretto-Mac-Intel.zip'],['Windows','Libretto-Windows-Setup.exe']],page:'/libretto/'},
  {id:'voce',name:'Voce',vkey:'viva',c:['#3a86ff','#1245d6'],img:'data:image/png;base64,'+ICONS.viva,re:/^(voce|viva)/i,files:[['Mac','Voce-Mac.dmg|Voce-Mac.zip'],['Mac Intel','Voce-Mac-Intel.dmg|Voce-Mac-Intel.zip'],['Windows','Voce-Windows-Setup.exe']],page:'/voce/'},
- {id:'foliva',name:'Foliva',vkey:'foliva',c:['#9b7bf2','#5b3cc4'],img:'data:image/png;base64,'+ICONS.foliva,re:/^foliva/i,files:[['Mac','Foliva-Mac.zip'],['Mac Intel','Foliva-Mac-Intel.zip'],['Windows','Foliva-Windows-Setup.exe']],page:'/foliva/',test:true}
+ {id:'foliva',name:'Foliva',vkey:'foliva',c:['#9b7bf2','#5b3cc4'],img:'data:image/png;base64,'+ICONS.foliva,re:/^foliva/i,files:[['Mac','Foliva-Mac.zip'],['Mac Intel','Foliva-Mac-Intel.zip'],['Windows','Foliva-Windows-Setup.exe']],page:'/foliva/',beta:true}
 ];
 var PLATS=['Mac (Apple Silicon)','Mac (Intel)','Windows','Android'];
 function platOf(n){n=n.toLowerCase();if(/\.apk$/.test(n))return 'Android';if(/windows|\.exe$|\.msi$/.test(n))return 'Windows';if(/intel|x64|x86/.test(n)&&/mac|\.dmg|\.zip/.test(n))return 'Mac (Intel)';if(/mac|\.dmg|\.zip/.test(n))return 'Mac (Apple Silicon)';return null}
@@ -331,7 +331,8 @@ function cmpV(a,b){var x=String(a).split('.').map(Number),y=String(b).split('.')
 /* Release-Name mit Version, auch wenn die Version nur im Tag steht (z. B. Name „Voce“, Tag „1.8.1“) */
 function relName(r){var n=r.name||r.tag_name,v=verOf(r),k=v&&v.replace(/\.0$/,'');return v&&n.indexOf(v)<0&&n.indexOf(k)<0?n+' '+v:n}
 /* Version aus Name oder Tag, auch zweiteilig („Libretto 1.1“, Tag „2.0“) → 1.1.0 */
-function verOf(r){var m=/(?:^|[^\d.])(\d+\.\d+(?:\.\d+)?)(?![\d.])/.exec(' '+(r.name||'')+' '+(r.tag_name||''));if(!m)return null;var v=m[1].split('.');while(v.length<3)v.push('0');return v.join('.')}
+/* Version aus Release-Name, Tag und dem Anfang des Release-Textes (der Release-Ablauf schreibt dort die genaue Nummer, z. B. „Libretto 1.1.1 – …“, auch wenn der Titel „Libretto 1.1“ heißt); die höchste zählt */
+function verOf(r){var src=' '+(r.name||'')+' '+(r.tag_name||'')+' '+String(r.body||'').slice(0,40),re=/(?:^|[^\d.])(\d+\.\d+(?:\.\d+)?)(?![\d.])/g,m,best=null;while((m=re.exec(src))){var v=m[1].split('.');while(v.length<3)v.push('0');v=v.join('.');if(!best||cmpV(v,best)>0)best=v}return best}
 /* Dateien einer App: je Plattform mehrere erlaubte Namen (DMG oder ZIP), getrennt durch | */
 function alts(f){return f[1].split('|')}
 function hasFile(r,f){return (r.assets||[]).some(function(a){return alts(f).indexOf(a.name)>=0})}
@@ -437,7 +438,7 @@ function renderVer(){var rels=S.rel||[],vj=S.vj||{},h='',bad=0,warn=0;ISSUES=[];
   if(cls==='ok')st.push(a.test?'Alles da. Testversion für Kollegen, nicht auf der Website verlinkt.':'Alles in Ordnung'+(lk==='ok'?', die Website verlinkt das neueste Release.':'.'));
   if(cls!=='ok')ISSUES.push({cls:cls,t:a.name+': '+st.join(' ')});
   if(cls==='bad')bad++;if(cls==='warn')warn++;
-  h+='<div class="arow"><div class="nm"><img src="'+a.img+'" alt="">'+a.name+(a.test?' <span class="pill warn">Test</span>':'')+'</div>'+
+  h+='<div class="arow"><div class="nm"><img src="'+a.img+'" alt="">'+a.name+(a.test?' <span class="pill warn">Test</span>':a.beta?' <span class="pill warn">Beta</span>':'')+'</div>'+
    '<div><span class="k">Version laut Website</span><b>'+(vv||'–')+'</b></div>'+
    '<div><span class="k">Neuestes Release bei GitHub</span><b>'+(r?esc(relName(r)):'–')+'</b>'+(r?'<div class="small muted">'+fd(r.published_at)+(r.prerelease?' · Pre-Release':'')+'</div>':'')+'</div>'+
    '<div><span class="k">Dateien</span><div class="chips">'+a.files.map(function(f){return '<span class="chip '+(hv(f)?'ok':'bad')+'">'+(hv(f)?'✓ ':'✗ ')+f[0]+'</span>'}).join('')+(lk?'<span class="chip '+lk+'">'+(lk==='ok'?'✓ ':'✗ ')+'Website-Links</span>':'')+'</div><div class="stat"><span class="pill '+cls+'">'+(cls==='ok'?'OK':cls==='warn'?'Prüfen':'Achtung')+'</span> <span class="muted">'+esc(st.join(' '))+'</span></div></div></div>'});
@@ -600,10 +601,10 @@ function webMore(){var st=load()||{},c=st.gc||window.THEIS_PRESET||{};var ids=['
 
 /* ---------- Checkliste und Links ---------- */
 var CL=[
- ['Libretto veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (normales Release, kein Pre-Release) mit Libretto-Mac.dmg, Libretto-Mac-Intel.dmg, Libretto-Windows-Setup.exe (ZIPs als Reserve). Version im Namen, z. B. Tag „1.1“, Name „Libretto 1.1“. Eine ältere Version für ältere Macs ohne „Latest“ anlegen. Erst die Dateien, dann versions.json.'],
+ ['Libretto veröffentlichen','Automatisch über GitHub: Der Libretto-Chat trägt Version, Release-Tag und Quellcode-Stand in <a href="https://github.com/'+REPO+'/blob/main/release/libretto.json" target="_blank" rel="noopener">release/libretto.json</a> ein (erst als Probelauf mit „dry“). Der Ablauf baut alle Dateien, ersetzt sie im Release, setzt Titel und Prüfsummen und erst danach versions.json. Ältere Version für ältere Macs bleibt im eigenen Release (1.0.12).'],
  ['Aula veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Aula-Mac.zip, Aula-Mac-Intel.zip, Aula-Windows-Setup.exe. Version im Namen, z. B. Tag „1.4“, Name „Aula 1.4“. Im Website-Update die Links auf der Aula-Seite auf den neuen Tag setzen.'],
- ['Voce veröffentlichen','Neues <a href="https://github.com/'+REPO+'/releases/new" target="_blank" rel="noopener">Release</a> (nicht Pre-Release) mit Voce-Mac.dmg, Voce-Mac-Intel.dmg, Voce-Windows-Setup.exe. Version im Namen, z. B. Tag „2.0“, Name „Voce 2.0“. Im Website-Update die Links auf der Voce-Seite auf den neuen Tag setzen.'],
- ['Foliva-Testversion tauschen','Pre-Release <a href="https://github.com/'+REPO+'/releases/tag/foliva-beta" target="_blank" rel="noopener">foliva-beta</a> (beim ersten Mal neu anlegen, Haken „Set as a pre-release“): Foliva-Mac.zip, Foliva-Mac-Intel.zip, Foliva-Windows-Setup.exe (ohne Versionsnummer im Dateinamen). Name z. B. „Foliva 0.9.11 (Test)“. Nicht auf der Website verlinken.'],
+ ['Voce veröffentlichen','Automatisch über GitHub wie bei Libretto: <a href="https://github.com/'+REPO+'/blob/main/release/voce.json" target="_blank" rel="noopener">release/voce.json</a>. Ältere Macs: Release 1.10.0.'],
+ ['Foliva-Beta veröffentlichen','Pre-Release mit der Versionsnummer als Tag (z. B. „0.9.16“, Haken „Set as a pre-release“): Foliva-Mac.zip, Foliva-Mac-Intel.zip, Foliva-Windows-Setup.exe. Im Website-Update die Links auf der Foliva-Seite auf den neuen Tag setzen, dann versions.json.'],
  ['Reiter „Versionen“ prüfen','Erst wenn alle Dateien da sind (✓), geht es weiter. „Website-Links“ zeigt noch ✗, bis das Website-Update hochgeladen ist.'],
  ['Website-Update hochladen','<a href="https://github.com/'+REPO+'/upload/main" target="_blank" rel="noopener">Upload-Seite</a>: Inhalt des Ordners „website“ aus dem Zip hineinziehen (Unterordner mitziehen), „Commit changes“. Danach 1 bis 2 Minuten warten.'],
  ['Nachkontrolle','Seite hart neu laden: oben in der Übersicht muss „Alles in Ordnung“ stehen (Versionen, Dateien, Website-Links, Seiten). Einen Download-Link testen.']];
