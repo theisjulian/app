@@ -59,7 +59,7 @@ const Export = (() => {
     l.hsRef = subj => k === 'fr' ? `Exposé oral ${/^[aeiouyéèh]/i.test(subj) ? 'd’' : 'de '}${subj}` : `${REF[k].head} ${subj}`; }
   /* Überschrift „Prüfung in/di/de …“ – im Französischen mit Elision (d’anglais, d’italien, d’espagnol) */
   for (const [k, l] of Object.entries(LBL)) l.hs = subj => k === 'fr' ? `Épreuve orale ${/^[aeiouyéèh]/i.test(subj) ? 'd’' : 'de '}${subj}` : `${l.head} ${subj}`;
-  let L = LBL.de; let TIGHT = false;
+  let L = LBL.de; let TIGHT = false; let DENSE = false; let BODY = 20;
   const tr = (d, lang) => lang === 'de' ? d : ((window.DESC_I18N || {})[d] || {})[lang] || d;
   const gap = (n = 120) => p(t(''), { after: n });
 
@@ -102,12 +102,12 @@ const Export = (() => {
       ? [cell(p(t(label, { bold: true })), { w: w1, fill: GREY }), cell(p([t(L.np + '  ', { bold: true }), t(String(v).padStart(2, '0'), { bold: true })], { align: AlignmentType.RIGHT }), { w: w2, fill: GREY }), cell(p(t(`${sc.w[c] * 10} %`, { bold: true }), { align: AlignmentType.CENTER }), { w: w3, fill: GREY })]
       : [cell(p(t(label, { bold: true })), { w: w1, fill: GREY }), cell(p(t(`${sc.f[c]} x ${fmt(v)} / ${maxOf(ex.scheme, c)} ${L.be}`, { bold: true }), { align: AlignmentType.RIGHT }), { w: w2, fill: GREY }), cell(p(t(`${fmt(v * sc.f[c])} ${L.be}`, { bold: true }), { align: AlignmentType.RIGHT }), { w: w3, fill: GREY })];
     const body = [];
-    if (settings.showDesc) for (const d of descriptor(ex.scheme, c, v)) body.push(p([t('• '), t(tr(d, ex.wlang))], { after: 0 }));
+    if (settings.showDesc) for (const d of descriptor(ex.scheme, c, v)) body.push(p([t('• ', { size: BODY }), t(tr(d, ex.wlang), { size: BODY })], { after: 0 }));
     const note = String((r.notes || {})[c] || '').trim();
-    if (note) body.push(p([t('• '), t(L.remark + ': ', { bold: true }), t(note)], { before: body.length ? 60 : 0, after: 0 }));
+    if (note) body.push(p([t('• ', { size: BODY }), t(L.remark + ': ', { bold: true, size: BODY }), t(note, { size: BODY })], { before: body.length ? (DENSE ? 30 : 60) : 0, after: 0 }));
     if (!body.length) body.push(p(t('')), p(t('')));
     return [table([new TableRow({ cantSplit: true, children: bar })], [w1, w2, w3]),
-      table([new TableRow({ children: [cell(body, { w: W, v: VerticalAlign.TOP, m: TIGHT ? 30 : 60 })] })], [W]), gap(TIGHT ? 30 : 70)];
+      table([new TableRow({ children: [cell(body, { w: W, v: VerticalAlign.TOP, m: DENSE ? 20 : TIGHT ? 30 : 60 })] })], [W]), gap(DENSE ? 20 : TIGHT ? 30 : 70)];
   }
 
   function totals(ex, e) {
@@ -141,11 +141,11 @@ const Export = (() => {
 
   function verdictBlock(text) {
     return [table([new TableRow({ cantSplit: true, children: [cell(p(t(L.verdict, { bold: true })), { w: W, fill: GREY })] })], [W]),
-      table([new TableRow({ children: [cell(p(t(text || '')), { w: W, v: VerticalAlign.TOP, m: TIGHT ? 40 : 60 })] })], [W]), gap(TIGHT ? 70 : 110)];
+      table([new TableRow({ children: [cell(p(t(text || '', { size: BODY })), { w: W, v: VerticalAlign.TOP, m: DENSE ? 30 : TIGHT ? 40 : 60 })] })], [W]), gap(DENSE ? 50 : TIGHT ? 70 : 110)];
   }
   function signatures(settings) {
     /* Unterschriften bleiben immer zusammen (Linie und Beschriftung nie auf getrennten Seiten) */
-    const line = () => p(t('________________________________'), { before: 220, keepNext: true });
+    const line = () => p(t('________________________________'), { before: DENSE ? 150 : 220, keepNext: true });
     /* Absatz davor: sonst verschmilzt Word die Tabelle mit der Ergebnistabelle */
     const out = [gap(40), table([new TableRow({ cantSplit: true, children: [
       cell([line(), p(t(L.sigT))], { w: W / 2, borders: NONE }),
@@ -158,6 +158,14 @@ const Export = (() => {
     const { s, r, e, verdict } = item; const sc = SCHEMES[ex.scheme];
     /* Viel Text (lange Notizen + Worturteil): etwas engere Abstände, damit der Bogen auf eine Seite passt */
     TIGHT = Object.values(r.notes || {}).join('').length + String(verdict || '').length > 650;
+    /* Sehr viel Text: geschätzte Zeilenzahl (≈ 105 Zeichen je Zeile bei 10 pt) – ab hier 9 pt für Beschreibungen, Notizen und Worturteil,
+       damit Gesamtbewertung und Unterschriften nie allein auf eine zweite Seite rutschen */
+    const lines = x => Math.max(1, Math.ceil(String(x || '').length / 105));
+    let est = lines(verdict) + 2;
+    for (const c of catsOf(ex.scheme)) { const ds = settings.showDesc ? descriptor(ex.scheme, c, r.scores[c]) : []; est += 2 + ds.reduce((a, d) => a + lines(tr(d, ex.wlang)), 0); const n = String((r.notes || {})[c] || '').trim(); if (n) est += lines(L.remark + ': ' + n); }
+    est += sc.type === 'be' ? 7 : 3;   /* Gesamtbewertung: Notenschlüssel + Ergebnis bzw. Notenpunkte */
+    if (ex.kind === 'ref' && item.topic) est += lines(item.topic) - 1;
+    DENSE = est > 39; BODY = DENSE ? 18 : 20; if (DENSE) TIGHT = true;
     const level = sc.type === 'np' ? 'Q 12/13' : sc.type === 'bep' ? 'B1' : (sc.badge || sc.label);
     return [...header(ex, settings, s, level, item), ...catsOf(ex.scheme).flatMap(c => catBlock(ex, settings, c, r)), ...verdictBlock(verdict), ...totals(ex, e), ...signatures(settings)];
   }

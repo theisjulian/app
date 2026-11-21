@@ -1828,7 +1828,7 @@ async function bkPaint() {
   const st = await BK.status();
   $('bkStatus').textContent = (st.lastLocalError ? `⚠ Die letzte Sicherung auf diesem ${DEVICE} ist fehlgeschlagen (${st.lastLocalError}). Letzte erfolgreiche: ` : `Zuletzt auf diesem ${DEVICE} gesichert: `) + `${bkAgo(st.lastLocal).replace(/\.$/, '')}. ` + (st.backupDir
     ? (st.lastExternalError ? `Sicherungsordner „${st.backupDir}“ nicht erreichbar (${st.lastExternalError}) – ist der Stick angesteckt bzw. der Ordner da?` : `Zusätzlich im Sicherungsordner „${st.backupDir}“: ${bkAgo(st.lastExternal).replace(/\.$/, '')}.`)
-    : 'Noch kein Sicherungsordner. Tipp: einen Ordner wählen (z. B. iCloud Drive oder USB-Stick), dann liegt jede Sicherung zusätzlich dort.') + ' Gesichert wird bei Änderungen etwa alle 15 Minuten und beim Beenden.';
+    : `Noch kein Sicherungsordner. Tipp: einen Ordner wählen (z. B. ${NATIVE && NATIVE.platform === 'win32' ? 'OneDrive' : 'iCloud Drive'} oder USB-Stick), dann liegt jede Sicherung zusätzlich dort.`) + ' Gesichert wird bei Änderungen etwa alle 15 Minuten und beim Beenden.';
   $('bkDirClear').hidden = !st.backupDir;
 }
 async function bkList() {
