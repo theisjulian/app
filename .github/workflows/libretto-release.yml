@@ -24,6 +24,7 @@ jobs:
         run: |
           f=site/release/libretto.json
           for k in version tag ref; do echo "$k=$(jq -r .$k $f)" >> "$GITHUB_OUTPUT"; done
+          echo "dry=$(jq -r '.dry // false' $f)" >> "$GITHUB_OUTPUT"
       - name: Quellcode holen (privat)
         uses: actions/checkout@v4
         with:
@@ -53,13 +54,25 @@ jobs:
           HFSPLUS: /tmp/ldh/build/hfs/hfsplus
           DMGTOOL: /tmp/ldh/build/dmg/dmg
         run: bash q/tools/ci-build.sh || { tail -60 /tmp/build.log; exit 1; }
-      - name: Dateien im Release ersetzen
+      - name: Probelauf – nur in einen verborgenen Entwurf (nichts wird veröffentlicht)
+        if: steps.req.outputs.dry == 'true'
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           cd /tmp/out && sha256sum Libretto-* | tee SHA256.txt
-          gh release upload "${{ steps.req.outputs.tag }}" Libretto-* --clobber -R "$GITHUB_REPOSITORY"
+          gh release delete libretto-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          gh release create libretto-probe --draft --title "Libretto ${{ steps.req.outputs.version }} – Probelauf (nicht öffentlich)" --notes "$(cat SHA256.txt)" -R "$GITHUB_REPOSITORY" Libretto-* SHA256.txt
+      - name: Dateien im Release ersetzen
+        if: steps.req.outputs.dry != 'true'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cd /tmp/out && sha256sum Libretto-* | tee SHA256.txt
+          for i in 1 2 3; do gh release upload "${{ steps.req.outputs.tag }}" Libretto-* --clobber -R "$GITHUB_REPOSITORY" && break; echo "Hochladen fehlgeschlagen – neuer Versuch"; sleep 20; done
+          # Kontrolle: Größe jeder Datei im Release = gebaute Datei
+          for f in Libretto-*; do s=$(gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets --jq ".assets[] | select(.name==\"$f\") | .size"); [ "$s" = "$(stat -c %s "$f")" ] || { echo "Kontrolle fehlgeschlagen: $f"; exit 1; }; done
           gh release edit "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --notes "Libretto ${{ steps.req.outputs.version }} – macOS 13 oder neuer (Apple-Chip: Libretto-Mac.dmg, Intel: Libretto-Mac-Intel.dmg), Windows 10/11 (Libretto-Windows-Setup.exe). Ältere Macs (macOS 11/12): Release 1.0.12. Prüfsummen (SHA-256): $(tr '\n' ' ' < SHA256.txt)"
+          gh release delete libretto-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
       - name: versions.json aktualisieren (erst jetzt – die Dateien sind online)
+        if: steps.req.outputs.dry != 'true'
         run: |
           cd site && git pull -q --rebase origin main
           jq --arg v "${{ steps.req.outputs.version }}" --arg n "$(jq -r .notes release/libretto.json)" '.libretto.version = $v | (if $n != "" and $n != "null" then .libretto.notes = $n else . end)' versions.json > v.tmp && mv v.tmp versions.json
