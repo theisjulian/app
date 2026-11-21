@@ -1,4 +1,4 @@
-# Libretto veröffentlichen: baut die Apps aus dem privaten Quellcode (theisjulian/libretto-quelle) und ersetzt die Dateien im Release.
+# Libretto veröffentlichen: baut die Apps aus dem privaten Quellcode aller theis-Apps (theisjulian/theis-quelle, Ordner libretto/) und ersetzt die Dateien im Release.
 # Ausgelöst durch eine Änderung an release/libretto.json (Version, Release-Tag, Stand des Quellcodes, Hinweistext für versions.json).
 name: Libretto veröffentlichen
 on:
@@ -28,7 +28,7 @@ jobs:
       - name: Quellcode holen (privat)
         uses: actions/checkout@v4
         with:
-          repository: theisjulian/libretto-quelle
+          repository: theisjulian/theis-quelle
           ref: ${{ steps.req.outputs.ref }}
           token: ${{ secrets.QUELLE_TOKEN }}
           path: q
@@ -39,11 +39,11 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq hfsprogs nsis cmake zlib1g-dev libbz2-dev liblzma-dev zip >/dev/null
           pip install -q ds_store==1.3.4 mac_alias==2.2.4 pillow
           git clone -q https://github.com/mozilla/libdmg-hfsplus /tmp/ldh && cd /tmp/ldh && git checkout -q e18579b391950589b9ed16ee630c54ce4319bb29
-          git apply "$GITHUB_WORKSPACE/q/tools/patches/libdmg-hfsplus-HFS_IDS.patch" && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null && cmake --build build -j4 >/dev/null
+          git apply "$GITHUB_WORKSPACE/q/libretto/tools/patches/libdmg-hfsplus-HFS_IDS.patch" && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null && cmake --build build -j4 >/dev/null
           curl -sSL https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /tmp
           npm i -g -s @electron/packager@20.3.0
       - name: Version prüfen
-        run: test "$(node -p "require('./q/package.json').version")" = "${{ steps.req.outputs.version }}"
+        run: test "$(node -p "require('./q/libretto/package.json').version")" = "${{ steps.req.outputs.version }}"
       - name: Bauen
         env:
           OUT: /tmp/out
@@ -53,7 +53,7 @@ jobs:
           RC: /tmp/apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign
           HFSPLUS: /tmp/ldh/build/hfs/hfsplus
           DMGTOOL: /tmp/ldh/build/dmg/dmg
-        run: bash q/tools/ci-build.sh || { tail -60 /tmp/build.log; exit 1; }
+        run: bash q/libretto/tools/ci-build.sh || { tail -60 /tmp/build.log; exit 1; }
       - name: Probelauf – nur in einen verborgenen Entwurf (nichts wird veröffentlicht)
         if: steps.req.outputs.dry == 'true'
         env: { GH_TOKEN: '${{ github.token }}' }
