@@ -1,0 +1,81 @@
+# Voce veröffentlichen: baut die Apps aus dem privaten Quellcode aller theis-Apps (theisjulian/theis-quelle, Ordner voce/) und ersetzt die Dateien im Release.
+# Ausgelöst durch eine Änderung an release/voce.json (Version, Release-Tag, Stand des Quellcodes, Hinweistext für versions.json).
+name: Voce veröffentlichen
+on:
+  push:
+    branches: [main]
+    paths: ['release/voce.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: voce-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - name: Website-Repository holen
+        uses: actions/checkout@v4
+        with: { path: site }
+      - name: Auftrag lesen
+        id: req
+        run: |
+          f=site/release/voce.json
+          for k in version tag ref; do echo "$k=$(jq -r .$k $f)" >> "$GITHUB_OUTPUT"; done
+          echo "dry=$(jq -r '.dry // false' $f)" >> "$GITHUB_OUTPUT"
+      - name: Quellcode holen (privat)
+        uses: actions/checkout@v4
+        with:
+          repository: theisjulian/theis-quelle
+          ref: ${{ steps.req.outputs.ref }}
+          token: ${{ secrets.QUELLE_TOKEN }}
+          path: q
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Werkzeuge
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq hfsprogs nsis cmake zlib1g-dev libbz2-dev liblzma-dev zip >/dev/null
+          pip install -q ds_store==1.3.4 mac_alias==2.2.4 pillow
+          git clone -q https://github.com/mozilla/libdmg-hfsplus /tmp/ldh && cd /tmp/ldh && git checkout -q e18579b391950589b9ed16ee630c54ce4319bb29
+          git apply "$GITHUB_WORKSPACE/q/voce/tools/patches/libdmg-hfsplus-HFS_IDS.patch" && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null && cmake --build build -j4 >/dev/null
+          curl -sSL https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /tmp
+          npm i -g -s @electron/packager@20.3.0
+      - name: Version prüfen
+        run: test "$(node -p "require('./q/voce/package.json').version")" = "${{ steps.req.outputs.version }}"
+      - name: Bauen
+        env:
+          OUT: /tmp/out
+          WORK: /tmp/work
+          LOG: /tmp/build.log
+          PK: electron-packager
+          RC: /tmp/apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign
+          HFSPLUS: /tmp/ldh/build/hfs/hfsplus
+          DMGTOOL: /tmp/ldh/build/dmg/dmg
+        run: bash q/voce/tools/ci-build.sh || { tail -60 /tmp/build.log; exit 1; }
+      - name: Probelauf – nur in einen verborgenen Entwurf (nichts wird veröffentlicht)
+        if: steps.req.outputs.dry == 'true'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cd /tmp/out && sha256sum Voce-* | tee SHA256.txt
+          gh release delete voce-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          gh release create voce-probe --draft --title "Voce ${{ steps.req.outputs.version }} – Probelauf (nicht öffentlich)" --notes "$(cat SHA256.txt)" -R "$GITHUB_REPOSITORY" Voce-* SHA256.txt
+      - name: Dateien im Release ersetzen
+        if: steps.req.outputs.dry != 'true'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cd /tmp/out && sha256sum Voce-* | tee SHA256.txt
+          gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce ${{ steps.req.outputs.version }}" --notes "Voce ${{ steps.req.outputs.version }}" --latest=false
+          for i in 1 2 3; do gh release upload "${{ steps.req.outputs.tag }}" Voce-* --clobber -R "$GITHUB_REPOSITORY" && break; echo "Hochladen fehlgeschlagen – neuer Versuch"; sleep 20; done
+          # Kontrolle: Größe jeder Datei im Release = gebaute Datei
+          for f in Voce-*; do s=$(gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets --jq ".assets[] | select(.name==\"$f\") | .size"); [ "$s" = "$(stat -c %s "$f")" ] || { echo "Kontrolle fehlgeschlagen: $f"; exit 1; }; done
+          gh release edit "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce ${{ steps.req.outputs.version }}" --notes "Voce ${{ steps.req.outputs.version }} – macOS 13 oder neuer (Apple-Chip: Voce-Mac.dmg, Intel: Voce-Mac-Intel.dmg), Windows 10/11 (Voce-Windows-Setup.exe). Ältere Macs (macOS 11/12): Release 1.10.0. Prüfsummen (SHA-256): $(tr '\n' ' ' < SHA256.txt)"
+          gh release delete voce-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+      - name: versions.json aktualisieren (erst jetzt – die Dateien sind online)
+        if: steps.req.outputs.dry != 'true'
+        run: |
+          cd site && git pull -q --rebase origin main
+          jq --arg v "${{ steps.req.outputs.version }}" --arg n "$(jq -r .notes release/voce.json)" '.viva.version = $v | (if $n != "" and $n != "null" then .viva.notes = $n else . end)' versions.json > v.tmp && mv v.tmp versions.json
+          git config user.name "Voce-Release"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --quiet versions.json || { git commit -qm "Voce ${{ steps.req.outputs.version }}: versions.json" versions.json && git push -q origin main; }
