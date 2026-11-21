@@ -1614,7 +1614,7 @@ const SOURCES = {
   stand: '21.11.2026',
   groups: [
     { title: 'Bekanntmachungen des Kultusministeriums', items: [
-      { q: 'KMBek Sport 12/13, Nr. 1.1.1 – Voraussetzungen der Schule', d: 'Bekanntmachung des Bayerischen Staatsministeriums für Unterricht und Kultus „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, Az. VII.7-BK7400-3.39 147, BayMBl. 2022 Nr. 485 (2235.1.1.5-K)', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
+      { q: 'KMBek Sport 12/13, Nr. 1.1.1 – Voraussetzungen der Schule', d: 'Bekanntmachung des Bayerischen Staatsministeriums für Unterricht und Kultus „Durchführung des Sportunterrichts in den Jahrgangsstufen 12 und 13 (neunjähriges Gymnasium)“ vom 1. August 2022, Az. VII.7-BK7400-3.39 147, BayMBl. 2022 Nr. 485 vom 17.08.2022 (Gliederungsnummer 2235.1.1.5-K); in Kraft für das neunjährige Gymnasium seit 01.08.2022', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/', more: ['https://www.verkuendung-bayern.de/files/baymbl/2022/485/baymbl-2022-485.pdf'],
         use: 'Hinweis „Qualifikation“ bei Rudern, Sportklettern und Bewegungskünste; Hinweis auf vertiefte Kenntnisse bei Rückschlagspielen; Basketball, Fußball, Handball und Gerätturnen sind auf „getrennt nach Geschlecht“ voreingestellt, abwählbar bei Ausnahmegenehmigung der Schulleitung', at: 'Nr. 1.1.1', st: 'Original gelesen' },
       { q: 'KMBek Sport 12/13, Nr. 1.1.2 – Wahlmöglichkeiten', d: 'wie Nr. 1, Tabelle „Sportliche Handlungsfelder“ mit den Gruppen A, B und C und „Prämissen“', url: 'https://www.verkuendung-bayern.de/baymbl/2022-485/',
         use: 'Liste der Sportarten und ihre Gruppen A, B, C; je Halbjahr eine Sportart; mindestens zwei Gruppen; höchstens zweimal dasselbe Handlungsfeld, Badminton, Tennis und Tischtennis zählen zusammen als Rückschlagspiele; weitere vom Kultusministerium im Einzelfall genehmigte Sportarten (Gruppe C, nur mit zusätzlicher Qualifikation der Lehrkraft). Diese Regeln prüfen der Wahlbogen, die Verteilung und die Warnungen', at: 'Nr. 1.1.2', st: 'Original gelesen' },
@@ -2985,7 +2985,7 @@ Eure Fachschaft Sport`;
     const sec = document.createElement('section'); sec.id = 'h-quellen';
     sec.innerHTML = `<h3>Quellenverzeichnis</h3>
       <p>Sportivo stützt sich auf die folgenden Vorschriften und Unterlagen (Stand ${SOURCES.stand}). Sportivo ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule.</p>
-      <p class="small muted"><b>Prüfstand:</b> „Original gelesen“ = ganzer Abschnitt im Original gelesen · „Stelle geprüft“ = die genannte Stelle im Original geprüft · „eigener Inhalt“ = keine amtliche Vorgabe. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an <a href="mailto:hallo@theisapps.de">hallo@theisapps.de</a>.</p>
+      <p class="small muted"><b>Prüfstand:</b> „Original gelesen“ = ganzer Abschnitt im Original gelesen · „Stelle geprüft“ = die genannte Stelle im Original geprüft · „Lizenz geprüft“ = Lizenztext gelesen · „eigener Inhalt“ = keine amtliche Vorgabe. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an <a href="mailto:hallo@theisapps.de">hallo@theisapps.de</a>.</p>
       <div class="row"><button class="btn ghost" type="button" id="src-pdf">Quellenverzeichnis als PDF</button></div>
       ${SOURCES.groups.map((g, gi) => `<h4>${L[gi]} · ${esc(g.title)}</h4>${g.note ? `<p class="small muted">${esc(g.note)}</p>` : ''}
         <div class="tbl-wrap srcwrap"><table class="srctbl"><thead><tr><th class="c">Nr.</th><th>Quelle</th><th>In Sportivo verwendet für</th><th>Fundstelle · Prüfstand</th></tr></thead><tbody>
@@ -3006,11 +3006,15 @@ Eure Fachschaft Sport`;
       doc.text(L, 18, 'SPORTIVO · SPORTWAHL Q12/Q13 · GYMNASIUM BAYERN', { size: 7.5, color: GR, bold: true });
       doc.text(L, 26, 'Quellenverzeichnis', { size: 18, bold: true });
       doc.text(L, 31.5, `Rechtsgrundlagen und Vorgaben, Stand ${SOURCES.stand}`, { size: 9, color: GR });
+      if (P.meta.schule) doc.text(R, 26, doc.fit(P.meta.schule, 70, 9, true), { size: 9, bold: true, align: 'r' });
       doc.line(L, 35, R, 35, { lw: .45 });
       y = 41;
       if (first) {
+        const sw = doc.width('Stand ', 8) + doc.width(SOURCES.stand, 8, true) + 5;
+        doc.rrect(L, y - 3.6, sw, 5.6, 1.2, { fill: '#eef0f4' }); doc.text(L + 2.5, y, 'Stand ', { size: 8, color: GR }); doc.text(L + 2.5 + doc.width('Stand ', 8), y, SOURCES.stand, { size: 8, bold: true });
+        y += 8;
         [`Sportivo stützt sich auf diese Vorschriften und Unterlagen (Stand ${SOURCES.stand}). Sportivo ist keine amtliche Software; maßgeblich sind die Originaltexte und die Entscheidungen der Schule.`,
-         `„Prüfstand“: Original gelesen · Stelle geprüft · eigener Inhalt. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.`]
+         `„Prüfstand“: Original gelesen · Stelle geprüft · Lizenz geprüft · eigener Inhalt. Links abgerufen am ${SOURCES.stand}. Neuere Fassung oder Fehler entdeckt? Bitte an hallo@theisapps.de.`]
           .forEach((t, i) => { wrap(t, R - L, 8.6).forEach(l => { doc.text(L, y, l, { size: 8.6, color: i ? GR : INK }); y += 4; }); y += 1.5; });
         y += 2;
       }
