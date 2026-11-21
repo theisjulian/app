@@ -73,6 +73,7 @@ const Print = (() => {
       table.dense td{padding-top:1.9px;padding-bottom:1.9px} table.dense td.big{font-size:10.5pt}
       tbody tr:nth-child(even) td{background:#f7f8fa}
       thead{display:table-header-group} tr{page-break-inside:avoid}
+      .gv{display:inline-block;white-space:nowrap} .gv b{display:inline-block;min-width:var(--d);text-align:right;font-weight:inherit} .gv u{display:inline-block;min-width:calc(var(--f) + .32em);text-align:left;text-decoration:none} .gv i{display:inline-block;width:.62em;text-align:left;font-style:normal}
       td.l,th.l{text-align:left} td.b{font-weight:700} td.big{font-size:11.5pt;font-weight:750}
       td.mut{color:#3f4552}
       td.nw{white-space:nowrap} tr.hg th{white-space:nowrap}
@@ -110,17 +111,30 @@ const Print = (() => {
   }
   /* Tabellenzeile: Array = normale Zeile, { group } = Zwischenüberschrift, { cells, cls } = besondere Zeile (foot = Durchschnitt, sub = Zusatzzeile) */
   const rowCells = r => Array.isArray(r) ? r : r.cells;
+  /* Zahlen exakt untereinander: ganze Stellen rechtsbündig, Nachkommastellen am Komma ausgerichtet, Zeichen (+ – *) in eigenem Platz dahinter.
+     Gilt je Spalte nur, wenn dort verschieden breite Einträge vorkommen (z. B. 2 und 2+, 9 und 12, 6 und 6*). */
+  const GV = /^(\d{1,3})(?:,(\d{1,2}))?([+\-–−*]?)$/;
+  function gvCols(t) {
+    return t.head.map((_, i) => { if ((t.align && t.align[i]) === 'l') return null; let dig = 0, dec = 0, sign = false, n = 0; const lens = new Set(), decs = new Set();
+      t.rows.forEach(r => { if (r.group != null || (!Array.isArray(r) && r.cls === 'foot')) return; const m = GV.exec(String(rowCells(r)[i] ?? '').trim()); if (!m) return; n++;
+        dig = Math.max(dig, m[1].length); lens.add(m[1].length); const d = m[2] ? m[2].length : 0; dec = Math.max(dec, d); decs.add(d); if (m[3]) sign = true; });
+      return n && (sign || lens.size > 1 || decs.size > 1) ? { dig, dec, sign } : null; });
+  }
+  const gvHtml = (txt, g) => { const m = g && GV.exec(String(txt).trim()); if (!m) return null;
+    return `<span class="gv" style="--d:${g.dig}ch;--f:${g.dec}ch"><b>${m[1]}</b>${g.dec ? `<u>${m[2] ? ',' + m[2] : ''}</u>` : ''}${g.sign ? `<i>${esc(m[3])}</i>` : ''}</span>`; };
+  const gvDocx = (txt, g) => { const m = g && GV.exec(String(txt).trim()); if (!m) return txt; const F = ' ', P = ' ';
+    return F.repeat(g.dig - m[1].length) + m[1] + (g.dec ? (m[2] ? ',' + m[2] + F.repeat(g.dec - m[2].length) : P + F.repeat(g.dec)) : '') + (g.sign ? (m[3] || F) : ''); };
   function tableHtml(t) {
     const n = t.head.length, al = i => (t.align && t.align[i]) === 'l' ? 'l' : '';
     const edge = i => (t.gEdge && t.gEdge[i]) || '';
-    const nameCol = t.head.indexOf('Name');
+    const nameCol = t.head.indexOf('Name'), gv = gvCols(t);
     const cellCls = (i, extra) => [al(i), i === nameCol ? 'nw' : '', (t.bold || []).includes(i) ? 'b' : '', (t.big || []).includes(i) ? 'big' : '', (t.muted || []).includes(i) ? 'mut' : '', edge(i), extra || ''].filter(Boolean).join(' ');
     const hg = t.headGroups ? `<tr class="hg">${t.headGroups.map(g => `<th colspan="${g.span || 1}" class="${g.label ? '' : 'e'}">${esc(g.label || '')}</th>`).join('')}</tr>` : '';
     const cg = t.pct && t.widths ? `<colgroup>${t.widths.map(x => `<col style="width:${x}%">`).join('')}</colgroup>` : '';
     /* lange Listen (ganze Klasse) etwas enger, damit bis gut 30 Namen auf eine Seite passen */
     return `<table class="${[t.small ? 'small' : '', t.keep ? 'keep' : '', t.dense || t.rows.length > 22 ? 'dense' : ''].join(' ')}"${cg ? ' style="table-layout:fixed"' : ''}>${cg}<thead>${hg}<tr>${t.head.map((h, i) => `<th class="${al(i)} ${edge(i)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${
       t.rows.map(r => r.group != null ? `<tr class="grp"><td colspan="${n}">${esc(r.group)}</td></tr>`
-        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${esc(c).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+        : `<tr class="${r.cls || ''}">${rowCells(r).map((c, i) => `<td class="${cellCls(i)}">${(r.cls !== 'foot' && gvHtml(c, gv[i])) || esc(c).replace(/\n/g, '<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
   /* Bewertungsraster: je Kriterium eine Karte mit Beschreibung, Gewicht, Wert, Skala und Anmerkungen (leer: Linien zum Ausfüllen)
      c = { scale: [{ g?:'1', v:['15','14','13'] } …] oder ['++','+','–','––'], items: [{ l, d, w, v, vs, sel, note }], lines } */
@@ -215,9 +229,9 @@ const Print = (() => {
     for (const b of flat(m.blocks)) {
       if (b.stats) {   /* Kennzahlen als eine Zeile Kästchen; die erste (Durchschnitt) hervorgehoben */
         const n = b.stats.length, cw = Math.floor(W / n);
-        const kb = { style: BorderStyle.SINGLE, size: 6, color: 'D5D9E0' }, kk = { style: BorderStyle.SINGLE, size: 14, color: '1D2B4F' };
+        const kb = { style: BorderStyle.SINGLE, size: 6, color: 'D5D9E0' }, kk = { style: BorderStyle.SINGLE, size: 30, color: '1D2B4F' };
         kids.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: Array(n).fill(cw), layout: TableLayoutType.FIXED, rows: [new TableRow({ children: b.stats.map(x => new TableCell({
-          borders: x.key ? { top: kk, bottom: kk, left: kk, right: kk } : { top: kb, bottom: kb, left: kb, right: kb }, width: { size: cw, type: WidthType.DXA }, shading: x.key ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F3F5FA' } : undefined, margins: { top: 70, bottom: 70, left: 120, right: 120 },
+          borders: x.key ? { top: kb, bottom: kb, left: kk, right: kb } : { top: kb, bottom: kb, left: kb, right: kb },   /* Schwerpunkt: kräftiger Balken links – rundum dick würde in Word in die Nachbarzellen laufen */ width: { size: cw, type: WidthType.DXA }, shading: x.key ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F3F5FA' } : undefined, margins: { top: 70, bottom: 70, left: 120, right: 120 },
           children: [p(t(String(x.l).toUpperCase(), { size: 13, bold: true, color: '6B7280' }), { after: 0 }), p(t(x.v, { size: x.key ? 40 : 32, bold: true, color: x.key ? '1D2B4F' : '1B1D22' }), { after: 0 }), ...(x.s ? [p(t(x.s, { size: 14, color: '5B6271' }), { after: 0 })] : [])] })) })] }));
         kids.push(p(t(''), { after: 120 })); continue;
       }
@@ -282,7 +296,8 @@ const Print = (() => {
         /* Kopfgruppen (z. B. „Schreiben“ über Inhalt und Sprache) als eigene Kopfzeile */
         const hgRow = tb.headGroups ? [new TableRow({ tableHeader: true, children: (() => { let col = 0; return tb.headGroups.map(g => { const span = g.span || 1, w = widths.slice(col, col + span).reduce((x, y) => x + y, 0); col += span;
           return new TableCell({ borders: B, columnSpan: span, width: { size: w, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF0F4' }, margins: { top: 30, bottom: 30, left: 70, right: 70 }, children: [p(t(g.label || '', { size: sz - 1, bold: true, color: '1D2B4F' }), { align: AlignmentType.CENTER, after: 0 })] }); }); })() })] : [];
-        const mkRow = (r, ri) => { const cells = Array.isArray(r) ? r : r.cells, foot = !Array.isArray(r) && r.cls === 'foot', tint = !Array.isArray(r) && ({ up: 'E5F4EA', down: 'FBE7E5' })[r.cls];
+        const gv = gvCols(tb);
+        const mkRow = (r, ri) => { const foot0 = !Array.isArray(r) && r.cls === 'foot', cells = (Array.isArray(r) ? r : r.cells).map((c, i) => foot0 ? c : gvDocx(c, gv[i])), foot = !Array.isArray(r) && r.cls === 'foot', tint = !Array.isArray(r) && ({ up: 'E5F4EA', down: 'FBE7E5' })[r.cls];
           return new TableRow({ cantSplit: true, children: cells.map((c, i) => { const cell = mk(c, i, false, ri);
             if (tint) return new TableCell({ borders: B, width: { size: widths[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, shading: { type: ShadingType.CLEAR, color: 'auto', fill: tint }, margins: { top: mv, bottom: mv, left: 70, right: 70 },
               children: [p(t(c, { size: sz, bold: (tb.bold || []).includes(i) }), { align: (tb.align && tb.align[i] === 'l') ? AlignmentType.LEFT : AlignmentType.CENTER, after: 0 })] });
