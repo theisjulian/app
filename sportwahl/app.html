@@ -167,6 +167,9 @@ dialog.help::backdrop { background: rgba(10, 14, 20, .55); }
 .warnlist { margin: 0; padding-left: 18px; font-size: 14px; }
 /* Design-Knopf: Symbol ohne Kreisfläche */
 .help-btn .q.lk-ic { background: none; color: var(--accent); }
+.help-btn .q.bk { background: none; color: var(--accent); }
+a.site-back { text-decoration: none; }
+@media print { a.site-back { display: none !important; } }
 dialog.look { padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--glass-solid, var(--surface)); color: var(--ink); width: min(560px, calc(100vw - 24px)); }
 dialog.look::backdrop { background: rgba(10, 14, 20, .55); }
 dialog.look .help-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
@@ -473,6 +476,7 @@ textarea.msg{font:14px/1.5 var(--f-body);min-height:380px}
     </div>
     <div class="row" style="gap:14px">
       <div class="row small muted" id="head-stats"></div>
+      <a class="btn quiet help-btn site-back" href="./" title="Zurück zu Sportivo auf theisapps.de"><span class="q bk" aria-hidden="true"><svg viewBox="0 0 18 18" width="18" height="18"><path d="M11 4 6 9l5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>theisapps.de</a>
       <button class="btn quiet help-btn" type="button" id="look-btn" aria-haspopup="dialog"><span class="q lk-ic" aria-hidden="true"><svg viewBox="0 0 18 18" width="18" height="18"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 1a8 8 0 0 1 0 16z" fill="currentColor"/></svg></span>Design</button>
       <button class="btn quiet help-btn" type="button" id="help-btn" aria-haspopup="dialog"><span class="q" aria-hidden="true">?</span>Hilfe</button>
     </div>
@@ -1869,7 +1873,7 @@ const WAHLBOGEN_TEMPLATE = "<!doctype html>\n<html lang=\"de\">\n<head>\n<meta c
     const nLF = P.students.filter(s => s.lf).length;
     $('head-stats').innerHTML = `<span>${P.students.length} Wahlen</span><span>·</span><span>${P.students.length - nLF} Sport (gA)</span><span>·</span><span>${nLF} Leistungsfach</span>`;
     $('banner').innerHTML = VIEW
-      ? `<div class="banner"><span><b>Ansicht mit Beispieldaten.</b> Hier wird nichts gespeichert; nach dem Neuladen beginnt alles von vorn. Ein eigenes Projekt in diesem Browser bleibt unberührt.</span><span class="row"><a class="btn" href="app.html" style="text-decoration:none">Sportivo mit eigenen Daten öffnen</a></span></div>`
+      ? `<div class="banner"><span><b>Ansicht mit Beispieldaten.</b> Hier wird nichts gespeichert; nach dem Neuladen beginnt alles von vorn. Ein eigenes Projekt in diesem Browser bleibt unberührt.</span><span class="row"><a class="btn quiet" href="./" style="text-decoration:none">Zurück zur Website</a><a class="btn" href="app.html" style="text-decoration:none">Sportivo mit eigenen Daten öffnen</a></span></div>`
       : P.example
       ? `<div class="banner"><span><b>Beispieldaten zum Ausprobieren.</b> Die 96 Schülerinnen und Schüler sind frei erfunden.</span><span class="row"><button class="btn" type="button" id="b-new">Leeres Projekt anlegen</button></span></div>` : '';
     const b = $('b-new');
