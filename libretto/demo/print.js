@@ -166,7 +166,7 @@ const Print = (() => {
       if (b.lines) return `<div class="cLines wr">${'<div></div>'.repeat(b.lines)}</div>`;
       return '';
     };
-    if (m.slips) return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}${SLIP_CSS}</style></head><body>${slipsHtml(m.slips)}</body></html>`;
+    if (m.slips) return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}${SLIP_CSS}${m.slips.graf ? SLIPG_CSS : ''}</style></head><body>${slipsHtml(m.slips)}</body></html>`;
     return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}</style></head><body>
       ${headHtml(m, settings)}${keepSig(m.blocks).map(block).join('')}</body></html>`;
   }
@@ -180,25 +180,69 @@ const Print = (() => {
       .slip.cut::before{content:'';position:absolute;top:-6pt;left:-1mm;width:12pt;height:12pt;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='1.8' stroke-linecap='round'><circle cx='6' cy='6' r='3'/><circle cx='6' cy='18' r='3'/><path d='M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12'/></svg>") center/9.5pt no-repeat}
       .slip.pbA{page-break-after:always;break-after:page}
       .slip .sHd{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:3.4mm}
-      .slip .eye{font-size:7.6pt;font-weight:600;letter-spacing:.01em;color:#4b5160}
-      .slip h2{margin:2.5pt 0 0;font-size:16.5pt;font-weight:750;letter-spacing:-.015em;text-transform:none;color:${INK};line-height:1.15;border:0;padding:0;background:none}
-      .slip .tot{flex:none;width:40mm;border:1.5pt solid ${INK};background:#f3f5fa;border-radius:7px;padding:4px 6px 5px;text-align:center}
-      .slip .tot .l{display:block;font-size:6.6pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3f4552}
-      .slip .tot .v{display:block;font-size:25pt;font-weight:800;line-height:1.05;color:${INK};font-variant-numeric:tabular-nums}
-      .slip .tot .s{display:block;font-size:7pt;color:#3a3f4b;white-space:nowrap}
-      .slip table{table-layout:fixed;margin:0;font-size:8.8pt}
-      .slip th{padding:3px 5px 3px} .slip td{padding:3.4px 5px 3.6px;vertical-align:top}
+      .slip .eye{font-size:7.5pt;font-weight:600;letter-spacing:.01em;color:#4b5160}
+      .slip h2{margin:2.5pt 0 0;font-size:16pt;font-weight:750;letter-spacing:-.015em;text-transform:none;color:${INK};line-height:1.15;border:0;padding:0;background:none}
+      .slip .tot{flex:none;width:46mm;border:1.5pt solid ${INK};background:#f3f5fa;border-radius:7px;padding:4px 6px 5px;text-align:center}
+      .slip .tot .l{display:block;font-size:6.75pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552}
+      .slip .tot .v{display:block;font-size:26pt;font-weight:800;line-height:1.05;color:${INK};font-variant-numeric:tabular-nums}
+      .slip .tot .s{display:block;font-size:7.5pt;color:#3a3f4b;white-space:nowrap}
+      .slip table{table-layout:fixed;margin:0;font-size:9pt}
+      .slip th{padding:3px 5px 3px;font-size:6.75pt;letter-spacing:.07em} .slip td{padding:3.4px 5px 3.6px;vertical-align:top}
       .slip td.pl{font-weight:700;color:${INK};text-align:left}
       .slip td.bw{text-align:left} .slip td.bw b{font-weight:700} .slip td.bw span{color:#3a3f4b}
-      .slip .calc{display:block;font-size:7.2pt;color:#4b5160;margin-top:1.5pt;line-height:1.3}
+      .slip .calc{display:block;font-size:7.5pt;color:#4b5160;margin-top:1.5pt;line-height:1.3}
       .slip .calc.cap{color:#b42318}
-      .slip td.tn{text-align:left;white-space:nowrap} .slip .tnV{display:inline-block;min-width:10mm;font-weight:750;font-size:10.2pt;color:${INK}} .slip .tnV.cap{color:#b42318}
-      .slip .bar{display:inline-block;vertical-align:1.5pt;width:19mm;height:4.2pt;border-radius:3pt;background:#e6e9ef;overflow:hidden;margin-left:1.5mm}
-      .slip .bar i{display:block;height:100%;background:${INK};border-radius:3pt}
-      .slip .sum{margin-top:2.6mm;padding:2.2mm 3mm;background:#f3f5fa;border-radius:5px;font-size:8pt;color:#1b1d22;line-height:1.4}
-      .slip .sum b{color:${INK}} .slip .sum .lbl{font-size:6.6pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552;margin-right:5px}`;
+      .slip td.tn{text-align:left;white-space:nowrap} .slip .tnV{display:inline-block;min-width:10mm;font-weight:750;font-size:10.5pt;color:${INK}} .slip .tnV.cap{color:#b42318}
+      .slip svg.bar{display:inline-block;vertical-align:1.5pt;width:72px;height:6px;margin-left:1.5mm}
+      .slip .sum{margin-top:2.6mm;padding:2.2mm 3mm;background:#f3f5fa;border-radius:5px;font-size:9pt;color:#1b1d22;line-height:1.4}
+      .slip .sum b{color:${INK}} .slip .sum .lbl{font-size:6.75pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552;margin-right:5px}`;
+  /* Grafische Fassung: Ring für die Notenpunkte, jede Teilnote auf derselben Skala 0–15, darunter der Gesamtbalken aus Gewicht × Teilnote.
+     Alles als Vektorgrafik mit festen Maßen (kein Runden auf Bildschirmpunkte → überall gleich dick). Farben auch schwarz-weiß unterscheidbar. */
+  const SLIPG_CSS = `
+      .slip.g .gHd{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:2.6mm}
+      .slip.g .gt{flex:none;display:flex;align-items:center;gap:7px} .slip.g .gt svg{width:21mm;height:21mm}
+      .slip.g .gt .l{font-size:6.75pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552} .slip.g .gt .w{font-size:10.5pt;font-weight:750;color:${INK};line-height:1.25} .slip.g .gt .s{font-size:7.5pt;color:#3a3f4b}
+      .slip.g .gR{display:grid;grid-template-columns:50mm 11mm 82mm 1fr;align-items:center;column-gap:2.5mm;padding:1.6mm 0;border-top:.75pt solid #e3e6ec;font-size:9pt}
+      .slip.g .gHd + .gR{border-top:0;padding-top:0}
+      .slip.g .pl{display:flex;gap:2mm;align-items:flex-start} .slip.g .pl i{flex:none;width:7pt;height:7pt;border-radius:2pt;margin-top:2.6pt}
+      .slip.g .pl b{display:block;font-weight:700;color:${INK};line-height:1.3} .slip.g .pl span{display:block;font-size:7.5pt;color:#4b5160;line-height:1.35} .slip.g .pl span b{display:inline;color:#1b1d22}
+      .slip.g .pv{font-size:10.5pt;font-weight:750;color:${INK};text-align:right;font-variant-numeric:tabular-nums} .slip.g .pv.cap{color:#b42318}
+      .slip.g .ps svg{display:block;width:80mm;height:auto} .slip.g .ps em{display:block;font-style:normal;font-size:7.5pt;color:#b42318;margin-top:1pt}
+      .slip.g .ps em.rd{color:#1b1d22} .slip.g .ps em.rd b{color:${INK}}
+      .slip.g .pw{text-align:right;color:#3a3f4b;padding-right:1mm}
+      .slip.g .gR.gSum{margin-top:1.4mm;padding:2mm 0;background:#f3f5fa;border-radius:5px;border-top:0}
+      .slip.g .gR.gSum .pl{padding-left:2.4mm} .slip.g .gR.gSum .pl b{font-size:6.75pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552}`;
+  const SEG = ['#1d2b4f', '#5b7bb5', '#a9bde0', '#7f8fae', '#bccae3', '#3c5287'], SEGW = [1, 1, 0, 1, 0, 1], RED = '#b42318';
+  const de2 = x => x.toFixed(2).replace('.', ',');
+  function slipG(sl, it, k, per, n) {
+    const SW = 300, SH = 14, X = v => (v / 15 * SW).toFixed(2), r = 30, cf = 2 * Math.PI * r;
+    const ring = `<svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="${r}" fill="none" stroke="#e6e9ef" stroke-width="9"/>${it.v > 0 ? `<circle cx="42" cy="42" r="${r}" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="${it.v < 15 ? 'round' : 'butt'}" stroke-dasharray="${(cf * it.v / 15).toFixed(2)} ${cf.toFixed(2)}" transform="rotate(-90 42 42)"/>` : ''}<text x="42" y="51" text-anchor="middle" font-size="26" font-weight="800" fill="${INK}">${it.v}</text></svg>`;
+    const axis = `<text x="0" y="-3" font-size="7" fill="#6b7280">0</text><text x="${X(5)}" y="-3" text-anchor="middle" font-size="7" fill="#6b7280">5</text><text x="${X(10)}" y="-3" text-anchor="middle" font-size="7" fill="#6b7280">10</text><text x="${SW}" y="-3" text-anchor="end" font-size="7" fill="#6b7280">15</text>`;
+    const scale = (x, i) => { const top = i === 0 ? 11 : 0; let o = `<svg width="${SW + 2}" height="${SH + top}" viewBox="-1 ${-top} ${SW + 2} ${SH + top}">`;
+      [[0, 1], [1, 4], [4, 7], [7, 10], [10, 13], [13, 15]].forEach(([a, b], j) => { o += `<rect x="${X(a)}" y="0" width="${(+X(b) - +X(a)).toFixed(2)}" height="${SH}" fill="${j % 2 ? '#eef1f6' : '#f6f8fb'}"/>`; });
+      [1, 4, 7, 10, 13].forEach(v => { o += `<rect x="${(+X(v) - .5).toFixed(2)}" y="0" width="1" height="${SH}" fill="#d5dae3"/>`; });
+      if (i === 0) o += axis;
+      if (x.tn > 0) o += `<rect x="0" y="3" width="${Math.max(SH - 6, +X(x.tn)).toFixed(2)}" height="${SH - 6}" rx="${(SH - 6) / 2}" fill="${x.sperr ? RED : SEG[i % SEG.length]}"/>`;
+      return o + '</svg>'; };
+    const stack = () => { const H = 16; let at = 0, o = `<svg width="${SW + 2}" height="${H}" viewBox="-1 0 ${SW + 2} ${H}"><rect x="0" y="0" width="${SW}" height="${H}" fill="#e6e9ef"/>`;
+      it.rows.forEach((x, i) => { const c = x.tn * x.w / 100, wd = c / 15 * SW;
+        o += `<rect x="${X(at)}" y="0" width="${wd.toFixed(2)}" height="${H}" fill="${x.sperr ? RED : SEG[i % SEG.length]}"/>`;
+        if (wd > 26) o += `<text x="${(+X(at) + wd / 2).toFixed(2)}" y="${H / 2 + 2.8}" text-anchor="middle" font-size="7.5" font-weight="700" fill="${x.sperr || SEGW[i % SEG.length] ? '#fff' : INK}">${de2(c)}</text>`;
+        at += c; });
+      return o + '</svg>'; };
+    return `<section class="slip g per${per}${it.name.length > 30 ? ' long' : ''}${k % per ? ' cut' : ''}${k % per === per - 1 && k < n - 1 ? ' pbA' : ''}">
+      <div class="gHd"><div><div class="eye">${esc(sl.eyebrow)}</div><h2>${esc(it.name)}</h2></div>
+        <div class="gt">${ring}<div><div class="l">Notenpunkte</div><div class="w">${esc(it.word)}</div><div class="s">${esc(it.exact)} ungerundet</div></div></div></div>
+      ${it.rows.map((x, i) => `<div class="gR"><div class="pl"><i style="background:${x.sperr ? RED : SEG[i % SEG.length]}"></i><div><b>${esc(x.label)}</b><span>${(x.bewG || x.bew).map(([l, v]) => `${esc(l)}<b>${esc(v)}</b>`).join('')}</span></div></div>
+        <div class="pv${x.sperr ? ' cap' : ''}">${esc(x.tnT)}</div><div class="ps">${scale(x, i)}${x.sperr ? '<em>Sperrklausel: höchstens 3</em>' : ''}</div><div class="pw">${esc(String(x.w).replace('.', ','))} %</div></div>`).join('')}
+      <div class="gR gSum"><div class="pl"><div><b>Gesamt</b><span>Summe aus Gewicht × Teilnote</span></div></div>
+        <div class="pv">${esc(it.exact)}</div><div class="ps">${stack()}<em class="rd">gerundet <b>${it.v} Notenpunkte</b> (${esc(it.word)})</em></div><div class="pw">100 %</div></div></section>`;
+  }
   function slipsHtml(sl) {
-    const bar = tn => `<span class="bar"><i style="width:${(Math.max(0, Math.min(15, tn)) / 15 * 100).toFixed(1)}%"></i></span>`;
+    if (sl.graf) { const n = sl.items.length, per = sl.per || 3; return sl.items.map((it, k) => slipG(sl, it, k, per, n)).join(''); }
+    /* Balken als Vektorgrafik mit ganzzahliger Größe (72 × 6 px = 19 × 1,6 mm): CSS-Balken rundet Chromium je nach Lage auf 5 oder 6 px → ungleich dick */
+    const bar = tn => { const f = Math.max(0, Math.min(15, +tn || 0)) / 15 * 72;
+      return `<svg class="bar" width="72" height="6" viewBox="0 0 72 6"><rect width="72" height="6" rx="3" fill="#e6e9ef"/>${f > 0 ? `<rect width="${Math.max(6, f).toFixed(2)}" height="6" rx="3" fill="${INK}"/>` : ''}</svg>`; };
     const n = sl.items.length, per = sl.per || 3;
     return sl.items.map((it, k) => `<section class="slip per${per}${it.name.length > 30 ? ' long' : ''}${k % per ? ' cut' : ''}${k % per === per - 1 && k < n - 1 ? ' pbA' : ''}">
       <div class="sHd"><div><div class="eye">${esc(sl.eyebrow)}</div><h2>${esc(it.name)}</h2></div>

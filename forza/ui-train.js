@@ -36,7 +36,7 @@
   const doneN = (e) => e.sets.filter((x) => x.done).length;
   const isOpen = (e) => e.sets.some((x) => !x.done);
   const kindOf = (ex) => { const pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A, cs = ex.content && ex.content.secs; return { pf, cs, timed: !!pf.secs || !!cs, perSide: pf.perSide || !!(ex.content && ex.content.perSide) }; };
-  const planRange = (se, k) => { const m = /(\d+)\s*[–-]\s*(\d+)/.exec(se.planned_reps || ''); if (m) return [+m[1], +m[2]]; return k.timed ? (k.cs || k.pf.secs || null) : (k.pf.reps || null); };
+  const planRange = (se, k) => { const m = /(\d+)\s*[–-]\s*(\d+)/.exec(se.planned_reps || ''); if (m) return [+m[1], +m[2]]; const one = /^\s*(\d+)/.exec(se.planned_reps || ''); if (one) return [+one[1], +one[1]]; return k.timed ? (k.cs || k.pf.secs || null) : (k.pf.reps || null); };
   /* Vorschlag für einen offenen Satz: nichts wird gespeichert, bevor du den Satz abschließt */
   F.setTarget = (se, st) => {
     const ex = F.S.exById[se.exercise_id] || {}, k = kindOf(ex), range = planRange(se, k), i = se.sets.indexOf(st);
@@ -98,8 +98,8 @@
       ${se.sets.map((st, i) => { if (st.done) return `<div class="setrow done compact" data-sid="${st.id}"><span class="sn">${F.icon.check.replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6"')}</span><div class="grow"><b>Satz ${st.set_no}</b><span class="mute"> · ${[st.load_kg !== null && !noLoad(ex) ? F.fmt(Number(st.load_kg)) + ' kg' : '', timed ? (st.seconds ? st.seconds + ' s' : '') : st.reps !== null ? st.reps + ' Wdh.' : ''].filter(Boolean).join(' × ') || 'ohne Werte'}${st.rir !== null && st.rir !== undefined ? ' · Reserve ' + st.rir : ''}${st.pain ? ' · Schmerz' : ''}</span></div><button class="btn sm ghost" data-act="undo" data-s="${st.id}">Ändern</button></div>`;
         const tg = F.setTarget(se, st); return `<div class="setrow ${st.done ? 'done' : i === firstOpen ? 'cur' : ''}" data-sid="${st.id}">
         <div class="row between" style="margin-bottom:10px"><b>Satz ${st.set_no}${st.pain ? ' · Schmerz gemeldet' : ''}</b>${st.done ? '<span class="badge ok">erledigt</span>' : ''}</div>
-        <div class="row gap">${noLoad(ex) ? '' : `<div class="grow"><div class="small mute" style="margin-bottom:4px">${unit}${ex.load_convention === 'je_hand' && st.load_kg ? ' (= ' + F.fmt(st.load_kg * 2) + ' gesamt)' : ''}</div><div class="stepper"><button data-act="step" data-f="load_kg" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="decimal" data-in="setVal" data-f="load_kg" data-s="${st.id}" value="${st.load_kg === null ? '' : F.fmt(st.load_kg)}" placeholder="${tg.load_kg !== null && tg.load_kg !== undefined ? F.fmt(tg.load_kg) : '–'}"><button data-act="step" data-f="load_kg" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`}
-        <div class="grow"><div class="small mute" style="margin-bottom:4px">${timed ? 'Sekunden / Meter' : 'Wiederholungen'}</div><div class="stepper"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="numeric" data-in="setVal" data-f="${timed ? 'seconds' : 'reps'}" data-s="${st.id}" value="${(timed ? st.seconds : st.reps) ?? ''}" placeholder="${(timed ? tg.seconds : tg.reps) ?? '–'}"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div></div>
+        <div class="row gap">${noLoad(ex) ? '' : `<div class="grow"><div class="small mute" style="margin-bottom:4px">${unit}${ex.load_convention === 'je_hand' && st.load_kg ? ' (= ' + F.fmt(st.load_kg * 2) + ' gesamt)' : ''}</div><div class="stepper"><button data-act="step" data-f="load_kg" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="none" readonly data-pad="1" data-in="setVal" data-f="load_kg" data-s="${st.id}" value="${st.load_kg === null ? '' : F.fmt(st.load_kg)}" placeholder="${tg.load_kg !== null && tg.load_kg !== undefined ? F.fmt(tg.load_kg) : '–'}"><button data-act="step" data-f="load_kg" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`}
+        <div class="grow"><div class="small mute" style="margin-bottom:4px">${timed ? 'Sekunden / Meter' : 'Wiederholungen'}</div><div class="stepper"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="none" readonly data-pad="1" data-in="setVal" data-f="${timed ? 'seconds' : 'reps'}" data-s="${st.id}" value="${(timed ? st.seconds : st.reps) ?? ''}" placeholder="${(timed ? tg.seconds : tg.reps) ?? '–'}"><button data-act="step" data-f="${timed ? 'seconds' : 'reps'}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div></div>
         ${pf.rir ? `<div class="small mute" style="margin:10px 0 4px">Wie viele Wiederholungen hättest du noch geschafft? (optional)</div><div class="row wrap gap">${[0, 1, 2, 3, 4].map((r) => `<button class="chip ${st.rir === r ? 'on' : ''}" data-act="rir" data-s="${st.id}" data-v="${r}">${r === 4 ? '4+' : r}</button>`).join('')}</div>` : ''}
         <button class="btn ${st.done ? 'ghost' : 'pri'} block" style="margin-top:12px" data-act="${st.done ? 'undo' : 'doneSet'}" data-s="${st.id}">${st.done ? 'Wieder öffnen' : 'Satz abschließen'}</button></div>`; }).join('')}
       ${open >= 2 ? `<button class="btn block" style="margin-bottom:10px" data-act="doneAll" data-id="${se.id}">${ico('check')} Restliche ${open} Sätze wie vorgeschlagen abhaken</button>` : ''}
@@ -154,7 +154,7 @@
     const wu = warmupFor(s, se, ex); if (wu.length && !(warmState(s).d || {})[se.id]) return topBar(s, dnEx) + warmScreen(s, se, ex, wu);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung (weniger = schwerer)' : 'kg';
     const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
-    const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="${im}" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
+    const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="none" readonly data-pad="1" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
     return topBar(s, dnEx) + `<div class="fz${enter(st.id)}">
       <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}${pair ? ' · Superset mit ' + esc((F.S.exById[pair.exercise_id] || {}).name || '') : ''}</div>
       <div class="h1 fz-name">${esc(ex.name)}</div>
@@ -215,6 +215,29 @@
     // nach dem Halten den abschließenden Klick schlucken, sonst käme ein Schritt zu viel
     document.addEventListener('click', (e) => { if (rep && e.target.closest && e.target.closest('[data-act=step]')) { rep = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
   })();
+  /* Ziffernfeld statt Tastatur: nichts verschiebt sich, große Tasten, Schnelltasten für typische Sprünge */
+  const PADK = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', '⌫'];
+  const padShow = () => { const d = document.getElementById('pad-d'), P = F.ui.pad; if (d) { d.textContent = P.v || '0'; d.classList.toggle('fresh', P.fresh); } };
+  document.addEventListener('click', (e) => { const inp = e.target.closest && e.target.closest('input[data-pad]'); if (!inp) return; e.preventDefault(); openPad(inp); });
+  const openPad = (inp) => {
+    const f = findSet(inp.dataset.s); if (!f) return; const fld = inp.dataset.f, ex = F.S.exById[f.se.exercise_id] || {};
+    const step = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? E.params(F.S.params).load_step_hand : E.params(F.S.params).load_step_total) : fld === 'seconds' ? 5 : 1;
+    F.ui.pad = { s: inp.dataset.s, f: fld, v: inp.value || '', fresh: true, step };
+    const lbl = fld === 'load_kg' ? (ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung' : 'kg') : fld === 'reps' ? 'Wiederholungen' : 'Sekunden';
+    const q = fld === 'load_kg' ? [-2 * step, -step, step, 2 * step] : fld === 'seconds' ? [-10, -5, 5, 10] : [-2, -1, 1, 2];
+    F.modal(`<div class="pad"><div class="small mute">${esc(ex.name || '')} · Satz ${f.st.set_no}</div><div class="pad-top"><div class="pad-disp fresh" id="pad-d">${esc(inp.value || '0')}</div><span class="pad-u">${lbl}</span></div>
+      <div class="pad-q">${q.map((d) => `<button data-act="padQuick" data-d="${d}">${d > 0 ? '+' : '−'}${F.fmt(Math.abs(d))}</button>`).join('')}</div>
+      <div class="pad-k">${PADK.map((k) => `<button data-act="padKey" data-k="${k}" ${k === ',' && fld !== 'load_kg' ? 'disabled' : ''} aria-label="${k === '⌫' ? 'löschen' : k}">${k}</button>`).join('')}</div>
+      <button class="btn pri block pad-ok" data-act="padOk">Übernehmen</button></div>`);
+  };
+  F.acts.padKey = (t) => { const P = F.ui.pad, k = t.dataset.k; if (!P) return; if (P.fresh) { P.v = ''; P.fresh = false; }
+    if (k === '⌫') P.v = P.v.slice(0, -1); else if (k === ',') { if (!P.v.includes(',')) P.v = (P.v || '0') + ','; } else if (P.v.replace(',', '').length < 5) P.v = (P.v === '0' ? '' : P.v) + k;
+    try { navigator.vibrate && navigator.vibrate(5); } catch {} padShow(); };
+  F.acts.padQuick = (t) => { const P = F.ui.pad; if (!P) return; const v = Math.max(0, (F.num(P.v) || 0) + Number(t.dataset.d)); P.v = F.fmt(Math.round(v * 100) / 100); P.fresh = false; padShow(); };
+  F.acts.padOk = () => { const P = F.ui.pad; if (!P) return; const f = findSet(P.s); F.closeModal(); if (!f) return; const v = F.num(P.v);
+    f.st[P.f] = P.f === 'load_kg' ? v : v === null ? null : Math.round(v);
+    document.querySelectorAll(`input[data-s="${P.s}"][data-f="${P.f}"]`).forEach((el) => { el.value = v === null ? '' : F.fmt(f.st[P.f]); F.fit(el); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); });
+    updPlates(f, P.f); F.ui.pad = null; };
   F.acts.rir = (t) => { const f = findSet(t.dataset.s); if (!f) return; f.st.rir = f.st.rir === Number(t.dataset.v) ? null : Number(t.dataset.v); F.render(); };
   /* Vorschlag in die leeren Felder übernehmen (nur das, was du nicht selbst geändert hast) */
   const applyTarget = (se, st, ex) => { const tg = F.setTarget(se, st); if (st.load_kg === null && !noLoad(ex)) st.load_kg = tg.load_kg; if (tg.timed) { if (st.seconds === null || st.seconds === undefined) st.seconds = tg.seconds; } else if (st.reps === null || st.reps === undefined) st.reps = tg.reps; };
@@ -242,7 +265,7 @@
       else if (!isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
       if (!s.session_exercises.some(isOpen)) rest = false;
     }
-    if (rest) { const P = E.params(F.S.params), sec = P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
+    if (rest) { const P = E.params(F.S.params), sec = (F.therapyRest && F.therapyRest(f.s, f.se)) || P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
     else F.rest = null;
     F.render(); F.pulseSet && F.pulseSet(st.id); if (F.rest) F.tick(); window.scrollTo(0, 0);
   };
@@ -323,11 +346,14 @@
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), cur = F.S.exById[se.exercise_id];
     const ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
     const used = new Set(s.session_exercises.map((x) => x.exercise_id));
-    // Alle passenden Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet): gleiches Muster, dann was du oft machst
-    const freq = F.exFreq(60), ok = (e) => e.dosage_profile !== 'M' && E.eligible(e, Object.assign({ allowDraft: true }, ctx));
-    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && ok(e))
-      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 20);
-    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}${freq[e.id] ? ' · ' + freq[e.id] + '× gemacht' : ''}${e.tier !== 'geprueft' && !(F.S.userEx[e.id] || {}).released ? ' · Entwurf' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
+    // Alle Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet). „Passend“: gleicher Muskel, gleiches Muster zuerst, dann was du oft machst
+    const freq = F.exFreq(60), all = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && E.eligible(e, Object.assign({ allowDraft: true }, ctx)));
+    const fit = all.filter((e) => e.dosage_profile !== 'M' && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)))
+      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 25);
+    const row = (e, n) => F.sxRow(e, `data-act="swap" data-id="${se.id}" data-ex="${e.id}"`, n);
+    F.picker({ title: 'Ersetzen', sub: esc(cur.name), g0: ['fit', 'Passend'],
+      list: (q, g) => g === 'fit' && !F.nz(q).trim() ? (fit.length ? `<div class="sx-h">Gleiche Muskeln</div>${fit.map((e) => row(e, [e.pattern === cur.pattern ? 'gleiches Muster' : '', freq[e.id] ? freq[e.id] + '× zuletzt' : ''].filter(Boolean).join(' · '))).join('')}` : '<div class="sx-empty">Keine passende Alternative mit deinen Geräten. Such oben nach einer anderen Übung.</div>')
+        : F.sxList(all, q, g === 'fit' ? 'alle' : g, row, 'Nichts gefunden.') });
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);
@@ -343,7 +369,7 @@
   /* Haltungsblock: ein Angebot am Ende statt fester Übungen in der Liste */
   const postureEx = (s) => { const P = E.params(F.S.params); if (!P.posture_block || !s || s.kind !== 'kraft' || s.session_exercises.some((se) => (F.S.exById[se.exercise_id] || {}).dosage_profile === 'M')) return [];
     return E.mobilityPick({ exercises: F.S.exercises, items: F.items().items, userEx: F.S.userEx, painEx: F.painSet(), sessions: F.S.sessions, goals: [], studio: F.items().kind === 'studio' }, P, 3); };
-  const postureOffer = (s) => { const l = postureEx(s); return l.length ? `<button class="btn block" style="margin-top:10px" data-act="addPosture">Haltung anhängen · ${l.length} Übungen, ca. 4 min</button>` : ''; };
+  const postureOffer = (s) => { const th = F.therapyOffer ? F.therapyOffer(s) : ''; if (th) return th; const l = postureEx(s); return l.length ? `<button class="btn block" style="margin-top:10px" data-act="addPosture">Haltung anhängen · ${l.length} Übungen, ca. 4 min</button>` : ''; };
   F.acts.addPosture = async () => {
     const s = F.openSession(), items = postureEx(s); if (!items.length) return;
     const ses = await F.sb.from('session_exercises').insert(items.map((it, i) => ({ session_id: s.id, exercise_id: it.exercise_id, position: s.session_exercises.length + i, planned_sets: it.sets, planned_reps: it.reps.join('–'), why: it.load_text }))).select(); if (ses.error) throw ses.error;

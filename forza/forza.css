@@ -498,3 +498,64 @@ input,select,textarea{font-size:max(16px,1em)}
 html[data-theme=glas] .fz-feel button{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:inset 0 1px 0 var(--ghi),inset 0 0 0 1px var(--gline)}
 .pr-line{margin:8px 0 6px;font-size:15px}.hist-rows .mrow{font-size:14px;margin:6px 0}
 .pr-card .mrow{margin:10px 0}.pr-up{color:var(--ok);font-variant-numeric:tabular-nums}
+/* Therapieplan */
+.ther-card{border-color:color-mix(in srgb,var(--a) 45%,var(--line))}
+.ther-card.done{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}.ther-card.done b{color:var(--ok)}
+.ther-dots{display:flex;gap:5px;flex:none;padding-top:4px}.ther-dots i{width:9px;height:9px;border-radius:50%;background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
+.ther-dots i.on{background:var(--a);box-shadow:none}
+.ther-line{display:flex;justify-content:space-between;align-items:center;margin:-4px 2px 12px}
+.ther-it{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.ther-it:first-of-type{border-top:0}
+.ther-it .lnk{margin-top:4px;display:inline-block;color:var(--a);text-decoration:none;font-weight:600}
+.ther-dose{display:flex;flex-direction:column;gap:6px;flex:none}
+.mini{display:flex;align-items:center;background:var(--card2);border-radius:12px;overflow:hidden}
+.mini button{width:34px;height:34px;font-size:18px;color:var(--a)}.mini button:active{background:color-mix(in srgb,var(--a) 18%,transparent)}
+.mini span{min-width:46px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+html[data-theme=glas] .mini{background:var(--glass);box-shadow:inset 0 0 0 1px var(--gline)}
+/* Ziffernfeld */
+.stepper input[readonly]{cursor:pointer;caret-color:transparent;-webkit-user-select:none;user-select:none}
+.pad .pad-top{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:6px 0 12px}
+.pad-disp{font-size:56px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:2ch;text-align:center;line-height:1.1}
+.pad-disp.fresh{color:var(--mute)}.pad-u{color:var(--mute);font-size:15px}
+.pad-q{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.pad-q button{height:44px;border-radius:14px;background:color-mix(in srgb,var(--a) 14%,var(--card2));color:var(--text);font-weight:700;font-size:16px}
+.pad-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.pad-k button{height:58px;border-radius:16px;background:var(--card2);font-size:26px;font-weight:600;transition:transform .08s,background .15s}
+.pad-k button:active,.pad-q button:active{transform:scale(.95);background:color-mix(in srgb,var(--a) 22%,var(--card2))}
+.pad-k button:disabled{opacity:.3}
+.pad-ok{min-height:56px;font-size:18px}
+html[data-theme=glas] .pad-k button,html[data-theme=glas] .pad-q button{background:var(--glass);box-shadow:inset 0 1px 0 var(--ghi),inset 0 0 0 1px var(--gline)}
+
+/* Übungssuche als Vollbild-Blatt: oben verankert, so hoch wie der sichtbare Bereich (über der Tastatur), nur die Liste scrollt */
+.modal.full{align-items:flex-start;top:var(--vvt,0px);bottom:auto;height:var(--vvh,100dvh)}
+.modal.full>div{display:flex;flex-direction:column;margin-top:calc(var(--st) + 10px);height:calc(100% - var(--st) - 10px);max-height:none;overflow:hidden;padding-bottom:0;border-radius:24px 24px 0 0}
+html[data-theme] .modal.full>div{border-radius:24px 24px 0 0}
+@media(min-width:900px){.modal.full{align-items:center}.modal.full>div{margin:0;height:min(720px,calc(100% - 40px));border-radius:26px!important}}
+.sx-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex:none}
+.sx-head .h2{margin:0}
+.sx-done{color:var(--a);font-weight:600;font-size:16px;padding:4px 2px 8px 12px}
+.sx-box{display:flex;align-items:center;gap:8px;flex:none;margin-top:10px;padding:0 6px 0 12px;height:46px;border-radius:14px;background:var(--card2);border:1px solid transparent;color:var(--mute);transition:border-color .2s}
+.sx-box:focus-within{border-color:var(--a)}
+.sx-box svg{flex:none}
+.sx-box input{flex:1;min-width:0;height:100%;border:0;background:transparent;outline:none;color:var(--text);font-size:17px;padding:0;-webkit-appearance:none;appearance:none}
+.sx-box input::-webkit-search-cancel-button{display:none}
+.sx-clr{flex:none;width:30px;height:30px;border-radius:99px;background:var(--line);color:var(--text);font-size:12px;display:grid;place-items:center}
+.sx-clr[hidden]{display:none}
+.sx-chips{display:flex;gap:8px;scroll-padding-inline:18px;flex:none;overflow-x:auto;margin:10px -18px 4px;padding:0 18px 2px;scrollbar-width:none;overscroll-behavior-x:contain}
+.sx-chips::-webkit-scrollbar{display:none}
+.sx-chips .chip{flex:none;white-space:nowrap}
+.sx-chips .chip.on{background:var(--a);color:var(--ai,#fff);border-color:transparent}
+.sx-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:0 -18px;padding:0 18px calc(16px + var(--sb))}
+html.kb .sx-list{padding-bottom:12px}
+.sx-h{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:16px 0 2px}
+.sx-n{font-size:13px;color:var(--mute);margin:12px 0 2px}
+.sx-it{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 0;border-bottom:1px solid var(--line);color:var(--text)}
+.sx-it:active{opacity:.6}
+.sx-t{flex:1;min-width:0}
+.sx-t b{display:block;font-weight:600;font-size:16px;line-height:1.25}
+.sx-t small{display:block;font-size:13px;color:var(--mute);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-tag{font-style:normal;font-weight:500;font-size:11px;padding:2px 7px;border-radius:99px;background:var(--card2);color:var(--mute);margin-left:7px;vertical-align:2px;white-space:nowrap}
+.sx-plus{flex:none;width:32px;height:32px;border-radius:99px;display:grid;place-items:center;background:color-mix(in srgb,var(--a) 16%,transparent);color:var(--a)}
+.sx-plus svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.sx-empty{padding:28px 6px;text-align:center;color:var(--mute);line-height:1.5}
+html[data-theme] .sx-box input{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0;padding:0}
+html[data-theme=glas] .modal.full>div{background:var(--bg2)!important}

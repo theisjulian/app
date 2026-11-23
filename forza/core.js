@@ -46,6 +46,45 @@
     swap: I('<path d="M7 7h12l-3-3M17 17H5l3 3"/>'), warn: I('<path d="M12 4l9 16H3zM12 10v4M12 17v.1"/>'), note: I('<path d="M6 4h9l4 4v12H6zM9 12h6M9 16h6"/>')
   };
 
+  /* ---------- Übungssuche ----------
+     Findet auch mit Tippfehlern, ohne Umlaute (ue/ü/u), mit Muskel, Gerät oder englischen Namen.
+     Jedes Suchwort muss irgendwo passen; sortiert nach Treffergüte, dann nach Häufigkeit bei dir. */
+  const nz = (x) => String(x || '').toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u').replace(/[^a-z0-9]+/g, ' ').trim();
+  F.nz = nz;
+  const lev = (a, b) => { if (Math.abs(a.length - b.length) > 2) return 9; const d = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) { let prev = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = t; } } return d[b.length]; };
+  const SYN = { bauch: 'rumpf crunch core', bauchmuskeln: 'rumpf', sixpack: 'rumpf', core: 'rumpf', po: 'gesass', hintern: 'gesass', glute: 'gesass hip', glutes: 'gesass hip',
+    arme: 'bizeps trizeps unterarme', arm: 'bizeps trizeps', bein: 'quadrizeps beinbeuger', beine: 'quadrizeps beinbeuger waden', oberschenkel: 'quadrizeps beinbeuger',
+    rucken: 'lat oberer rucken', back: 'rucken lat', brustmuskel: 'brust', chest: 'brust', schulter: 'schulter', shoulder: 'schulter', nacken: 'nacken kinn',
+    zuhause: 'korpergewicht band matte', heim: 'korpergewicht band matte', ohne: 'korpergewicht', hantel: 'kurzhantel langhantel', kabel: 'kabelzug', cable: 'kabel',
+    maschine: 'maschine presse', machine: 'maschine', dumbbell: 'kurzhantel', barbell: 'langhantel', stange: 'langhantel ez',
+    pulldown: 'latzug', row: 'rudern', rows: 'rudern', fly: 'fliegende butterfly pec', flys: 'fliegende butterfly', squat: 'kniebeuge', deadlift: 'kreuzheben',
+    bench: 'bankdrucken', press: 'drucken presse', calf: 'waden', calves: 'waden', lunge: 'ausfallschritt split', lunges: 'ausfallschritt', triceps: 'trizeps', biceps: 'bizeps',
+    hamstring: 'beinbeuger', hamstrings: 'beinbeuger', quad: 'quadrizeps beinstrecker', quads: 'quadrizeps beinstrecker', abs: 'rumpf crunch', dip: 'dips', pullup: 'klimmzug',
+    chinup: 'chin klimmzug', raise: 'heben', extension: 'strecker strecken', curl: 'curl', plank: 'unterarmstutz stutz', stutz: 'unterarmstutz plank',
+    dehnen: 'dehnung dehn', stretch: 'dehnung', mobility: 'mobilitat', haltung: 'mobilitat nacken bws', bws: 'brustwirbelsaule', therapie: 'therapieplan',
+    klimmzug: 'klimmzug chin', liegestutz: 'liegestutz push up', pushup: 'liegestutz', crunch: 'crunch', wade: 'waden' };
+  F.exSearch = (q, list) => {
+    const toks = nz(q).split(' ').filter((t) => t.length >= 2 || /\d/.test(t)); if (!toks.length) return list.map((e) => ({ e, sc: 0 }));
+    const freq = F.exFreq ? F.exFreq(90) : {};
+    const prep = (e) => e._sx || (e._sx = { name: nz(e.name), nw: nz(e.name).split(' '),
+      mus: nz((e.muscles_primary || []).map((m) => (E.LABEL[m] || '') + ' ' + m).join(' ')), sec: nz((e.muscles_secondary || []).map((m) => (E.LABEL[m] || '') + ' ' + m).join(' ')),
+      eq: nz((e.equipment || []).concat(e.equipment_alt || []).map((i) => (F.itemLabel ? F.itemLabel(i) : '') + ' ' + i).join(' ')), pat: nz(e.pattern) });
+    const tokScore = (x, t) => {
+      let best = 0;
+      for (const w of x.nw) { if (w === t) best = Math.max(best, 14); else if (w.startsWith(t)) best = Math.max(best, 11); else if (w.includes(t) && t.length >= 3) best = Math.max(best, 4); } // mitten im Wort zählt weniger (sonst passt „rücken“ auf „drücken“)
+      if (x.mus.includes(t)) best = Math.max(best, 7); if (x.eq.includes(t)) best = Math.max(best, 5); if (x.sec.includes(t)) best = Math.max(best, 3); if (x.pat.includes(t)) best = Math.max(best, 3);
+      if (!best && SYN[t]) for (const sy of SYN[t].split(' ')) if (x.name.includes(sy)) best = Math.max(best, 8); else if (x.mus.includes(sy) || x.eq.includes(sy) || x.pat.includes(sy)) best = Math.max(best, 5);
+      if (!best && t.length >= 4) { const tol = t.length >= 7 ? 2 : 1; for (const w of x.nw.concat(x.mus.split(' '), x.eq.split(' '))) if (w.length >= 3 && (lev(t, w) <= tol || (w.length > t.length && lev(t, w.slice(0, t.length)) <= tol))) { best = Math.max(best, 4); break; } }
+      return best;
+    };
+    const out = [];
+    for (const e of list) { const x = prep(e); let sc = 0, ok = true; for (const t of toks) { const v = tokScore(x, t); if (!v) { ok = false; break; } sc += v; }
+      if (!ok) continue; if (x.name.startsWith(toks[0])) sc += 4; sc += Math.min(4, freq[e.id] || 0); out.push({ e, sc }); }
+    return out.sort((a, b) => b.sc - a.sc || a.e.name.localeCompare(b.e.name, 'de'));
+  };
+
   /* ---------- Darstellung ---------- */
   /* Tageslicht-Theme: Phase nach Sonnenstand (Näherung für Süddeutschland, ca. 48,2° N / 10,8° O) */
   F.sunPhase = (d = new Date()) => {
@@ -141,8 +180,16 @@
     });
   };
 
+  /* iPhone: nach dem Schließen der Tastatur bleibt die Seite manchmal verschoben, feste Leisten sitzen falsch.
+     Kurz an die aktuelle Stelle scrollen zwingt Safari, alles neu auszurichten. */
+  document.addEventListener('focusout', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) setTimeout(() => { if (!document.activeElement || !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) window.scrollTo(window.scrollX, window.scrollY); }, 60); });
   /* Tastatur offen (iPhone): feste Leisten wandern sonst mit der Tastatur nach oben */
-  if (window.visualViewport) { const kb = () => document.documentElement.classList.toggle('kb', window.innerHeight - visualViewport.height > 140); visualViewport.addEventListener('resize', kb); }
+  if (window.visualViewport) {
+    const vv = window.visualViewport, de = document.documentElement;
+    // --vvh/--vvt: sichtbare Höhe und Verschiebung, damit Vollbild-Blätter genau über der Tastatur enden
+    const kb = () => { de.classList.toggle('kb', window.innerHeight - vv.height > 140); de.style.setProperty('--vvh', vv.height + 'px'); de.style.setProperty('--vvt', vv.offsetTop + 'px'); };
+    vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb); kb();
+  }
 
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
@@ -163,8 +210,8 @@
     F.netBadge();
   };
   /* Fenster als Blatt von unten: Griff oben, nach unten wischen schließt, Hintergrund scrollt nicht mit */
-  F.modal = (html) => {
-    F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
+  F.modal = (html, o = {}) => {
+    F.closeModal(); const m = document.createElement('div'); m.className = 'modal' + (o.full ? ' full' : ''); m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
     m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m);
     const sh = m.firstElementChild; let y0 = null, dy = 0;
     // Nur ziehen, wenn nichts darüber gescrollt ist (auch keine innere Liste wie die Übungssuche)
