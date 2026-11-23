@@ -1,14 +1,15 @@
 'use strict';
 /* Geschützte Vorschau · Anmeldung
-   Art 0 = Vorschau-Passwort, 1 = QR, 2/3 = Schüler, 4 = Admin (Benutzername + Passwort) */
-const ADM = !!window.OVMG_ADMIN, STU = window.OVMG_MODE === 'schueler', MODE = window.OVMG_MODE || '';
-const T_PW = ADM ? 4 : STU ? 2 : 0, T_QR = ADM ? -1 : STU ? 3 : 1, DBN = ADM ? 'ovmg-adminpage' : STU ? 'ovmg-mitreden' : 'ovmg-preview';
+   Art 0 = Vorschau-Passwort, 1 = QR, 2/3 = Schüler (Mitreden), 4 = Admin (Benutzername + Passwort), 6/7 = AK Technik */
+const ADM = !!window.OVMG_ADMIN, STU = window.OVMG_MODE === 'schueler', TK = window.OVMG_MODE === 'technik', MODE = window.OVMG_MODE || '';
+const T_PW = ADM ? 4 : STU ? 2 : TK ? 6 : 0, T_QR = ADM ? -1 : STU ? 3 : TK ? 7 : 1, DBN = ADM ? 'ovmg-adminpage' : STU ? 'ovmg-mitreden' : TK ? 'ovmg-technik' : 'ovmg-preview';
 const BASE = window.OVMG_BASE || './', FLAG = 'ovmg-auto-' + DBN;
 const $ = s => document.querySelector(s);
 const user = $('#user'), form = $('form'), password = $('#password'), keep = $('#keep'), status = $('#status'), button = form.querySelector('button[type=submit]'),
   gate = $('#gate'), card = $('.card'), viewer = $('#viewer'), frame = $('#viewer iframe'), load = $('#load'), bar = $('#load-bar'), ltext = $('#load-t'), lsub = $('#load-s');
 let objectURL = null, busy = false;
-const T = STU ? { open: 'Wird geöffnet', back: 'Schön, dass du wieder da bist.', check: 'Passwort wird geprüft …', wrong: 'Das Passwort stimmt nicht. Probier es noch einmal.', qr: 'QR-Code wird geprüft …', qrBad: 'Dieser QR-Code gilt nicht mehr. Nimm das Passwort.' }
+const T = TK ? { open: 'Die Entwürfe werden geöffnet', back: 'Schön, dass du wieder da bist.', check: 'Passwort wird geprüft …', wrong: 'Das Passwort stimmt nicht. Probier es noch einmal.', qr: 'QR-Code wird geprüft …', qrBad: 'Dieser QR-Code gilt nicht mehr. Nimm das Passwort.', net: 'Die Entwürfe konnten nicht geladen werden. Prüf deine Verbindung und versuch es noch einmal.', browser: 'Öffne die Seite bitte in einem aktuellen Safari, Chrome, Firefox oder Edge.' }
+  : STU ? { open: 'Wird geöffnet', back: 'Schön, dass du wieder da bist.', check: 'Passwort wird geprüft …', wrong: 'Das Passwort stimmt nicht. Probier es noch einmal.', qr: 'QR-Code wird geprüft …', qrBad: 'Dieser QR-Code gilt nicht mehr. Nimm das Passwort.' }
   : ADM ? { open: 'Admin-Bereich wird geöffnet', back: 'Willkommen zurück.', check: 'Anmeldung wird geprüft …', wrong: 'Benutzername oder Passwort ist nicht richtig.' }
   : { open: 'Die Vorschau wird geöffnet', back: 'Willkommen zurück.', check: 'Passwort wird geprüft …', wrong: 'Das Passwort ist nicht richtig. Bitte noch einmal versuchen.', qr: 'QR-Zugang wird geprüft …', qrBad: 'Dieser QR-Code ist nicht mehr gültig. Bitte das Passwort verwenden.' };
 const setFlag = on => { try { on ? localStorage.setItem(FLAG, '1') : localStorage.removeItem(FLAG) } catch (e) { } };
@@ -85,7 +86,7 @@ function fail(msg) {
   busyOff(); status.textContent = msg; card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
   setTimeout(() => (ADM && !user.value ? user : password).focus(), 30);
 }
-const errText = err => err.message === 'password' ? T.wrong : err.message === 'browser' ? 'Bitte die Seite in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.' : 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und noch einmal versuchen.';
+const errText = err => err.message === 'password' ? T.wrong : err.message === 'browser' ? (T.browser || 'Bitte die Seite in einem aktuellen Safari, Chrome, Firefox oder Edge öffnen.') : (T.net || 'Die Vorschau konnte nicht geladen werden. Bitte Verbindung prüfen und noch einmal versuchen.');
 function waitMsg(type, ms) { return new Promise(res => { const t = setTimeout(res, ms); addEventListener('message', function h(e) { if (e.source === frame.contentWindow && e.data && (e.data.type === type || e.data.type === 'ovmg-logout')) { clearTimeout(t); removeEventListener('message', h); res() } }) }) }
 const frames2 = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
