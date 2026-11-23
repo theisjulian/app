@@ -96,6 +96,10 @@
     try { await insertPicked(s, F.therapyPick(p), p); await F.load(); F.ui.tr.ei = 0; F.render(); } catch (er) { F.err(er, 'Therapieplan'); }
   };
 
+  F.therapyRows = (where) => { const p = F.therapy(); if (!p || !p.active || p.mode !== 'einstreuen') return '';
+    const l = F.therapyPick(p).filter((x) => (where === 'vor') === atStart(p, x)); if (!l.length) return '';
+    return l.map((x) => `<div class="exrow ther-row"><div class="exn">${F.icon.heute.replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"')}</div><div class="grow"><b>${esc(x.it.name)}</b><span class="badge" style="margin-left:6px">Therapie</span><div class="mute small">${x.it.sets} × ${x.it.secs ? x.it.secs + ' s' : x.it.reps} · ${where === 'vor' ? 'vorher' : 'zum Schluss'}</div></div><button class="icbtn" data-act="help" data-id="${x.ex.id}" aria-label="Hilfe">${F.icon.info}</button></div>`).join(''); };
+
   /* ---------- Starten oder an ein laufendes Training anhängen ---------- */
   const addItems = async (sessId, startPos, p) => {
     const list = p.items.map((it) => ({ it, ex: exOf(it) })).filter((x) => x.ex);
@@ -123,6 +127,8 @@
 
   /* ---------- Karte auf „Heute“ ---------- */
   F.therapyCard = () => {
+    // Noch kein Plan: einmal deutlich anbieten (lässt sich ausblenden)
+    if (!F.therapy() && !F.ls.get('ther-hint-off', false)) return `<div class="card ther-card"><div class="eyebrow">Therapieplan</div><b>Übungen aus Physio oder Orthopädie</b><div class="small mute" style="margin:4px 0 12px">Einmal einrichten, dann streut forza sie im Wechsel in dein Training ein: Dehnen vorher, Kräftigen am Ende.</div><div class="row gap"><button class="btn pri grow" data-act="nav" data-r="mehr/therapie">Einrichten</button><button class="btn ghost" data-act="therapyHintOff">Später</button></div></div>`;
     const t = F.therapyToday(); if (!t) return '';
     if (t.p.mode === 'einstreuen') { if (t.running) return ''; const pk = F.therapyPick(t.p), pre = pk.filter((x) => atStart(t.p, x)), post = pk.filter((x) => !atStart(t.p, x));
       return `<div class="ther-line small mute"><span><b>Therapieplan im Training:</b> ${[pre.length ? 'vorher ' + pre.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : '', post.length ? 'danach ' + post.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : ''].filter(Boolean).join(' · ')}</span><button class="lnk" data-act="nav" data-r="mehr/therapie">Plan</button></div>`; }
@@ -161,6 +167,7 @@
   const edit = async (fn) => { const p = F.therapy(); fn(p); await savePlan(p); F.render(); };
   F.acts.therapyToggle = () => edit((p) => { p.active = !p.active; });
   F.acts.therapyDay = (t) => edit((p) => { const d = +t.dataset.d, w = p.weekdays || []; p.weekdays = w.includes(d) ? w.filter((x) => x !== d) : w.concat(d).sort(); });
+  F.acts.therapyHintOff = () => { F.ls.set('ther-hint-off', true); F.render(); };
   F.acts.therapyMode = (t) => edit((p) => { p.mode = t.dataset.v; });
   F.acts.therapyCount = (t) => edit((p) => { p.count = +t.dataset.n; });
   F.acts.therapyPos = (t) => edit((p) => { p.pos = t.dataset.v; });

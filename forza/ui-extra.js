@@ -349,17 +349,13 @@
     pulldown: ['latzug'], row: ['rudern'], rows: ['rudern'], fly: ['fliegende', 'butterfly', 'fly', 'pec'], flys: ['fliegende', 'butterfly', 'fly'], squat: ['kniebeuge', 'squat'], deadlift: ['kreuzheben'], bench: ['bankdrucken'], press: ['drucken', 'presse', 'press'], calf: ['waden'], calves: ['waden'], lunge: ['ausfallschritt', 'split'], lunges: ['ausfallschritt'], shoulder: ['schulter'], chest: ['brust'], back: ['rucken', 'lat'], triceps: ['trizeps'], biceps: ['bizeps'], glute: ['gesass', 'glute', 'hip'], glutes: ['gesass', 'glute', 'hip'], hamstring: ['beinbeuger', 'hamstrings'], hamstrings: ['beinbeuger', 'hamstrings'], quad: ['quadrizeps', 'beinstrecker'], quads: ['quadrizeps', 'beinstrecker'], abs: ['rumpf', 'crunch'], dip: ['dips'], pullup: ['klimmzug'], chinup: ['chin', 'klimmzug'], raise: ['heben', 'raise'], extension: ['strecker', 'extension', 'strecken'], machine: ['maschine'], cable: ['kabel'], dumbbell: ['kurzhantel'], barbell: ['langhantel'] };
   const addList = (q) => {
     const s = F.openSession(), have = new Set(s.session_exercises.map((e) => e.exercise_id)), items = F.items().items, ctx = { items, userEx: F.S.userEx, painEx: F.painSet() };
-    const toks = norm(q).split(/[\s,]+/).filter(Boolean);
-    const hay = (e) => norm([e.name, e.pattern, (e.muscles_primary || []).concat(e.muscles_secondary || []).map((m) => (E.LABEL[m] || '') + ' ' + m).join(' '), (e.equipment || []).join(' '), (e.equipment_alt || []).join(' ')].join(' ').replace(/_/g, ''));
-    const hits = F.S.exercises.filter((e) => e.active && !have.has(e.id) && !((F.S.userEx[e.id] || {}).hidden) && E.available(e, items).ok && (toks.length || e.dosage_profile !== 'M')).map((e) => {
-      const h = hay(e), n = norm(e.name); let sc = 0;
-      for (const t of toks) { const alts = [t].concat(SYN[t] || []); const m = alts.findIndex((x) => h.includes(x.replace(/_/g, ''))); if (m < 0) return null; sc += n.startsWith(t) ? 3 : n.includes(t) ? 2 : 1; }
-      return { e, sc };
-    }).filter(Boolean);
+    const toks = F.nz(q).split(' ').filter(Boolean);
+    const cand = F.S.exercises.filter((e) => e.active && !have.has(e.id) && !((F.S.userEx[e.id] || {}).hidden) && E.available(e, items).ok && (toks.length || e.dosage_profile !== 'M'));
+    const hits = toks.length ? F.exSearch(q, cand) : cand.map((e) => ({ e, sc: 0 }));
     if (toks.length) {
       hits.sort((a, b) => b.sc - a.sc || a.e.name.localeCompare(b.e.name, 'de'));
       const one = (x) => { const e = x.e; return `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${(e.muscles_primary || []).map((m) => E.LABEL[m] || m).join(', ')}${e.tier !== 'geprueft' && e.dosage_profile !== 'M' ? ' · Entwurf' : ''}${e.dosage_profile === 'M' ? ' · Mobilität' : ''}</div></div></button>`; };
-      return hits.length ? `<div class="list">${hits.slice(0, 60).map(one).join('')}</div>` : '<div class="mute" style="padding:10px 0">Nichts gefunden. Versuche es mit dem Muskel (z. B. Bauch, Rücken), dem Gerät (Kabel, Kurzhantel) oder einem Teil des Namens.</div>';
+      return hits.length ? `<div class="small mute" style="margin:4px 0 2px">${hits.length} ${hits.length === 1 ? 'Treffer' : 'Treffer'}</div><div class="list">${hits.slice(0, 60).map(one).join('')}</div>` : '<div class="mute" style="padding:10px 0">Nichts gefunden. Versuche es mit dem Muskel (Bauch, Rücken, Waden), dem Gerät (Kabel, Kurzhantel, Maschine) oder einem Teil des Namens.</div>';
     }
     // Ohne Suche: zuerst, was du in den letzten Wochen oft gemacht hast
     const freq = F.exFreq(60, s.id);

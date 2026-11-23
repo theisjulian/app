@@ -511,3 +511,16 @@ html[data-theme=glas] .fz-feel button{background:var(--glass);backdrop-filter:va
 .mini button{width:34px;height:34px;font-size:18px;color:var(--a)}.mini button:active{background:color-mix(in srgb,var(--a) 18%,transparent)}
 .mini span{min-width:46px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
 html[data-theme=glas] .mini{background:var(--glass);box-shadow:inset 0 0 0 1px var(--gline)}
+/* Ziffernfeld */
+.stepper input[readonly]{cursor:pointer;caret-color:transparent;-webkit-user-select:none;user-select:none}
+.pad .pad-top{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:6px 0 12px}
+.pad-disp{font-size:56px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:2ch;text-align:center;line-height:1.1}
+.pad-disp.fresh{color:var(--mute)}.pad-u{color:var(--mute);font-size:15px}
+.pad-q{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.pad-q button{height:44px;border-radius:14px;background:color-mix(in srgb,var(--a) 14%,var(--card2));color:var(--text);font-weight:700;font-size:16px}
+.pad-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.pad-k button{height:58px;border-radius:16px;background:var(--card2);font-size:26px;font-weight:600;transition:transform .08s,background .15s}
+.pad-k button:active,.pad-q button:active{transform:scale(.95);background:color-mix(in srgb,var(--a) 22%,var(--card2))}
+.pad-k button:disabled{opacity:.3}
+.pad-ok{min-height:56px;font-size:18px}
+html[data-theme=glas] .pad-k button,html[data-theme=glas] .pad-q button{background:var(--glass);box-shadow:inset 0 1px 0 var(--ghi),inset 0 0 0 1px var(--gline)}
