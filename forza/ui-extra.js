@@ -347,27 +347,56 @@
   const SYN = { bauch: ['rumpf', 'crunch', 'core'], bauchmuskel: ['rumpf'], bauchmuskeln: ['rumpf'], sixpack: ['rumpf'], core: ['rumpf'], po: ['gesaess'], popo: ['gesaess'], hintern: ['gesaess'], arme: ['bizeps', 'trizeps', 'unterarm'], arm: ['bizeps', 'trizeps'], bein: ['quadrizeps', 'beinbeuger', 'hamstrings'], beine: ['quadrizeps', 'beinbeuger', 'hamstrings'], oberschenkel: ['quadrizeps', 'beinbeuger'], schulter: ['schulter'], ruecken: ['ruecken', 'lat'], brustmuskel: ['brust'], zuhause: ['koerpergewicht', 'band', 'matte'], heim: ['koerpergewicht', 'band', 'matte'], ohne: ['koerpergewicht'], hantel: ['kurzhantel', 'langhantel'], kabel: ['kabelzug'], maschine: ['maschine', 'presse', 'pec', 'beinbeuger', 'leg'], plank: ['stutz', 'plank'], stuetz: ['stutz', 'plank'], liegestutz: ['liegestutz'], klimmzug: ['klimmzug', 'chin'], dehnen: ['dehn'],
     // englische Begriffe, wie sie im Studio oft heißen
     pulldown: ['latzug'], row: ['rudern'], rows: ['rudern'], fly: ['fliegende', 'butterfly', 'fly', 'pec'], flys: ['fliegende', 'butterfly', 'fly'], squat: ['kniebeuge', 'squat'], deadlift: ['kreuzheben'], bench: ['bankdrucken'], press: ['drucken', 'presse', 'press'], calf: ['waden'], calves: ['waden'], lunge: ['ausfallschritt', 'split'], lunges: ['ausfallschritt'], shoulder: ['schulter'], chest: ['brust'], back: ['rucken', 'lat'], triceps: ['trizeps'], biceps: ['bizeps'], glute: ['gesass', 'glute', 'hip'], glutes: ['gesass', 'glute', 'hip'], hamstring: ['beinbeuger', 'hamstrings'], hamstrings: ['beinbeuger', 'hamstrings'], quad: ['quadrizeps', 'beinstrecker'], quads: ['quadrizeps', 'beinstrecker'], abs: ['rumpf', 'crunch'], dip: ['dips'], pullup: ['klimmzug'], chinup: ['chin', 'klimmzug'], raise: ['heben', 'raise'], extension: ['strecker', 'extension', 'strecken'], machine: ['maschine'], cable: ['kabel'], dumbbell: ['kurzhantel'], barbell: ['langhantel'] };
-  const addList = (q) => {
-    const s = F.openSession(), have = new Set(s.session_exercises.map((e) => e.exercise_id)), items = F.items().items, ctx = { items, userEx: F.S.userEx, painEx: F.painSet() };
-    const toks = F.nz(q).split(' ').filter(Boolean);
-    const cand = F.S.exercises.filter((e) => e.active && !have.has(e.id) && !((F.S.userEx[e.id] || {}).hidden) && E.available(e, items).ok && (toks.length || e.dosage_profile !== 'M'));
-    const hits = toks.length ? F.exSearch(q, cand) : cand.map((e) => ({ e, sc: 0 }));
-    if (toks.length) {
-      hits.sort((a, b) => b.sc - a.sc || a.e.name.localeCompare(b.e.name, 'de'));
-      const one = (x) => { const e = x.e; return `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${(e.muscles_primary || []).map((m) => E.LABEL[m] || m).join(', ')}${e.tier !== 'geprueft' && e.dosage_profile !== 'M' ? ' · Entwurf' : ''}${e.dosage_profile === 'M' ? ' · Mobilität' : ''}</div></div></button>`; };
-      return hits.length ? `<div class="small mute" style="margin:4px 0 2px">${hits.length} ${hits.length === 1 ? 'Treffer' : 'Treffer'}</div><div class="list">${hits.slice(0, 60).map(one).join('')}</div>` : '<div class="mute" style="padding:10px 0">Nichts gefunden. Versuche es mit dem Muskel (Bauch, Rücken, Waden), dem Gerät (Kabel, Kurzhantel, Maschine) oder einem Teil des Namens.</div>';
-    }
-    // Ohne Suche: zuerst, was du in den letzten Wochen oft gemacht hast
-    const freq = F.exFreq(60, s.id);
-    const top = hits.map((x) => x.e).filter((e) => freq[e.id]).sort((a, b) => freq[b.id] - freq[a.id]).slice(0, 8);
-    const topHtml = top.length ? `<div class="eyebrow" style="margin:6px 0 4px">Häufig bei dir</div><div class="list">${top.map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${freq[e.id]}× in den letzten Wochen</div></div></button>`).join('')}</div>` : '';
-    const groups = {}; hits.forEach((x) => (groups[x.e.muscles_primary[0]] = groups[x.e.muscles_primary[0]] || []).push(x.e));
-    const keys = Object.keys(groups).sort((a, b) => (E.LABEL[a] || a).localeCompare(E.LABEL[b] || b, 'de'));
-    return topHtml + keys.map((m) => `<div class="eyebrow" style="margin:12px 0 4px">${E.LABEL[m] || m}</div><div class="list">${groups[m].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((e) => `<button class="it" data-act="addEx" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b>${e.tier !== 'geprueft' ? '<div class="small mute">Entwurf</div>' : ''}</div></button>`).join('')}</div>`).join('') || '<div class="mute">Mit dieser Ausstattung gibt es nichts zum Hinzufügen.</div>';
+  /* ---------- Übungssuche als Vollbild-Blatt: Suchfeld fest oben, nur die Liste scrollt und endet über der Tastatur ---------- */
+  const GRP = [['brust', 'Brust', ['brust']], ['ruecken', 'Rücken', ['lat', 'ruecken_hoch', 'ruecken_unten', 'nacken', 'brustwirbelsaeule']],
+    ['schulter', 'Schulter', ['schulter_vorn', 'schulter_seitlich', 'schulter_hinten', 'rotatoren']], ['arme', 'Arme', ['bizeps', 'trizeps', 'unterarme']],
+    ['beine', 'Beine', ['quadrizeps', 'hamstrings', 'gesaess', 'waden', 'adduktoren', 'rotatoren_huefte']], ['rumpf', 'Rumpf', ['rumpf']], ['mob', 'Mobilität', null]];
+  const inGrp = (e, g) => { const d = GRP.find((x) => x[0] === g); if (!d) return true; if (!d[2]) return e.dosage_profile === 'M'; return e.dosage_profile !== 'M' && (e.muscles_primary || []).some((m) => d[2].includes(m)); };
+  const gear = (e) => { const l = (e.equipment || []).filter((i) => i !== 'koerpergewicht').slice(0, 2).map((i) => F.itemLabel(i).replace(/\s*\(.*\)/, '')); return l.length ? l.join(', ') : 'Körpergewicht'; };
+  F.sxRow = (e, attrs, note) => {
+    const mus = (e.muscles_primary || []).slice(0, 2).map((m) => E.LABEL[m] || m).join(', ');
+    const tag = e.dosage_profile === 'M' ? '<em class="sx-tag">Mobilität</em>' : e.tier !== 'geprueft' ? '<em class="sx-tag">Entwurf</em>' : '';
+    return `<button class="sx-it" ${attrs}><span class="sx-t"><b>${esc(e.name)}${tag}</b><small>${[mus, gear(e), note].filter(Boolean).map(esc).join(' · ')}</small></span><span class="sx-plus" aria-hidden="true">${F.icon.plus}</span></button>`;
   };
-  F.acts.addExAsk = () => { F.modal(`<div class="h2">Übung hinzufügen</div><input id="ax-q" type="search" placeholder="Name, Muskel oder Gerät" autocomplete="off" data-in="axq" data-live="1" style="width:100%;margin:6px 0"><div id="ax-list" style="max-height:55vh;overflow:auto">${addList('')}</div>`); };
+  // Treffer: Suche (mit Tippfehlern) und Muskelgruppe kombiniert; ohne Suche „Häufig bei dir“ und nach Muskel gruppiert
+  F.sxList = (cand, q, g, row, empty) => {
+    const toks = F.nz(q).split(' ').filter(Boolean); cand = cand.filter((e) => inGrp(e, g) && (toks.length || g === 'mob' || e.dosage_profile !== 'M'));
+    if (toks.length) {
+      const hits = F.exSearch(q, cand).sort((a, b) => b.sc - a.sc || a.e.name.localeCompare(b.e.name, 'de'));
+      return hits.length ? `<div class="sx-n">${hits.length} Treffer</div>${hits.slice(0, 60).map((x) => row(x.e)).join('')}`
+        : `<div class="sx-empty">Nichts gefunden.<br>Versuch den Muskel (Bauch, Rücken, Waden), das Gerät (Kabel, Kurzhantel, Maschine) oder einen Teil des Namens.</div>`;
+    }
+    const freq = F.exFreq(60), top = cand.filter((e) => freq[e.id]).sort((a, b) => freq[b.id] - freq[a.id]).slice(0, g === 'alle' ? 8 : 5);
+    const groups = {}; cand.forEach((e) => (groups[e.muscles_primary[0]] = groups[e.muscles_primary[0]] || []).push(e));
+    const keys = Object.keys(groups).sort((a, b) => (E.LABEL[a] || a).localeCompare(E.LABEL[b] || b, 'de'));
+    return (top.length ? `<div class="sx-h">Häufig bei dir</div>${top.map((e) => row(e, freq[e.id] + '× zuletzt')).join('')}` : '')
+      + keys.map((m) => `<div class="sx-h">${E.LABEL[m] || m}</div>${groups[m].sort((a, b) => a.name.localeCompare(b.name, 'de')).map((e) => row(e)).join('')}`).join('') || `<div class="sx-empty">${empty}</div>`;
+  };
+  const SVG_Q = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  // o: { title, sub, g0: [key, label] eigener erster Knopf, list(q, g) → html }
+  F.picker = (o) => {
+    const g0 = o.g0 || ['alle', 'Alle']; F.ui.sx = { q: '', g: g0[0], list: o.list };
+    const chips = [g0, ...GRP.map((x) => [x[0], x[1]])].map(([k, l]) => `<button class="chip ${k === g0[0] ? 'on' : ''}" data-act="sxGrp" data-g="${k}">${l}</button>`).join('');
+    F.modal(`<div class="sx-head"><div><div class="h2">${o.title}</div>${o.sub ? `<div class="small mute">${o.sub}</div>` : ''}</div><button class="sx-done" data-act="close">Fertig</button></div>
+      <label class="sx-box">${SVG_Q}<input id="sx-q" type="search" enterkeyhint="search" placeholder="Name, Muskel oder Gerät" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-in="sxq" data-live="1"><button type="button" class="sx-clr" data-act="sxClr" aria-label="Suche leeren" hidden>✕</button></label>
+      <div class="sx-chips" data-noswipe>${chips}</div><div id="sx-list" class="sx-list">${o.list('', g0[0])}</div>`, { full: true });
+    const l = document.getElementById('sx-list'); let y = null;
+    // Beim Wischen durch die Liste die Tastatur einklappen (wie in iOS-Apps); ein Tipp bewegt nichts und bleibt ein Tipp
+    l.addEventListener('touchstart', (e) => { y = e.touches[0].clientY; }, { passive: true });
+    l.addEventListener('touchmove', (e) => { if (y !== null && Math.abs(e.touches[0].clientY - y) > 10 && document.activeElement && document.activeElement.id === 'sx-q') { document.activeElement.blur(); y = null; } }, { passive: true });
+    const i = document.getElementById('sx-q'); try { i.focus({ preventScroll: true }); } catch (er) { i.focus(); }
+  };
+  const sxDraw = () => { const x = F.ui.sx, l = document.getElementById('sx-list'); if (!x || !l) return; l.innerHTML = x.list(x.q, x.g); l.scrollTop = 0; };
   // nur bei geänderter Suche neu aufbauen: beim Antippen eines Treffers feuert sonst „change“ und der Tipp geht ins Leere
-  F.ins.axq = (t) => { const l = document.getElementById('ax-list'); if (!l || l.dataset.q === t.value) return; l.dataset.q = t.value; l.innerHTML = addList(t.value); };
+  F.ins.sxq = (t) => { const x = F.ui.sx; if (!x || x.q === t.value) return; x.q = t.value; const c = document.querySelector('.sx-clr'); if (c) c.hidden = !t.value; sxDraw(); };
+  F.acts.sxClr = () => { const i = document.getElementById('sx-q'); if (!i) return; i.value = ''; F.ins.sxq(i); i.focus(); };
+  F.acts.sxGrp = (t) => { const x = F.ui.sx; if (!x) return; x.g = t.dataset.g; document.querySelectorAll('.sx-chips .chip').forEach((c) => c.classList.toggle('on', c === t)); t.scrollIntoView({ inline: 'nearest', block: 'nearest' }); sxDraw(); };
+
+  const addCand = () => {
+    const s = F.openSession(), have = new Set(s.session_exercises.map((e) => e.exercise_id)), items = F.items().items;
+    return F.S.exercises.filter((e) => e.active && !have.has(e.id) && !((F.S.userEx[e.id] || {}).hidden) && E.available(e, items).ok);
+  };
+  F.acts.addExAsk = () => F.picker({ title: 'Übung hinzufügen', list: (q, g) => F.sxList(addCand(), q, g, (e, n) => F.sxRow(e, `data-act="addEx" data-ex="${e.id}"`, n), 'Mit dieser Ausstattung gibt es hier nichts zum Hinzufügen.') });
   F.acts.addEx = async (t) => {
     const s = F.openSession(), ex = F.S.exById[t.dataset.ex]; if (!s || !ex) return;
     const P = E.params(F.S.params), prio = E.prioOf(F.S.priorities, ex.muscles_primary[0], F.today()), pf = E.profOf(ex.dosage_profile, P, (F.S.profile && F.S.profile.goals) || [], prio);
