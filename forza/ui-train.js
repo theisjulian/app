@@ -346,11 +346,14 @@
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), cur = F.S.exById[se.exercise_id];
     const ctx = { items: F.items().items, userEx: F.S.userEx, painEx: F.painSet() };
     const used = new Set(s.session_exercises.map((x) => x.exercise_id));
-    // Alle passenden Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet): gleiches Muster, dann was du oft machst
-    const freq = F.exFreq(60), ok = (e) => e.dosage_profile !== 'M' && E.eligible(e, Object.assign({ allowDraft: true }, ctx));
-    const alts = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)) && ok(e))
-      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 20);
-    F.modal(`<div class="h2">Ersetzen durch</div>${alts.length ? `<div class="list">${alts.map((e) => `<button class="it" data-act="swap" data-id="${se.id}" data-ex="${e.id}"><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${e.muscles_primary.map((m) => E.LABEL[m]).join(', ')}${e.pattern === cur.pattern ? ' · gleiches Bewegungsmuster' : ''}${freq[e.id] ? ' · ' + freq[e.id] + '× gemacht' : ''}${e.tier !== 'geprueft' && !(F.S.userEx[e.id] || {}).released ? ' · Entwurf' : ''}</div></div></button>`).join('')}</div>` : '<div class="mute">Mit deiner aktuellen Ausstattung und den freigegebenen Übungen gibt es keine passende Alternative. Unter „Mehr → Katalog“ kannst du Entwürfe freigeben.</div>'}`);
+    // Alle Übungen, die mit deinen Geräten gehen (Entwürfe gekennzeichnet). „Passend“: gleicher Muskel, gleiches Muster zuerst, dann was du oft machst
+    const freq = F.exFreq(60), all = F.S.exercises.filter((e) => e.id !== cur.id && !used.has(e.id) && E.eligible(e, Object.assign({ allowDraft: true }, ctx)));
+    const fit = all.filter((e) => e.dosage_profile !== 'M' && e.muscles_primary.some((m) => cur.muscles_primary.includes(m)))
+      .sort((a, b) => (b.pattern === cur.pattern) - (a.pattern === cur.pattern) || (freq[b.id] || 0) - (freq[a.id] || 0) || (b.tier === 'geprueft') - (a.tier === 'geprueft') || a.name.localeCompare(b.name, 'de')).slice(0, 25);
+    const row = (e, n) => F.sxRow(e, `data-act="swap" data-id="${se.id}" data-ex="${e.id}"`, n);
+    F.picker({ title: 'Ersetzen', sub: esc(cur.name), g0: ['fit', 'Passend'],
+      list: (q, g) => g === 'fit' && !F.nz(q).trim() ? (fit.length ? `<div class="sx-h">Gleiche Muskeln</div>${fit.map((e) => row(e, [e.pattern === cur.pattern ? 'gleiches Muster' : '', freq[e.id] ? freq[e.id] + '× zuletzt' : ''].filter(Boolean).join(' · '))).join('')}` : '<div class="sx-empty">Keine passende Alternative mit deinen Geräten. Such oben nach einer anderen Übung.</div>')
+        : F.sxList(all, q, g === 'fit' ? 'alle' : g, row, 'Nichts gefunden.') });
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);

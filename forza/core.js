@@ -184,7 +184,12 @@
      Kurz an die aktuelle Stelle scrollen zwingt Safari, alles neu auszurichten. */
   document.addEventListener('focusout', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) setTimeout(() => { if (!document.activeElement || !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) window.scrollTo(window.scrollX, window.scrollY); }, 60); });
   /* Tastatur offen (iPhone): feste Leisten wandern sonst mit der Tastatur nach oben */
-  if (window.visualViewport) { const kb = () => document.documentElement.classList.toggle('kb', window.innerHeight - visualViewport.height > 140); visualViewport.addEventListener('resize', kb); }
+  if (window.visualViewport) {
+    const vv = window.visualViewport, de = document.documentElement;
+    // --vvh/--vvt: sichtbare Höhe und Verschiebung, damit Vollbild-Blätter genau über der Tastatur enden
+    const kb = () => { de.classList.toggle('kb', window.innerHeight - vv.height > 140); de.style.setProperty('--vvh', vv.height + 'px'); de.style.setProperty('--vvt', vv.offsetTop + 'px'); };
+    vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb); kb();
+  }
 
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
@@ -205,8 +210,8 @@
     F.netBadge();
   };
   /* Fenster als Blatt von unten: Griff oben, nach unten wischen schließt, Hintergrund scrollt nicht mit */
-  F.modal = (html) => {
-    F.closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
+  F.modal = (html, o = {}) => {
+    F.closeModal(); const m = document.createElement('div'); m.className = 'modal' + (o.full ? ' full' : ''); m.id = 'modal'; m.innerHTML = `<div><span class="grab" aria-hidden="true"></span>${html}</div>`;
     m.addEventListener('click', (e) => { if (e.target === m) F.closeModal(); }); document.body.appendChild(m);
     const sh = m.firstElementChild; let y0 = null, dy = 0;
     // Nur ziehen, wenn nichts darüber gescrollt ist (auch keine innere Liste wie die Übungssuche)
