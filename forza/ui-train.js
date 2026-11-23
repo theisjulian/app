@@ -36,7 +36,7 @@
   const doneN = (e) => e.sets.filter((x) => x.done).length;
   const isOpen = (e) => e.sets.some((x) => !x.done);
   const kindOf = (ex) => { const pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A, cs = ex.content && ex.content.secs; return { pf, cs, timed: !!pf.secs || !!cs, perSide: pf.perSide || !!(ex.content && ex.content.perSide) }; };
-  const planRange = (se, k) => { const m = /(\d+)\s*[–-]\s*(\d+)/.exec(se.planned_reps || ''); if (m) return [+m[1], +m[2]]; return k.timed ? (k.cs || k.pf.secs || null) : (k.pf.reps || null); };
+  const planRange = (se, k) => { const m = /(\d+)\s*[–-]\s*(\d+)/.exec(se.planned_reps || ''); if (m) return [+m[1], +m[2]]; const one = /^\s*(\d+)/.exec(se.planned_reps || ''); if (one) return [+one[1], +one[1]]; return k.timed ? (k.cs || k.pf.secs || null) : (k.pf.reps || null); };
   /* Vorschlag für einen offenen Satz: nichts wird gespeichert, bevor du den Satz abschließt */
   F.setTarget = (se, st) => {
     const ex = F.S.exById[se.exercise_id] || {}, k = kindOf(ex), range = planRange(se, k), i = se.sets.indexOf(st);
@@ -242,7 +242,7 @@
       else if (!isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
       if (!s.session_exercises.some(isOpen)) rest = false;
     }
-    if (rest) { const P = E.params(F.S.params), sec = P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
+    if (rest) { const P = E.params(F.S.params), sec = (F.therapyRest && F.therapyRest(f.s, f.se)) || P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
     else F.rest = null;
     F.render(); F.pulseSet && F.pulseSet(st.id); if (F.rest) F.tick(); window.scrollTo(0, 0);
   };
@@ -343,7 +343,7 @@
   /* Haltungsblock: ein Angebot am Ende statt fester Übungen in der Liste */
   const postureEx = (s) => { const P = E.params(F.S.params); if (!P.posture_block || !s || s.kind !== 'kraft' || s.session_exercises.some((se) => (F.S.exById[se.exercise_id] || {}).dosage_profile === 'M')) return [];
     return E.mobilityPick({ exercises: F.S.exercises, items: F.items().items, userEx: F.S.userEx, painEx: F.painSet(), sessions: F.S.sessions, goals: [], studio: F.items().kind === 'studio' }, P, 3); };
-  const postureOffer = (s) => { const l = postureEx(s); return l.length ? `<button class="btn block" style="margin-top:10px" data-act="addPosture">Haltung anhängen · ${l.length} Übungen, ca. 4 min</button>` : ''; };
+  const postureOffer = (s) => { const th = F.therapyOffer ? F.therapyOffer(s) : ''; if (th) return th; const l = postureEx(s); return l.length ? `<button class="btn block" style="margin-top:10px" data-act="addPosture">Haltung anhängen · ${l.length} Übungen, ca. 4 min</button>` : ''; };
   F.acts.addPosture = async () => {
     const s = F.openSession(), items = postureEx(s); if (!items.length) return;
     const ses = await F.sb.from('session_exercises').insert(items.map((it, i) => ({ session_id: s.id, exercise_id: it.exercise_id, position: s.session_exercises.length + i, planned_sets: it.sets, planned_reps: it.reps.join('–'), why: it.load_text }))).select(); if (ses.error) throw ses.error;
