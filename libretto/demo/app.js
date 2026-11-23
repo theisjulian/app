@@ -1201,7 +1201,7 @@ function assessmentSheet(c, a) {
     <div class="importBox"><div><b>Notenliste einlesen</b><p class="hint">Z. B. die „Notenliste (CSV für Excel)“ aus <b>Voce</b> nach einer mündlichen Schulaufgabe. Libretto ordnet die ${up ? 'Notenpunkte' : 'Noten'} über die Namen zu; du kannst sie danach in der Tabelle ändern.</p><p class="hint" id="aImpInfo" hidden></p></div>
       <div class="panelBtns" style="margin:0"><button type="button" class="mini" id="aImpBtn">Datei wählen …</button></div><input type="file" id="aImpFile" accept=".csv,.txt" hidden></div></div>
     ${field('Notiz (nur für dich)', `<textarea id="aNote" rows="2">${esc(a.note || '')}</textarea>`)}
-    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) || R.byParts(a) ? `<button type="button" class="mini accent" id="aPrintD" title="${a.alt && R.byParts(a) ? 'Mit den Teilnoten für Übersetzung und Aufgabenteil' : R.byParts(a) ? 'Mit Inhalt, Sprache und Teilnote je Prüfungsteil' : 'Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe'}">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">${R.byParts(a) ? 'Teilnoten eintragen …' : 'Aufgabenpunkte eintragen …'}</button>` : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
+    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) || R.byParts(a) ? `<button type="button" class="mini accent" id="aPrintD" title="${a.alt && R.byParts(a) ? 'Mit den Teilnoten für Übersetzung und Aufgabenteil' : R.byParts(a) ? 'Mit Inhalt, Sprache und Teilnote je Prüfungsteil' : 'Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe'}">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">${R.byParts(a) ? 'Teilnoten eintragen …' : 'Aufgabenpunkte eintragen …'}</button>` : '') + (R.byParts(a) && !a.alt && upper(c) ? `<button type="button" class="mini accent" id="aSlips" title="Je Schüler ein Abschnitt mit allen Prüfungsteilen und der Rechnung – drei je Seite zum Ausschneiden">Schülerübersichten (PDF)</button>` : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
   const read = d => {
     a.type = d.querySelector('#aType').value; a.title = d.querySelector('#aTitle').value.trim(); a.date = d.querySelector('#aDate').value; a.short = d.querySelector('#aShort').value.trim();
     if (up) a.term = d.querySelector('#aTerm').value;
@@ -1516,6 +1516,10 @@ function assessmentSheet(c, a) {
   };
   const cur = () => c.assessments.find(x => x.id === a.id);
   const pd = dlg.querySelector('#aPrintD'); if (pd) { pd.onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'pdf'); dlg.querySelector('#aWordD').onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'docx'); dlg.querySelector('#aTkOpen').onclick = () => { close(); taskSheet(c, cur()); }; }
+  const sl = dlg.querySelector('#aSlips'); if (sl) sl.onclick = async () => { const m = modelSlips(c, cur());
+    if (!m.slips.items.length) return toast('Noch keine vollständigen Ergebnisse – erst alle Prüfungsteile eintragen');
+    await exportModel(m, 'pdf');
+    if (m.skipped.length) toast(`Ohne Übersicht (noch nicht vollständig, abwesend oder Nachtermin): ${m.skipped.map(x => x.name).join('; ')}`, 6000); };
   const pr = dlg.querySelector('#aPrint'); if (pr) { pr.onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'pdf'); dlg.querySelector('#aWord').onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'docx'); }
 }
 
@@ -2863,6 +2867,33 @@ function taskHeadGroups(tk, before, after) {
   out.push({ label: '', span: after });
   return out;
 }
+/* Schülerübersichten (Oberstufe, Klausur nach Prüfungsteilen): je Schüler ein Abschnitt mit Prüfungsteilen, Teilnoten und nachvollziehbarer Rechnung –
+   drei je A4-Seite zum Ausschneiden (wie die Übersichten der ISB-Rechentabelle). Nur Schüler mit vollständigem Ergebnis. */
+const PCT15 = [95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 33, 27, 20];
+function modelSlips(c, a) {
+  const ps = a.parts, W = ps.reduce((x, p) => x + (+p.w || 0), 0) || 1, lnT = a.title || R.TYPES[a.type].label;
+  const pc = p => Math.round((+p.w || 0) / W * 1000) / 10, dz = x => fmt(x, 1).replace(/,0$/, '');
+  const WORD = ['ungenügend', 'mangelhaft', 'mangelhaft', 'mangelhaft', 'ausreichend', 'ausreichend', 'ausreichend', 'befriedigend', 'befriedigend', 'befriedigend', 'gut', 'gut', 'gut', 'sehr gut', 'sehr gut', 'sehr gut'];
+  const items = [], skipped = [];
+  groupsOf(c).forEach(g => g.students.forEach(s => {
+    const r = a.results && a.results[s.id];
+    if (!r || r.status || r.v == null || r.exact == null) { if (R.counted(s)) skipped.push(s); return; }
+    const rows = ps.map(p => { const v = (r.pp || {})[p.id], n = R.partNote(p, v); if (!n) return null;
+      if (p.kind === 'be') { const thr = n.tn ? PCT15[15 - n.tn] : null;
+        return { label: p.label, w: pc(p), tn: n.tn, bew: [['', f2(v)], [` von ${f2(p.max)} BE`, '']], extra: dz(n.lg) + ' %',
+          calc: `${f2(v)} ÷ ${f2(p.max)} BE = ${dz(n.lg)} % Lösungsgrad → ${n.tn} ${n.tn === 1 ? 'Punkt' : 'Punkte'} (${thr ? 'ab ' + thr + ' %' : 'unter 20 %'})` }; }
+      if (p.kind === 'is') { const raw = Math.round((0.4 * v.i + 0.6 * v.s) * 100) / 100;
+        return { label: p.label, w: pc(p), tn: n.tn, sperr: n.sperr, bew: [['Inhalt ', f2(v.i)], [' · Sprache ', f2(v.s)]],
+          calc: `0,4 × ${f2(v.i)} (Inhalt) + 0,6 × ${f2(v.s)} (Sprache) = ${dz(raw)}${n.sperr ? ` → Sperrklausel (${+v.i === 0 ? 'Inhalt' : 'Sprache'} 0 Punkte): höchstens 3` : ''}` }; }
+      return { label: p.label, w: pc(p), tn: n.tn, bew: [['', f2(v)]], calc: '' };
+    }).filter(Boolean);
+    items.push({ name: `${s.first || ''} ${s.last || ''}`.trim() || s.name, v: r.v, exact: fmt(r.exact, 2), word: WORD[r.v],
+      rows: rows.map(x => ({ ...x, tnT: dz(x.tn) })),
+      total: `${rows.map(x => `${String(x.w).replace('.', ',')} % × ${dz(x.tn)}`).join(' + ')} = ${fmt(r.exact, 2)} → gerundet ${r.v} Notenpunkte (${WORD[r.v]})` });
+  }));
+  return { title: `Schülerübersichten · ${lnT}`, file: `${a.date || ''} ${lnT} Schülerübersichten ${c.name} ${c.subject}`.trim(), skipped,
+    slips: { eyebrow: [lnT, c.subject, c.name, a.term || '', a.date ? fdate(a.date) : ''].filter(Boolean).join(' · '), items } };
+}
 function modelAssessment(c, a, opt = {}) {
   const up = upper(c), dist = R.distribution(a, c.students, up), unit = up ? 'Punkte' : 'Note';   /* Q12/13: „Punkte“ = Notenpunkte, Rohwerte heißen dort BE */
   const lnT = a.title || R.TYPES[a.type].label, parts = R.byParts(a), tasksMode = R.byTask(a);
@@ -2993,11 +3024,26 @@ async function fitHtml(html, landscape) {
     return html;
   } catch (e) { return html; } finally { fr.remove(); }
 }
+/* Schülerübersichten: drei je Seite, bei vielen Teilen (ab vier) zwei; passt ein Abschnitt trotzdem nicht in seine Höhe, wird nachgemessen und weniger je Seite gedruckt – nie abgeschnitten */
+async function fitSlips(m, st) {
+  let per = m.slips.items.some(it => it.rows.length > 3) ? 2 : 3, html;
+  for (;;) {
+    m.slips.per = per; html = Print.html(m, st);
+    if (per === 1) return html;
+    const fr = document.createElement('iframe'); fr.setAttribute('sandbox', 'allow-same-origin'); fr.style.cssText = 'position:fixed;left:-5000px;top:0;width:698px;height:400px;border:0;visibility:hidden';
+    document.body.appendChild(fr);
+    let over = false;
+    try { await new Promise(r => { fr.onload = r; fr.srcdoc = html; }); over = [...fr.contentDocument.querySelectorAll('.slip')].some(e => e.scrollHeight > e.clientHeight + 1); } catch (e) {} finally { fr.remove(); }
+    if (!over) return html;
+    per--;
+  }
+}
 async function exportModel(m, kind) {
   const base = m.file ? fileSafe(m.file) : fileSafe(m.title);
   try {
     const st = (D && D.settings) || {};
-    if (kind === 'pdf') await N.savePdf(base + '.pdf', await fitHtml(Print.html(m, st), m.landscape), m.landscape, Print.footer(st));
+    if (kind === 'pdf' && m.slips) await N.savePdf(base + '.pdf', await fitSlips(m, st), false, Print.footer(st));
+    else if (kind === 'pdf') await N.savePdf(base + '.pdf', await fitHtml(Print.html(m, st), m.landscape), m.landscape, Print.footer(st));
     if (kind === 'docx') await N.saveFile(base + '.docx', await Print.docx(m, st), 'docx');
     if (kind === 'csv') await N.saveFile(base + '.csv', Print.csv(m), 'csv');
   } catch (e) { toast('Export fehlgeschlagen: ' + e.message); }
@@ -3883,6 +3929,7 @@ function helpSheet(opts) {
       <li><b>Inhalt + Sprache</b> (Schreiben, Sprachmittlung): je 0–15 Notenpunkte nach den Bewertungsrastern; Teilnote = 40 % Inhalt + 60 % Sprache. Ist Inhalt oder Sprache 0 Punkte, höchstens 3 Punkte (<b>Sperrklausel</b>, rot markiert).</li>
       <li>Ergebnis: Teilnoten nach den Anteilen gemittelt („genau“), dann gerundet. Vorlagen: „Hörverstehen + Sprachmittlung“ (35 / 65 %) und „Textaufgaben + Stellungnahme“ (65 / 35 %) nach dem ISB-Leitfaden 04/2025 (S. 2: 30–40 % / 60–70 %) sowie „Wie im Abitur“ (Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %). Teile und Anteile änderst du frei (zusammen 100 %). Mehrere Schreibaufgaben = je ein eigener Teil, denn Inhalt/Sprache und Sperrklausel gelten je Aufgabe. Fehlen bei einem BE-Teil die erreichbaren BE, ist das Feld rot umrandet.</li></ul>
     <p>Libretto merkt sich die Prüfungsteile je Fach als Vorlage. Der Ausdruck „Detailliert“ zeigt BE, Inhalt, Sprache und Teilnote je Teil.</p>
+    <p><b>Schülerübersichten (PDF):</b> Im Leistungsnachweis auf „Schülerübersichten (PDF)“ – je Schüler ein Abschnitt zum Ausschneiden, drei je Seite: alle Prüfungsteile mit BE bzw. Inhalt und Sprache, Lösungsgrad, Teilnote, Gewicht und die ganze Rechnung bis zu den Notenpunkten (Sperrklausel rot mit Begründung). Wer noch nicht alle Teile hat, abwesend war oder nachschreibt, bekommt (noch) keine Übersicht – Libretto nennt die Namen.</p>
     <p><b>Mündliche Schulaufgabe:</b> In der Q-Phase ist genau eine Schulaufgabe mündlich (KMS vom 12.06.2023) – Bewertung z. B. mit Voce, Noten übernehmen (siehe „Voce“ unter Kalender, Termine und Klassen austauschen).</p>
     <p><b>Spät beginnende Fremdsprache:</b> Beim Kurs „Spät beginnende Fremdsprache“ anhaken. Dann bewertest du auch in Q12/13 mit Bewertungseinheiten wie in Jgst. 5–11 – „+ Schreiben / SM“ mit Inhalt 4 + Sprache 6, ohne Sperrklausel, halbe BE erwünscht – und Libretto rechnet über den Notenschlüssel in Notenpunkte um; „ausreichend“ beginnt zwischen 50 % und 60 %, „mangelhaft“ bei 33 % (ISB-Leitfaden, April 2025).</p>${fig('oberstufe', 'Notentabelle Q12: Notenpunkte und Halbjahresleistung')}${fig('pruefungsteile', 'Klausur nach Prüfungsteilen: Hörverstehen in BE, Sprachmittlung mit Inhalt und Sprache')}`],
   ['alt', 'Latein und Griechisch', 'Szenarien nach Fächern', `
@@ -4217,6 +4264,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.3', ['Neu: Schülerübersichten für Klausuren nach Prüfungsteilen (Oberstufe) – je Schüler ein Abschnitt mit allen Prüfungsteilen, Teilnoten und der vollständigen Rechnung, drei je A4-Seite zum Ausschneiden']],
   ['1.1.2', ['Touch ID schöner eingebunden: Fingerabdruck-Zeichen direkt im Passwortfeld statt eigener Schaltfläche; der Mac fragt beim Start und nach dem automatischen Sperren von selbst; klarere Abfrage („Libretto“ möchte deine Noten öffnen)', 'Schärfere Bilder in Hilfe und Handbuch, neues Bild „Kurs aus mehreren Klassen“']],
   ['1.1.1', ['Touch ID am Mac: Libretto lässt sich mit dem Fingerabdruck entsperren (freiwillig, unter Einstellungen → Sicherheit) – das Passwort bleibt immer gültig', 'Notentabelle: Noten stehen exakt untereinander – der Hinweis-Punkt bei gefährdeten Schülern verschiebt die Note nicht mehr', 'Übersicht: Notenverteilung je Kurs als schmaler Farbbalken, beide Spalten gleich hoch, klarere Hinweise', 'Farbwelten aufgeräumt: acht statt elf (Klar, Terrakotta und Salbei waren fast gleich wie Apple, Glut und Wald – wer sie gewählt hatte, bekommt automatisch die ähnliche)', 'Schalter im Dunkelmodus besser erkennbar', 'Neuer Leistungsnachweis: In Fächern mit Schulaufgaben ist „Schulaufgabe“ vorausgewählt, bis die Mindestzahl erreicht ist', 'Hinweis, wenn das Datum eines Leistungsnachweises in die Ferien, auf einen Feiertag oder ein Wochenende fällt', 'W-Seminar und 13/2 ohne Schulaufgabe: keine leere Spalte „Ø SA“ mehr', 'Zweigeteilte Schulaufgabe (Latein, Griechisch): leere Felder zeigen „…“ – Klick öffnet die Eingabe der Teile', 'Hilfe und Handbuch überarbeitet: 18 aktuelle Bildschirmfotos, neue Funktionen beschrieben, Voce statt Viva; Quellenverzeichnis ergänzt (GSO § 19, Feiertagsgesetz), alle Links am 21.11.2026 geprüft', 'Handbuch als PDF speichern klappt jetzt auch mit vielen Bildern (vorher konnte es bei großen Ausdrucken scheitern)']],
   ['1.1.0', ['Leistungsfach Sport: Fach Sport und Sporttheorie in einem Kurs – Libretto rechnet die Endpunktzahl nach der Bekanntmachung zum Sportunterricht in Q12/Q13 (Nr. 2.3.1): beide Teile gerundet, dann der Durchschnitt, keine Aufrundung auf 1 Punkt', 'Datenschutz: Hinweis in der Übersicht, wenn Kurse älter als zwei Schuljahre sind (LDO § 14a) – mit Löschen oder „Noch behalten“; Libretto löscht nie von selbst', 'Technik erneuert: aktuelle Electron-Version (45), PDF-Leser pdf.js 6 und Excel-Leser SheetJS 0.20.3 mit allen Sicherheitskorrekturen', 'Notentabelle: Tab und Enter springen ohne Verzögerung weiter – kein Tastendruck geht verloren', 'Punkte-Spalten zeigen groß die Note und klein die Punkte – beim Eintippen wie gewohnt die Punkte', 'Aufgabenblatt: Felder stehen in jeder Fenstergröße exakt unter ihren Spaltenköpfen', 'Neue Installation: DMG für den Mac mit Anleitung für den ersten Start, Installationsprogramm für Windows im neuen Design', 'Einstellungen → Termine: Schultermine aus Datei einlesen oder Schulkalender abonnieren; Einstellungen → Sicherheit: Klassen austauschen und alte Kurse', 'Hilfe und Handbuch ergänzt: Kalender-Abo Schritt für Schritt, Gastschüler, Zwischensumme, Speichern, Löschhinweis', '⌘S bzw. Strg+S speichert überall – auch in offenen Fenstern und mit gerade getipptem Wert; eine Sicherung höchstens alle zehn Minuten', 'Punkte je Aufgabe: Schreibaufgabe und Sprachmittlung zeigen ihre Zwischensumme mit Faktor (z. B. (4 + 6) × 2 = 20) – zum Übertragen auf den Korrekturbogen', 'Neu: macOS 13 (Ventura) oder neuer nötig']],

@@ -166,8 +166,50 @@ const Print = (() => {
       if (b.lines) return `<div class="cLines wr">${'<div></div>'.repeat(b.lines)}</div>`;
       return '';
     };
+    if (m.slips) return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}${SLIP_CSS}</style></head><body>${slipsHtml(m.slips)}</body></html>`;
     return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}</style></head><body>
       ${headHtml(m, settings)}${keepSig(m.blocks).map(block).join('')}</body></html>`;
+  }
+
+  /* Schülerübersichten: drei Abschnitte je A4-Seite (feste Höhe, damit nie einer über den Seitenrand läuft), Schnittlinien dazwischen.
+     Druckbereich: 297 mm − 14 mm oben − 20,3 mm unten = 262,7 mm → 3 × 86 mm. */
+  const SLIP_CSS = `
+      .slip{height:86mm;padding:4.2mm 0.5mm 0;position:relative;display:flex;flex-direction:column;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+      .slip.per2{height:130.5mm} .slip.per1{height:261mm} .slip.long h2{font-size:13.5pt}
+      .slip.cut{border-top:.75pt dashed #9aa1ad}
+      .slip.cut::before{content:'';position:absolute;top:-6pt;left:-1mm;width:12pt;height:12pt;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='1.8' stroke-linecap='round'><circle cx='6' cy='6' r='3'/><circle cx='6' cy='18' r='3'/><path d='M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12'/></svg>") center/9.5pt no-repeat}
+      .slip.pbA{page-break-after:always;break-after:page}
+      .slip .sHd{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:3.4mm}
+      .slip .eye{font-size:7.6pt;font-weight:600;letter-spacing:.01em;color:#4b5160}
+      .slip h2{margin:2.5pt 0 0;font-size:16.5pt;font-weight:750;letter-spacing:-.015em;text-transform:none;color:${INK};line-height:1.15;border:0;padding:0;background:none}
+      .slip .tot{flex:none;width:40mm;border:1.5pt solid ${INK};background:#f3f5fa;border-radius:7px;padding:4px 6px 5px;text-align:center}
+      .slip .tot .l{display:block;font-size:6.6pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3f4552}
+      .slip .tot .v{display:block;font-size:25pt;font-weight:800;line-height:1.05;color:${INK};font-variant-numeric:tabular-nums}
+      .slip .tot .s{display:block;font-size:7pt;color:#3a3f4b;white-space:nowrap}
+      .slip table{table-layout:fixed;margin:0;font-size:8.8pt}
+      .slip th{padding:3px 5px 3px} .slip td{padding:3.4px 5px 3.6px;vertical-align:top}
+      .slip td.pl{font-weight:700;color:${INK};text-align:left}
+      .slip td.bw{text-align:left} .slip td.bw b{font-weight:700} .slip td.bw span{color:#3a3f4b}
+      .slip .calc{display:block;font-size:7.2pt;color:#4b5160;margin-top:1.5pt;line-height:1.3}
+      .slip .calc.cap{color:#b42318}
+      .slip td.tn{text-align:left;white-space:nowrap} .slip .tnV{display:inline-block;min-width:10mm;font-weight:750;font-size:10.2pt;color:${INK}} .slip .tnV.cap{color:#b42318}
+      .slip .bar{display:inline-block;vertical-align:1.5pt;width:19mm;height:4.2pt;border-radius:3pt;background:#e6e9ef;overflow:hidden;margin-left:1.5mm}
+      .slip .bar i{display:block;height:100%;background:${INK};border-radius:3pt}
+      .slip .sum{margin-top:2.6mm;padding:2.2mm 3mm;background:#f3f5fa;border-radius:5px;font-size:8pt;color:#1b1d22;line-height:1.4}
+      .slip .sum b{color:${INK}} .slip .sum .lbl{font-size:6.6pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552;margin-right:5px}`;
+  function slipsHtml(sl) {
+    const bar = tn => `<span class="bar"><i style="width:${(Math.max(0, Math.min(15, tn)) / 15 * 100).toFixed(1)}%"></i></span>`;
+    const n = sl.items.length, per = sl.per || 3;
+    return sl.items.map((it, k) => `<section class="slip per${per}${it.name.length > 30 ? ' long' : ''}${k % per ? ' cut' : ''}${k % per === per - 1 && k < n - 1 ? ' pbA' : ''}">
+      <div class="sHd"><div><div class="eye">${esc(sl.eyebrow)}</div><h2>${esc(it.name)}</h2></div>
+        <div class="tot"><span class="l">Notenpunkte</span><span class="v">${it.v}</span><span class="s">${esc(it.exact)} ungerundet · ${esc(it.word)}</span></div></div>
+      <table><colgroup><col style="width:19%"><col style="width:49%"><col style="width:22%"><col style="width:10%"></colgroup>
+        <thead><tr><th class="l">Prüfungsteil</th><th class="l">Bewertung und Rechnung</th><th class="l">Teilnote (0–15)</th><th>Gewicht</th></tr></thead>
+        <tbody>${it.rows.map(x => `<tr><td class="pl">${esc(x.label)}</td>
+          <td class="bw">${x.bew.map(([l, v]) => `<span>${esc(l)}</span><b>${esc(v)}</b>`).join('')}${x.calc ? `<span class="calc${x.sperr ? ' cap' : ''}">${esc(x.calc)}</span>` : ''}</td>
+          <td class="tn"><span class="tnV${x.sperr ? ' cap' : ''}">${esc(x.tnT)}</span>${bar(x.tn)}</td>
+          <td>${esc(String(x.w).replace('.', ','))} %</td></tr>`).join('')}</tbody></table>
+      <div class="sum"><span class="lbl">Gesamt</span>${esc(it.total)}</div></section>`).join('');
   }
 
   /* Fußzeile für jede PDF-Seite (Chromium-Fußzeilenvorlage) */
