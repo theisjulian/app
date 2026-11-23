@@ -95,13 +95,37 @@ function groupedRows(c, fn) { let n = 0; return groupsOf(c).flatMap(g => [...(g.
 function mixedName(list) { const ks = [...new Set(list.map(clsKey).filter(Boolean))].sort(cmpCls).map(k => /^(\d{1,2})(\D+)$/.exec(k)); return ks.length > 1 && ks.every(m => m && m[1] === ks[0][1]) ? ks[0][1] + ks.map(m => m[2]).join('') : ''; }
 
 /* ---------- Dialoge ---------- */
+/* Unterfenster: Das aufrufende Fenster bleibt darunter offen. Schließt man das Unterfenster, ist man wieder dort, wo man war.
+   refresh (optional) baut das aufrufende Fenster danach neu auf (z. B. weil das Unterfenster Zahlen darin geändert hat) –
+   noch nicht gesicherte Eingaben und die Bildlaufposition bleiben dabei erhalten. */
+let AFTER = null;
+/* Alle Fenster schließen, ohne zurückzukehren – wenn eine Schaltfläche woandershin führt (z. B. zum Reiter „Termine“) */
+function closeAll() { AFTER = null; $$('dialog').forEach(d => { d._after = null; if (d.open) d.close(); d.remove(); }); document.body.classList.remove('modal'); }
+async function openSub(parent, open, refresh) {
+  AFTER = refresh ? () => refreshSheet(parent, refresh) : null;
+  try { await open(); } finally { AFTER = null; }
+}
+async function refreshSheet(old, reopen) {
+  if (!old || !old.isConnected) return;
+  const edited = $$('input[id],select[id],textarea[id]', old).filter(e => e.type === 'checkbox' || e.type === 'radio' ? e.checked !== e.defaultChecked
+    : e.tagName === 'SELECT' ? [...e.options].some(o => o.selected !== o.defaultSelected) : e.type !== 'file' && e.value !== e.defaultValue)
+    .map(e => [e.id, e.type === 'checkbox' || e.type === 'radio' ? e.checked : e.value, e.type === 'checkbox' || e.type === 'radio']);
+  const scr = $$('.sheetbody,.setMain', old).map(e => e.scrollTop);
+  AFTER = old._after; old._after = null; old.close(); old.remove();
+  try { await reopen(); } finally { AFTER = null; }
+  const nd = [...document.querySelectorAll('dialog[open]')].pop(); if (!nd) return;
+  nd.classList.add('noAnim');
+  edited.forEach(([id, v, chk]) => { const e = nd.querySelector('#' + CSS.escape(id)); if (e) { if (chk) e.checked = v; else e.value = v; } });
+  $$('.sheetbody,.setMain', nd).forEach((e, i) => { if (scr[i]) e.scrollTop = scr[i]; });
+}
 function sheet({ title, body, ok = 'Sichern', cancel = 'Abbrechen', wide, small, onOk, onOpen, footer = '', allowRO }) {
   if (READONLY && ok && !allowRO) { ok = ''; cancel = 'Schließen'; }
   const dlg = document.createElement('dialog');
   if (wide) dlg.className = 'wide'; if (small) dlg.className = 'small';
   dlg.innerHTML = `<form method="dialog"><div class="sheethead"><button type="button" class="linkish" data-x>${esc(cancel)}</button><h2>${esc(title)}</h2>${ok ? `<button type="submit" class="linkish strong">${esc(ok)}</button>` : '<span></span>'}</div><div class="sheetbody">${body}${footer}</div></form>`;
   document.body.appendChild(dlg);
-  const close = () => { dlg.close(); dlg.remove(); document.body.classList.remove('modal'); };
+  dlg._after = AFTER; AFTER = null;
+  const close = () => { const f = dlg._after; dlg._after = null; dlg.close(); dlg.remove(); if (!document.querySelector('dialog[open]')) document.body.classList.remove('modal'); if (f) f(); };
   dlg.querySelector('[data-x]').onclick = close;
   dlg.addEventListener('cancel', e => { e.preventDefault(); close(); });
   dlg.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); if (!onOk || (await onOk(dlg)) !== false) close(); });
@@ -1201,7 +1225,7 @@ function assessmentSheet(c, a) {
     <div class="importBox"><div><b>Notenliste einlesen</b><p class="hint">Z. B. die „Notenliste (CSV für Excel)“ aus <b>Voce</b> nach einer mündlichen Schulaufgabe. Libretto ordnet die ${up ? 'Notenpunkte' : 'Noten'} über die Namen zu; du kannst sie danach in der Tabelle ändern.</p><p class="hint" id="aImpInfo" hidden></p></div>
       <div class="panelBtns" style="margin:0"><button type="button" class="mini" id="aImpBtn">Datei wählen …</button></div><input type="file" id="aImpFile" accept=".csv,.txt" hidden></div></div>
     ${field('Notiz (nur für dich)', `<textarea id="aNote" rows="2">${esc(a.note || '')}</textarea>`)}
-    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) || R.byParts(a) ? `<button type="button" class="mini accent" id="aPrintD" title="${a.alt && R.byParts(a) ? 'Mit den Teilnoten für Übersetzung und Aufgabenteil' : R.byParts(a) ? 'Mit Inhalt, Sprache und Teilnote je Prüfungsteil' : 'Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe'}">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">${R.byParts(a) ? 'Teilnoten eintragen …' : 'Aufgabenpunkte eintragen …'}</button>` : '') + (R.byParts(a) && !a.alt && upper(c) ? `<button type="button" class="mini accent" id="aSlips" title="Je Schüler ein Abschnitt mit allen Prüfungsteilen und der Rechnung – drei je Seite zum Ausschneiden">Schülerübersichten (PDF)</button>` : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
+    ${isNew ? '' : '<div class="panelBtns"><button type="button" class="mini" id="aPrint">Notenliste drucken (PDF)</button><button type="button" class="mini" id="aWord">als Word</button>' + (R.byTask(a) || R.byParts(a) ? `<button type="button" class="mini accent" id="aPrintD" title="${a.alt && R.byParts(a) ? 'Mit den Teilnoten für Übersetzung und Aufgabenteil' : R.byParts(a) ? 'Mit Inhalt, Sprache und Teilnote je Prüfungsteil' : 'Mit den Punkten jeder Aufgabe je Schüler, Ø Punkten und Lösungsquote je Aufgabe'}">Detailliert (PDF)</button><button type="button" class="mini" id="aWordD">Detailliert als Word</button><button type="button" class="mini" id="aTkOpen">${R.byParts(a) ? 'Teilnoten eintragen …' : 'Aufgabenpunkte eintragen …'}</button>` : '') + (R.byParts(a) && !a.alt && upper(c) ? `<button type="button" class="mini accent" id="aSlips" title="Je Schüler ein Abschnitt mit allen Prüfungsteilen und der Rechnung als Tabelle – zum Ausschneiden">Schülerübersichten (PDF)</button><button type="button" class="mini" id="aSlipsG" title="Dasselbe mit Balken: jede Teilnote auf der Skala 0–15 und wie sie zur Gesamtnote beiträgt">grafisch</button>` : '') + '</div><button type="button" class="danger" id="aDel">Leistungsnachweis löschen</button>'}`;
   const read = d => {
     a.type = d.querySelector('#aType').value; a.title = d.querySelector('#aTitle').value.trim(); a.date = d.querySelector('#aDate').value; a.short = d.querySelector('#aShort').value.trim();
     if (up) a.term = d.querySelector('#aTerm').value;
@@ -1333,7 +1357,7 @@ function assessmentSheet(c, a) {
     $$('[data-ptpl]', dlg).forEach(b => b.onclick = () => { syncParts(); const hv = parts.find(p => p.kind !== 'is'), old = parts.slice();
       parts = R.PARTS_TPL(b.dataset.ptpl).map((p, i) => ({ ...p, id: (old[i] && old[i].kind === p.kind) ? old[i].id : uid(), ...(p.kind !== 'is' && hv && +hv.max > 0 ? { max: hv.max } : {}) }));
       drawParts(); const m = dlg.querySelector('.prow [data-pm]:not([disabled])'); if (m && m.value === '') m.focus(); });
-    dlg.querySelector('#pEnter').onclick = () => { if (commit(dlg) !== false) { close(); partsSheet(c, c.assessments.find(x => x.id === a.id)); } };
+    dlg.querySelector('#pEnter').onclick = () => { if (commit(dlg) !== false) openSub(dlg, () => partsSheet(c, c.assessments.find(x => x.id === a.id)), () => assessmentSheet(c, c.assessments.find(x => x.id === a.id))); };
     dlg.querySelector('#aParts').addEventListener('change', upd);
   }
   ['#aType', '#aCount', '#aPts', '#aTasks'].forEach(s => dlg.querySelector(s).addEventListener('change', upd));
@@ -1492,7 +1516,7 @@ function assessmentSheet(c, a) {
     if (n && !(await ask(`Aufgabe <b>${esc(t.label || '')}</b> entfernen? Die dafür eingetragenen Punkte von ${n} ${n === 1 ? 'Person' : 'Personen'} werden nicht mehr mitgerechnet (die Eingaben bleiben gespeichert).`, 'Entfernen', true))) return;
     tasks = tasks.filter(x => x.id !== id); if (!tasks.length) tasks.push({ id: uid(), label: '', max: '' }); drawTasks();
   });
-  dlg.querySelector('#tEnter').onclick = () => { if (commit(dlg) !== false) { close(); taskSheet(c, c.assessments.find(x => x.id === a.id)); } };
+  dlg.querySelector('#tEnter').onclick = () => { if (commit(dlg) !== false) openSub(dlg, () => taskSheet(c, c.assessments.find(x => x.id === a.id)), () => assessmentSheet(c, c.assessments.find(x => x.id === a.id))); };
   /* Schlüssel gleich mitrechnen, sobald Punkte oder Prozentgrenzen eingegeben sind (solange keine Grenze von Hand geändert wurde) */
   const autoKey = () => { if (!dlg.querySelector('#aTasks').checked && !manualKey && +dlg.querySelector('#aMax').value > 0) suggest(true); };
   /* Punkte geändert: KMK-Raster immer neu; eigene Grenzen nur, solange noch keine eingetragen sind (gespeicherte Grenzen bleiben stehen) */
@@ -1515,11 +1539,12 @@ function assessmentSheet(c, a) {
     if (await ask(`„${esc(a.title || R.TYPES[a.type].label)}“ ${n ? `mit ${n} eingetragenen Ergebnissen ` : ''}löschen?`, 'Löschen', true)) { toTrash('assessment', `${a.title || R.TYPES[a.type].label}${a.date ? ' vom ' + fdate(a.date) : ''} · ${c.name} ${c.subject}`, c.assessments.find(x => x.id === a.id), { courseId: c.id }); c.assessments = c.assessments.filter(x => x.id !== a.id); save(); close(); render(); toast('Gelöscht – 60 Tage lang unter „Sicherung“ wiederherstellbar', 4000); }
   };
   const cur = () => c.assessments.find(x => x.id === a.id);
-  const pd = dlg.querySelector('#aPrintD'); if (pd) { pd.onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'pdf'); dlg.querySelector('#aWordD').onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'docx'); dlg.querySelector('#aTkOpen').onclick = () => { close(); taskSheet(c, cur()); }; }
-  const sl = dlg.querySelector('#aSlips'); if (sl) sl.onclick = async () => { const m = modelSlips(c, cur());
+  const pd = dlg.querySelector('#aPrintD'); if (pd) { pd.onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'pdf'); dlg.querySelector('#aWordD').onclick = () => exportModel(modelAssessment(c, cur(), { detail: true }), 'docx'); dlg.querySelector('#aTkOpen').onclick = () => openSub(dlg, () => taskSheet(c, cur()), () => assessmentSheet(c, cur())); }
+  const slips = async graf => { const m = modelSlips(c, cur(), graf);
     if (!m.slips.items.length) return toast('Noch keine vollständigen Ergebnisse – erst alle Prüfungsteile eintragen');
     await exportModel(m, 'pdf');
     if (m.skipped.length) toast(`Ohne Übersicht (noch nicht vollständig, abwesend oder Nachtermin): ${m.skipped.map(x => x.name).join('; ')}`, 6000); };
+  const sl = dlg.querySelector('#aSlips'); if (sl) { sl.onclick = () => slips(false); dlg.querySelector('#aSlipsG').onclick = () => slips(true); }
   const pr = dlg.querySelector('#aPrint'); if (pr) { pr.onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'pdf'); dlg.querySelector('#aWord').onclick = () => exportModel(modelAssessment(c, c.assessments.find(x => x.id === a.id)), 'docx'); }
 }
 
@@ -2423,7 +2448,7 @@ function semCard(c, s) {
     if (b.dataset.tmedit) semTerminSheet(c, s, t, redrawTm); else exportModel(modelSemProtocol(c, s, t), 'pdf'); });
   q('#smDocPdf').onclick = () => exportModel(modelSemDossier(c, [s]), 'pdf');
   q('#smDocWord').onclick = () => exportModel(modelSemDossier(c, [s]), 'docx');
-  q('#smGrades').onclick = () => { close(); studentSheet(c, s); };
+  q('#smGrades').onclick = () => openSub(dlg, () => studentSheet(c, s));
   if (!(v.thema || '').trim()) q('#smThema').focus();
 }
 
@@ -2870,7 +2895,7 @@ function taskHeadGroups(tk, before, after) {
 /* Schülerübersichten (Oberstufe, Klausur nach Prüfungsteilen): je Schüler ein Abschnitt mit Prüfungsteilen, Teilnoten und nachvollziehbarer Rechnung –
    drei je A4-Seite zum Ausschneiden (wie die Übersichten der ISB-Rechentabelle). Nur Schüler mit vollständigem Ergebnis. */
 const PCT15 = [95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 33, 27, 20];
-function modelSlips(c, a) {
+function modelSlips(c, a, graf) {
   const ps = a.parts, W = ps.reduce((x, p) => x + (+p.w || 0), 0) || 1, lnT = a.title || R.TYPES[a.type].label;
   const pc = p => Math.round((+p.w || 0) / W * 1000) / 10, dz = x => fmt(x, 1).replace(/,0$/, '');
   const WORD = ['ungenügend', 'mangelhaft', 'mangelhaft', 'mangelhaft', 'ausreichend', 'ausreichend', 'ausreichend', 'befriedigend', 'befriedigend', 'befriedigend', 'gut', 'gut', 'gut', 'sehr gut', 'sehr gut', 'sehr gut'];
@@ -2880,19 +2905,19 @@ function modelSlips(c, a) {
     if (!r || r.status || r.v == null || r.exact == null) { if (R.counted(s)) skipped.push(s); return; }
     const rows = ps.map(p => { const v = (r.pp || {})[p.id], n = R.partNote(p, v); if (!n) return null;
       if (p.kind === 'be') { const thr = n.tn ? PCT15[15 - n.tn] : null;
-        return { label: p.label, w: pc(p), tn: n.tn, bew: [['', f2(v)], [` von ${f2(p.max)} BE`, '']], extra: dz(n.lg) + ' %',
+        return { label: p.label, w: pc(p), tn: n.tn, bew: [['', f2(v)], [` von ${f2(p.max)} BE`, '']], extra: dz(n.lg) + ' %', bewG: [['', f2(v)], [` von ${f2(p.max)} BE · ${dz(n.lg)} %`, '']],
           calc: `${f2(v)} ÷ ${f2(p.max)} BE = ${dz(n.lg)} % Lösungsgrad → ${n.tn} ${n.tn === 1 ? 'Punkt' : 'Punkte'} (${thr ? 'ab ' + thr + ' %' : 'unter 20 %'})` }; }
       if (p.kind === 'is') { const raw = Math.round((0.4 * v.i + 0.6 * v.s) * 100) / 100;
         return { label: p.label, w: pc(p), tn: n.tn, sperr: n.sperr, bew: [['Inhalt ', f2(v.i)], [' · Sprache ', f2(v.s)]],
           calc: `0,4 × ${f2(v.i)} (Inhalt) + 0,6 × ${f2(v.s)} (Sprache) = ${dz(raw)}${n.sperr ? ` → Sperrklausel (${+v.i === 0 ? 'Inhalt' : 'Sprache'} 0 Punkte): höchstens 3` : ''}` }; }
       return { label: p.label, w: pc(p), tn: n.tn, bew: [['', f2(v)]], calc: '' };
     }).filter(Boolean);
-    items.push({ name: `${s.first || ''} ${s.last || ''}`.trim() || s.name, v: r.v, exact: fmt(r.exact, 2), word: WORD[r.v],
+    items.push({ name: `${s.first || ''} ${s.last || ''}`.trim() || s.name, v: r.v, exact: fmt(r.exact, 2), ex: +r.exact, word: WORD[r.v],
       rows: rows.map(x => ({ ...x, tnT: dz(x.tn) })),
       total: `${rows.map(x => `${String(x.w).replace('.', ',')} % × ${dz(x.tn)}`).join(' + ')} = ${fmt(r.exact, 2)} → gerundet ${r.v} Notenpunkte (${WORD[r.v]})` });
   }));
-  return { title: `Schülerübersichten · ${lnT}`, file: `${a.date || ''} ${lnT} Schülerübersichten ${c.name} ${c.subject}`.trim(), skipped,
-    slips: { eyebrow: [lnT, c.subject, c.name, a.term || '', a.date ? fdate(a.date) : ''].filter(Boolean).join(' · '), items } };
+  return { title: `Schülerübersichten · ${lnT}`, file: `${a.date || ''} ${lnT} Schülerübersichten${graf ? ' grafisch' : ''} ${c.name} ${c.subject}`.trim(), skipped,
+    slips: { graf: !!graf, eyebrow: [lnT, c.subject, c.name, a.term || '', a.date ? fdate(a.date) : ''].filter(Boolean).join(' · '), items } };
 }
 function modelAssessment(c, a, opt = {}) {
   const up = upper(c), dist = R.distribution(a, c.students, up), unit = up ? 'Punkte' : 'Note';   /* Q12/13: „Punkte“ = Notenpunkte, Rohwerte heißen dort BE */
@@ -3190,7 +3215,7 @@ function deadlineSheet() {
     onOpen: (d, close) => { draw(d);
       d.querySelector('#dlAdd').onclick = () => { sync(d); const k = d.querySelector('#dlAddK').value; if (!k) return; L.push({ id: uid(), kind: k, date: '', close: '', src: 'hand', ...(k === 'own' ? { title: '', g: 'all' } : {}) }); draw(d); };
       const cb = d.querySelector('#dlCal'); if (cb) cb.onclick = () => { sync(d); const keep = D.settings.dl; D.settings.dl = L; const n = mergeDeadlines(detectDeadlines(D.events)); L = D.settings.dl; D.settings.dl = keep; draw(d); toast(n ? 'Aus den Schulterminen ergänzt – mit „Sichern“ übernehmen' : 'Schon alles eingetragen'); };
-      const ib = d.querySelector('#dlImp'); if (ib) ib.onclick = () => { close(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); }; },
+      const ib = d.querySelector('#dlImp'); if (ib) ib.onclick = () => { closeAll(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); }; },
     onOk: d => { sync(d); D.settings.dl = L.filter(x => x.date || x.close || (x.kind === 'own' && x.title));
       if (!D.settings.half1End) { const h = D.settings.dl.find(x => x.kind === 'zz') || D.settings.dl.find(x => x.kind === 'hj'); if (h && dlDue(h)) { D.settings.half1End = dlDue(h); toast('Stichtag „Stand Zwischenzeugnis“: ' + fdate(D.settings.half1End)); } }
       save(); render(); } });
@@ -3216,7 +3241,7 @@ function courseDeadlineSheet(c) {
   sheet({ title: 'Fristen · ' + c.name, ok: '', cancel: 'Schließen', body: `<div class="tlist">${rows || '<p class="hint">Für diesen Kurs ist noch keine Frist eingetragen.</p>'}</div>
     <div class="panelBtns"><button type="button" class="mini" data-dlall>Fristen der Schule bearbeiten …</button></div>
     <p class="hint">Es erscheinen nur die Fristen für ${upper(c) ? 'Q' + esc(String(c.grade)) : 'die Jahrgangsstufen 5–11'}${c.seminar ? ' und das W-Seminar' : ''}. Ob deine Schule ein Zwischenzeugnis oder Zwischenberichte hat, legst du unter „Fristen“ fest – eingetragen wird nur, was es gibt.</p>`,
-    onOpen: (d, close) => { d.querySelector('[data-dlall]').onclick = () => { close(); deadlineSheet(); }; } });
+    onOpen: d => { d.querySelector('[data-dlall]').onclick = () => openSub(d, deadlineSheet, () => courseDeadlineSheet(c)); } });
 }
 const dlDays = x => Math.round((new Date(dlDue(x) + 'T12:00') - new Date(todayISO() + 'T12:00')) / 864e5);
 const dlWhen = n => n === 0 ? 'heute' : n === 1 ? 'morgen' : n < 14 ? 'in ' + n + ' Tagen' : 'in ' + Math.round(n / 7) + ' Wochen';
@@ -3237,7 +3262,7 @@ function kmkMfsCheck() {
   sheet({ title: 'Bitte Notenschlüssel prüfen', ok: 'Verstanden', cancel: 'Später erinnern', body: `<p class="prose" style="margin-top:0">In diesen Leistungsnachweisen der modernen Fremdsprachen ist das <b>KMK-Raster</b> bzw. die Gesamt-BE-Tabelle gewählt (4 ab 40 %). Das ist dort nicht vorgesehen: „ausreichend“ liegt je nach Aufgabe bei 50–60 %, die Grenze zu „ungenügend“ bei 33 % (KMS vom 08.03.2023; Q12/Q13: ISB-Leitfaden 04/2025). Ältere Libretto-Versionen haben das KMK-Raster hier noch angeboten.</p>
     <div class="kmkList">${hits.map(({ c, a }) => `<button type="button" class="kmkItem" data-c="${c.id}" data-a="${a.id}"><b>${esc(c.name)}</b> · ${esc(c.subject || '')}<span>${esc(R.TYPES[a.type] ? R.TYPES[a.type].label : a.type)}${a.title ? ' „' + esc(a.title) + '“' : ''}${a.date ? ' · ' + fdate(a.date) : ''}</span></button>`).join('')}</div>
     <p class="hint">Libretto ändert keine Noten von selbst. Ein Klick öffnet den Leistungsnachweis; dort setzt „Note 4 ab 50 % …“ passende Grenzen ein, und der Notenspiegel zeigt sofort, was sich ändern würde. Falls die Grenzen bewusst so gewählt sind (z. B. Absprache mit der Schule), einfach lassen.</p>`,
-    onOpen: (d, close) => $$('.kmkItem', d).forEach(b => b.onclick = () => { close(); UI.course = b.dataset.c; UI.tab = 'grades'; render(); const c = course(), a = c && c.assessments.find(x => x.id === b.dataset.a); if (a) setTimeout(() => assessmentSheet(c, a), 200); }),
+    onOpen: (d, close) => $$('.kmkItem', d).forEach(b => b.onclick = () => { closeAll(); UI.course = b.dataset.c; UI.tab = 'grades'; render(); const c = course(), a = c && c.assessments.find(x => x.id === b.dataset.a); if (a) setTimeout(() => assessmentSheet(c, a), 200); }),
     onOk: () => { D.settings.notice = { ...(D.settings.notice || {}), kmkMfs: true }; save(); } });
 }
 /* ---------- Schulkalender als Abo (ICS-Link) ----------
@@ -3751,16 +3776,16 @@ async function settingsSheet(tab) {
       const pick = (attr, b) => $$(`[data-${attr}]`, d).forEach(x => { x.setAttribute('aria-pressed', String(x === b)); x.classList.toggle('on', x === b); });
       $$('[data-stab]', d).forEach(b => b.onclick = () => { settingsSheet.last = b.dataset.stab; pick('stab', b); $$('.setPane', d).forEach(x => { x.hidden = x.dataset.pane !== b.dataset.stab; }); d.querySelector('.setMain').scrollTop = 0; });
       d.querySelector('#licBtn').onclick = openLicenses;
-      d.querySelector('#sDl').onclick = () => { close(); deadlineSheet(); };
-      d.querySelector('#sEvImp').onclick = () => { close(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); };
-      d.querySelector('#sEvFeed').onclick = () => { close(); feedSheet(); };
+      d.querySelector('#sDl').onclick = () => openSub(d, deadlineSheet, () => settingsSheet());
+      d.querySelector('#sEvImp').onclick = () => { closeAll(); UI.tab = 'dates'; render(); setTimeout(() => { const f = $('#evFile'); if (f) f.click(); }, 60); };
+      d.querySelector('#sEvFeed').onclick = () => openSub(d, feedSheet, () => settingsSheet());
       d.querySelector('#sEvHow').onclick = () => helpSheet({ topic: 'kalabo' });
       { const nb = d.querySelector('#sEvNow'); if (nb) nb.onclick = async () => { nb.disabled = true; const r = await refreshFeed(true); nb.disabled = false; if (r && !r.ok) toast('Aktualisieren fehlgeschlagen: ' + r.error, 6000); else toast('Schulkalender aktualisiert'); }; }
-      d.querySelector('#sKl').onclick = () => { close(); klassenSheet(); };
-      d.querySelector('#sLdo').onclick = () => { close(); ldoSheet(); };
-      d.querySelector('#abOpen').onclick = () => { close(); openAbout(); };
+      d.querySelector('#sKl').onclick = () => openSub(d, klassenSheet);
+      d.querySelector('#sLdo').onclick = () => openSub(d, ldoSheet, () => settingsSheet());
+      d.querySelector('#abOpen').onclick = () => openAbout();
       $$('[data-ab]', d).forEach(b => b.onclick = async () => { const k = b.dataset.ab;
-        if (k === 'help') { close(); helpSheet(); } else if (k === 'src') { close(); sourcesSheet(); }
+        if (k === 'help') helpSheet(); else if (k === 'src') sourcesSheet();
         else { b.disabled = true; try { await helpSheet({ pdf: true }); } catch (e) { toast('PDF konnte nicht erstellt werden'); } finally { b.disabled = false; } } });
       d.querySelector('#sToBackup').onclick = () => { close(); UI.tab = 'backup'; render(); };
       d.querySelector('#sLockNow').onclick = () => { close(); lockNow(); };
@@ -3929,7 +3954,7 @@ function helpSheet(opts) {
       <li><b>Inhalt + Sprache</b> (Schreiben, Sprachmittlung): je 0–15 Notenpunkte nach den Bewertungsrastern; Teilnote = 40 % Inhalt + 60 % Sprache. Ist Inhalt oder Sprache 0 Punkte, höchstens 3 Punkte (<b>Sperrklausel</b>, rot markiert).</li>
       <li>Ergebnis: Teilnoten nach den Anteilen gemittelt („genau“), dann gerundet. Vorlagen: „Hörverstehen + Sprachmittlung“ (35 / 65 %) und „Textaufgaben + Stellungnahme“ (65 / 35 %) nach dem ISB-Leitfaden 04/2025 (S. 2: 30–40 % / 60–70 %) sowie „Wie im Abitur“ (Hörverstehen 20 %, Schreiben 55 %, Sprachmittlung 25 %). Teile und Anteile änderst du frei (zusammen 100 %). Mehrere Schreibaufgaben = je ein eigener Teil, denn Inhalt/Sprache und Sperrklausel gelten je Aufgabe. Fehlen bei einem BE-Teil die erreichbaren BE, ist das Feld rot umrandet.</li></ul>
     <p>Libretto merkt sich die Prüfungsteile je Fach als Vorlage. Der Ausdruck „Detailliert“ zeigt BE, Inhalt, Sprache und Teilnote je Teil.</p>
-    <p><b>Schülerübersichten (PDF):</b> Im Leistungsnachweis auf „Schülerübersichten (PDF)“ – je Schüler ein Abschnitt zum Ausschneiden, drei je Seite: alle Prüfungsteile mit BE bzw. Inhalt und Sprache, Lösungsgrad, Teilnote, Gewicht und die ganze Rechnung bis zu den Notenpunkten (Sperrklausel rot mit Begründung). Wer noch nicht alle Teile hat, abwesend war oder nachschreibt, bekommt (noch) keine Übersicht – Libretto nennt die Namen.</p>
+    <p><b>Schülerübersichten (PDF):</b> Im Leistungsnachweis auf „Schülerübersichten (PDF)“ – je Schüler ein Abschnitt zum Ausschneiden, drei je Seite: alle Prüfungsteile mit BE bzw. Inhalt und Sprache, Lösungsgrad, Teilnote, Gewicht und die ganze Rechnung bis zu den Notenpunkten (Sperrklausel rot mit Begründung). Wer noch nicht alle Teile hat, abwesend war oder nachschreibt, bekommt (noch) keine Übersicht – Libretto nennt die Namen. Daneben „grafisch“: dieselbe Übersicht mit Balken – jede Teilnote auf der Skala 0–15 und ein Gesamtbalken, der zeigt, wie viel jeder Teil zur Note beiträgt.</p>
     <p><b>Mündliche Schulaufgabe:</b> In der Q-Phase ist genau eine Schulaufgabe mündlich (KMS vom 12.06.2023) – Bewertung z. B. mit Voce, Noten übernehmen (siehe „Voce“ unter Kalender, Termine und Klassen austauschen).</p>
     <p><b>Spät beginnende Fremdsprache:</b> Beim Kurs „Spät beginnende Fremdsprache“ anhaken. Dann bewertest du auch in Q12/13 mit Bewertungseinheiten wie in Jgst. 5–11 – „+ Schreiben / SM“ mit Inhalt 4 + Sprache 6, ohne Sperrklausel, halbe BE erwünscht – und Libretto rechnet über den Notenschlüssel in Notenpunkte um; „ausreichend“ beginnt zwischen 50 % und 60 %, „mangelhaft“ bei 33 % (ISB-Leitfaden, April 2025).</p>${fig('oberstufe', 'Notentabelle Q12: Notenpunkte und Halbjahresleistung')}${fig('pruefungsteile', 'Klausur nach Prüfungsteilen: Hörverstehen in BE, Sprachmittlung mit Inhalt und Sprache')}`],
   ['alt', 'Latein und Griechisch', 'Szenarien nach Fächern', `
@@ -4264,6 +4289,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.4', ['Schülerübersichten jetzt auch grafisch: Ring für die Notenpunkte, jede Teilnote als Balken auf der Skala 0–15 und ein Gesamtbalken, der zeigt, wie viel jeder Teil beiträgt', 'Fenster: Aus einem Unterfenster (z. B. Teilnoten eintragen, Quellenverzeichnis, Fristen) kommst du beim Schließen wieder dorthin zurück, wo du warst – nicht gesicherte Eingaben bleiben erhalten', 'Ausdrucke: Balken in den Schülerübersichten überall exakt gleich dick, Schriftgrößen vereinheitlicht']],
   ['1.1.3', ['Neu: Schülerübersichten für Klausuren nach Prüfungsteilen (Oberstufe) – je Schüler ein Abschnitt mit allen Prüfungsteilen, Teilnoten und der vollständigen Rechnung, drei je A4-Seite zum Ausschneiden']],
   ['1.1.2', ['Touch ID schöner eingebunden: Fingerabdruck-Zeichen direkt im Passwortfeld statt eigener Schaltfläche; der Mac fragt beim Start und nach dem automatischen Sperren von selbst; klarere Abfrage („Libretto“ möchte deine Noten öffnen)', 'Schärfere Bilder in Hilfe und Handbuch, neues Bild „Kurs aus mehreren Klassen“']],
   ['1.1.1', ['Touch ID am Mac: Libretto lässt sich mit dem Fingerabdruck entsperren (freiwillig, unter Einstellungen → Sicherheit) – das Passwort bleibt immer gültig', 'Notentabelle: Noten stehen exakt untereinander – der Hinweis-Punkt bei gefährdeten Schülern verschiebt die Note nicht mehr', 'Übersicht: Notenverteilung je Kurs als schmaler Farbbalken, beide Spalten gleich hoch, klarere Hinweise', 'Farbwelten aufgeräumt: acht statt elf (Klar, Terrakotta und Salbei waren fast gleich wie Apple, Glut und Wald – wer sie gewählt hatte, bekommt automatisch die ähnliche)', 'Schalter im Dunkelmodus besser erkennbar', 'Neuer Leistungsnachweis: In Fächern mit Schulaufgaben ist „Schulaufgabe“ vorausgewählt, bis die Mindestzahl erreicht ist', 'Hinweis, wenn das Datum eines Leistungsnachweises in die Ferien, auf einen Feiertag oder ein Wochenende fällt', 'W-Seminar und 13/2 ohne Schulaufgabe: keine leere Spalte „Ø SA“ mehr', 'Zweigeteilte Schulaufgabe (Latein, Griechisch): leere Felder zeigen „…“ – Klick öffnet die Eingabe der Teile', 'Hilfe und Handbuch überarbeitet: 18 aktuelle Bildschirmfotos, neue Funktionen beschrieben, Voce statt Viva; Quellenverzeichnis ergänzt (GSO § 19, Feiertagsgesetz), alle Links am 21.11.2026 geprüft', 'Handbuch als PDF speichern klappt jetzt auch mit vielen Bildern (vorher konnte es bei großen Ausdrucken scheitern)']],
@@ -4297,9 +4323,9 @@ async function openAbout() {
   d.querySelector('.abx').onclick = close;
   d.addEventListener('click', e => { if (e.target === d) close(); });
   d.addEventListener('cancel', e => { e.preventDefault(); close(); });
-  d.querySelector('#abLic').onclick = () => { close(); openLicenses(); };
-  d.querySelector('#abHelp').onclick = () => { close(); if (D) helpSheet(); };
-  d.querySelector('#abSrc').onclick = () => { close(); sourcesSheet(); };
+  d.querySelector('#abLic').onclick = () => openLicenses();
+  d.querySelector('#abHelp').onclick = () => { if (D) helpSheet(); else close(); };
+  d.querySelector('#abSrc').onclick = () => sourcesSheet();
   d.showModal();
 }
 $('#aboutBtn').innerHTML = window.THEISAPPS_LOGO;
