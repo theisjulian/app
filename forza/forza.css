@@ -585,3 +585,19 @@ html[data-theme][data-mode][data-font] .hero .badge{background:color-mix(in srgb
 html[data-theme][data-mode][data-font] .hero .badge.ss,html[data-theme][data-mode][data-font] .badge.ss{background:var(--a);color:var(--ai,#fff)}
 html[data-theme=graphit] .hero{--hero-mute:#aab3c4}
 html[data-theme=graphit][data-mode][data-font] .hero .badge.ss{background:var(--acc);color:var(--acc-ink,#12160a)}
+
+/* ---------- Miami: Sonnenuntergang am Strand. Neon-Pink, Türkis, Abendlila, Sonne mit Streifen und Palme in der Vorschlagskarte ---------- */
+html[data-theme=miami]{--acc:#ff3d8b;--acc-ink:#2b0416;--acc-l:#d61f6f;--grad:linear-gradient(120deg,#ffb347 0%,#ff5e7e 36%,#ff2d95 62%,#8b3dff 100%);--hue:340;--teal:#2ee6d6}
+html[data-theme=miami][data-mode=dark]{--bg:#0d0718;--bg2:#140b24;--card:#1b1030;--card2:#26173f;--line:#33204f;--text:#fff0f7;--mute:#b9a4cf;--hero1:#3a0f5c;--hero2:#1a0630;--heroline:#4a1f6b;--glow:radial-gradient(900px 520px at 90% -10%,rgba(255,61,139,.32),transparent 60%),radial-gradient(700px 420px at -10% 35%,rgba(46,230,214,.14),transparent 60%),radial-gradient(700px 420px at 50% 115%,rgba(139,61,255,.22),transparent 60%)}
+html[data-theme=miami][data-mode=light]{--bg:#fff3ec;--bg2:#fffaf6;--card:#ffffff;--card2:#ffe9f0;--line:#f8d6e2;--text:#2a0d3a;--mute:#7c5a86;--hero1:#3a0f5c;--hero2:#1a0630;--heroline:#3a0f5c;--glow:radial-gradient(900px 500px at 90% -10%,rgba(255,61,139,.16),transparent 60%),radial-gradient(700px 420px at -10% 35%,rgba(46,230,214,.12),transparent 60%)}
+html[data-theme=miami] .hero{background:linear-gradient(172deg,#2a0a4a 0%,#4a1170 38%,#9c1f78 74%,#ff5a5f 102%);border-color:rgba(255,120,180,.35);box-shadow:0 22px 60px -30px #ff3d8b}
+html[data-theme=miami] .hero:after{inset:auto;top:-58px;right:-44px;width:200px;height:200px;border-radius:50%;background:linear-gradient(180deg,#ffd76b 0%,#ff8a3d 45%,#ff2d95 100%);opacity:.36;animation:none;
+  -webkit-mask:linear-gradient(#000 0 50%,transparent 0),repeating-linear-gradient(180deg,#000 0 11px,transparent 11px 16px);mask:linear-gradient(#000 0 50%,transparent 0),repeating-linear-gradient(180deg,#000 0 11px,transparent 11px 16px)}
+html[data-theme=miami] .hero:before{content:"";position:absolute;top:30px;right:-14px;width:96px;height:132px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 160'%3E%3Cpath d='M70 160c4-38 2-72-8-104' stroke='%231a0630' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3Cg fill='%231a0630'%3E%3Cpath d='M62 56C50 40 28 36 8 46c18-4 36 0 50 14z'/%3E%3Cpath d='M62 56C58 34 42 20 20 16c18 8 30 22 36 42z'/%3E%3Cpath d='M62 56c6-22 22-34 44-34-20 6-32 18-38 38z'/%3E%3Cpath d='M62 56c16-10 38-10 54 4-20-8-36-4-50 2z'/%3E%3Cpath d='M62 56C44 52 24 62 16 82c10-14 26-22 44-22z'/%3E%3Cpath d='M62 56c16 4 30 18 32 38-8-16-20-26-36-32z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center/contain;opacity:.6;pointer-events:none;z-index:0}
+html[data-theme=miami] .hero .h1,html[data-theme=miami] .hero h1{font-style:italic;letter-spacing:-.02em;text-shadow:0 0 22px rgba(255,61,139,.6),0 2px 0 rgba(0,0,0,.25)}
+html[data-theme=miami] .hero .eyebrow{color:var(--teal)}
+html[data-theme=miami][data-mode][data-font] .hero .badge.ss{background:var(--teal);color:#06201f}
+html[data-theme=miami] .h1{letter-spacing:-.025em}
+html[data-theme=miami] .bnav button.on{color:var(--a)}
+html[data-theme=miami][data-mode=dark] .card{border-color:rgba(255,61,139,.16)}
+html[data-theme=miami] .fz-go{box-shadow:0 10px 30px -12px #ff3d8b,0 0 0 1px rgba(255,255,255,.08) inset}
