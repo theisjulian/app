@@ -559,3 +559,29 @@ html.kb .sx-list{padding-bottom:12px}
 .sx-empty{padding:28px 6px;text-align:center;color:var(--mute);line-height:1.5}
 html[data-theme] .sx-box input{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0;padding:0}
 html[data-theme=glas] .modal.full>div{background:var(--bg2)!important}
+
+/* Supersätze: kräftiges Etikett (auch im hellen Modus lesbar), Leiste im Fokus, Gruppen in der Übersicht */
+.badge.ss{display:inline-block;margin-left:6px;background:var(--a);color:var(--ai,#fff);vertical-align:2px}
+html[data-theme][data-mode] .badge.ss{background:var(--a);color:var(--ai,#fff)}
+.ss-strip{margin:8px 0 4px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--a) 12%,var(--card));border:1px solid color-mix(in srgb,var(--a) 45%,transparent)}
+.ss-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;margin:0 2px 8px}
+.ss-top b{color:var(--text)}.ss-top span{color:var(--mute);font-size:12px}
+.ss-row{display:flex;gap:6px}
+.ss-m{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:8px;border-radius:12px;background:var(--card2);text-align:left;color:var(--text);border:1.5px solid transparent}
+.ss-m.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 18%,var(--card2))}
+.ss-m.ok{opacity:.55}
+.ss-m i{flex:none;width:24px;height:24px;border-radius:99px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px;background:var(--line);color:var(--text)}
+.ss-m.on i{background:var(--a);color:var(--ai,#fff)}
+.ss-m span{min-width:0}
+.ss-m b{display:block;font-size:13px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ss-m small{display:block;font-size:11px;color:var(--mute);margin-top:1px}
+.ss-grp{border:1.5px solid color-mix(in srgb,var(--a) 55%,transparent);border-radius:16px;padding:2px 4px 4px;margin:8px 0;background:color-mix(in srgb,var(--a) 6%,transparent)}
+.ss-grp .it{border-top:0!important}
+.ss-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--a);padding:8px 10px 0}
+.ss-join{display:block;margin:2px auto;padding:6px 12px;border-radius:99px;font-size:13px;color:var(--a);border:1px dashed color-mix(in srgb,var(--a) 60%,transparent)}
+.ss-join.on{color:var(--mute);border-color:var(--line)}
+/* Etiketten in der dunklen Vorschlagskarte: vorher helle Pille mit grauer Schrift, kaum lesbar */
+html[data-theme][data-mode][data-font] .hero .badge{background:color-mix(in srgb,currentColor 16%,transparent);color:inherit}
+html[data-theme][data-mode][data-font] .hero .badge.ss,html[data-theme][data-mode][data-font] .badge.ss{background:var(--a);color:var(--ai,#fff)}
+html[data-theme=graphit] .hero{--hero-mute:#aab3c4}
+html[data-theme=graphit][data-mode][data-font] .hero .badge.ss{background:var(--acc);color:var(--acc-ink,#12160a)}

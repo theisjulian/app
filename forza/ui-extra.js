@@ -406,16 +406,38 @@
     const sr = await F.sb.from('sets').insert(rows); if (sr.error) throw sr.error;
     F.closeModal(); await F.load(); F.ui.tr.ei = F.openSession().session_exercises.length - 1; F.render(); window.scrollTo(0, 0); F.toast('Hinzugefügt · zählt für künftige Vorschläge');
   };
-  F.acts.trOverview = () => {
-    const s = F.openSession(); if (!s) return; const exs = s.session_exercises, cur = F.ui.tr.ei;
-    const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
+  // Übersicht: Supersätze als eingerahmte Gruppe; im Bearbeiten-Modus zwischen zwei Übungen verbinden oder lösen
+  const troList = (s) => {
+    const exs = s.session_exercises, cur = F.ui.tr.ei, ed = F.ui.ssEdit;
     const row = (e, i) => { const ex = F.S.exById[e.exercise_id] || { name: '?' }, d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length, on = i === cur;
       return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;padding:12px 10px;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
+    let h = '', i = 0;
+    while (i < exs.length) {
+      const g = F.ssGroup(s, exs[i]); let k = 1; if (g.length > 1 && g[0] === exs[i]) while (k < g.length && g.includes(exs[i + k])) k++;
+      const part = exs.slice(i, i + k).map((e, j) => (j ? (ed ? `<button class="ss-join on" data-act="ssLink" data-i="${i + j - 1}">Lösen</button>` : '') : '') + row(e, i + j)).join('');
+      h += k > 1 ? `<div class="ss-grp"><div class="ss-lbl">${k === 2 ? 'Supersatz' : 'Dreiersatz'} · im Wechsel</div>${part}</div>` : part;
+      i += k; if (ed && i < exs.length) h += `<button class="ss-join" data-act="ssLink" data-i="${i - 1}">+ Supersatz mit nächster</button>`;
+    }
+    return h;
+  };
+  F.acts.trOverview = () => {
+    const s = F.openSession(); if (!s) return; const exs = s.session_exercises; F.ui.ssEdit = false;
+    const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
     F.modal(`<div class="row between"><div class="h2">Dein Training</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
       <div class="small mute" style="margin:2px 0 8px">${dn} von ${tot} Sätzen · ${exs.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length} von ${exs.length} Übungen erledigt</div>
       <div style="height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:${pct}%;background:var(--grad,var(--a));border-radius:99px"></i></div>
-      <div class="list" style="max-height:52vh;overflow:auto">${exs.map(row).join('')}</div>
-      <button class="btn block" style="margin-top:12px" data-act="addExAsk">+ Übung hinzufügen</button>`);
+      <div class="list" id="tro-list" style="max-height:52vh;overflow:auto">${troList(s)}</div>
+      <div class="row gap" style="margin-top:12px"><button class="btn grow" data-act="ssEdit" id="ss-ed">Supersätze bilden</button><button class="btn grow" data-act="addExAsk">+ Übung</button></div>`);
+  };
+  const troRedraw = () => { const s = F.openSession(), l = document.getElementById('tro-list'), b = document.getElementById('ss-ed'); if (l && s) l.innerHTML = troList(s); if (b) b.textContent = F.ui.ssEdit ? 'Fertig' : 'Supersätze bilden'; };
+  F.acts.ssEdit = () => { F.ui.ssEdit = !F.ui.ssEdit; troRedraw(); };
+  // Verbindet Übung i mit i+1 (höchstens 3 je Gruppe) oder trennt die Gruppe an dieser Stelle
+  F.acts.ssLink = async (t) => {
+    const s = F.openSession(), exs = s.session_exercises, i = Number(t.dataset.i), a = exs[i], b = exs[i + 1]; if (!a || !b) return;
+    const ga = F.ssGroup(s, a), gb = F.ssGroup(s, b);
+    if (ga.includes(b)) await F.ssApply([ga.filter((x) => exs.indexOf(x) <= i), ga.filter((x) => exs.indexOf(x) > i)]);
+    else { const g = [...ga, ...gb]; if (g.length > 3) { F.toast('Höchstens 3 Übungen pro Supersatz.'); return; } await F.ssApply([g]); }
+    troRedraw(); F.render();
   };
   F.acts.trJump = (t) => { F.closeModal(); F.acts.goEx(t); };
 
