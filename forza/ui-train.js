@@ -12,7 +12,7 @@
     const sg0 = F.suggestion(); if (sg0.rest || sg0.empty || !sg0.items.length) return F.toast('Heute kein Vorschlag möglich.');
     const sg = sg0; // Haltungsblock wird am Ende angeboten, nicht fest eingeplant
     const sess = await F.insert('sessions', { session_date: F.today(), kind: 'kraft', title: sg.title, split_day: sg.split_day, status: 'geplant', source: 'manuell', form: F.ls.get('form-' + F.today(), 'normal'), planned_minutes: sg.minutes, equipment_profile_id: F.items().id, rule_version: sg.rule_version, started_at: new Date().toISOString() });
-    const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: it.load_text + (it.pair_with ? ' · Superset mit «' + it.pair_with + '»: im Wechsel, Pause erst nach beiden.' : '') }))).select();
+    const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: F.ssWhy(it.load_text, it.ss || (it.pair_with ? [it.pair_with] : [])) }))).select();
     if (ses.error) throw ses.error;
     const rows = [];
     ses.data.forEach((se, i) => { const it = sg.items[i]; for (let n = 1; n <= it.sets; n++) rows.push({ session_exercise_id: se.id, set_no: n, load_kg: it.load_kg, load_per_hand: it.load_convention === 'je_hand' }); });
@@ -46,7 +46,15 @@
     const reps = st.reps ?? (prev && prev.reps !== null && Number(prev.load_kg) === Number(load) ? prev.reps : E.repTarget(range, E.lastWorkSets(F.S.sessions, ex.id, ex.load_convention === 'unterstuetzt'), load, st.set_no));
     return { load_kg: load, reps, timed: false };
   };
-  const partnerOf = (s, se) => { const m = /Superset mit «(.+?)»/.exec(se.why || ''); return m ? s.session_exercises.find((x) => x !== se && (F.S.exById[x.exercise_id] || {}).name === m[1]) || null : null; };
+  /* Supersätze: 2–3 Übungen im Wechsel, Pause erst nach der Runde. Gespeichert im Hinweistext der Übung
+     („Superset mit «A» und «B»“): braucht keine neue Spalte und funktioniert offline über die Warteschlange. */
+  const SSRE = /(?:\s*·\s*)?Superset mit ((?:«[^»]+»(?:,\s*|\s+und\s+)?)+)(?::[^.]*\.)?/;
+  const exName = (se) => (F.S.exById[se.exercise_id] || {}).name;
+  const ssNames = (se) => { const m = SSRE.exec(se.why || ''); return m ? [...m[1].matchAll(/«([^»]+)»/g)].map((x) => x[1]) : []; };
+  F.ssGroup = (s, se) => { const ns = ssNames(se); if (!ns.length) return [se]; const g = s.session_exercises.filter((x) => x === se || ns.includes(exName(x))); return g.length > 1 ? g : [se]; };
+  F.ssWhy = (why, partners) => { const base = (why || '').replace(SSRE, '').trim(); return partners.length ? (base ? base + ' · ' : '') + 'Superset mit ' + partners.map((n) => '«' + n + '»').join(' und ') + ': im Wechsel, Pause erst nach ' + (partners.length > 1 ? 'allen' : 'beiden') + '.' : (base || null); };
+  // groups: Liste von Gruppen (je 1–3 Übungen); schreibt die Hinweise nur, wenn sie sich ändern
+  F.ssApply = async (groups) => { for (const g of groups) for (const se of g) { const w = F.ssWhy(se.why, g.filter((x) => x !== se).map(exName)); if (w !== (se.why || null)) { se.why = w; await F.save('session_exercises', se.id, { why: w }); } } };
   /* nächste Übung mit offenen Sätzen ab der aktuellen; übersprungene erst, wenn sonst nichts mehr offen ist */
   const nextOpen = (s, from) => {
     const exs = s.session_exercises, n = exs.length, skip = F.ui.tr.skip;
@@ -153,19 +161,27 @@
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
     const wu = warmupFor(s, se, ex); if (wu.length && !(warmState(s).d || {})[se.id]) return topBar(s, dnEx) + warmScreen(s, se, ex, wu);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung (weniger = schwerer)' : 'kg';
-    const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
+    const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, skipped = F.ui.tr.skip.includes(se.id);
     const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="none" readonly data-pad="1" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
     return topBar(s, dnEx) + `<div class="fz${enter(st.id)}">
-      <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}${pair ? ' · Superset mit ' + esc((F.S.exById[pair.exercise_id] || {}).name || '') : ''}</div>
+      <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}</div>${ssStrip(s, se)}
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
+      ${timed ? `<button class="btn block fz-cd" data-act="cdStart" data-s="${st.id}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg> Countdown starten${perSide ? ' · je Seite' : ''}</button>` : ''}
       <div class="fz-plates" id="fz-plates" data-ex="${ex.id}">${F.platesTxt(ex, Number(tg.load_kg))}</div>
       ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : (() => { const lt = lastTime(ex); return `<div class="small mute">${lt ? esc(lt) : 'Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.'}</div>`; })()}
       <button class="btn pri block fz-go" data-act="doneSet" data-s="${st.id}">${F.icon.check.replace('<svg', '<svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"')} Geschafft</button>
       ${pf.rir ? `<div class="fz-feel" role="group" aria-label="Geschafft mit Gefühl"><span>oder gleich mit Gefühl:</span><button data-act="doneSet" data-s="${st.id}" data-rir="4">Leicht</button><button data-act="doneSet" data-s="${st.id}" data-rir="2">Passt</button><button data-act="doneSet" data-s="${st.id}" data-rir="0">Am Limit</button></div>` : ''}
       <div class="fz-tools"><button data-act="skipEx" data-id="${se.id}">${skipped ? 'Später' : 'Überspringen'}</button><button data-act="help" data-id="${se.exercise_id}">Hilfe</button><button data-act="swapAsk" data-id="${se.id}">Ersetzen</button><button data-act="addSet" data-id="${se.id}">+ Satz</button><button class="bad" data-act="painAsk" data-id="${se.id}">Schmerz</button></div>
       ${(() => { const prev = se.sets.filter((x) => x.done); return prev.length ? `<div class="small mute" style="margin-top:10px">Heute: ${setLine(se)}</div>` : ''; })()}</div>`;
+  };
+  // Supersatz-Leiste: alle Übungen der Runde nebeneinander, die aktuelle hervorgehoben, antippen springt hin
+  const ssStrip = (s, se) => {
+    const g = F.ssGroup(s, se); if (g.length < 2) return '';
+    const R = Math.max(...g.map((x) => x.sets.length)), op = g.filter(isOpen), r = Math.min(R, (op.length ? Math.min(...op.map(doneN)) : R - 1) + 1);
+    return `<div class="ss-strip"><div class="ss-top"><b>${g.length === 2 ? 'Supersatz' : 'Dreiersatz'} · Runde ${r} von ${R}</b><span>Pause erst nach ${g.length === 2 ? 'beiden' : 'allen'}</span></div>
+      <div class="ss-row">${g.map((x, k) => `<button class="ss-m${x === se ? ' on' : ''}${isOpen(x) ? '' : ' ok'}" data-act="goEx" data-i="${s.session_exercises.indexOf(x)}"><i>${isOpen(x) ? k + 1 : '✓'}</i><span><b>${esc(exName(x) || '?')}</b><small>${doneN(x)}/${x.sets.length} Sätze</small></span></button>`).join('')}</div></div>`;
   };
   const nextPreview = (s) => {
     const i = nextOpen(s, F.ui.tr.ei || 0); if (i < 0) return '<div class="fz-next"><span class="eyebrow">Als Nächstes</span><b>Training beenden</b></div>';
@@ -257,18 +273,62 @@
     const nxt = f.se.sets.find((x) => !x.done);
     if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.save('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
     let rest = true;
-    if (F.focusOn()) {
-      // Superset: erst beide Übungen im Wechsel, Pause danach. Sonst weiter in derselben Übung bzw. zur nächsten offenen.
-      const s = f.s, p = partnerOf(s, f.se), idx = (e) => s.session_exercises.indexOf(e);
-      if (p && isOpen(p) && doneN(p) < doneN(f.se)) { F.ui.tr.ei = idx(p); rest = false; }
-      else if (p && isOpen(p) && (!isOpen(f.se) || doneN(p) < doneN(f.se) || idx(p) < idx(f.se))) F.ui.tr.ei = idx(p);
-      else if (!isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
-      if (!s.session_exercises.some(isOpen)) rest = false;
+    {
+      // Supersatz: reihum durch die Gruppe ohne Pause, Pause erst nach der Runde (auch in der Listenansicht). Sonst im Fokus weiter zur nächsten offenen.
+      const s = f.s, g = F.ssGroup(s, f.se), idx = (e) => s.session_exercises.indexOf(e);
+      if (g.length > 1) {
+        const k = g.indexOf(f.se), d = doneN(f.se); let nx = null;
+        for (let j = 1; j < g.length && !nx; j++) { const m = g[(k + j) % g.length]; if (isOpen(m) && doneN(m) < d) nx = m; }
+        if (nx) { F.ui.tr.ei = idx(nx); rest = false; }
+        else { const o = g.filter(isOpen).sort((a, b) => doneN(a) - doneN(b) || idx(a) - idx(b))[0]; if (o) F.ui.tr.ei = idx(o); else if (F.focusOn()) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; } }
+      } else if (F.focusOn() && !isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
+      if (F.focusOn() && !s.session_exercises.some(isOpen)) rest = false;
     }
     if (rest) { const P = E.params(F.S.params), sec = (F.therapyRest && F.therapyRest(f.s, f.se)) || P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
     else F.rest = null;
     F.render(); F.pulseSet && F.pulseSet(st.id); if (F.rest) F.tick(); window.scrollTo(0, 0);
   };
+  /* ---------- Countdown für Halteübungen (Unterarmstütz, Seitstütz, Tragen …) ----------
+     3 s Vorlauf, dann die Zielzeit; je Seite mit 5 s zum Wechseln. Am Ende wird der Satz mit der gehaltenen Zeit abgehakt
+     und die Pause startet. „Fertig“ zählt die bisher gehaltene Zeit, „Abbrechen“ speichert nichts. */
+  let CD = null;
+  const cdStop = () => { if (CD) { cancelAnimationFrame(CD.raf); CD = null; } const o = document.getElementById('cd'); if (o) o.remove(); };
+  F.acts.cdStart = (t) => {
+    const f = findSet(t.dataset.s); if (!f) return; const ex = F.S.exById[f.se.exercise_id] || {}, { perSide } = kindOf(ex);
+    const inp = document.querySelector(`input[data-f=seconds][data-s="${f.st.id}"]`), secs = Math.max(5, Math.round(F.num ? F.num(inp && inp.value) || F.setTarget(f.se, f.st).seconds || 30 : 30));
+    F.sound.unlock(); if (F.wake) F.wake(true); cdStop();
+    const ph = [{ k: 'ready', d: 3, l: 'Bereit machen' }];
+    if (perSide) ph.push({ k: 'work', d: secs, l: 'Linke Seite' }, { k: 'switch', d: 5, l: 'Seite wechseln' }, { k: 'work', d: secs, l: 'Rechte Seite' }); else ph.push({ k: 'work', d: secs, l: 'Halten' });
+    const o = document.createElement('div'); o.id = 'cd'; o.className = 'cd'; o.setAttribute('role', 'timer');
+    o.innerHTML = `<div class="cd-in"><div class="cd-ex">${esc(ex.name || '')}</div><div class="cd-ph" id="cd-ph"></div>
+      <div class="cd-ring"><svg viewBox="0 0 120 120"><circle class="cd-bg" cx="60" cy="60" r="52"/><circle class="cd-fg" id="cd-fg" cx="60" cy="60" r="52" pathLength="100"/></svg><div class="cd-n" id="cd-n"></div></div>
+      <div class="cd-btns"><button class="btn" data-act="cdPause" id="cd-p">Pause</button><button class="btn pri" data-act="cdDone">Fertig</button></div><button class="cd-x" data-act="cdCancel">Abbrechen</button></div>`;
+    document.body.appendChild(o);
+    CD = { f, ph, i: 0, end: Date.now() + ph[0].d * 1000, held: 0, paused: 0, last: null, secs };
+    const tick = () => {
+      if (!CD) return; const c = CD, p = c.ph[c.i], now = c.paused || Date.now(), left = Math.max(0, (c.end - now) / 1000), n = Math.ceil(left);
+      document.getElementById('cd-ph').textContent = p.l; document.getElementById('cd-n').textContent = p.k === 'ready' ? (n || 'Los') : n;
+      o.dataset.k = p.k; document.getElementById('cd-fg').style.strokeDashoffset = String(100 - (p.k === 'ready' ? 100 : (left / p.d) * 100));
+      if (n !== c.last && !c.paused) { c.last = n; if (n > 0 && n <= 3) { F.sound.beep(1, p.k === 'work' ? 660 : 520); try { navigator.vibrate && navigator.vibrate(20); } catch {} } }
+      if (left <= 0 && !c.paused) {
+        if (p.k === 'work') c.held += p.d;
+        c.i++; c.last = null;
+        if (c.i >= c.ph.length) { F.sound.beep(2, 880); try { navigator.vibrate && navigator.vibrate([120, 60, 160]); } catch {} return cdFinish(c.secs); }
+        F.sound.beep(1, 980); if (c.ph[c.i].k === 'switch') F.sound.say && F.sound.say('Seite wechseln');
+        c.end = Date.now() + c.ph[c.i].d * 1000;
+      }
+      c.raf = requestAnimationFrame(tick);
+    };
+    tick();
+  };
+  const cdFinish = async (held) => { const c = CD; if (!c) return; const st = c.f.st; cdStop(); st.seconds = Math.max(1, Math.round(held)); await F.acts.doneSet({ dataset: { s: st.id } }); };
+  F.acts.cdPause = () => { const c = CD; if (!c) return; const b = document.getElementById('cd-p');
+    if (c.paused) { c.end += Date.now() - c.paused; c.paused = 0; b.textContent = 'Pause'; } else { c.paused = Date.now(); b.textContent = 'Weiter'; } };
+  F.acts.cdDone = () => { const c = CD; if (!c) return; const p = c.ph[c.i], now = c.paused || Date.now();
+    const cur = p.k === 'work' ? p.d - Math.max(0, (c.end - now) / 1000) : 0, sides = c.ph.slice(0, c.i).filter((x) => x.k === 'work').length + (cur > 0 ? 1 : 0), held = (c.held + cur) / Math.max(1, sides);
+    if (held < 1) return cdStop(); cdFinish(held); };
+  F.acts.cdCancel = () => cdStop();
+
   /* Nachtragen in einem Rutsch: alle offenen Sätze der Übung mit den vorgeschlagenen Werten abhaken */
   F.acts.doneAll = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), ex = F.S.exById[se.exercise_id] || {};
@@ -357,7 +417,10 @@
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);
-    await F.update('session_exercises', se.id, { exercise_id: t.dataset.ex, replaced_from: se.exercise_id, why: 'Ersetzt, Last bitte neu einschätzen.' });
+    const g = F.ssGroup(s, se), oldN = exName(se), newN = (F.S.exById[t.dataset.ex] || {}).name;
+    await F.update('session_exercises', se.id, { exercise_id: t.dataset.ex, replaced_from: se.exercise_id, why: F.ssWhy('Ersetzt, Last bitte neu einschätzen.', g.filter((x) => x !== se).map(exName)) });
+    // Supersatz bleibt bestehen: die Partner verweisen ab jetzt auf die neue Übung
+    for (const p of g) if (p !== se && p.why) await F.update('session_exercises', p.id, { why: p.why.split('«' + oldN + '»').join('«' + newN + '»') });
     for (const st of se.sets.filter((x) => !x.done)) await F.update('sets', st.id, { load_kg: null });
     F.closeModal(); await F.load(); F.render();
   };

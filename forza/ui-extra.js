@@ -16,7 +16,7 @@
   F.acts.rerollReset = () => { const t = F.today(); F.ls.set('variant-' + t, 0); F.ls.set('avoid-' + t, []); F.ls.set('excl-' + t, []); F.render(); };
 
   /* ---------- Einstellungen: Darstellung sofort sichtbar ---------- */
-  const THEMES = [['graphit', 'Graphit', '#c8f542', '#141922'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f'], ['tag', 'Tageslicht', '#ffb36b', '#2a6fd8'], ['apple', 'Apple', '#ff375f', '#ff9f0a'], ['glas', 'Liquid Glass', '#a8c4ff', '#5ac8fa']];
+  const THEMES = [['miami', 'Miami', '#ffb347', '#ff2d95'], ['neon', 'Neon', '#ff4fb0', '#6a3ff0'], ['laguna', 'Laguna', '#2cc4d0', '#0b5f69'], ['klar', 'Klar', '#4f9bff', '#0a64e0'], ['glut', 'Glut', '#ffb067', '#ef4f1c'], ['wald', 'Wald', '#6fe29b', '#12853f'], ['tag', 'Tageslicht', '#ffb36b', '#2a6fd8'], ['apple', 'Apple', '#ff375f', '#ff9f0a'], ['glas', 'Liquid Glass', '#a8c4ff', '#5ac8fa']];
   const FONTS = [['standard', 'Standard', 'Geist'], ['rund', 'Rund', 'Nunito'], ['klassisch', 'Klassisch', 'Lora'], ['technisch', 'Technisch', 'Space Grotesk'], ['lesbar', 'Gut lesbar', 'Atkinson Hyperlegible'], ['geometrisch', 'Geometrisch', 'Jost']];
   const lookCards = () => {
     const l = F.look();
@@ -380,10 +380,13 @@
     F.modal(`<div class="sx-head"><div><div class="h2">${o.title}</div>${o.sub ? `<div class="small mute">${o.sub}</div>` : ''}</div><button class="sx-done" data-act="close">Fertig</button></div>
       <label class="sx-box">${SVG_Q}<input id="sx-q" type="search" enterkeyhint="search" placeholder="Name, Muskel oder Gerät" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-in="sxq" data-live="1"><button type="button" class="sx-clr" data-act="sxClr" aria-label="Suche leeren" hidden>✕</button></label>
       <div class="sx-chips" data-noswipe>${chips}</div><div id="sx-list" class="sx-list">${o.list('', g0[0])}</div>`, { full: true });
-    const l = document.getElementById('sx-list'); let y = null;
-    // Beim Wischen durch die Liste die Tastatur einklappen (wie in iOS-Apps); ein Tipp bewegt nichts und bleibt ein Tipp
-    l.addEventListener('touchstart', (e) => { y = e.touches[0].clientY; }, { passive: true });
-    l.addEventListener('touchmove', (e) => { if (y !== null && Math.abs(e.touches[0].clientY - y) > 10 && document.activeElement && document.activeElement.id === 'sx-q') { document.activeElement.blur(); y = null; } }, { passive: true });
+    const l = document.getElementById('sx-list'); let y = null, moved = false, lastScroll = 0;
+    // Beim Wischen durch die Liste die Tastatur einklappen (wie in iOS-Apps)
+    l.addEventListener('touchstart', (e) => { y = e.touches[0].clientY; moved = Date.now() - lastScroll < 300; }, { passive: true });
+    l.addEventListener('touchmove', (e) => { if (y === null || Math.abs(e.touches[0].clientY - y) <= 8) return; moved = true; if (document.activeElement && document.activeElement.id === 'sx-q') document.activeElement.blur(); }, { passive: true });
+    l.addEventListener('scroll', () => { lastScroll = Date.now(); }, { passive: true });
+    // Nur ein echter Tipp wählt aus: nicht nach Wischen, nicht beim Anhalten einer laufenden Liste
+    l.addEventListener('click', (e) => { if (moved || Date.now() - lastScroll < 250) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
     const i = document.getElementById('sx-q'); try { i.focus({ preventScroll: true }); } catch (er) { i.focus(); }
   };
   const sxDraw = () => { const x = F.ui.sx, l = document.getElementById('sx-list'); if (!x || !l) return; l.innerHTML = x.list(x.q, x.g); l.scrollTop = 0; };
@@ -406,17 +409,194 @@
     const sr = await F.sb.from('sets').insert(rows); if (sr.error) throw sr.error;
     F.closeModal(); await F.load(); F.ui.tr.ei = F.openSession().session_exercises.length - 1; F.render(); window.scrollTo(0, 0); F.toast('Hinzugefügt · zählt für künftige Vorschläge');
   };
+  /* ---------- Anordnen: Reihenfolge und Supersätze, vor dem Training und mittendrin ----------
+     Gemerkt wird pro Trainingstag im Split (days[i].arrange = { order: [Übungs-IDs], groups: [[IDs]] }):
+     synchronisiert über die Datenbank, ohne neue Spalte. Unbekannte Übungen behalten ihren Platz aus dem Vorschlag. */
+  const arrDay = (name) => { const sp = F.activeSplit(); return sp && (sp.days || []).find((d) => d.name === name) || null; };
+  const arrGet = (name) => { const d = arrDay(name), sp = F.activeSplit(); return (d && d.arrange) || (sp && F.ls.get('arr-' + sp.id + '-' + name, null)); };
+  F.arrSave = async (name, keys, groups) => {
+    const sp = F.activeSplit(), d = arrDay(name); if (!sp || !name) return;
+    const a = { order: keys.slice(), groups: groups.filter((g) => g.length > 1).map((g) => g.slice()) };
+    if (d && sp.user_id) { d.arrange = a; await F.save('splits', sp.id, { days: sp.days }); } else F.ls.set('arr-' + sp.id + '-' + name, a);
+  };
+  const arrReset = async (name) => { const sp = F.activeSplit(), d = arrDay(name); if (!sp) return; F.ls.set('arr-' + sp.id + '-' + name, null); if (d && d.arrange) { delete d.arrange; if (sp.user_id) await F.save('splits', sp.id, { days: sp.days }); } };
+  const baseSug = F.suggestion;
+  F.suggestion = () => {
+    const sg = baseSug(); if (!sg || !sg.items || !sg.items.length) return sg;
+    sg.items.forEach((it) => { it.ss = it.pair_with ? [it.pair_with] : []; });
+    const a = arrGet(sg.split_day); if (!a) return sg;
+    const byId = {}; sg.items.forEach((it, i) => { byId[it.exercise_id] = it; it._o = i; });
+    const out = (a.order || []).map((id) => byId[id]).filter(Boolean), seen = new Set(out);
+    sg.items.forEach((it) => { if (!seen.has(it)) out.splice(Math.min(it._o, out.length), 0, it); });
+    if (a.groups) {
+      out.forEach((it) => { it.ss = []; it.pair_with = null; });
+      for (const g of a.groups) { const m = g.map((id) => byId[id]).filter(Boolean).sort((x, y) => out.indexOf(x) - out.indexOf(y)); if (m.length < 2) continue;
+        // Gruppe zusammenhalten: Mitglieder direkt hinter das erste rücken
+        m.slice(1).forEach((x, k) => { out.splice(out.indexOf(x), 1); out.splice(out.indexOf(m[0]) + 1 + k, 0, x); });
+        m.forEach((x) => { x.ss = m.filter((y) => y !== x).map((y) => y.name); }); }
+    }
+    sg.items = out; sg.arranged = true; return sg;
+  };
+
+  // Reine Listen-Operationen auf IDs und Gruppen
+  const gOf = (groups, k) => groups.find((g) => g.length > 1 && g.includes(k));
+  const arrNorm = (keys, groups) => groups.map((g) => g.filter((k) => keys.includes(k))).filter((g) => g.length > 1);
+  const blockAt = (keys, groups, i) => { const g = gOf(groups, keys[i]); if (!g) return [i, i]; let a = i, b = i; while (a > 0 && g.includes(keys[a - 1])) a--; while (b < keys.length - 1 && g.includes(keys[b + 1])) b++; return [a, b]; };
+  const opMove = (keys, groups, i, d) => {
+    const j = i + d; if (j < 0 || j >= keys.length) return;
+    const g = gOf(groups, keys[i]), gj = gOf(groups, keys[j]);
+    if (g && g === gj) { [keys[i], keys[j]] = [keys[j], keys[i]]; return; }
+    if (g) g.splice(g.indexOf(keys[i]), 1); // verlässt den Supersatz
+    if (gj) { const [a, b] = blockAt(keys, groups, j), e = d > 0 ? b : a, [k] = keys.splice(i, 1); keys.splice(e, 0, k); }
+    else [keys[i], keys[j]] = [keys[j], keys[i]];
+  };
+  const opBlock = (keys, groups, i, d) => {
+    const [a, b] = blockAt(keys, groups, i), blk = keys.slice(a, b + 1);
+    if (d < 0) { if (a === 0) return; const [na] = blockAt(keys, groups, a - 1); keys.splice(a, blk.length); keys.splice(na, 0, ...blk); }
+    else { if (b === keys.length - 1) return; const [, nb] = blockAt(keys, groups, b + 1); keys.splice(a, blk.length); keys.splice(nb - blk.length + 1, 0, ...blk); }
+  };
+  const opLink = (keys, groups, i) => {
+    const x = keys[i], y = keys[i + 1]; if (!y) return groups;
+    const gx = gOf(groups, x), gy = gOf(groups, y);
+    if (gx && gx === gy) { const L = gx.filter((k) => keys.indexOf(k) <= i), R = gx.filter((k) => keys.indexOf(k) > i); return groups.filter((g) => g !== gx).concat([L, R]); }
+    const m = [...(gx || [x]), ...(gy || [y])]; if (m.length > 3) { F.toast('Höchstens 3 Übungen pro Supersatz.'); return groups; }
+    return groups.filter((g) => g !== gx && g !== gy).concat([m]);
+  };
+  const ARROW = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d < 0 ? 'M12 19V5M6 11l6-6 6 6' : 'M12 5v14M6 13l6 6 6-6'}"/></svg>`;
+  // L: [{ key, name, sub, done, on }]; ctx 'h' = vor dem Training, 't' = im Training
+  const arrList = (L, groups, ed, ctx) => {
+    const n = L.length;
+    const row = (e, i) => ed
+      ? `<div class="it ar-row"><div class="ico" style="${e.done ? 'background:var(--a);color:var(--ai)' : ''}">${e.done ? '✓' : i + 1}</div><div class="grow"><b>${esc(e.name)}</b><div class="small mute">${esc(e.sub || '')}</div></div><button class="ar-b" data-act="arrMove" data-c="${ctx}" data-i="${i}" data-d="-1" aria-label="nach oben" ${i ? '' : 'disabled'}>${ARROW(-1)}</button><button class="ar-b" data-act="arrMove" data-c="${ctx}" data-i="${i}" data-d="1" aria-label="nach unten" ${i < n - 1 ? '' : 'disabled'}>${ARROW(1)}</button></div>`
+      : `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;padding:12px 10px;${e.on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${e.done ? 'background:var(--a);color:var(--ai)' : ''}">${e.done ? '✓' : i + 1}</div><div class="grow"><b style="${e.done ? 'opacity:.65' : ''}">${esc(e.name)}</b><div class="small mute">${esc(e.sub || '')}</div></div><div class="mute">›</div></button>`;
+    let h = '', i = 0; const keys = L.map((e) => e.key);
+    while (i < n) {
+      const [, b] = blockAt(keys, groups, i), k = b - i + 1;
+      const part = L.slice(i, i + k).map((e, j) => (j && ed ? `<button class="ss-join on" data-act="arrLink" data-c="${ctx}" data-i="${i + j - 1}">Hier trennen</button>` : '') + row(e, i + j)).join('');
+      h += k > 1 ? `<div class="ss-grp"><div class="ss-lbl"><span>${k === 2 ? 'Supersatz' : 'Dreiersatz'} · im Wechsel</span>${ed ? `<span class="ar-bm"><button class="ar-b" data-act="arrBlock" data-c="${ctx}" data-i="${i}" data-d="-1" aria-label="Supersatz nach oben" ${i ? '' : 'disabled'}>${ARROW(-1)}</button><button class="ar-b" data-act="arrBlock" data-c="${ctx}" data-i="${i}" data-d="1" aria-label="Supersatz nach unten" ${b < n - 1 ? '' : 'disabled'}>${ARROW(1)}</button></span>` : ''}</div>${part}</div>` : part;
+      i += k; if (ed && i < n) h += `<button class="ss-join" data-act="arrLink" data-c="${ctx}" data-i="${i - 1}">+ Supersatz mit nächster</button>`;
+    }
+    return h;
+  };
+
+  /* Vor dem Training: Blatt „Reihenfolge & Supersätze“ zum Vorschlag */
+  const hState = () => { const sg = F.suggestion(), keys = sg.items.map((it) => it.exercise_id), byName = {}; sg.items.forEach((it) => { byName[it.name] = it.exercise_id; });
+    const groups = []; sg.items.forEach((it) => { if (it.ss && it.ss.length && !gOf(groups, it.exercise_id)) groups.push([it.exercise_id, ...it.ss.map((nm) => byName[nm]).filter(Boolean)]); });
+    return { sg, keys, groups: arrNorm(keys, groups) }; };
+  const hDraw = () => { const l = document.getElementById('ar-list'); if (!l) return; const { sg, keys, groups } = hState();
+    l.innerHTML = arrList(sg.items.map((it) => ({ key: it.exercise_id, name: it.name, sub: it.sets + ' Sätze' })), groups, true, 'h'); void keys; };
+  F.acts.arrAsk = () => {
+    const { sg } = hState();
+    F.modal(`<div class="row between"><div class="h2">Reihenfolge</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
+      <div class="small mute" style="margin:2px 0 10px">Mit den Pfeilen verschieben, zwischen zwei Übungen zum Supersatz verbinden. forza merkt sich das für „${esc(sg.split_day || sg.title)}“.</div>
+      <button class="btn block ar-prop" data-act="arrPropose" data-c="h">✦ Supersätze vorschlagen</button>
+      <div class="list" id="ar-list" style="max-height:58vh;overflow:auto"></div>
+      <div class="row gap" style="margin-top:12px"><button class="btn grow" data-act="arrReset">Zurücksetzen</button><button class="btn pri grow" data-act="close">Fertig</button></div>`);
+    hDraw();
+  };
+  const hApply = async (fn) => { const { sg, keys, groups } = hState(); const g2 = fn(keys, groups) || groups; await F.arrSave(sg.split_day, keys, arrNorm(keys, g2)); hDraw(); F.render(); };
+  F.acts.arrReset = async () => { const { sg } = hState(); await arrReset(sg.split_day); hDraw(); F.render(); F.toast('Wieder automatische Reihenfolge'); };
+
+  /* Im Training: Übersicht mit Bearbeiten-Modus */
+  const tState = () => { const s = F.openSession(), exs = s.session_exercises, keys = exs.map((e) => e.id), groups = [];
+    exs.forEach((e) => { const g = F.ssGroup(s, e); if (g.length > 1 && !gOf(groups, e.id)) groups.push(g.map((x) => x.id)); });
+    return { s, exs, keys, groups }; };
+  const troList = () => { const { s, exs, groups } = tState(), cur = F.ui.tr.ei;
+    return arrList(exs.map((e, i) => { const d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length;
+      return { key: e.id, name: (F.S.exById[e.exercise_id] || { name: '?' }).name, done: full, on: i === cur, sub: `${d}/${e.sets.length} Sätze${i === cur ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}` }; }), groups, F.ui.ssEdit, 't'); void s; };
   F.acts.trOverview = () => {
-    const s = F.openSession(); if (!s) return; const exs = s.session_exercises, cur = F.ui.tr.ei;
+    const s = F.openSession(); if (!s) return; const exs = s.session_exercises; F.ui.ssEdit = false;
     const tot = exs.reduce((n, e) => n + e.sets.length, 0), dn = exs.reduce((n, e) => n + e.sets.filter((t) => t.done).length, 0), pct = tot ? Math.round(dn / tot * 100) : 0;
-    const row = (e, i) => { const ex = F.S.exById[e.exercise_id] || { name: '?' }, d = e.sets.filter((t) => t.done).length, full = e.sets.length > 0 && d === e.sets.length, on = i === cur;
-      return `<button class="it" data-act="trJump" data-i="${i}" style="width:100%;text-align:left;padding:12px 10px;${on ? 'box-shadow:inset 0 0 0 2px var(--a);border-radius:14px' : ''}"><div class="ico" style="${full ? 'background:var(--a);color:var(--ai)' : ''}">${full ? '✓' : i + 1}</div><div class="grow"><b style="${full ? 'opacity:.65' : ''}">${esc(ex.name)}</b><div class="small mute">${d}/${e.sets.length} Sätze${on ? ' · aktuell' : full ? ' · erledigt' : d ? ' · begonnen' : ''}</div></div><div class="mute">›</div></button>`; };
     F.modal(`<div class="row between"><div class="h2">Dein Training</div><button class="mute" data-act="close" aria-label="Schließen">✕</button></div>
       <div class="small mute" style="margin:2px 0 8px">${dn} von ${tot} Sätzen · ${exs.filter((e) => e.sets.length && e.sets.every((t) => t.done)).length} von ${exs.length} Übungen erledigt</div>
       <div style="height:8px;border-radius:99px;background:var(--card2);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:${pct}%;background:var(--grad,var(--a));border-radius:99px"></i></div>
-      <div class="list" style="max-height:52vh;overflow:auto">${exs.map(row).join('')}</div>
-      <button class="btn block" style="margin-top:12px" data-act="addExAsk">+ Übung hinzufügen</button>`);
+      <button class="btn block ar-prop" id="ar-prop-t" data-act="arrPropose" data-c="t" hidden>✦ Supersätze vorschlagen (auch Physio)</button>
+      <div class="list" id="tro-list" style="max-height:52vh;overflow:auto">${troList()}</div>
+      <div class="row gap" style="margin-top:12px"><button class="btn grow" data-act="ssEdit" id="ss-ed">Anordnen</button><button class="btn grow" data-act="addExAsk">+ Übung</button></div>`);
   };
+  const troRedraw = () => { const l = document.getElementById('tro-list'), b = document.getElementById('ss-ed'); if (l && F.openSession()) l.innerHTML = troList(); if (b) b.textContent = F.ui.ssEdit ? 'Fertig' : 'Anordnen'; const pb = document.getElementById('ar-prop-t'); if (pb) pb.hidden = !F.ui.ssEdit; };
+  F.acts.ssEdit = () => { F.ui.ssEdit = !F.ui.ssEdit; troRedraw(); };
+  const tApply = async (fn, save = true) => {
+    const { s, exs, keys, groups } = tState(), cur = exs[F.ui.tr.ei], g2 = arrNorm(keys, fn(keys, groups) || groups);
+    const byId = {}; exs.forEach((e) => { byId[e.id] = e; });
+    const next = keys.map((k) => byId[k]);
+    for (let p = 0; p < next.length; p++) if (next[p].position !== p) { next[p].position = p; await F.save('session_exercises', next[p].id, { position: p }); }
+    s.session_exercises.splice(0, s.session_exercises.length, ...next);
+    await F.ssApply(next.map((e) => { const g = g2.find((x) => x.includes(e.id)); return g ? (g[0] === e.id ? g.map((k) => byId[k]) : null) : [e]; }).filter(Boolean));
+    F.ui.tr.ei = Math.max(0, next.indexOf(cur));
+    // merken für diesen Trainingstag: Reihenfolge und Gruppen als Übungs-IDs
+    if (save && s.split_day) await F.arrSave(s.split_day, next.map((e) => e.exercise_id), g2.map((g) => g.map((k) => byId[k].exercise_id)));
+    troRedraw(); F.render();
+  };
+  const run = (t, fn) => (t.dataset.c === 't' ? tApply : hApply)(fn);
+  F.acts.arrMove = (t) => run(t, (k, g) => { opMove(k, g, Number(t.dataset.i), Number(t.dataset.d)); return g; });
+  F.acts.arrBlock = (t) => run(t, (k, g) => { opBlock(k, g, Number(t.dataset.i), Number(t.dataset.d)); return g; });
+  F.acts.arrLink = (t) => run(t, (k, g) => opLink(k, g, Number(t.dataset.i)));
+  /* ---------- Supersätze vorschlagen (evidenzbasiert) ----------
+     - Gegenspieler zusammen (Brust/Rücken, Bizeps/Trizeps, Quadrizeps/Beinbeuger): gleiche oder bessere Leistung bei etwa halber Zeit
+       (Robbins 2010, Paz 2017; Übersicht Weakley 2017).
+     - Zubehörübungen für verschiedene Muskeln: gleiches Volumen in kürzerer Zeit (Weakley 2017).
+     - Nicht: Übungen für dieselben Muskeln (Agonisten-Supersatz senkt die Leistung), schwere Kniebeugen/Kreuzheben (Ganzkörper-Ermüdung),
+       zwei schwere Grundübungen ohne Gegenspieler-Bezug.
+     - Physio/Therapie als Füllsatz in der Pause einer Kraftübung, nie für dieselben Muskeln; Rumpf/Rücken nicht vor schweren
+       Hebeübungen ermüden (Stabilität der Wirbelsäule, McGill). Lange Pausen (Grundübungen) zuerst füllen. */
+  const ANT = { brust: ['lat', 'ruecken_hoch'], lat: ['brust', 'schulter_vorn'], ruecken_hoch: ['brust', 'schulter_vorn'], schulter_vorn: ['lat', 'ruecken_hoch', 'schulter_hinten'], schulter_hinten: ['schulter_vorn', 'brust'], bizeps: ['trizeps'], trizeps: ['bizeps'], quadrizeps: ['hamstrings'], hamstrings: ['quadrizeps'], adduktoren: ['gesaess'], gesaess: ['adduktoren'] };
+  const LOWER = new Set(['quadrizeps', 'hamstrings', 'gesaess', 'waden', 'adduktoren', 'rotatoren_huefte']);
+  // Mitbelastete Muskeln auch aus dem Bewegungsmuster ableiten (Drücken: vordere Schulter und Trizeps, Ziehen/Rudern: Bizeps)
+  const musAll = (e) => { const m = new Set([...(e.muscles_primary || []), ...(e.muscles_secondary || [])]), p = e.pattern || '';
+    if (/druecken|press|dip/.test(p)) { m.add('schulter_vorn'); m.add('trizeps'); } if (/zug|rudern|row|klimm/.test(p)) m.add('bizeps'); return m; };
+  const heavy = (e) => e.dosage_profile === 'G';
+  const heavyAxial = (e) => heavy(e) && (e.muscles_primary || []).some((m) => LOWER.has(m) || m === 'ruecken_unten');
+  const trunkT = (e) => [...musAll(e)].some((m) => ['rumpf', 'ruecken_unten', 'brustwirbelsaeule', 'nacken'].includes(m));
+  const loadsTrunk = (e) => heavyAxial(e) || musAll(e).has('ruecken_unten');
+  // Schulter als eine Region: Drücken belastet die vordere Schulter mit, Seitheben direkt danach wäre ein Agonisten-Paar
+  const reg = (m) => (/^schulter_|^rotatoren$/.test(m) ? 'schulter' : m);
+  const share = (a, b) => { const A = new Set([...musAll(a)].map(reg)); return [...musAll(b)].some((m) => A.has(reg(m))); };
+  const antag = (a, b) => (a.muscles_primary || []).some((m) => (ANT[m] || []).some((x) => (b.muscles_primary || []).includes(x)));
+  const pairScore = (a, b) => {
+    if (a.ther && b.ther) return -1;
+    if (a.ther || b.ther) { const t = a.ther ? a.ex : b.ex, h = a.ther ? b.ex : a.ex; if (share(t, h) || (trunkT(t) && loadsTrunk(h))) return -1; return 2 + (heavy(h) ? 1 : 0); }
+    const x = a.ex, y = b.ex;
+    if (heavyAxial(x) || heavyAxial(y) || x.dosage_profile === 'M' || y.dosage_profile === 'M') return -1;
+    if (antag(x, y) || antag(y, x)) return heavy(x) && heavy(y) ? 2.5 : 3;
+    if (heavy(x) && heavy(y)) return -1;
+    return share(x, y) ? -1 : 1;
+  };
+  // items: [{ key, ex, ther, fixed }] in aktueller Reihenfolge → neue Paare [Haupt, Partner]
+  const propose = (items, therOnly) => {
+    const free = items.filter((i) => !i.fixed && i.ex), cand = [];
+    for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
+      if (therOnly && !free[i].ther && !free[j].ther) continue;
+      const sc = pairScore(free[i], free[j]); if (sc > 0) cand.push([sc - (j - i) * 0.01, free[i], free[j]]); }
+    cand.sort((p, q) => ((q[1].ther || q[2].ther) - (p[1].ther || p[2].ther)) || q[0] - p[0]);
+    const used = new Set(), out = [];
+    for (const [, a, b] of cand) { if (used.has(a.key) || used.has(b.key)) continue; used.add(a.key); used.add(b.key); out.push(a.ther ? [b.key, a.key] : [a.key, b.key]); }
+    return out;
+  };
+  const opPropose = (keys, groups, info, therOnly) => {
+    const items = keys.map(info), fixedKeys = new Set(items.filter((i) => i.fixed).map((i) => i.key));
+    const keep = groups.filter((g) => g.some((k) => fixedKeys.has(k)) || (therOnly && !g.some((k) => (info(k) || {}).ther)));
+    const busy = new Set(keep.flat()), ng = propose(items.map((i) => (busy.has(i.key) ? Object.assign({}, i, { fixed: true }) : i)), therOnly);
+    for (const [a, b] of ng) { keys.splice(keys.indexOf(b), 1); keys.splice(keys.indexOf(a) + 1, 0, b); }
+    // Übrige Physio-Übungen als dritte Übung in einen bestehenden Kraft-Supersatz (wenn sie zu beiden passt)
+    let tri = 0;
+    if (therOnly) for (const t of items.filter((i) => i.ther && !i.fixed && !busy.has(i.key) && !ng.some((g) => g.includes(i.key)))) {
+      const g = keep.concat(ng).filter((x) => x.length === 2 && x.every((k) => { const m = info(k); return m && !m.ther && !m.fixed && pairScore(t, m) > 0; }))
+        .sort((x, y) => y.some((k) => heavy(info(k).ex)) - x.some((k) => heavy(info(k).ex)))[0];
+      if (!g) continue; g.push(t.key); keys.splice(keys.indexOf(t.key), 1); keys.splice(keys.indexOf(g[1]) + 1, 0, t.key); tri++;
+    }
+    F.ui.ssLast = ng.length + tri; return keep.concat(ng);
+  };
+  const isTherSE = (se) => /^Therapieplan/.test((se && se.why) || '');
+  const infoH = (k) => ({ key: k, ex: F.S.exById[k], ther: false, fixed: false });
+  const infoT = () => { const s = F.openSession(), m = {}; s.session_exercises.forEach((se) => { m[se.id] = { key: se.id, ex: F.S.exById[se.exercise_id], ther: isTherSE(se), fixed: se.sets.some((x) => x.done) }; }); return (k) => m[k]; };
+  F.acts.arrPropose = async (t) => {
+    F.ui.ssLast = 0; const ctx = t.dataset.c;
+    await run(t, (k, g) => opPropose(k, g, ctx === 't' ? infoT() : infoH));
+    F.toast(F.ui.ssLast ? `${F.ui.ssLast} ${F.ui.ssLast === 1 ? 'Supersatz' : 'Supersätze'} vorgeschlagen: ${ctx === 't' ? 'Physio in die Pausen, ' : ''}Gegenspieler oder verschiedene Muskeln im Wechsel` : 'Keine sinnvollen Paare: schwere Grundübungen und gleiche Muskeln bleiben einzeln', 3800);
+  };
+  // Therapieplan „In den Pausen“: beim Start jede Physio-Übung zu einer passenden Kraftübung legen (ohne die Tages-Anordnung zu überschreiben)
+  F.therSupersets = () => tApply((k, g) => opPropose(k, g, infoT(), true), false);
   F.acts.trJump = (t) => { F.closeModal(); F.acts.goEx(t); };
 
   /* ---------- Zeiten je Einheit und Übung ---------- */

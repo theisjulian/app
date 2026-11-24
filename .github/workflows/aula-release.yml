@@ -1,0 +1,77 @@
+# Aula veröffentlichen: baut die App aus dem privaten Quellcode aller theis-Apps (theisjulian/theis-quelle, Ordner aula/) und ersetzt die Dateien im Release.
+# Ausgelöst durch eine Änderung an release/aula.json (Version, Release-Tag, Stand des Quellcodes, Hinweistext für versions.json).
+# versions.json: beide Schlüssel „aula“ und „gruppen“ (ältere Gruppo-Versionen lesen „gruppen“).
+name: Aula veröffentlichen
+on:
+  push:
+    branches: [main]
+    paths: ['release/aula.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: aula-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Website-Repository holen
+        uses: actions/checkout@v4
+        with: { path: site }
+      - name: Auftrag lesen
+        id: req
+        run: |
+          f=site/release/aula.json
+          for k in version tag ref; do echo "$k=$(jq -r .$k $f)" >> "$GITHUB_OUTPUT"; done
+          echo "dry=$(jq -r '.dry // false' $f)" >> "$GITHUB_OUTPUT"
+      - name: Quellcode holen (privat)
+        uses: actions/checkout@v4
+        with:
+          repository: theisjulian/theis-quelle
+          ref: ${{ steps.req.outputs.ref }}
+          token: ${{ secrets.QUELLE_TOKEN }}
+          path: q
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Werkzeuge
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq nsis zip >/dev/null
+          curl -sSL https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /tmp
+          npm i -g -s @electron/packager@18.4.4
+      - name: Version prüfen
+        run: test "$(node -p "require('./q/aula/shell/package.json').version")" = "${{ steps.req.outputs.version }}"
+      - name: Bauen
+        env:
+          OUT: /tmp/out
+          WORK: /tmp/work
+          LOG: /tmp/build.log
+          PK: electron-packager
+          RC: /tmp/apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign
+        run: bash q/aula/tools/ci-build.sh || { tail -60 /tmp/build.log; exit 1; }
+      - name: Probelauf – nur in einen verborgenen Entwurf (nichts wird veröffentlicht)
+        if: steps.req.outputs.dry == 'true'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cd /tmp/out && sha256sum Aula-* | tee SHA256.txt
+          gh release delete aula-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          gh release create aula-probe --draft --title "Aula ${{ steps.req.outputs.version }} – Probelauf (nicht öffentlich)" --notes "$(cat SHA256.txt)" -R "$GITHUB_REPOSITORY" Aula-* SHA256.txt
+      - name: Dateien im Release ersetzen
+        if: steps.req.outputs.dry != 'true'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cd /tmp/out && sha256sum Aula-* | tee SHA256.txt
+          gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Aula $(echo ${{ steps.req.outputs.version }} | cut -d. -f1,2)" --notes "Aula ${{ steps.req.outputs.version }}" --latest=false
+          for i in 1 2 3; do gh release upload "${{ steps.req.outputs.tag }}" Aula-* --clobber -R "$GITHUB_REPOSITORY" && break; echo "Hochladen fehlgeschlagen – neuer Versuch"; sleep 20; done
+          # Kontrolle: Größe jeder Datei im Release = gebaute Datei
+          for f in Aula-*; do s=$(gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets --jq ".assets[] | select(.name==\"$f\") | .size"); [ "$s" = "$(stat -c %s "$f")" ] || { echo "Kontrolle fehlgeschlagen: $f"; exit 1; }; done
+          gh release edit "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Aula $(echo ${{ steps.req.outputs.version }} | cut -d. -f1,2)" --notes "Aula ${{ steps.req.outputs.version }} – macOS (Apple-Chip: Aula-Mac.zip, Intel: Aula-Mac-Intel.zip), Windows 10/11 (Aula-Windows-Setup.exe). Prüfsummen (SHA-256): $(tr '\n' ' ' < SHA256.txt)"
+          gh release delete aula-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+      - name: versions.json aktualisieren (erst jetzt – die Dateien sind online)
+        if: steps.req.outputs.dry != 'true'
+        run: |
+          cd site && git pull -q --rebase origin main
+          jq --arg v "${{ steps.req.outputs.version }}" --arg n "$(jq -r .notes release/aula.json)" '.aula.version = $v | .gruppen.version = $v | (if $n != "" and $n != "null" then .aula.notes = $n | .gruppen.notes = $n else . end)' versions.json > v.tmp && mv v.tmp versions.json
+          git config user.name "Aula-Release"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --quiet versions.json || { git commit -qm "Aula ${{ steps.req.outputs.version }}: versions.json" versions.json && git push -q origin main; }

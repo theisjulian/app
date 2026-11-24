@@ -179,7 +179,7 @@
   /* ---------- Darstellung ---------- */
   F.views.m_darstellung = () => {
     const l = F.look();
-    const T = [['graphit', 'Graphit', '#c8f542'], ['laguna', 'Laguna', '#2cc4d0'], ['klar', 'Klar', '#7db1ff'], ['neon', 'Neon', '#ff6fd8']];
+    const T = [['miami', 'Miami', '#ff3d8b'], ['laguna', 'Laguna', '#2cc4d0'], ['klar', 'Klar', '#7db1ff'], ['neon', 'Neon', '#ff6fd8']];
     const FN = [['standard', 'Standard', 'Geist'], ['rund', 'Rund', 'Nunito'], ['klassisch', 'Klassisch', 'Lora'], ['technisch', 'Technisch', 'Space Grotesk'], ['lesbar', 'Gut lesbar', 'Atkinson Hyperlegible'], ['geometrisch', 'Geometrisch', 'Jost']];
     return bk + `<div class="h1" style="margin-bottom:12px">Darstellung</div>
       <div class="card"><div class="eyebrow" style="margin-bottom:8px">Farbe</div><div class="row wrap gap">${T.map(([k, n, c]) => `<button class="chip ${l.theme === k ? 'on' : ''}" data-act="look" data-k="theme" data-v="${k}"><i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i>${n}</button>`).join('')}</div>

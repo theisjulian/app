@@ -102,13 +102,14 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden && F.look().theme === 'tag') F.applyLook(); });
   F.defDash = () => (matchMedia('(min-width:900px)').matches ? 'klassisch' : 'fokus');
   F.applyLook = () => {
-    const el = document.documentElement, p = F.ls.get('look', { theme: 'graphit', mode: 'dark', font: 'standard', anim: true });
+    const el = document.documentElement, p = F.look();
     let mode = p.mode; if (mode === 'auto') mode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     if (p.theme === 'tag') { const ph = F.sunPhase(); el.dataset.phase = ph; mode = (ph === 'nacht' || ph === 'abend') ? 'dark' : 'light'; } else delete el.dataset.phase;
     el.dataset.theme = p.theme; el.dataset.mode = mode; el.dataset.font = p.font; el.classList.toggle('noanim', !p.anim);
     const m = document.querySelector('meta[name=theme-color]'); if (m) { const bg = getComputedStyle(el).getPropertyValue('--bg2').trim(); m.content = bg || (mode === 'dark' ? '#141922' : '#f2f4f7'); }
   };
-  F.look = () => F.ls.get('look', { theme: 'graphit', mode: 'dark', font: 'standard', anim: true });
+  // Graphit ist durch Miami ersetzt: gespeicherte Auswahl wird einmalig umgestellt
+  F.look = () => { const l = F.ls.get('look', { theme: 'miami', mode: 'dark', font: 'standard', anim: true }); if (l.theme === 'graphit') { l.theme = 'miami'; F.ls.set('look', l); } return l; };
   F.setLook = (k, v) => { const l = F.look(); l[k] = v; F.ls.set('look', l); F.applyLook(); };
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => F.applyLook());
 
@@ -190,6 +191,10 @@
     const kb = () => { de.classList.toggle('kb', window.innerHeight - vv.height > 140); de.style.setProperty('--vvh', vv.height + 'px'); de.style.setProperty('--vvt', vv.offsetTop + 'px'); };
     vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb); kb();
   }
+
+  /* Kein Zoomen: Safari ignoriert user-scalable=no, daher Pinch-Gesten selbst abfangen; Doppeltipp-Zoom verhindert touch-action im CSS */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => document.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault(); }, { passive: false });
 
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
