@@ -168,6 +168,7 @@
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
+      ${timed ? `<button class="btn block fz-cd" data-act="cdStart" data-s="${st.id}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg> Countdown starten${perSide ? ' · je Seite' : ''}</button>` : ''}
       <div class="fz-plates" id="fz-plates" data-ex="${ex.id}">${F.platesTxt(ex, Number(tg.load_kg))}</div>
       ${!noLoad(ex) && tg.load_kg === null ? '<div class="small" style="color:var(--warn);margin-top:-4px">Noch kein Gewicht bekannt: leicht starten und eintragen.</div>' : (() => { const lt = lastTime(ex); return `<div class="small mute">${lt ? esc(lt) : 'Vorgeschlagen aus deinem letzten Training. Nur ändern, wenn es anders lief.'}</div>`; })()}
       <button class="btn pri block fz-go" data-act="doneSet" data-s="${st.id}">${F.icon.check.replace('<svg', '<svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"')} Geschafft</button>
@@ -287,6 +288,47 @@
     else F.rest = null;
     F.render(); F.pulseSet && F.pulseSet(st.id); if (F.rest) F.tick(); window.scrollTo(0, 0);
   };
+  /* ---------- Countdown für Halteübungen (Unterarmstütz, Seitstütz, Tragen …) ----------
+     3 s Vorlauf, dann die Zielzeit; je Seite mit 5 s zum Wechseln. Am Ende wird der Satz mit der gehaltenen Zeit abgehakt
+     und die Pause startet. „Fertig“ zählt die bisher gehaltene Zeit, „Abbrechen“ speichert nichts. */
+  let CD = null;
+  const cdStop = () => { if (CD) { cancelAnimationFrame(CD.raf); CD = null; } const o = document.getElementById('cd'); if (o) o.remove(); };
+  F.acts.cdStart = (t) => {
+    const f = findSet(t.dataset.s); if (!f) return; const ex = F.S.exById[f.se.exercise_id] || {}, { perSide } = kindOf(ex);
+    const inp = document.querySelector(`input[data-f=seconds][data-s="${f.st.id}"]`), secs = Math.max(5, Math.round(F.num ? F.num(inp && inp.value) || F.setTarget(f.se, f.st).seconds || 30 : 30));
+    F.sound.unlock(); if (F.wake) F.wake(true); cdStop();
+    const ph = [{ k: 'ready', d: 3, l: 'Bereit machen' }];
+    if (perSide) ph.push({ k: 'work', d: secs, l: 'Linke Seite' }, { k: 'switch', d: 5, l: 'Seite wechseln' }, { k: 'work', d: secs, l: 'Rechte Seite' }); else ph.push({ k: 'work', d: secs, l: 'Halten' });
+    const o = document.createElement('div'); o.id = 'cd'; o.className = 'cd'; o.setAttribute('role', 'timer');
+    o.innerHTML = `<div class="cd-in"><div class="cd-ex">${esc(ex.name || '')}</div><div class="cd-ph" id="cd-ph"></div>
+      <div class="cd-ring"><svg viewBox="0 0 120 120"><circle class="cd-bg" cx="60" cy="60" r="52"/><circle class="cd-fg" id="cd-fg" cx="60" cy="60" r="52" pathLength="100"/></svg><div class="cd-n" id="cd-n"></div></div>
+      <div class="cd-btns"><button class="btn" data-act="cdPause" id="cd-p">Pause</button><button class="btn pri" data-act="cdDone">Fertig</button></div><button class="cd-x" data-act="cdCancel">Abbrechen</button></div>`;
+    document.body.appendChild(o);
+    CD = { f, ph, i: 0, end: Date.now() + ph[0].d * 1000, held: 0, paused: 0, last: null, secs };
+    const tick = () => {
+      if (!CD) return; const c = CD, p = c.ph[c.i], now = c.paused || Date.now(), left = Math.max(0, (c.end - now) / 1000), n = Math.ceil(left);
+      document.getElementById('cd-ph').textContent = p.l; document.getElementById('cd-n').textContent = p.k === 'ready' ? (n || 'Los') : n;
+      o.dataset.k = p.k; document.getElementById('cd-fg').style.strokeDashoffset = String(100 - (p.k === 'ready' ? 100 : (left / p.d) * 100));
+      if (n !== c.last && !c.paused) { c.last = n; if (n > 0 && n <= 3) { F.sound.beep(1, p.k === 'work' ? 660 : 520); try { navigator.vibrate && navigator.vibrate(20); } catch {} } }
+      if (left <= 0 && !c.paused) {
+        if (p.k === 'work') c.held += p.d;
+        c.i++; c.last = null;
+        if (c.i >= c.ph.length) { F.sound.beep(2, 880); try { navigator.vibrate && navigator.vibrate([120, 60, 160]); } catch {} return cdFinish(c.secs); }
+        F.sound.beep(1, 980); if (c.ph[c.i].k === 'switch') F.sound.say && F.sound.say('Seite wechseln');
+        c.end = Date.now() + c.ph[c.i].d * 1000;
+      }
+      c.raf = requestAnimationFrame(tick);
+    };
+    tick();
+  };
+  const cdFinish = async (held) => { const c = CD; if (!c) return; const st = c.f.st; cdStop(); st.seconds = Math.max(1, Math.round(held)); await F.acts.doneSet({ dataset: { s: st.id } }); };
+  F.acts.cdPause = () => { const c = CD; if (!c) return; const b = document.getElementById('cd-p');
+    if (c.paused) { c.end += Date.now() - c.paused; c.paused = 0; b.textContent = 'Pause'; } else { c.paused = Date.now(); b.textContent = 'Weiter'; } };
+  F.acts.cdDone = () => { const c = CD; if (!c) return; const p = c.ph[c.i], now = c.paused || Date.now();
+    const cur = p.k === 'work' ? p.d - Math.max(0, (c.end - now) / 1000) : 0, sides = c.ph.slice(0, c.i).filter((x) => x.k === 'work').length + (cur > 0 ? 1 : 0), held = (c.held + cur) / Math.max(1, sides);
+    if (held < 1) return cdStop(); cdFinish(held); };
+  F.acts.cdCancel = () => cdStop();
+
   /* Nachtragen in einem Rutsch: alle offenen Sätze der Übung mit den vorgeschlagenen Werten abhaken */
   F.acts.doneAll = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id), ex = F.S.exById[se.exercise_id] || {};

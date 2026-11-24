@@ -616,3 +616,21 @@ html{touch-action:manipulation}
 .ss-lbl{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .ar-bm{display:flex;gap:6px}.ar-bm .ar-b{width:34px;height:34px;background:color-mix(in srgb,var(--a) 18%,var(--card2))}
 .ar-open{text-decoration:none!important;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:12px 0 2px;padding:8px;font-size:14px;font-weight:600;color:inherit;opacity:.88;border-radius:12px;background:rgba(255,255,255,.07)}
+/* Countdown für Halteübungen */
+.fz-cd{margin:2px 0 10px;gap:8px;background:color-mix(in srgb,var(--a) 16%,var(--card2));color:var(--text);border:1px solid color-mix(in srgb,var(--a) 40%,transparent)}
+.cd{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 20px) 20px calc(var(--sb) + 20px);animation:fadein .2s both}
+.cd-in{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.cd-ex{font-size:15px;color:var(--mute);font-weight:600}
+.cd-ph{font-size:26px;font-weight:800;margin:6px 0 18px;letter-spacing:-.01em}
+.cd[data-k=switch] .cd-ph{color:var(--warn,#f5a524)}
+.cd-ring{position:relative;width:min(76vw,320px);aspect-ratio:1}
+.cd-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.cd-bg{fill:none;stroke:var(--card2);stroke-width:9}
+.cd-fg{fill:none;stroke:var(--a);stroke-width:9;stroke-linecap:round;stroke-dasharray:100;transition:stroke .3s}
+html[data-theme=miami] .cd-fg{stroke:#ff3d8b}
+.cd[data-k=ready] .cd-fg,.cd[data-k=switch] .cd-fg{stroke:var(--mute)}
+.cd-n{position:absolute;inset:0;display:grid;place-items:center;font-size:min(30vw,120px);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.cd-btns{display:flex;gap:10px;width:100%;margin-top:26px}.cd-btns .btn{flex:1;min-height:60px;font-size:18px}
+.cd-x{margin-top:16px;color:var(--mute);font-size:15px;padding:8px 14px}
+.ar-prop{margin:0 0 10px;gap:6px;background:color-mix(in srgb,var(--a) 14%,var(--card2));color:var(--text);border:1px solid color-mix(in srgb,var(--a) 40%,transparent)}
+.ar-prop[hidden]{display:none}
