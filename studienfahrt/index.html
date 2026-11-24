@@ -1960,6 +1960,24 @@ html[data-andiamo-theme="dark"] .dz-miami{--dz-bg:linear-gradient(180deg,#2a0b3e
 .dz-miami .dz-side{background:var(--dz-side)!important}
 .dz-miami .dz-prev::after{content:'';position:absolute;right:10%;bottom:-18%;width:38%;aspect-ratio:1;border-radius:50%;background:linear-gradient(#ffe68a,#ff8a3d 60%,#ff2e88);opacity:.85}
 @media (max-width:760px){html[data-namo-style="miami"] .hero h1{margin-bottom:12px!important;line-height:.98}}
+/* ===== Update 29 · Info-Mail ===== */
+.ml-card .row{align-items:flex-start;gap:16px;flex-wrap:wrap}
+.ml-state{padding:6px 12px;border-radius:999px;background:var(--lg-soft);color:var(--lg-muted);font-weight:700;font-size:12.5px;white-space:nowrap}
+.ml-state.plan{background:color-mix(in srgb,var(--lg-accent) 14%,var(--lg-card));color:var(--lg-accent-text)}
+.ml-state.ok{background:var(--lg-ok-bg);color:var(--lg-ok)}
+.ml-warn{margin:14px 0 4px;padding:12px 14px;border-radius:14px;background:var(--lg-warn-bg);color:var(--lg-warn);font-size:13.5px;line-height:1.5}
+.ml-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.ml-grid>div{border:1px solid var(--lg-line);border-radius:18px;padding:16px 18px;background:var(--lg-card2)}
+.ml-grid h3{margin:0 0 8px}
+.ml-btns{display:flex;flex-wrap:wrap;gap:8px}
+.ml-btns .cb-ic{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8}
+.danger-soft{color:var(--lg-bad)!important}
+.ml-pv-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.ml-pv-head>div{display:grid;gap:2px;min-width:0}.ml-pv-head small{font-size:12px;color:var(--lg-muted)}.ml-pv-head b{font-size:15px}
+.ml-pv-head .field{margin:0;min-width:220px}
+.ml-frame{width:100%;height:min(70vh,900px);border:1px solid var(--lg-line);border-radius:16px;background:#f1ecf7}
+@media (max-width:760px){.ml-grid{grid-template-columns:1fr}.ml-frame{height:65vh}}
+.namo-sheet .ns-panel:has(.ml-frame){width:min(760px,96vw)!important;max-width:none!important}
 /* ===== Update 25 CSS Ende ===== */</style><style id="namo-gear">/* ===== Einstellungen-Knopf: schlichtes Zahnrad ohne Rahmen, nur das Zahnrad dreht sich (alle Designs) ===== */
 html body main.shell>#nav .sb-gear{width:40px;height:40px;border-radius:50%!important;background:transparent!important;box-shadow:none!important;border:0!important;color:var(--lg-side-ink,currentColor)!important;opacity:.72;transform:none!important;transition:background .2s,opacity .2s}
 html body main.shell>#nav .sb-gear:hover{transform:none!important;background:var(--sb-hover)!important;opacity:1}
@@ -4872,6 +4890,7 @@ dashDeadlines=function(){
  sc.forEach(x=>items.push({d:x.d,t:L('Stornofrist · ','Termine annullamento · ')+scLabel(x),k:x.costs[0].cancelTerms||L('letzter Tag kostenlos stornieren','ultimo giorno per annullare gratis'),go:'costs',sc:1}));
  const f=finance();if(f.dueDate&&f.confirmed){const open=activePeople().filter(p=>contributionDue(p)-contributionPaid(p.id)>0).length;if(open)items.push({d:f.dueDate,t:L('Reisebeitrag fällig','Scadenza quota'),k:open+' '+L('noch offen','ancora aperte'),go:'money'})}
  items.push({d:'2027-03-14',t:L('Abfahrt','Partenza'),k:'München Hbf',go:'programme'});
+ {const mp=(state.settings&&state.settings.mail)||{};if(mp.enabled&&mp.at&&!(typeof mlInfo!=='undefined'&&mlInfo&&mlInfo.lastAll))items.push({d:new Date(mp.at).toLocaleDateString('sv-SE'),t:L('Info-Mail an alle','E-mail a tutte'),k:L('wird automatisch verschickt · ','invio automatico · ')+new Date(mp.at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),go:'mail'})}
  const list=items.filter(x=>x.d>=today||(x.go!=='programme'&&!x.sc)).sort((a,b)=>a.d.localeCompare(b.d)).slice(0,7);
  const days=d=>Math.round((new Date(d+'T12:00:00')-new Date(today+'T12:00:00'))/864e5);
  return `<div class="card dash-dl"><div class="row"><h2>${L('Nächste Fristen','Prossime scadenze')}</h2>${canEditTrip()?btn(lgIcon('cal','cb-ic')+'.ics','scics','','dl-ics'):''}</div>${list.map(x=>{const n=days(x.d),cls=n<0?'over':n<=7?'soon':'';return `<button type="button" class="dl-row ${cls}${x.sc?' sc':''}" data-action="goto" data-id="${x.go}"><span class="dl-date"><b>${esc(new Intl.DateTimeFormat(uiLanguage==='it'?'it-IT':'de-DE',{day:'numeric',month:'short'}).format(new Date(x.d+'T12:00:00')))}</b><small>${n<0?L('überfällig','scaduta'):n===0?L('heute','oggi'):L('in '+n+' Tg.','tra '+n+' g')}</small></span><span class="dl-t"><b>${esc(x.t)}</b><small>${esc(x.k)}</small></span></button>`}).join('')||`<p class="muted">${L('Keine offenen Fristen.','Nessuna scadenza aperta.')}</p>`}</div>`};
@@ -5057,6 +5076,39 @@ document.addEventListener('change',e=>{if(e.target.id==='nu-sort'){nuSort=e.targ
 }catch(e){console.warn('Miami',e)}})();
 /* Statusleiste/Theme-Farbe passend */
 (()=>{const o=applyTheme;applyTheme=function(){o.apply(this,arguments);try{if(document.documentElement.dataset.namoStyle==='miami'){const d=document.documentElement.dataset.andiamoTheme==='dark';const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?'#0c0618':'#ff7a59'}}catch{}}})();
+
+/* ===== Update 29 · Info-Mail vor der Abfahrt ===== */
+/* Organisation → „Info-Mail“: Vorschau, Test an mich, Termin planen (Server verschickt automatisch genau einmal), jetzt an alle senden.
+   Versand serverseitig über die Edge Function „namo-mail“; Termin in settings.mail = {enabled, at (ISO), local}. */
+function mlStart(){const ds=(state.schedule||[]).map(x=>x.date).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')).sort();return ds[0]||'2027-03-14'}
+function mlDefaultLocal(){const d=new Date(mlStart()+'T12:00:00');d.setDate(d.getDate()-21);return d.toLocaleDateString('sv-SE')+'T17:30'}
+function mlPlan(){return (state.settings&&state.settings.mail)||{}}
+function mlFmt(iso){const d=new Date(iso);return isNaN(d)?'':d.toLocaleString(uiLanguage==='it'?'it-IT':'de-DE',{weekday:'short',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+let mlInfo=null,mlBusy=false,mlErr='';
+async function mlCall(mode,extra={}){if(typeof cloud==='undefined'||!cloud)throw Error(L('Nur online verfügbar.','Disponibile solo online.'));const r=await cloud.functions.invoke('namo-mail',{body:{mode,...extra}});if(r.error){let d=null;try{d=await r.error.context.json()}catch{}const e=Error(d&&d.error==='no_mail_key'?L('Der Mail-Versand ist noch nicht eingerichtet (Resend-Schlüssel fehlt).','Invio e-mail non ancora configurato.'):d&&d.error==='forbidden'?L('Nur für den Admin-Zugang.','Solo per admin.'):(r.error.message&&!/non-2xx|Failed to send/i.test(r.error.message)?r.error.message:L('Mail-Dienst nicht erreichbar.','Servizio e-mail non raggiungibile.')));e.data=d;throw e}return r.data||{}}
+function mlLoad(force){if(mlBusy||(mlInfo&&!force))return;mlBusy=true;mlErr='';mlCall('status').then(d=>{mlInfo=d},e=>{mlErr=e.message;mlInfo=e.data||null}).finally(()=>{mlBusy=false;if(tab==='Organisation'&&organisationSection==='mail')renderKeep()})}
+views['Info-Mail']=()=>{
+ if(!isTripAdmin())return `<div class="card"><p class="muted">${L('Nur für den Admin-Zugang.','Solo per admin.')}</p></div>`;
+ mlLoad();const p=mlPlan(),i=mlInfo||{},sent=i.lastAll,local=p.local||mlDefaultLocal(),days=Math.round((new Date(mlStart()+'T12:00:00')-new Date(local))/864e5);
+ const state1=sent?`<span class="ml-state ok">✓ ${L('Verschickt','Inviata')} · ${esc(mlFmt(sent))} · ${i.sentCount||0} ${L('Empfängerinnen','destinatarie')}</span>`:p.enabled&&p.at?`<span class="ml-state plan">⏱ ${L('Geplant','Programmata')} · ${esc(mlFmt(p.at))}</span>`:`<span class="ml-state">${L('Noch nicht geplant','Non ancora programmata')}</span>`;
+ const warn=mlInfo&&mlInfo.configured===false?`<div class="ml-warn"><b>${L('Noch ein Schritt für den Versand:','Ancora un passo per l’invio:')}</b> ${L('Im Supabase-Projekt unter Edge Functions → Secrets „RESEND_API_KEY“ (Schlüssel von resend.com) und „MAIL_FROM“ (z. B. ’namo &lt;namo@theisapps.de&gt;) eintragen. Vorschau und Planung funktionieren schon.','Nel progetto Supabase inserisci in Edge Functions → Secrets “RESEND_API_KEY” e “MAIL_FROM”. Anteprima e programmazione funzionano già.')}</div>`:'';
+ return `<div class="card ml-card"><div class="row"><div><div class="eyebrow">${L('Vor der Abfahrt','Prima della partenza')}</div><h2>${L('Info-Mail an alle Teilnehmerinnen','E-mail informativa a tutte')}</h2><p class="small muted">${L('Eine kurze, persönliche Mail: was bei der Person noch offen ist (Anmeldung, Homescreen, Packliste, Notfallkontakt, Beitrag, Tickets), die wichtigsten Eckdaten und eine Homescreen-Anleitung für iPhone und Android. Jede Schülerin bekommt ihre eigene Version; du erhältst eine Kopie.','Un’e-mail breve e personale con ciò che manca, i dati principali e le istruzioni per la schermata Home. Ognuna riceve la propria versione; tu ricevi una copia.')}</p></div>${state1}</div>
+ ${warn}
+ <div class="ml-grid"><div class="ml-plan"><h3>${L('Termin','Data')}</h3><label class="field">${L('Verschicken am','Invia il')}<input type="datetime-local" id="ml-at" value="${esc(local)}" step="900"></label><p class="small muted" id="ml-hint">${days>0?L(`${days} Tage vor der Abfahrt`,`${days} giorni prima della partenza`):L('nach der Abfahrt?','dopo la partenza?')}</p>
+  <label class="checkline"><input type="checkbox" id="ml-on" ${p.enabled?'checked':''}> ${L('Automatisch zu diesem Termin verschicken','Invia automaticamente a questa data')}</label>
+  <div class="actions">${btn(L('Termin speichern','Salva data'),'mlsave','','primary')}</div></div>
+ <div class="ml-act"><h3>${L('Ansehen & testen','Vedi e prova')}</h3><p class="small muted">${i.recipients!=null?`${i.recipients} ${L('Empfängerinnen mit Zugang','destinatarie con accesso')}`:mlBusy?L('Lade …','Caricamento …'):''}</p><div class="actions ml-btns">${btn(lgIcon('doc','cb-ic')+L('Vorschau','Anteprima'),'mlpreview')}${btn(lgIcon('upload','cb-ic')+L('Test an mich','Prova a me'),'mltest')}${btn(L('Jetzt an alle senden …','Invia ora a tutte …'),'mlsendall','','danger-soft')}</div></div></div></div>`};
+(()=>{const o=views.Organisation;views.Organisation=()=>{if(!isTripAdmin()||!window.ANDIAMO_ONLINE)return o();const items=[['tasks','Aufgaben','Attività'],['contacts','Kontakte','Contatti'],['checklists','Checklisten','Liste di controllo'],['mail','Info-Mail','E-mail'],['backup','Sicherung','Backup']];return sectionNav(items,organisationSection,'orgsection')+views[orgPages[organisationSection]]()}})();
+orgPages.mail='Info-Mail';
+document.addEventListener('input',e=>{if(e.target.id==='ml-at'){const h=document.getElementById('ml-hint');const d=Math.round((new Date(mlStart()+'T12:00:00')-new Date(e.target.value))/864e5);if(h)h.textContent=d>0?L(`${d} Tage vor der Abfahrt`,`${d} giorni prima della partenza`):L('nach der Abfahrt?','dopo la partenza?')}});
+actions.mlsave=async()=>{if(!isTripAdmin())return;const v=document.getElementById('ml-at')?.value||'',on=!!document.getElementById('ml-on')?.checked;const d=new Date(v);if(!v||isNaN(d))throw Error(L('Bitte Datum und Uhrzeit wählen.','Scegli data e ora.'));if(on&&d<new Date())throw Error(L('Der Termin liegt in der Vergangenheit.','La data è nel passato.'));
+ const before=clone(state);state.settings.mail=Object.assign({},mlPlan(),{local:v,at:d.toISOString(),enabled:on});try{await persist();renderKeep();toast(on?L('Geplant – die Mail geht am ','Programmata – parte il ')+mlFmt(d.toISOString())+L(' raus.',''):L('Termin gespeichert (nicht automatisch).','Data salvata (non automatica).'))}catch(e){state=before;throw e}};
+actions.mlpreview=async pid=>{const sh=namoSheet(L('Vorschau der Info-Mail','Anteprima e-mail'),`<p class="muted">${L('Wird erzeugt …','Generazione …')}</p>`);try{const d=await mlCall('preview',pid?{personId:pid}:{});const st=activePeople().filter(p=>p.role!=='Lehrkraft').sort(comparePeople);
+ sh.el.querySelector('.ns-body').innerHTML=`<div class="ml-pv-head"><div><small>${L('Betreff','Oggetto')}</small><b>${esc(d.subject||'')}</b><small>${L('Von','Da')}: ${esc(d.from||'')}</small></div><label class="field">${L('Ansicht für','Vista per')}<select id="ml-who">${st.map(p=>`<option value="${esc(p.id)}" ${(pid?p.id===pid:p.name===d.sample)?'selected':''}>${esc(displayName(p))}</option>`).join('')}</select></label></div><iframe class="ml-frame" title="${esc(L('Vorschau','Anteprima'))}" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(d.html||'')}"></iframe>`;
+ sh.el.querySelector('#ml-who').onchange=e=>{sh.close();actions.mlpreview(e.target.value)}}catch(e){sh.el.querySelector('.ns-body').innerHTML=`<p>${esc(e.message)}</p>`}};
+actions.mltest=async()=>{toast(L('Testmail wird verschickt …','Invio prova …'));const d=await mlCall('test');toast(L(`Testmail an ${d.to} verschickt (Beispiel: ${d.sample}).`,`Prova inviata a ${d.to}.`))};
+actions.mlsendall=()=>{const n=mlInfo&&mlInfo.recipients;showForm(L('Info-Mail jetzt an alle senden?','Inviare ora a tutte?'),`<p>${L(`Die Mail geht sofort an ${n??'alle'} Schülerinnen mit Zugang – jede mit ihren eigenen offenen Punkten. Du bekommst eine Kopie.`,`L’e-mail parte subito a ${n??'tutte'} le studentesse con accesso. Ricevi una copia.`)}</p>${mlInfo&&mlInfo.lastAll?`<p class="ti-warn small">${L('Achtung: Es wurde schon eine Info-Mail verschickt am ','Attenzione: già inviata il ')}${esc(mlFmt(mlInfo.lastAll))}.</p>`:''}`,async()=>{const d=await mlCall('all');mlInfo=Object.assign(mlInfo||{},{lastAll:new Date().toISOString(),sentCount:d.ok});setTimeout(()=>toast(L(`${d.ok} Mails verschickt${d.failed?`, ${d.failed} fehlgeschlagen`:''}.`,`${d.ok} e-mail inviate.`)),300)});saveHandler.remoteOnly=true;$('#form button.primary').textContent=L('Jetzt senden','Invia ora')};
+(()=>{const o=actions.goto;actions.goto=id=>{if(id==='mail'){tab='Organisation';organisationSection='mail';render();appTop();return}return o(id)}})();
 
 /* ===== Update 25 · Ende ===== */
 init().catch(e=>{document.querySelector('main').innerHTML='<div class="card"><h2>Verbindung nicht verfügbar.</h2><p>Bitte Internetverbindung und Supabase-Einrichtung prüfen und die Seite neu laden.</p></div>';console.error(e)});
