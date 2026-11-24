@@ -192,6 +192,10 @@
     vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb); kb();
   }
 
+  /* Kein Zoomen: Safari ignoriert user-scalable=no, daher Pinch-Gesten selbst abfangen; Doppeltipp-Zoom verhindert touch-action im CSS */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => document.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+
   /* ---------- Rendern und Ereignisse ---------- */
   F.route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('/');
   F.go = (r) => { if (location.hash === '#/' + r) { F.closeModal(); F.render(); window.scrollTo(0, 0); } else location.hash = '#/' + r; }; // gleiche Adresse: kein hashchange, also selbst neu zeichnen

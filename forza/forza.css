@@ -608,3 +608,11 @@ html[data-theme=miami] .h1{letter-spacing:-.025em}
 html[data-theme=miami] .bnav button.on{color:var(--a)}
 html[data-theme=miami][data-mode=dark] .card{border-color:rgba(255,61,139,.16)}
 html[data-theme=miami] .fz-go{box-shadow:0 10px 30px -12px #ff3d8b,0 0 0 1px rgba(255,255,255,.08) inset}
+html{touch-action:manipulation}
+/* Anordnen: Pfeile je Übung und je Supersatz */
+.ar-row{padding:10px 4px!important;gap:8px!important}
+.ar-b{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--card2);color:var(--text);transition:transform .12s}
+.ar-b:active{transform:scale(.9)}.ar-b:disabled{opacity:.28}
+.ss-lbl{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ar-bm{display:flex;gap:6px}.ar-bm .ar-b{width:34px;height:34px;background:color-mix(in srgb,var(--a) 18%,var(--card2))}
+.ar-open{text-decoration:none!important;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:12px 0 2px;padding:8px;font-size:14px;font-weight:600;color:inherit;opacity:.88;border-radius:12px;background:rgba(255,255,255,.07)}
