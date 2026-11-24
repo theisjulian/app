@@ -487,7 +487,7 @@
       if (kg !== null && reentry && P.reentry_load_factor < 1) kg = Math.round(kg * P.reentry_load_factor / (c.ex.load_convention === 'je_hand' ? 1 : 2.5)) * (c.ex.load_convention === 'je_hand' ? 1 : 2.5);
       return {
         exercise_id: c.ex.id, name: c.ex.name, code: c.ex.code, muscle: c.muscle, sets: c.sets,
-        profile: c.ex.dosage_profile, reps: pf.reps || null, secs: pf.secs || null, perSide: !!pf.perSide,
+        profile: c.ex.dosage_profile, reps: pf.reps || null, secs: pf.secs || null, perSide: !!pf.perSide || !!(c.ex.content && c.ex.content.perSide),
         rir: pf.rir ? [rirLo, rirHi] : null, rest_s: P[pf.rest], load_kg: kg, load_convention: c.ex.load_convention,
         load_text: (c.carry ? 'Schwerpunkt unter dem Wochenziel: kurz mitgenommen. ' : c.habit ? 'Machst du an diesem Tag meist dazu. ' : '') + ls.text, first: ls.first, tier: c.ex.tier, prio: c.prio, carry: !!c.carry
       };

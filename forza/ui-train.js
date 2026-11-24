@@ -40,7 +40,7 @@
   const HOLD = /carry|farmer|suitcase|koffer|tragen|waiter|plank|unterarmstütz|seitstütz|hollow|l-sit|dead hang|totes hängen|wall sit|wandsitz|\bhalten\b|isometr/i;
   const ONESIDE = /suitcase|koffer|einarmig|einseitig|seitstütz|side plank|ein bein|einbeinig/i;
   const kindOf = (ex) => { const pf = E.PROFILES[ex.dosage_profile] || E.PROFILES.A, cs = ex.content && ex.content.secs, nm = ex.name || '';
-    const byName = !pf.secs && !cs && HOLD.test(nm) && !/liegestütz/i.test(nm);
+    const byName = ['G', 'A', 'S'].includes(ex.dosage_profile) && !cs && HOLD.test(nm) && !/liegestütz/i.test(nm); // nur als Absicherung, der Katalog führt Halte- und Trageübungen als I/T
     return { pf, cs: cs || (byName ? E.PROFILES.T.secs : null), timed: !!pf.secs || !!cs || byName, byName, perSide: pf.perSide || !!(ex.content && ex.content.perSide) || ((!!pf.secs || !!cs || byName) && ONESIDE.test(nm)) }; };
   const planRange = (se, k) => { if (k.byName && !/\bs\b|sek/i.test(se.planned_reps || '')) return k.cs; const m = /(\d+)\s*[–-]\s*(\d+)/.exec(se.planned_reps || ''); if (m) return [+m[1], +m[2]]; const one = /^\s*(\d+)/.exec(se.planned_reps || ''); if (one) return [+one[1], +one[1]]; return k.timed ? (k.cs || k.pf.secs || null) : (k.pf.reps || null); };
   /* Vorschlag für einen offenen Satz: nichts wird gespeichert, bevor du den Satz abschließt */
