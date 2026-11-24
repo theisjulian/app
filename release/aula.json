@@ -2,6 +2,6 @@
   "version": "1.4.1",
   "tag": "1.4",
   "ref": "d84d3cf507ec67f1b7c8c10e015da304ab1b4715",
-  "dry": true,
-  "notes": ""
+  "dry": false,
+  "notes": "Aula 1.4.1: schlichte, gut lesbare Gruppen-PDFs (neue Druck-Farbwelt „Schlicht“), Stundenplan und Sitzplan immer vollständig auf einer Seite, lange Namen werden nicht mehr abgeschnitten. Gruppo heißt jetzt Aula – alle Daten bleiben erhalten. Neu: Kalender mit Ferien, Feiertagen und Kalender-Abos (ICS), Statistik mit Unterricht, Schuljahr und Arbeitszeit, Gruppen zusammenführen, neue Seitenleiste und Einstellungen, Liquid-Glass-Design, Übersicht mit Tagesband, Schnellsuche, „Stunde starten“, Timer-Abläufe, Mini-Timer und der Timer „Moka“."
 }
