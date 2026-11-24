@@ -46,7 +46,15 @@
     const reps = st.reps ?? (prev && prev.reps !== null && Number(prev.load_kg) === Number(load) ? prev.reps : E.repTarget(range, E.lastWorkSets(F.S.sessions, ex.id, ex.load_convention === 'unterstuetzt'), load, st.set_no));
     return { load_kg: load, reps, timed: false };
   };
-  const partnerOf = (s, se) => { const m = /Superset mit «(.+?)»/.exec(se.why || ''); return m ? s.session_exercises.find((x) => x !== se && (F.S.exById[x.exercise_id] || {}).name === m[1]) || null : null; };
+  /* Supersätze: 2–3 Übungen im Wechsel, Pause erst nach der Runde. Gespeichert im Hinweistext der Übung
+     („Superset mit «A» und «B»“): braucht keine neue Spalte und funktioniert offline über die Warteschlange. */
+  const SSRE = /(?:\s*·\s*)?Superset mit ((?:«[^»]+»(?:,\s*|\s+und\s+)?)+)(?::[^.]*\.)?/;
+  const exName = (se) => (F.S.exById[se.exercise_id] || {}).name;
+  const ssNames = (se) => { const m = SSRE.exec(se.why || ''); return m ? [...m[1].matchAll(/«([^»]+)»/g)].map((x) => x[1]) : []; };
+  F.ssGroup = (s, se) => { const ns = ssNames(se); if (!ns.length) return [se]; const g = s.session_exercises.filter((x) => x === se || ns.includes(exName(x))); return g.length > 1 ? g : [se]; };
+  F.ssWhy = (why, partners) => { const base = (why || '').replace(SSRE, '').trim(); return partners.length ? (base ? base + ' · ' : '') + 'Superset mit ' + partners.map((n) => '«' + n + '»').join(' und ') + ': im Wechsel, Pause erst nach ' + (partners.length > 1 ? 'allen' : 'beiden') + '.' : (base || null); };
+  // groups: Liste von Gruppen (je 1–3 Übungen); schreibt die Hinweise nur, wenn sie sich ändern
+  F.ssApply = async (groups) => { for (const g of groups) for (const se of g) { const w = F.ssWhy(se.why, g.filter((x) => x !== se).map(exName)); if (w !== (se.why || null)) { se.why = w; await F.save('session_exercises', se.id, { why: w }); } } };
   /* nächste Übung mit offenen Sätzen ab der aktuellen; übersprungene erst, wenn sonst nichts mehr offen ist */
   const nextOpen = (s, from) => {
     const exs = s.session_exercises, n = exs.length, skip = F.ui.tr.skip;
@@ -153,10 +161,10 @@
     const ex = F.S.exById[se.exercise_id] || { name: '?', load_convention: 'gesamt' }, { pf, timed, perSide } = kindOf(ex);
     const wu = warmupFor(s, se, ex); if (wu.length && !(warmState(s).d || {})[se.id]) return topBar(s, dnEx) + warmScreen(s, se, ex, wu);
     const st = se.sets.find((x) => !x.done), tg = F.setTarget(se, st), unit = ex.load_convention === 'je_hand' ? 'kg je Hand' : ex.load_convention === 'zusatz' ? 'kg Zusatz' : ex.load_convention === 'unterstuetzt' ? 'kg Unterstützung (weniger = schwerer)' : 'kg';
-    const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, pair = partnerOf(s, se), skipped = F.ui.tr.skip.includes(se.id);
+    const fld = timed ? 'seconds' : 'reps', val = timed ? tg.seconds : tg.reps, skipped = F.ui.tr.skip.includes(se.id);
     const stepper = (f, v, im, lbl) => `<div class="fz-val"><span>${lbl}</span><div class="stepper"><button data-act="step" data-f="${f}" data-d="-1" data-s="${st.id}" aria-label="weniger">−</button><input type="text" inputmode="none" readonly data-pad="1" data-in="setVal" data-f="${f}" data-s="${st.id}" value="${v === null || v === undefined ? '' : F.fmt(v)}" placeholder="–"><button data-act="step" data-f="${f}" data-d="1" data-s="${st.id}" aria-label="mehr">+</button></div></div>`;
     return topBar(s, dnEx) + `<div class="fz${enter(st.id)}">
-      <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}${pair ? ' · Superset mit ' + esc((F.S.exById[pair.exercise_id] || {}).name || '') : ''}</div>
+      <div class="eyebrow">Übung ${F.ui.tr.ei + 1} von ${exs.length}</div>${ssStrip(s, se)}
       <div class="h1 fz-name">${esc(ex.name)}</div>
       <div class="fz-sub"><b>Satz ${st.set_no} von ${se.sets.length}</b> · Ziel ${esc(se.planned_reps || '')}${perSide ? ' je Seite' : ''}${se.planned_rir ? ' · Reserve ' + esc(se.planned_rir) : ''}</div>
       <div class="fz-vals">${noLoad(ex) ? '' : stepper('load_kg', tg.load_kg, 'decimal', unit)}${stepper(fld, val, 'numeric', timed ? 'Sekunden' : 'Wiederholungen')}</div>
@@ -166,6 +174,13 @@
       ${pf.rir ? `<div class="fz-feel" role="group" aria-label="Geschafft mit Gefühl"><span>oder gleich mit Gefühl:</span><button data-act="doneSet" data-s="${st.id}" data-rir="4">Leicht</button><button data-act="doneSet" data-s="${st.id}" data-rir="2">Passt</button><button data-act="doneSet" data-s="${st.id}" data-rir="0">Am Limit</button></div>` : ''}
       <div class="fz-tools"><button data-act="skipEx" data-id="${se.id}">${skipped ? 'Später' : 'Überspringen'}</button><button data-act="help" data-id="${se.exercise_id}">Hilfe</button><button data-act="swapAsk" data-id="${se.id}">Ersetzen</button><button data-act="addSet" data-id="${se.id}">+ Satz</button><button class="bad" data-act="painAsk" data-id="${se.id}">Schmerz</button></div>
       ${(() => { const prev = se.sets.filter((x) => x.done); return prev.length ? `<div class="small mute" style="margin-top:10px">Heute: ${setLine(se)}</div>` : ''; })()}</div>`;
+  };
+  // Supersatz-Leiste: alle Übungen der Runde nebeneinander, die aktuelle hervorgehoben, antippen springt hin
+  const ssStrip = (s, se) => {
+    const g = F.ssGroup(s, se); if (g.length < 2) return '';
+    const R = Math.max(...g.map((x) => x.sets.length)), op = g.filter(isOpen), r = Math.min(R, (op.length ? Math.min(...op.map(doneN)) : R - 1) + 1);
+    return `<div class="ss-strip"><div class="ss-top"><b>${g.length === 2 ? 'Supersatz' : 'Dreiersatz'} · Runde ${r} von ${R}</b><span>Pause erst nach ${g.length === 2 ? 'beiden' : 'allen'}</span></div>
+      <div class="ss-row">${g.map((x, k) => `<button class="ss-m${x === se ? ' on' : ''}${isOpen(x) ? '' : ' ok'}" data-act="goEx" data-i="${s.session_exercises.indexOf(x)}"><i>${isOpen(x) ? k + 1 : '✓'}</i><span><b>${esc(exName(x) || '?')}</b><small>${doneN(x)}/${x.sets.length} Sätze</small></span></button>`).join('')}</div></div>`;
   };
   const nextPreview = (s) => {
     const i = nextOpen(s, F.ui.tr.ei || 0); if (i < 0) return '<div class="fz-next"><span class="eyebrow">Als Nächstes</span><b>Training beenden</b></div>';
@@ -257,13 +272,16 @@
     const nxt = f.se.sets.find((x) => !x.done);
     if (nxt && nxt.load_kg === null && st.load_kg !== null) { nxt.load_kg = st.load_kg; F.save('sets', nxt.id, { load_kg: st.load_kg }).catch(() => null); }
     let rest = true;
-    if (F.focusOn()) {
-      // Superset: erst beide Übungen im Wechsel, Pause danach. Sonst weiter in derselben Übung bzw. zur nächsten offenen.
-      const s = f.s, p = partnerOf(s, f.se), idx = (e) => s.session_exercises.indexOf(e);
-      if (p && isOpen(p) && doneN(p) < doneN(f.se)) { F.ui.tr.ei = idx(p); rest = false; }
-      else if (p && isOpen(p) && (!isOpen(f.se) || doneN(p) < doneN(f.se) || idx(p) < idx(f.se))) F.ui.tr.ei = idx(p);
-      else if (!isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
-      if (!s.session_exercises.some(isOpen)) rest = false;
+    {
+      // Supersatz: reihum durch die Gruppe ohne Pause, Pause erst nach der Runde (auch in der Listenansicht). Sonst im Fokus weiter zur nächsten offenen.
+      const s = f.s, g = F.ssGroup(s, f.se), idx = (e) => s.session_exercises.indexOf(e);
+      if (g.length > 1) {
+        const k = g.indexOf(f.se), d = doneN(f.se); let nx = null;
+        for (let j = 1; j < g.length && !nx; j++) { const m = g[(k + j) % g.length]; if (isOpen(m) && doneN(m) < d) nx = m; }
+        if (nx) { F.ui.tr.ei = idx(nx); rest = false; }
+        else { const o = g.filter(isOpen).sort((a, b) => doneN(a) - doneN(b) || idx(a) - idx(b))[0]; if (o) F.ui.tr.ei = idx(o); else if (F.focusOn()) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; } }
+      } else if (F.focusOn() && !isOpen(f.se)) { const i = nextOpen(s, idx(f.se)); if (i >= 0) F.ui.tr.ei = i; }
+      if (F.focusOn() && !s.session_exercises.some(isOpen)) rest = false;
     }
     if (rest) { const P = E.params(F.S.params), sec = (F.therapyRest && F.therapyRest(f.s, f.se)) || P[pf.rest] || 90; F.rest = { end: Date.now() + sec * 1000, total: sec, warned: false }; }
     else F.rest = null;
@@ -357,7 +375,10 @@
   };
   F.acts.swap = async (t) => {
     const s = F.openSession(), se = s.session_exercises.find((x) => x.id === t.dataset.id);
-    await F.update('session_exercises', se.id, { exercise_id: t.dataset.ex, replaced_from: se.exercise_id, why: 'Ersetzt, Last bitte neu einschätzen.' });
+    const g = F.ssGroup(s, se), oldN = exName(se), newN = (F.S.exById[t.dataset.ex] || {}).name;
+    await F.update('session_exercises', se.id, { exercise_id: t.dataset.ex, replaced_from: se.exercise_id, why: F.ssWhy('Ersetzt, Last bitte neu einschätzen.', g.filter((x) => x !== se).map(exName)) });
+    // Supersatz bleibt bestehen: die Partner verweisen ab jetzt auf die neue Übung
+    for (const p of g) if (p !== se && p.why) await F.update('session_exercises', p.id, { why: p.why.split('«' + oldN + '»').join('«' + newN + '»') });
     for (const st of se.sets.filter((x) => !x.done)) await F.update('sets', st.id, { load_kg: null });
     F.closeModal(); await F.load(); F.render();
   };
