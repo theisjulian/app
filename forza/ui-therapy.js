@@ -77,7 +77,7 @@
   const lastDone = () => { const m = {}; for (const s of F.S.sessions) for (const se of s.session_exercises) if (isTher(se) && se.sets.some((x) => x.done)) { if (!m[se.exercise_id] || s.session_date > m[se.exercise_id]) m[se.exercise_id] = s.session_date; } return m; };
   F.therapyPick = (p) => { const ld = lastDone(), n = Math.max(1, Math.min(p.items.length, p.count || 3));
     return p.items.map((it, i) => ({ it, ex: exOf(it), i })).filter((x) => x.ex).sort((a, b) => (ld[a.ex.id] || '') < (ld[b.ex.id] || '') ? -1 : (ld[a.ex.id] || '') > (ld[b.ex.id] || '') ? 1 : a.i - b.i).slice(0, n); };
-  const atStart = (p, x) => p.pos === 'anfang' || (p.pos !== 'ende' && x.ex.dosage_profile === 'M');
+  const atStart = (p, x) => p.pos === 'anfang' || (p.pos !== 'ende' && p.pos !== 'supersatz' && x.ex.dosage_profile === 'M');
   const insertPicked = async (s, list, p) => {
     if (!list.length) return;
     const minPos = Math.min(0, ...s.session_exercises.map((e) => e.position)), maxPos = Math.max(0, ...s.session_exercises.map((e) => e.position));
@@ -93,12 +93,12 @@
     const had = F.openSession(); await baseStart(t, e);
     const p = F.therapy(), s = F.openSession();
     if (had || !p || !p.active || p.mode !== 'einstreuen' || !s || s.kind !== 'kraft' || s.session_exercises.some(isTher)) return;
-    try { await insertPicked(s, F.therapyPick(p), p); await F.load(); F.ui.tr.ei = 0; F.render(); } catch (er) { F.err(er, 'Therapieplan'); }
+    try { await insertPicked(s, F.therapyPick(p), p); await F.load(); if (p.pos === 'supersatz' && F.therSupersets) await F.therSupersets(); F.ui.tr.ei = 0; F.render(); } catch (er) { F.err(er, 'Therapieplan'); }
   };
 
   F.therapyRows = (where) => { const p = F.therapy(); if (!p || !p.active || p.mode !== 'einstreuen') return '';
     const l = F.therapyPick(p).filter((x) => (where === 'vor') === atStart(p, x)); if (!l.length) return '';
-    return l.map((x) => `<div class="exrow ther-row"><div class="exn">${F.icon.heute.replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"')}</div><div class="grow"><b>${esc(x.it.name)}</b><span class="badge" style="margin-left:6px">Therapie</span><div class="mute small">${x.it.sets} × ${x.it.secs ? x.it.secs + ' s' : x.it.reps} · ${where === 'vor' ? 'vorher' : 'zum Schluss'}</div></div><button class="icbtn" data-act="help" data-id="${x.ex.id}" aria-label="Hilfe">${F.icon.info}</button></div>`).join(''); };
+    return l.map((x) => `<div class="exrow ther-row"><div class="exn">${F.icon.heute.replace('<svg', '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"')}</div><div class="grow"><b>${esc(x.it.name)}</b><span class="badge" style="margin-left:6px">${p.pos === 'supersatz' ? 'Therapie · in den Pausen' : 'Therapie'}</span><div class="mute small">${x.it.sets} × ${x.it.secs ? x.it.secs + ' s' : x.it.reps} · ${where === 'vor' ? 'vorher' : 'zum Schluss'}</div></div><button class="icbtn" data-act="help" data-id="${x.ex.id}" aria-label="Hilfe">${F.icon.info}</button></div>`).join(''); };
 
   /* ---------- Starten oder an ein laufendes Training anhängen ---------- */
   const addItems = async (sessId, startPos, p) => {
@@ -131,7 +131,7 @@
     if (!F.therapy() && !F.ls.get('ther-hint-off', false)) return `<div class="card ther-card"><div class="eyebrow">Therapieplan</div><b>Übungen aus Physio oder Orthopädie</b><div class="small mute" style="margin:4px 0 12px">Einmal einrichten, dann streut forza sie im Wechsel in dein Training ein: Dehnen vorher, Kräftigen am Ende.</div><div class="row gap"><button class="btn pri grow" data-act="nav" data-r="mehr/therapie">Einrichten</button><button class="btn ghost" data-act="therapyHintOff">Später</button></div></div>`;
     const t = F.therapyToday(); if (!t) return '';
     if (t.p.mode === 'einstreuen') { if (t.running) return ''; const pk = F.therapyPick(t.p), pre = pk.filter((x) => atStart(t.p, x)), post = pk.filter((x) => !atStart(t.p, x));
-      return `<div class="ther-line small mute"><span><b>Therapieplan im Training:</b> ${[pre.length ? 'vorher ' + pre.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : '', post.length ? 'danach ' + post.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : ''].filter(Boolean).join(' · ')}</span><button class="lnk" data-act="nav" data-r="mehr/therapie">Plan</button></div>`; }
+      return `<div class="ther-line small mute"><span><b>Therapieplan im Training:</b> ${[pre.length ? 'vorher ' + pre.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : '', post.length ? (t.p.pos === 'supersatz' ? 'in den Pausen ' : 'danach ') + post.map((x) => esc(x.it.name.replace(/ \(.*\)$/, ''))).join(', ') : ''].filter(Boolean).join(' · ')}</span><button class="lnk" data-act="nav" data-r="mehr/therapie">Plan</button></div>`; }
     const w = weekCount(), dots = `<span class="ther-dots" aria-label="${w.n} von ${w.of} diese Woche">${Array.from({ length: w.of }, (_, i) => `<i class="${i < w.n ? 'on' : ''}"></i>`).join('')}</span>`;
     if (t.running) return ''; // läuft gerade: die Karte „Läuft gerade“ reicht
     if (t.done) return `<div class="card ther-card done"><div class="row between"><div><div class="eyebrow">Therapieplan</div><b>Heute erledigt</b></div>${dots}</div></div>`;
@@ -153,8 +153,8 @@
         <div class="eyebrow" style="margin:14px 0 8px">Wie</div><div class="seg"><button class="${p.mode === 'einstreuen' ? 'on' : ''}" data-act="therapyMode" data-v="einstreuen">Im Training einstreuen</button><button class="${p.mode !== 'einstreuen' ? 'on' : ''}" data-act="therapyMode" data-v="einzeln">Eigene Einheit</button></div>
         ${p.mode === 'einstreuen' ? `<div class="small mute" style="margin-top:8px">Jedes Training bekommt ein paar Übungen aus dem Plan, im Wechsel: zuerst, was am längsten nicht dran war.</div>
         <div class="eyebrow" style="margin:14px 0 8px">Übungen pro Training</div><div class="row wrap gap">${[2, 3, 4, 5].map((n) => `<button class="chip ${(p.count || 3) === n ? 'on' : ''}" data-act="therapyCount" data-n="${n}">${n}</button>`).join('')}</div>
-        <div class="eyebrow" style="margin:14px 0 8px">Wo</div><div class="row wrap gap">${[['auto', 'Automatisch'], ['anfang', 'Am Anfang'], ['ende', 'Am Ende']].map(([k, l]) => `<button class="chip ${(p.pos || 'auto') === k ? 'on' : ''}" data-act="therapyPos" data-v="${k}">${l}</button>`).join('')}</div>
-        <div class="small mute" style="margin-top:6px">Automatisch: Dehnen und Mobilisieren vorher, Kräftigen am Ende.</div>
+        <div class="eyebrow" style="margin:14px 0 8px">Wo</div><div class="row wrap gap">${[['auto', 'Automatisch'], ['anfang', 'Am Anfang'], ['ende', 'Am Ende'], ['supersatz', 'In den Pausen (Supersatz)']].map(([k, l]) => `<button class="chip ${(p.pos || 'auto') === k ? 'on' : ''}" data-act="therapyPos" data-v="${k}">${l}</button>`).join('')}</div>
+        <div class="small mute" style="margin-top:6px">${p.pos === 'supersatz' ? 'Jede Übung kommt in die Pause einer Kraftübung für andere Muskeln. Rumpf und Rücken nie vor schweren Kniebeugen oder Kreuzheben. Spart Zeit, ohne die Kraftübung zu schwächen.' : 'Automatisch: Dehnen und Mobilisieren vorher, Kräftigen am Ende.'}</div>
         <div class="small" style="margin-top:10px">Nächstes Training: ${F.therapyPick(p).map((x) => esc(x.it.name)).join(' · ')}</div>`
         : `<div class="eyebrow" style="margin:14px 0 8px">Tage</div><div class="row wrap gap">${days.map((d) => `<button class="chip ${(p.weekdays || []).includes(d) ? 'on' : ''}" data-act="therapyDay" data-d="${d}">${WDN[d]}</button>`).join('')}</div>`}
         <div class="eyebrow" style="margin:14px 0 8px">Pause zwischen den Sätzen</div><div class="row wrap gap">${[20, 30, 45, 60].map((r) => `<button class="chip ${(p.rest || 30) === r ? 'on' : ''}" data-act="therapyRest" data-r="${r}">${r} s</button>`).join('')}</div></div>
