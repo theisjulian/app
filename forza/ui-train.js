@@ -12,7 +12,7 @@
     const sg0 = F.suggestion(); if (sg0.rest || sg0.empty || !sg0.items.length) return F.toast('Heute kein Vorschlag möglich.');
     const sg = sg0; // Haltungsblock wird am Ende angeboten, nicht fest eingeplant
     const sess = await F.insert('sessions', { session_date: F.today(), kind: 'kraft', title: sg.title, split_day: sg.split_day, status: 'geplant', source: 'manuell', form: F.ls.get('form-' + F.today(), 'normal'), planned_minutes: sg.minutes, equipment_profile_id: F.items().id, rule_version: sg.rule_version, started_at: new Date().toISOString() });
-    const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: it.load_text + (it.pair_with ? ' · Superset mit «' + it.pair_with + '»: im Wechsel, Pause erst nach beiden.' : '') }))).select();
+    const ses = await F.sb.from('session_exercises').insert(sg.items.map((it, i) => ({ session_id: sess.id, exercise_id: it.exercise_id, position: i, planned_sets: it.sets, planned_reps: it.reps ? it.reps.join('–') : it.secs ? it.secs.join('–') + ' s' : null, planned_rir: it.rir ? it.rir.join('–') : null, why: F.ssWhy(it.load_text, it.ss || (it.pair_with ? [it.pair_with] : [])) }))).select();
     if (ses.error) throw ses.error;
     const rows = [];
     ses.data.forEach((se, i) => { const it = sg.items[i]; for (let n = 1; n <= it.sets; n++) rows.push({ session_exercise_id: se.id, set_no: n, load_kg: it.load_kg, load_per_hand: it.load_convention === 'je_hand' }); });
