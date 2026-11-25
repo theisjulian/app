@@ -1202,7 +1202,7 @@ function assessmentSheet(c, a) {
     <div id="keyBox" style="margin-top:10px">
       <div class="rows">${sw('aTasks', R.byTask(a) || (a.byTask && tasks.length) || tkDef, 'Punkte je Aufgabe eingeben')}</div>
       <div id="taskBox" hidden><div class="subhead" style="margin-top:6px">Aufgaben und erreichbare Punkte</div>
-        <div class="field"><span>Schnell: Höchstpunkte aller Aufgaben in einer Zeile (z. B. 2 3 4 3 2 2 2; auch aus Excel einfügbar)</span><input type="text" id="tQuick" placeholder="2 3 4 3 2 2 2 – dann Enter" autocomplete="off"></div>
+        <div class="field"><span>Schnell: Höchstpunkte aller Aufgaben in einer Zeile (z. B. 2 3 4 3 2 2 2; auch aus Excel einfügbar). Zum Verbessern einfach die Zeile ändern und Enter – die Aufgaben werden der Reihe nach ersetzt.</span><input type="text" id="tQuick" placeholder="2 3 4 3 2 2 2 – dann Enter" autocomplete="off"></div>
         <div id="taskRows"></div>
         <div class="panelBtns"><button type="button" class="mini" id="tAdd">+ Aufgabe</button><button type="button" class="mini" id="tPrev" hidden></button><button type="button" class="mini accent" id="tEnter">Sichern und Aufgabenpunkte eintragen …</button></div>
         <p class="hint" id="tHint"></p>
@@ -1457,7 +1457,9 @@ function assessmentSheet(c, a) {
     dlg.querySelector('#tHint').textContent = `${tasks.length} ${tasks.length === 1 ? 'Aufgabe' : 'Aufgaben'} · zusammen ${String(sum).replace('.', ',')} Punkte.` + (nOld() ? ` ${nOld()} ${nOld() === 1 ? 'Person hat' : 'Personen haben'} bisher nur Gesamtpunkte – sie bleiben bestehen, bis du für die Person Aufgabenpunkte einträgst.` : '');
     if (!manualKey) suggest(true); else showPct();
   };
-  const drawTasks = () => { dlg.querySelector('#taskRows').innerHTML = tasks.map((t, i) => taskRow(t, i + 1)).join(''); updTasks(); };
+  /* Schnellzeile zeigt immer die aktuellen Höchstpunkte – so kann man „3 4 2“ einfach zu „2 3 4 2“ verbessern */
+  const mirrorQuick = () => { const q = dlg.querySelector('#tQuick'); if (!q || document.activeElement === q) return; q.value = tasks.filter(t => t.max !== '' && t.max != null).map(t => String(t.max).replace('.', ',')).join(' '); };
+  const drawTasks = () => { dlg.querySelector('#taskRows').innerHTML = tasks.map((t, i) => taskRow(t, i + 1)).join(''); updTasks(); mirrorQuick(); };
   /* Faktor-Simulation direkt hier (gleicher Baustein wie in „Punkte je Aufgabe“) */
   const aTf = {};
   const aTfRender = () => {
@@ -1479,7 +1481,9 @@ function assessmentSheet(c, a) {
   aTfRender();
   dlg.querySelector('#aTasks').addEventListener('change', () => { if (dlg.querySelector('#aTasks').checked) updTasks(); });
   dlg.querySelector('#tAdd').onclick = () => { syncTasks(); tasks.push({ id: uid(), label: '', max: '' }); drawTasks(); const l = $$('[data-tl]', dlg); l[l.length - 1].focus(); };
-  dlg.querySelector('#taskRows').addEventListener('input', () => { syncTasks(); updTasks(); });
+  dlg.querySelector('#taskRows').addEventListener('input', () => { syncTasks(); updTasks(); mirrorQuick(); });
+  /* Enter in der Bezeichnung: weiter zu den Punkten dieser Aufgabe – nie das ganze Fenster sichern */
+  dlg.querySelector('#taskRows').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('[data-tl]')) { e.preventDefault(); e.stopPropagation(); const m = e.target.closest('.trowE').querySelector('[data-tm]'); if (m) m.focus(); } });
   dlg.querySelector('#taskRows').addEventListener('change', e => { if (e.target.matches('[data-tf]')) { syncTasks(); updTasks(); } });
   /* Schreibaufgabe: Faktor gilt für Inhalt und Sprache gemeinsam */
   dlg.querySelector('#taskRows').addEventListener('change', e => { const row = e.target.closest('.trowE'); if (!e.target.matches('[data-tf]') || !row || !row.dataset.g) return; $$(`.trowE[data-g="${row.dataset.g}"] [data-tf]`, dlg).forEach(x => { x.value = e.target.value; }); });
@@ -1490,6 +1494,10 @@ function assessmentSheet(c, a) {
   const hasPts = id => Object.values(a.results || {}).some(r => r && r.pts && r.pts[id] != null && r.pts[id] !== '');
   const applyQuick = () => {
     const inp = dlg.querySelector('#tQuick'), raw = inp.value.trim(); if (!raw) return;
+    syncTasks();
+    /* unverändert (z. B. beim Verlassen des Feldes nach Enter) → nichts tun */
+    const cur = tasks.filter(t => t.max !== '' && t.max != null).map(t => String(t.max)).join(' ');
+    if (raw.replace(/,/g, '.').split(/[\s;]+/).filter(Boolean).join(' ') === cur && tasks.every(t => t.max !== '' && t.max != null)) return;
     const parts = (/[\s;]/.test(raw) ? raw.split(/[\s;]+/).map(x => x.replace(',', '.')) : raw.split(',')).filter(x => x !== '');
     const nums = parts.map(Number);
     if (!nums.length || nums.some(x => !(x > 0) || x > 1000)) { toast('Bitte nur Zahlen größer als 0 eingeben, z. B. 2 3 4 3 2 2 2'); return; }
@@ -1497,7 +1505,7 @@ function assessmentSheet(c, a) {
     const keep = [];
     tasks.forEach((t, i) => { if (i < nums.length) { t.max = nums[i]; keep.push(t); } else if (hasPts(t.id)) keep.push(t); });
     for (let i = tasks.length; i < nums.length; i++) keep.push({ id: uid(), label: '', max: nums[i] });
-    tasks = keep; inp.value = ''; drawTasks();
+    tasks = keep; drawTasks(); inp.value = tasks.filter(t => t.max !== '' && t.max != null).map(t => String(t.max).replace('.', ',')).join(' ');
     if (tasks.length > nums.length) toast('Hinweis: Einige Aufgaben mit schon eingetragenen Punkten bleiben bestehen.', 4500);
   };
   dlg.querySelector('#tQuick').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); applyQuick(); } });
@@ -2216,7 +2224,7 @@ function espReportHtml(r) {
     ${rem ? `<div class="notices">${rem}</div>` : ''}
     <table class="espRep"><thead><tr><th>Fach</th><th>Große LN</th><th>Kleine LN</th><th class="n">Ø groß</th><th class="n">Ø klein</th><th class="avg">Ø gesamt</th></tr></thead>
     <tbody>${r.st.subjects.map(x => `<tr class="${me && Esp.deburr(x.teacher).endsWith(me) ? 'mine' : ''}"><td><b>${esc(x.subj)}</b><small>${esc(x.teacher)}</small></td><td>${espGradeChips(x.big)}</td><td>${espGradeChips(x.small)}</td><td class="n">${esc(x.avgBig || '–')}</td><td class="n">${esc(x.avgSmall || '–')}</td><td class="avg">${espAvgBar(x.avg)}</td></tr>`).join('')}</tbody></table>
-    <p class="hint">Hochgestellt klein: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben · Zahlen wie im Infoportal.</p></section>`;
+    <p class="hint">Stand des Infoportals vom ${esc(fdate(r.rep.stand))}: Noten, die erst in Libretto stehen (z. B. eine neue mündliche Note), fehlen hier – sie siehst du oben unter „Bei dir“. Klein tiefgestellt: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben.</p></section>`;
 }
 function espView(startId) {
   if (!espOn()) return;
@@ -2975,8 +2983,27 @@ function modelSemResults(c) {
    Drucken & Export
    ====================================================================== */
 /* ---------- Übertrag-Übersicht ---------- */
+/* Lesezeichen „Libretto → Infoportal“ einrichten: Code aus infoportal-helfer.js, Kommentare raus, eine Zeile */
+async function ipBookmarklet() {
+  const src = await (await fetch('infoportal-helfer.js')).text();
+  return 'javascript:' + encodeURIComponent(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n\s*/g, ' ').trim());
+}
+async function ipSetup() {
+  let href = ''; try { href = await ipBookmarklet(); } catch (e) { href = ''; }
+  const { dlg } = sheet({ title: 'Lesezeichen „Libretto → Infoportal“', ok: '', cancel: 'Fertig', body: `
+    <p class="prose" style="margin-top:0">Einmal einrichten, dann trägt ein Klick im Infoportal die kopierten Noten ein.</p>
+    <ol class="prose ipSteps">
+      <li>In Safari (oder Chrome) die <b>Favoritenleiste</b> einblenden: Menü „Darstellung“ → „Favoritenleiste einblenden“.</li>
+      <li>Diesen Knopf mit der Maus <b>in die Favoritenleiste ziehen</b>:<div class="ipDrag"><a draggable="true" href="${esc(href)}" id="ipLink">Libretto → Infoportal</a></div>
+        Klappt das Ziehen nicht: auf <a href="#" id="ipWeb">theisapps.de/libretto/helfer</a> gehen und den Knopf dort in die Favoritenleiste ziehen.</li>
+      <li>Im Infoportal: Seite öffnen (z. B. Noten → Mündlich), in Libretto unter „Übertrag“ auf <b>„Fürs Infoportal kopieren“</b>, dann das Lesezeichen anklicken. Safari fragt beim ersten Mal, ob eingefügt werden darf – „Einfügen“ wählen.</li>
+      <li>Prüfen (eingetragene Zeilen sind grün) und <b>im Infoportal wie gewohnt speichern</b>. Danach in Libretto „Diese … als übertragen markieren“.</li></ol>
+    <p class="hint">Das Lesezeichen läuft nur in deinem Browser auf der geöffneten Seite: Es füllt die Notenfelder aus, speichert nicht und schickt nichts weg. Findet es eine Person nicht, sagt es das.</p>` });
+  const l = dlg.querySelector('#ipLink'); l.onclick = e => { e.preventDefault(); toast('Nicht anklicken – in die Favoritenleiste des Browsers ziehen.'); };
+  dlg.querySelector('#ipWeb').onclick = e => { e.preventDefault(); window.open('https://theisapps.de/libretto/helfer/'); };
+}
 function transferSheet(c) {
-  const up = upper(c);
+  const up = upper(c); let ipKeys = null;
   const open = new Set();
   const numbered = () => { let n = 0; return groupsOf(c).flatMap(g => g.students.map(st => ({ n: ++n, s: st, g: g.label }))); };
   const stateText = (st, n) => st === 'done' ? 'alles übertragen' : st === 'open' ? 'noch nichts übertragen' : st === 'part' ? `${n} offen oder geändert` : 'keine Noten';
@@ -2991,18 +3018,40 @@ function transferSheet(c) {
       const its = items(a), st = xAssess(c, a), todo = its.filter(x => xState(c, x.key, x.r) !== 'done').length;
       const any = its.some(x => xState(c, x.key, x.r) !== 'open');
       return `<details class="xrow" data-d="${a.id}" ${open.has(a.id) ? 'open' : ''}><summary>${mk(st)}<b>${esc(a.short || R.TYPES[a.type].short)}${a.date ? ' ' + sdate(a.date) : ''}</b><span class="xt">${esc(a.title || R.TYPES[a.type].label)}</span><span class="hint">${stateText(st, todo)}</span></summary>
-        <div class="xbtns">${st !== 'done' ? `<button type="button" class="mini accent" data-all="${a.id}">Alle als übertragen markieren</button>` : ''}${any ? `<button type="button" class="mini" data-none="${a.id}">Übertrag zurücknehmen</button>` : ''}</div>
+        <div class="xbtns"><button type="button" class="mini ipBtn" data-ip="${a.id}" title="Noten in die Zwischenablage – im Infoportal dann das Lesezeichen „Libretto → Infoportal“ anklicken">Fürs Infoportal kopieren</button>${ipKeys && ipKeys.id === a.id ? `<button type="button" class="mini accent" data-ipmark>Diese ${ipKeys.keys.length} als übertragen markieren</button>` : ''}${st !== 'done' ? `<button type="button" class="mini${ipKeys && ipKeys.id === a.id ? '' : ' accent'}" data-all="${a.id}">Alle als übertragen markieren</button>` : ''}${any ? `<button type="button" class="mini" data-none="${a.id}">Übertrag zurücknehmen</button>` : ''}</div>
         <div class="xlist">${its.map((x, i) => { const xs = xState(c, x.key, x.r); return `${x.g && (!i || its[i - 1].g !== x.g) ? `<div class="xgrp">${esc(x.g)}</div>` : ''}<label class="xi ${xs}"><input type="checkbox" data-k="${x.key}" ${xs === 'done' ? 'checked' : ''}><span class="nr">${x.n}</span><span class="xn">${esc(x.s.name)}</span><b>${esc(xSig(c, x.r))}</b><span class="hint">${stLabel(xs)}</span></label>`; }).join('')}</div></details>`;
     }).join('');
     const stE = ents.length ? (ents.every(e => xState(c, xKeyE(e), e) === 'done') ? 'done' : ents.every(e => xState(c, xKeyE(e), e) === 'open') ? 'open' : 'part') : null;
     const rowsE = ents.length ? `<details class="xrow" data-d="ent" ${open.has('ent') ? 'open' : ''}><summary>${mk(stE)}<b>Einzelnoten</b><span class="xt">z. B. Unterrichtsbeiträge</span><span class="hint">${stateText(stE, ents.filter(e => xState(c, xKeyE(e), e) !== 'done').length)}</span></summary>
-        <div class="xbtns">${stE !== 'done' ? '<button type="button" class="mini accent" data-all="ent">Alle als übertragen markieren</button>' : ''}${ents.some(e => xState(c, xKeyE(e), e) !== 'open') ? '<button type="button" class="mini" data-none="ent">Übertrag zurücknehmen</button>' : ''}</div>
+        <div class="xbtns"><button type="button" class="mini ipBtn" data-ip="ent" title="Je Person die älteste noch offene Einzelnote in die Zwischenablage – im Infoportal dann das Lesezeichen „Libretto → Infoportal“ anklicken">Fürs Infoportal kopieren</button>${ipKeys && ipKeys.id === 'ent' ? `<button type="button" class="mini accent" data-ipmark>Diese ${ipKeys.keys.length} als übertragen markieren</button>` : ''}${stE !== 'done' ? `<button type="button" class="mini${ipKeys && ipKeys.id === 'ent' ? '' : ' accent'}" data-all="ent">Alle als übertragen markieren</button>` : ''}${ents.some(e => xState(c, xKeyE(e), e) !== 'open') ? '<button type="button" class="mini" data-none="ent">Übertrag zurücknehmen</button>' : ''}</div>
         <div class="xlist">${ents.map(e => { const xs = xState(c, xKeyE(e), e); return `<label class="xi ${xs}"><input type="checkbox" data-k="${xKeyE(e)}" ${xs === 'done' ? 'checked' : ''}><span class="xn">${esc(nm(e.sid))}</span><span class="hint">${esc(R.TYPES[e.type].short)}${e.date ? ' ' + sdate(e.date) : ''}</span><b>${esc(xSig(c, e))}</b><span class="hint">${stLabel(xs)}</span></label>`; }).join('')}</div></details>` : '';
-    return `<p class="hint">Hier merkst du dir, was du schon ins Notenprogramm der Schule (z. B. Infoportal) übertragen hast. <b>✓</b> alles übertragen · <b style="color:var(--orange)">●</b> nach dem Übertrag geändert oder ergänzt (Nachtrag nötig) · ohne Zeichen: noch nicht übertragen. Libretto schickt nichts weg – es ist nur deine Merkhilfe.</p>
+    return `<div class="ipTip"><div><b>Schneller ins Infoportal:</b> „Fürs Infoportal kopieren“ – dann im Infoportal auf die Seite gehen (z. B. Noten → Mündlich) und das Lesezeichen <b>„Libretto → Infoportal“</b> anklicken. Die Noten stehen dann bei den richtigen Personen, grün markiert. Speichern machst du selbst im Infoportal.</div><button type="button" class="mini" data-ipsetup>Lesezeichen einrichten …</button></div>
+      <p class="hint">Hier merkst du dir, was du schon ins Notenprogramm der Schule (z. B. Infoportal) übertragen hast. <b>✓</b> alles übertragen · <b style="color:var(--orange)">●</b> nach dem Übertrag geändert oder ergänzt (Nachtrag nötig) · ohne Zeichen: noch nicht übertragen. Libretto schickt nichts weg – es ist nur deine Merkhilfe.</p>
       ${rowsA || rowsE ? `<div class="xtop"><button type="button" class="mini accent" data-allall>Alles Angezeigte als übertragen markieren</button><span class="hint">${esc(scopeLabel(c))}</span></div>${rowsA}${rowsE}` : '<div class="empty" style="min-height:120px"><div><strong>Noch keine Noten</strong><p>Sobald Noten eingetragen sind, siehst du hier, was noch zu übertragen ist.</p></div></div>'}`;
   };
   const { dlg } = sheet({ title: 'Übertrag', ok: '', cancel: 'Fertig', wide: true, body: body() });
   const root = dlg.querySelector('.sheetbody');
+  /* Fürs Infoportal: noch offene (oder geänderte) Noten als Zeile für das Lesezeichen „Libretto → Infoportal“ */
+  const IP_ART = ['RA', 'UB', 'RF', 'GR', 'WZ', 'PN', 'WS', 'EP', 'PF', 'LN', 'KSL'];
+  const dmy = d => d ? d.split('-').reverse().join('.') : '';
+  const ipCopy = async id => {
+    let list = [], what = '';
+    if (id === 'ent') {
+      const ents = (c.entries || []).filter(e => R.inScope(e, entScope(c)) && xSig(c, e) && xState(c, xKeyE(e), e) !== 'done').sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      const seen = new Set(); ents.forEach(e => { if (seen.has(e.sid)) return; seen.add(e.sid); list.push({ key: xKeyE(e), s: c.students.find(x => x.id === e.sid), g: xSig(c, e), d: dmy(e.date), art: IP_ART.includes((R.TYPES[e.type].short || '').toUpperCase()) ? R.TYPES[e.type].short.toUpperCase() : '' }); });
+      const rest = ents.length - list.length; what = `Einzelnoten · je Person die älteste offene${rest ? ` (danach noch ${rest} weitere)` : ''}`;
+    } else {
+      const a = asById(id); let its = items(a).filter(x => xState(c, x.key, x.r) !== 'done'); if (!its.length) its = items(a);
+      list = its.map(x => ({ key: x.key, s: x.s, g: xSig(c, x.r), d: dmy(a.date) })); what = `${a.title || R.TYPES[a.type].label}${a.date ? ' · ' + sdate(a.date) : ''}`;
+    }
+    const ok = list.filter(x => x.s && /^\d{1,2}[+-]?$/.test(String(x.g).trim())), skip = list.filter(x => !ok.includes(x));
+    if (!ok.length) { toast('Nichts zu kopieren – alles schon übertragen.'); return; }
+    const aa = id === 'ent' ? null : asById(id);
+    const data = { kind: id === 'ent' ? 'e' : 'a', date: aa && aa.date ? dmy(aa.date) : '', what: `${cLabel(c)} · ${what}`, items: ok.map(x => { const n = splitName(x.s); return { last: n.last, first: n.first, cls: x.s.cls || '', g: String(x.g).trim(), d: x.d, ...(x.art ? { art: x.art } : {}) }; }) };
+    try { await navigator.clipboard.writeText('LIBRETTO-INFOPORTAL 1\n' + JSON.stringify(data)); } catch (e) { toast('Kopieren ging nicht: ' + e.message); return; }
+    ipKeys = { id, keys: ok.map(x => x.key) }; refresh();
+    toast(`${ok.length} ${ok.length === 1 ? 'Note' : 'Noten'} kopiert – jetzt im Infoportal das Lesezeichen „Libretto → Infoportal“ anklicken${skip.length ? `. Nicht dabei (keine Zahl): ${skip.map(x => x.s ? x.s.name : '').join(', ')}` : ''}`, 6500);
+  };
   const refresh = () => { root.querySelectorAll('details[data-d]').forEach(d => d.open ? open.add(d.dataset.d) : open.delete(d.dataset.d)); root.innerHTML = body(); save(); renderGrades(); };
   const asById = id => c.assessments.find(a => a.id === id);
   const markAll = id => { if (id === 'ent') (c.entries || []).filter(e => R.inScope(e, entScope(c))).forEach(e => xMark(c, xKeyE(e), e)); else { const a = asById(id); if (a) items(a).forEach(x => xMark(c, x.key, x.r)); } };
@@ -3010,7 +3059,10 @@ function transferSheet(c) {
   root.addEventListener('click', e => {
     if (READONLY) return;
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.all) { markAll(b.dataset.all); refresh(); }
+    if (b.dataset.ip) { ipCopy(b.dataset.ip); return; }
+    if ('ipmark' in b.dataset) { const kk = ipKeys ? ipKeys.keys : []; kk.forEach(k => { let r = null; if (k.startsWith('e|')) r = (c.entries || []).find(x => xKeyE(x) === k); else { const [aid, sid] = k.split('|'); const a = asById(aid); r = a && a.results && a.results[sid]; } xMark(c, k, r); }); ipKeys = null; refresh(); toast(`${kk.length} als übertragen markiert`); return; }
+    if ('ipsetup' in b.dataset) { ipSetup(); return; }
+    if (b.dataset.all) { ipKeys = null; markAll(b.dataset.all); refresh(); }
     else if (b.dataset.none) { clearAll(b.dataset.none); refresh(); }
     else if ('allall' in b.dataset) { visibleAssessments(c).forEach(a => markAll(a.id)); markAll('ent'); refresh(); }
   });
@@ -4244,6 +4296,7 @@ function helpSheet(opts) {
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
     
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
+    <p><b>Schneller ins Infoportal – Lesezeichen „Libretto → Infoportal“:</b> Einmal einrichten (im Fenster „Übertrag“ → „Lesezeichen einrichten …“: den blauen Knopf in die Favoritenleiste von Safari oder Chrome ziehen). Dann: im Infoportal die passende Seite öffnen (z. B. Noten → Mündlich), in Libretto beim Leistungsnachweis oder bei den Einzelnoten <b>„Fürs Infoportal kopieren“</b>, im Infoportal das Lesezeichen anklicken. Es trägt jede Note bei der richtigen Person ein (bei Einzelnoten auch Art und Datum) und markiert die Zeilen grün. <b>Gespeichert wird erst, wenn du im Infoportal speicherst</b> – danach in Libretto „Diese … als übertragen markieren“. Bei Einzelnoten kommt je Person die älteste offene Note; hat jemand mehrere, kopierst du nach dem Speichern einfach die nächste Runde. Findet das Lesezeichen eine Person nicht, nennt es sie – die trägst du von Hand ein. Das Lesezeichen läuft nur in deinem Browser und schickt nichts weg.</p>
     <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen. Mit der Terminliste aus dem Infoportal geht es noch bequemer – siehe „Elternsprechtag mit Terminliste“.</p>${fig('schuelerblatt', 'Schülerblatt mit Durchschnitten, allen Noten und Zeugnisnote')}${fig('uebertrag', 'Übertrag: was schon im Infoportal steht')}`],
   ['esp', 'Elternsprechtag mit Terminliste aus dem Infoportal', 'Zeugnis und Gespräche', `
     <p>Am Elternsprechtag kommen die Eltern im Fünf-Minuten-Takt – aus verschiedenen Klassen und Fächern. Libretto zeigt dir Termin für Termin die richtige Person mit allen Noten, über alle deine Kurse hinweg. Mit ↑ ↓ geht es zum nächsten Termin.</p>
@@ -4255,6 +4308,7 @@ function helpSheet(opts) {
     <p><b>3. Am Abend:</b> Am Tag selbst steht der Elternsprechtag ganz oben in der Übersicht. Links die Terminleiste (der aktuelle Termin ist nach der Uhr markiert), rechts die Person: oben „Bei dir“ mit Zeugnisnote und allen Noten, darunter „Alle Fächer“ aus dem Bericht; dein eigenes Fach ist mit „du“ markiert. Ist jemand in zwei deiner Kurse, wechselst du oben zwischen den Kursen.</p>
     <p><b>Gesprächsnotiz:</b> Was du ins Feld „Gesprächsnotiz“ schreibst, steht sofort bei der Person unter „Notizen“ – mit Datum, zum Beispiel „Elternsprechtag 1.12.2026: …“. Frühere Notizen sind zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen.</p>
     <p><b>Nicht zugeordnet (?):</b> Haben die Eltern nur ihren eigenen Namen eingetragen („Hier eintragen“) oder steht die Person in keinem deiner Kurse, wählst du sie in der Ansicht unten unter „Person aus deinen Kursen zuordnen“. Libretto ordnet nie unsicher zu – gibt es einen Namen doppelt, fragt es lieber.</p>
+    <p><b>Welcher Stand gilt?</b> „Bei dir“ kommt direkt aus Libretto und ist immer aktuell. „Alle Fächer“ zeigt den Stand des Infoportals am Tag des Ausdrucks – auch für dein eigenes Fach. Eine Note, die du erst in Libretto eingetragen hast (z. B. eine neue mündliche Note), steht deshalb oben, aber noch nicht in „Alle Fächer“.</p>
     <p><b>Mappe drucken:</b> Im Kasten „Elternsprechtag“ druckt „Mappe drucken (PDF)“ eine Terminübersicht und je Termin eine Seite mit allen Noten und Linien für handschriftliche Notizen – oder mit der schon geschriebenen Gesprächsnotiz.</p>
     <p><b>Datenschutz:</b> Terminliste (mit den Namen der Eltern) und Bericht braucht es nur für diesen Tag. Danach bietet die Übersicht an, beides zu löschen; die Gesprächsnotizen bleiben bei den Schülern. Alles bleibt verschlüsselt auf diesem Computer.</p>${fig('elternsprechtag', 'Elternsprechtag: Terminleiste, Noten bei dir und alle Fächer aus dem Bericht Leistungsstand')}`],
   ['kalender', 'Kalender, Termine und Klassen austauschen', 'Organisation', `
@@ -4557,6 +4611,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.8', ['Neu: Schneller ins Infoportal – „Fürs Infoportal kopieren“ im Übertrag und ein Lesezeichen „Libretto → Infoportal“, das die Noten bei den richtigen Personen einträgt (gespeichert wird erst im Infoportal)', 'Aufgaben-Schnelleingabe: Die Zeile bleibt stehen und lässt sich verbessern (z. B. vergessene erste Aufgabe davor schreiben); gelöschte Aufgaben kommen nicht mehr zurück; Enter in der Aufgabenbezeichnung sichert nicht mehr versehentlich das ganze Fenster', 'Elternsprechtag: Hinweis, dass „Alle Fächer“ den Stand des Infoportals zeigt']],
   ['1.1.7', ['Elternsprechtag: PDF einlesen und Mappe drucken jetzt direkt in der Ansicht; solange kein Bericht Leistungsstand da ist, erklärt ein Hinweis bei jeder Person, wie die Klassenleitung alle Fächer dazuholt']],
   ['1.1.6', ['Elternsprechtag: Zuordnung zu deinen Kursen zuverlässiger (auch bei älteren Kursen, bei Klassen wie „09F“, bei mehreren Vornamen oder anderer Reihenfolge); beim Einlesen steht bei jeder nicht zugeordneten Person, warum', 'Klassenleitung: eigener Knopf „Leistungsstand der Klasse“ im Kasten Elternsprechtag']],
   ['1.1.5', ['Neu: Elternsprechtag mit Terminliste aus dem Infoportal – Terminliste, Belegungsplan und (für die Klassenleitung) Bericht Leistungsstand als PDF einlesen; am Abend Termin für Termin alle Noten über alle Kurse, alle Fächer der Klasse, Gesprächsnotiz direkt bei der Person, Mappe zum Ausdrucken; danach löschen (Datenschutz)']],

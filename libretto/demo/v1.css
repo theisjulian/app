@@ -902,3 +902,8 @@ table.espRep .avg{width:132px}
 .espTools{display:flex;gap:6px;padding:0 6px 10px 0;flex-wrap:wrap} .espTools .mini{font-size:12.5px;padding:5px 10px}
 .espRepHint{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--blue) 8%,transparent);display:flex;gap:14px;align-items:center;font-size:13.5px;line-height:1.45}
 .espRepHint .mini{flex:none}
+/* Übertrag: Helfer fürs Infoportal */
+.ipTip{display:flex;gap:14px;align-items:center;margin:0 0 12px;padding:11px 14px;border-radius:12px;background:color-mix(in srgb,var(--blue) 8%,transparent);font-size:13.5px;line-height:1.45}
+.ipTip .mini{flex:none}
+.ipSteps{padding-left:20px;line-height:1.55} .ipSteps li{margin-bottom:8px}
+.ipDrag{margin:8px 0 6px} .ipDrag a{display:inline-block;padding:8px 16px;border-radius:10px;background:var(--blue);color:#fff;font-weight:650;text-decoration:none;cursor:grab;box-shadow:0 2px 8px color-mix(in srgb,var(--blue) 35%,transparent)}
