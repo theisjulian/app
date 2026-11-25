@@ -1,7 +1,7 @@
 {
-  "version": "1.1.4",
+  "version": "1.1.7",
   "tag": "1.1",
-  "ref": "f2f1c361562fc479a15364207dfcd9a2bf0a0932",
+  "ref": "860f1cc665ff9e59f4909e9f72c1dea06e8d6de8",
   "dry": false,
-  "notes": "Schülerübersichten jetzt auch grafisch; Unterfenster führen beim Schließen zurück; Balken und Schriften im Druck vereinheitlicht."
+  "notes": ""
 }

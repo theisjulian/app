@@ -164,13 +164,53 @@ const Print = (() => {
       if (b.crit) return critHtml(b.crit);
       if (b.group) return `<div class="keepT">${b.group.map(block).join('')}</div>`;
       if (b.lines) return `<div class="cLines wr">${'<div></div>'.repeat(b.lines)}</div>`;
+      if (b.espChips) return espChipsHtml(b.espChips);
+      if (b.espRep) return espRepHtml(b.espRep);
+      if (b.espNote) return `<div class="espNoteP">${esc(b.espNote)}</div>`;
       return '';
     };
     if (m.slips) return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}${SLIP_CSS}${m.slips.graf ? SLIPG_CSS : ''}</style></head><body>${slipsHtml(m.slips)}</body></html>`;
-    return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+    return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${CSS}${m.espCss ? ESP_CSS : ''}</style></head><body>
       ${headHtml(m, settings)}${keepSig(m.blocks).map(block).join('')}</body></html>`;
   }
 
+  /* Elternsprechtag-Mappe: Noten als kleine Kästchen (Rand in der Notenfarbe, Zahl dunkel – auch schwarz-weiß lesbar) */
+  const GCOL = ['', '#2f8a46', '#5f9e34', '#a68f00', '#c96500', '#c02a20', '#7d1a1a'];
+  const gBox = (g, w, cls = '', nn) => { const n = nn != null ? nn : parseInt(g); return `<span class="eG ${g === 'x' ? 'x' : ''} ${cls}" style="${n ? `--c:${GCOL[n]}` : ''}">${esc(g)}${w != null && w !== 1 ? `<sub>${esc(String(w).replace('.', ','))}</sub>` : ''}</span>`; };
+  function espChipsHtml(e) {
+    const row = (t, l) => l.length ? `<div class="eRow"><div class="eRowT">${esc(t)}</div><div class="eItems">${l.map(x => `<div class="eIt">${gBox(x.g, null, 'big', x.n)}<small>${esc(x.lbl)}${x.date ? '<br>' + esc(x.date) : ''}</small></div>`).join('')}</div></div>` : '';
+    return `<div class="eChips">${row(e.bigT, e.big)}${row('Kleine Leistungsnachweise', e.small)}${!e.big.length && !e.small.length ? '<p class="note">Noch keine Noten.</p>' : ''}</div>`;
+  }
+  function espRepHtml(r) {
+    let last = '';
+    const list = l => l.length ? l.map(g => { const lab = g.t && g.t !== last ? `<span class="eTyp">${esc(g.t)}</span>` : ''; last = g.t; return lab + gBox(g.g, g.w); }).join('') : '<span class="eNone">–</span>';
+    const bar = a => { const v = parseFloat(String(a || '').replace(',', '.')); if (!isFinite(v)) return '<span class="eNone">–</span>'; const n = Math.min(6, Math.max(1, Math.round(v))), f = Math.max(0, Math.min(1, (6 - v) / 5));
+      return `<span class="eAvg"><b>${esc(a)}</b><svg width="60" height="6" viewBox="0 0 60 6"><rect width="60" height="6" rx="3" fill="#e6e9ef"/><rect width="${Math.max(6, f * 60).toFixed(2)}" height="6" rx="3" fill="${GCOL[n]}"/></svg></span>`; };
+    return `${(r.remarks || []).map(t => `<div class="eRem ${/gefährdet/i.test(t) ? 'warn' : ''}">${esc(t)}</div>`).join('')}
+      <table class="eRep"><colgroup><col style="width:27%"><col style="width:17%"><col><col style="width:9%"><col style="width:9%"><col style="width:17%"></colgroup>
+      <thead><tr><th>Fach · Lehrkraft</th><th>Große LN</th><th>Kleine LN</th><th class="n">Ø groß</th><th class="n">Ø klein</th><th>Ø gesamt</th></tr></thead>
+      <tbody>${r.subjects.map(x => { last = ''; const b = list(x.big); last = ''; const k = list(x.small); return `<tr class="${x.mine ? 'mine' : ''}"><td><b>${esc(x.subj)}</b><small>${esc(x.teacher)}</small></td><td>${b}</td><td>${k}</td><td class="n">${esc(x.avgBig || '–')}</td><td class="n">${esc(x.avgSmall || '–')}</td><td>${bar(x.avg)}</td></tr>`; }).join('')}</tbody></table>
+      <p class="note">Bericht Leistungsstand aus dem Infoportal, Klasse ${esc(r.cls)}, Stand ${esc(r.stand)}. Kleine Zahl: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben.</p>`;
+  }
+  const ESP_CSS = `
+      .eChips{break-inside:avoid;margin:0 0 6px} .eChips > p{grid-column:1/-1}
+      .eChips{display:grid;grid-template-columns:1fr 1fr;column-gap:8mm}
+      .eRow{margin:0 0 6px;min-width:0} .eRowT{font-size:7pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3f4552;margin-bottom:4px}
+      .eItems{display:flex;flex-wrap:wrap;gap:6px 6px;justify-content:flex-start} .eIt{display:flex;flex-direction:column;align-items:center;min-width:13mm;text-align:center} .eIt small{font-size:6.8pt;color:#4b5160;line-height:1.25;margin-top:2px}
+      .eG{display:inline-flex;align-items:baseline;justify-content:center;min-width:15pt;height:14pt;line-height:12.5pt;padding:0 3pt;margin:1pt 2.5pt 1pt 0;border:1.25pt solid var(--c,#9aa1ad);border-radius:3.5pt;font-weight:750;font-size:8.6pt;color:#1b1d22;font-variant-numeric:tabular-nums;background:#fff}
+      .eG sub{font-size:5.6pt;font-weight:600;color:#4b5160;margin-left:1pt;vertical-align:-1pt;line-height:1}
+      .eG.x{border-style:dashed;color:#6b7280;font-weight:600}
+      .eG.big{min-width:24pt;height:21pt;line-height:19pt;font-size:12.5pt;border-width:1.75pt;border-radius:5pt;margin:0}
+      .eTyp{font-size:6.8pt;font-weight:600;color:#4b5160;margin:0 2.5pt 0 4pt} .eTyp:first-child{margin-left:0}
+      .eNone{color:#9aa1ad}
+      table.eRep{table-layout:fixed;width:100%;margin:2px 0 4px;font-size:8.6pt} table.eRep td{vertical-align:middle;padding-top:3.5px;padding-bottom:3.5px}
+      table.eRep th,table.eRep td{text-align:left} table.eRep th.n,table.eRep td.n{text-align:right}
+      table.eRep td b{display:block;font-weight:700;color:#1b1d22} table.eRep td small{display:block;font-size:7pt;color:#4b5160;font-style:italic}
+      table.eRep .n{text-align:right;font-variant-numeric:tabular-nums}
+      table.eRep tr.mine td{background:#f3f5fa} table.eRep tr.mine td:first-child b::after{content:'  · du';font-weight:600;color:${INK};font-size:7pt}
+      .eAvg{display:flex;align-items:center;gap:5pt} .eAvg b{display:inline-block;min-width:20pt;font-variant-numeric:tabular-nums;font-weight:750;color:#1b1d22} .eAvg svg{width:16mm;height:1.6mm;flex:none}
+      .eRem{margin:0 0 6px;padding:5px 9px;border-radius:5px;background:#f3f5fa;font-size:8.4pt;font-weight:600;color:#1b1d22;border-left:2.5pt solid #9aa1ad;break-inside:avoid} .eRem.warn{background:#fdf0ef;border-left-color:#b42318;color:#7a1712}
+      .espNoteP{white-space:pre-wrap;border:.75pt solid #d5d9e0;border-radius:6px;padding:8px 11px;font-size:9.2pt;line-height:1.45;break-inside:avoid}`;
   /* Schülerübersichten: drei Abschnitte je A4-Seite (feste Höhe, damit nie einer über den Seitenrand läuft), Schnittlinien dazwischen.
      Druckbereich: 297 mm − 14 mm oben − 20,3 mm unten = 262,7 mm → 3 × 86 mm. */
   const SLIP_CSS = `

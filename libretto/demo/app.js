@@ -838,6 +838,9 @@ document.addEventListener('click', async e => {
     if (a === 'klassen') klassenSheet();
     if (a === 'deadlines') deadlineSheet();
     if (a === 'ldo') ldoSheet();
+    if (a === 'espView') espView();
+    if (a === 'espDel') espDelete();
+    if (a === 'espAdd') { UI.tab = 'dates'; render(); espPick(); }
     if (a === 'courseDeadlines' && course()) courseDeadlineSheet(course());
     if (a === 'editCourse') courseSheet(course());
     if (a === 'newAssessment') assessmentSheet(course());
@@ -2123,11 +2126,10 @@ function entryCfgSheet(c) {
 /* ======================================================================
    Elternsprechtag: eine Person groß, alle Noten in zeitlicher Folge, Weiterblättern mit ← →. Notizen sind zunächst verborgen (Bildschirm sehen evtl. die Eltern).
    ====================================================================== */
-function talkView(c, sid) {
-  const up = upper(c), list = c.students; let i = Math.max(0, list.findIndex(x => x.id === sid)), showNotes = false;
+/* Noten einer Person groß (Elternsprechtag-Ansicht, auch in der Terminansicht) */
+function talkGrades(c, s) {
+  const up = upper(c);
   const chip = (v, txt) => `<span class="tvChip ${v == null ? 'none' : ''}" style="${v == null ? '' : `--g:var(--gr${up ? R.POINT_GRADE(v) : v})`}">${esc(txt)}</span>`;
-  const inner = () => {
-    const s = list[i];
     const as = c.assessments.concat((c.entries || []).filter(e => e.sid === s.id).map(e => ({ ...e, title: R.TYPES[e.type].label, results: { [s.id]: e } }))).filter(a => a.results && a.results[s.id]).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
     let stats;
     if (up) stats = R.termsOf(c).map(t => { const fo = finalOf(c, s, t), p = fo.points; return `<div class="tvStat ${t === scopeOf(c).term ? 'key' : ''}"><span>Halbjahr ${t}</span><b>${esc(fo.v)}</b><small>${fo.kind !== 'calc' ? fo.label : p == null ? 'noch offen' : 'Punkte · ' + R.POINT_LABEL(p)}</small></div>`; }).join('');
@@ -2135,14 +2137,20 @@ function talkView(c, sid) {
       stats = `<div class="tvStat key"><span>Zeugnisnote</span><b>${esc(finalOf(c, s).v)}</b><small>${(fo => fo.kind === 'ng' ? 'ohne Note' : fo.kind === 'guest' ? 'Gast – zählt nicht' : fo.kind === 'ov' ? 'festgelegt' : 'Vorschlag nach § 28 GSO')(finalOf(c, s))}</small></div><div class="tvStat"><span>Ø gesamt</span><b>${fmt(r.total) || '–'}</b><small>rechnerisch</small></div>${c.hasSA ? `<div class="tvStat"><span>Ø große LN</span><b>${fmt(r.saAvg) || '–'}</b><small>Schulaufgaben</small></div>` : ''}<div class="tvStat"><span>Ø kleine LN</span><b>${fmt(r.smAvg) || '–'}</b><small>gewichtet</small></div>`; }
     const warn = up ? [] : R.studentWarnings(c, s.id, R.computeLower(c, s.id, scopeOf(c)));
     const row = (title, filter) => { const l = as.filter(filter); return l.length ? `<div class="tvRow"><div class="tvRowT">${title}</div><div class="tvChips">${l.map(a => { const r = a.results[s.id], v = R.valueOf(r, up); return `<div class="tvItem">${chip(v, R.cellText(r, up) || '–')}<small>${esc(a.title || R.TYPES[a.type].short)}${a.date ? '<br>' + sdate(a.date) : ''}</small></div>`; }).join('')}</div></div>` : ''; };
+    return `<div class="tvStats">${stats}</div>
+      ${warn.length ? `<div class="notices">${warn.map(w => `<div class="notice ${w.level === 'info' ? 'info' : ''}"><div class="grow">${esc(w.text)}</div></div>`).join('')}</div>` : ''}
+      ${as.length ? row(up ? 'Schulaufgaben' : 'Große Leistungsnachweise', a => R.isBig(a)) + row('Kleine Leistungsnachweise', a => !R.isBig(a)) : '<p class="hint">Noch keine Noten.</p>'}
+      ${supOf(c, s.id) ? `<p class="hint">${esc(supText(c, s.id))}</p>` : ''}`;
+}
+function talkView(c, sid) {
+  const list = c.students; let i = Math.max(0, list.findIndex(x => x.id === sid)), showNotes = false;
+  const inner = () => {
+    const s = list[i];
     const note = c.notes[s.id];
     return `<div class="tvTop"><button type="button" class="mini" data-tv="-1" ${i ? '' : 'disabled'} aria-label="Vorherige Person">←</button>
         <div class="tvName"><h2>${esc(s.name)}${supTag(c, s.id)}</h2><p>${esc(cLabel(c))}${isMixed(c.students) && s.cls ? ' · Klasse ' + esc(s.cls) : ''} · ${esc(scopeLabel(c))} · ${i + 1} von ${list.length}</p></div>
         <button type="button" class="mini" data-tv="1" ${i < list.length - 1 ? '' : 'disabled'} aria-label="Nächste Person">→</button></div>
-      <div class="tvStats">${stats}</div>
-      ${warn.length ? `<div class="notices">${warn.map(w => `<div class="notice ${w.level === 'info' ? 'info' : ''}"><div class="grow">${esc(w.text)}</div></div>`).join('')}</div>` : ''}
-      ${as.length ? row(up ? 'Schulaufgaben' : 'Große Leistungsnachweise', a => R.isBig(a)) + row('Kleine Leistungsnachweise', a => !R.isBig(a)) : '<p class="hint">Noch keine Noten.</p>'}
-      ${supOf(c, s.id) ? `<p class="hint">${esc(supText(c, s.id))}</p>` : ''}
+      ${talkGrades(c, s)}
       ${note ? `<div class="tvNote">${showNotes ? `<b>Notizen (nur für dich)</b><p>${esc(note)}</p><button type="button" class="linkbtn" data-tvn>Notizen verbergen</button>` : '<button type="button" class="linkbtn" data-tvn>Notizen zeigen</button> <small class="hint">– zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen</small>'}</div>` : ''}
       <p class="hint tvKeys">← → blättern · Esc schließt</p>`;
   };
@@ -2151,6 +2159,236 @@ function talkView(c, sid) {
   const draw = () => { dlg.querySelector('#tvBox').innerHTML = inner(); };
   dlg.addEventListener('click', e => { const b = e.target.closest('[data-tv]'); if (b) { i = Math.max(0, Math.min(list.length - 1, i + +b.dataset.tv)); showNotes = false; draw(); } if (e.target.closest('[data-tvn]')) { showNotes = !showNotes; draw(); } });
   dlg.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('input,textarea,select')) return; if (e.key === 'ArrowRight' && i < list.length - 1) { i++; showNotes = false; draw(); e.preventDefault(); } if (e.key === 'ArrowLeft' && i > 0) { i--; showNotes = false; draw(); e.preventDefault(); } });
+}
+/* ======================================================================
+   Elternsprechtag mit Terminliste aus dem Infoportal (esp.js liest die PDFs).
+   D.esp = { date, room, teacher, slots: [{ id, t, st, last, first, cls, subj, parent, open, cid?, sid?, note?, noteBlk? }], reports: { '9F': Bericht Leistungsstand } }
+   Die Liste (mit Elternnamen) und der Bericht gelten nur für diesen Tag: danach bietet Libretto das Löschen an. Gesprächsnotizen stehen sofort in den Notizen der Person.
+   ====================================================================== */
+const espOn = () => !!(D && D.esp && (D.esp.slots || []).length);
+const espKey = x => String(x || '').replace(/\s+/g, '').toUpperCase();
+const espCls = c => { const k = classesOf(c); return k.length === 1 ? k[0] : ''; };
+/* eigene Kurse, in denen die Person steht (manuelle Zuordnung geht vor) */
+function espHits(sl) {
+  if (sl.cid && sl.sid) { const c = D.courses.find(x => x.id === sl.cid), s = c && c.students.find(x => x.id === sl.sid); if (s) return [{ c, s }].concat(Esp.matchStudent(Esp.nameOf(s), D.courses.filter(x => x.id !== c.id))); }
+  return Esp.matchStudent(sl, D.courses, { classOf: espCls });
+}
+function espReport(sl, hit) {
+  const reps = Object.values((D.esp && D.esp.reports) || {}); if (!reps.length) return null;
+  const s = hit ? hit.s : null, probe = s ? { ...Esp.nameOf(s), cls: s.cls || sl.cls || espCls(hit.c) } : sl;
+  for (const r of reps) { const m = Esp.matchReport(probe, r); if (m) return { rep: r, st: m }; }
+  return null;
+}
+function espName(sl) { const h = sl.cid ? espHits(sl)[0] : null; if (h) return h.s.name; return sl.last ? `${sl.last}${sl.first ? ', ' + sl.first : ''}` : ''; }
+const SUBJ_SHORT = { E: 'Englisch', IT: 'Italienisch', F: 'Französisch', L: 'Latein', D: 'Deutsch', M: 'Mathematik', S: 'Spanisch', G: 'Geschichte' };
+const espSubj = x => SUBJ_SHORT[String(x || '').toUpperCase()] || x || '';
+/* Gesprächsnotiz: steht sofort in den Notizen der Person (eigener Absatz, wird beim Weiterschreiben ersetzt) */
+function espSaveNote(sl, text) {
+  text = String(text || '').trim(); const h = espHits(sl)[0];
+  sl.note = text;
+  if (h) {
+    const blk = text ? `Elternsprechtag ${fdate(D.esp.date)}: ${text}` : '';
+    let n = h.c.notes[h.s.id] || '';
+    if (sl.noteBlk && n.includes(sl.noteBlk)) n = n.replace(sl.noteBlk, blk); else if (blk) n = n ? n.replace(/\s+$/, '') + '\n\n' + blk : blk;
+    n = n.replace(/\n{3,}/g, '\n\n').trim();
+    if (n) h.c.notes[h.s.id] = n; else delete h.c.notes[h.s.id];
+    sl.noteBlk = blk; sl.noteCid = h.c.id; sl.noteSid = h.s.id;
+  }
+  save();
+}
+/* Noten aus dem Bericht: kleine Kacheln, Gewicht tiefgestellt */
+function espGradeChips(list) {
+  if (!list.length) return '<span class="espNone">–</span>';
+  let last = '';
+  return list.map(g => { const lab = g.t && g.t !== last ? `<span class="espTyp">${esc(g.t)}</span>` : ''; last = g.t;
+    const n = parseInt(g.g); return `${lab}<span class="espG ${g.g === 'x' ? 'x' : ''}" style="${n ? `--g:var(--gr${n})` : ''}" title="${g.g === 'x' ? 'nicht mitgeschrieben / noch nicht geschrieben' : 'Note ' + esc(g.g) + (g.w !== 1 ? ', Gewicht ' + String(g.w).replace('.', ',') : '')}">${esc(g.g)}${g.w !== 1 ? `<sub>${esc(String(g.w).replace('.', ','))}</sub>` : ''}</span>`; }).join('');
+}
+const espAvgN = a => { const v = parseFloat(String(a || '').replace(',', '.')); return isFinite(v) ? v : null; };
+function espAvgBar(a) {
+  const v = espAvgN(a); if (v == null) return '<span class="espNone">–</span>';
+  const f = Math.max(0, Math.min(1, (6 - v) / 5)), n = Math.min(6, Math.max(1, Math.round(v)));
+  return `<span class="espAvg" style="--g:var(--gr${n})"><b>${esc(a)}</b><svg viewBox="0 0 100 8" preserveAspectRatio="none"><rect width="100" height="8" rx="4" fill="var(--fill-2)"/><rect width="${Math.max(8, f * 100).toFixed(1)}" height="8" rx="4" fill="var(--g)"/></svg></span>`;
+}
+function espReportHtml(r) {
+  const me = Esp.deburr((D.settings.teacher || '').replace(/^.*\s/, ''));
+  const rem = (r.st.remarks || []).map(t => `<div class="notice ${/gefährdet/i.test(t) ? '' : 'info'}"><div class="grow">${esc(t)}</div></div>`).join('');
+  return `<section class="espSec"><div class="espSecT">Alle Fächer <span>Bericht Leistungsstand aus dem Infoportal · Klasse ${esc(r.rep.cls)} · Stand ${esc(fdate(r.rep.stand))}</span></div>
+    ${rem ? `<div class="notices">${rem}</div>` : ''}
+    <table class="espRep"><thead><tr><th>Fach</th><th>Große LN</th><th>Kleine LN</th><th class="n">Ø groß</th><th class="n">Ø klein</th><th class="avg">Ø gesamt</th></tr></thead>
+    <tbody>${r.st.subjects.map(x => `<tr class="${me && Esp.deburr(x.teacher).endsWith(me) ? 'mine' : ''}"><td><b>${esc(x.subj)}</b><small>${esc(x.teacher)}</small></td><td>${espGradeChips(x.big)}</td><td>${espGradeChips(x.small)}</td><td class="n">${esc(x.avgBig || '–')}</td><td class="n">${esc(x.avgSmall || '–')}</td><td class="avg">${espAvgBar(x.avg)}</td></tr>`).join('')}</tbody></table>
+    <p class="hint">Hochgestellt klein: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben · Zahlen wie im Infoportal.</p></section>`;
+}
+function espView(startId) {
+  if (!espOn()) return;
+  const E = D.esp, sl = () => E.slots, booked = () => sl().filter(x => x.st === 'booked');
+  const now = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  const isToday = () => E.date === todayISO();
+  let cur = startId || (() => { if (isToday()) { const n = now(), b = booked().filter(x => x.t <= n).pop(); if (b) return b.id; } return (booked()[0] || sl()[0]).id; })();
+  let showNotes = false, tab = 0, picking = false;
+  const idx = () => sl().findIndex(x => x.id === cur);
+  const timeline = () => { const n = isToday() ? now() : '', live = n ? sl().filter(x => x.t <= n).pop() : null;
+    return sl().map(x => { const h = x.st === 'booked' ? espHits(x)[0] : null;
+      if (x.st !== 'booked') return `<div class="espT off ${live && live.id === x.id ? 'live' : ''}"><span class="t">${esc(x.t)}</span><span class="w">${x.st === 'pause' ? 'Pause' : x.st === 'gap' ? 'frei oder Pause' : 'frei'}</span></div>`;
+      const nm = espName(x) || (x.parent ? 'Eltern: ' + x.parent : 'ohne Namen');
+      return `<button type="button" class="espT ${x.id === cur ? 'on' : ''} ${live && live.id === x.id ? 'live' : ''} ${x.note ? 'noted' : ''}" data-esp="${x.id}"><span class="t">${esc(x.t)}</span><span class="w"><b>${esc(nm)}</b><small>${esc([x.cls, espSubj(x.subj)].filter(Boolean).join(' · ') || (x.open ? 'nur Eltern eingetragen' : ''))}</small></span>${!h && !espReport(x) ? '<i class="q" title="Nicht zugeordnet – in der Ansicht eine Person wählen">?</i>' : x.note ? '<i class="dot" title="Gesprächsnotiz"></i>' : ''}</button>`; }).join('');
+  };
+  const picker = x => { const opts = D.courses.slice().sort(courseCmp).map(c => `<optgroup label="${esc(c.name + ' · ' + (c.subject || ''))}">${c.students.slice().sort(Names.compare).map(s => `<option value="${c.id}|${s.id}" ${x.cid === c.id && x.sid === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</optgroup>`).join('');
+    return `<div class="espPick"><label>Person aus deinen Kursen zuordnen <select id="espPick"><option value="">– bitte wählen –</option>${opts}</select></label>${x.cid ? '<button type="button" class="linkbtn" id="espUnpick">Zuordnung aufheben</button>' : ''}</div>`; };
+  const detail = () => {
+    const x = sl().find(y => y.id === cur); if (!x) return '';
+    const b = booked(), bi = b.findIndex(y => y.id === cur), hits = x.st === 'booked' ? espHits(x) : [], h = hits[Math.min(tab, hits.length - 1)];
+    const rep = x.st === 'booked' ? espReport(x, hits[0]) : null;
+    const top = `<div class="tvTop espTop"><button type="button" class="mini" data-espgo="-1" ${bi > 0 ? '' : 'disabled'} aria-label="Voriger Termin">↑</button>
+      <div class="tvName"><p class="espTime">${esc(x.t)} Uhr${bi >= 0 ? ` · Termin ${bi + 1} von ${b.length}` : ''}</p><h2>${esc(espName(x) || (x.parent ? 'Eltern: ' + x.parent : 'Termin'))}${h ? supTag(h.c, h.s.id) : ''}</h2>
+        <p>${esc([x.cls ? 'Klasse ' + x.cls : '', espSubj(x.subj)].filter(Boolean).join(' · '))}${x.parent && (espName(x)) ? `${x.cls || x.subj ? ' · ' : ''}Eltern: ${esc(x.parent)}` : ''}</p></div>
+      <button type="button" class="mini" data-espgo="1" ${bi < b.length - 1 ? '' : 'disabled'} aria-label="Nächster Termin">↓</button></div>`;
+    if (x.st !== 'booked') return top + `<p class="hint espEmpty">${x.st === 'pause' ? 'Pause.' : 'Kein Termin gebucht.'}</p>`;
+    const tabs = hits.length > 1 ? `<div class="seg espTabs">${hits.map((y, k) => `<button type="button" data-esptab="${k}" aria-pressed="${k === tab}">${esc(y.c.name)} · ${esc(y.c.subject || '')}</button>`).join('')}</div>` : '';
+    const mine = h ? `<section class="espSec"><div class="espSecT">Bei dir <span>${esc(cLabel(h.c))} · ${esc(scopeLabel(h.c))}</span></div>${tabs}<div class="espGr">${talkGrades(h.c, h.s)}</div></section>` : '';
+    const none = !h && !rep ? `<div class="notice info"><div class="grow">${x.open ? 'Die Eltern haben einen Termin gebucht, aber keinen Namen eingetragen.' : 'Diese Person steht in keinem deiner Kurse' + (Object.keys(E.reports || {}).length ? ' und nicht im eingelesenen Bericht.' : '.')} Ordne sie unten zu, dann siehst du ihre Noten.</div></div>` : '';
+    const note = h ? h.c.notes[h.s.id] : '';
+    const older = note && x.noteBlk ? note.replace(x.noteBlk, '').trim() : note;
+    const noRep = !Object.keys(E.reports || {}).length ? `<div class="espRepHint"><div><b>Klassenleitung?</b> Dann siehst du hier bei jedem Kind deiner Klasse alle Fächer mit allen Noten. Dafür im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“, als PDF speichern – und hier einlesen.</div><button type="button" class="mini accent" data-espimp>Leistungsstand einlesen …</button></div>` : '';
+    return top + none + mine + (rep ? espReportHtml(rep) : noRep)
+      + `<section class="espSec"><div class="espSecT">Gesprächsnotiz <span>${h ? 'wird sofort bei der Person unter „Notizen“ gespeichert' : 'bleibt beim Termin, bis du die Terminliste löschst'}</span></div>
+        <textarea id="espNote" rows="3" placeholder="Was wurde besprochen? Vereinbarungen, Rückmeldung an …">${esc(x.note || '')}</textarea><small class="hint" id="espSaved"></small>
+        ${older ? `<div class="tvNote">${showNotes ? `<b>Frühere Notizen (nur für dich)</b><p>${esc(older)}</p><button type="button" class="linkbtn" data-tvn>verbergen</button>` : '<button type="button" class="linkbtn" data-tvn>Frühere Notizen zeigen</button> <small class="hint">– zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen</small>'}</div>` : ''}</section>`
+      + (picking || !h || x.cid ? picker(x) : `<p class="hint espFoot"><button type="button" class="linkbtn" id="espRepick">Andere Person zuordnen</button></p>`);
+  };
+  const { dlg } = sheet({ title: `Elternsprechtag · ${wdate(E.date)}${E.room ? ' · Raum ' + E.room.replace(/,?\s*Gebäude:.*$/, '') : ''}`, wide: true, ok: '', cancel: 'Fertig',
+    body: `<div class="espWrap"><div class="espSide"><div class="espTools"><button type="button" class="mini" data-espimp title="Terminliste, Belegungsplan oder Bericht Leistungsstand (Klassenleitung) aus dem Infoportal">PDF einlesen …</button><button type="button" class="mini" data-espprint>Mappe drucken</button></div><nav class="espList" id="espList" aria-label="Termine">${timeline()}</nav></div><div class="espMain" id="espMain">${detail()}</div></div><p class="hint tvKeys">↑ ↓ nächster Termin · Esc schließt</p>` });
+  dlg.classList.add('tvDlg', 'espDlg'); dlg.tabIndex = -1;
+  const draw = (keepList) => { const m = dlg.querySelector('#espMain'); m.innerHTML = detail(); m.scrollTop = 0; if (!keepList) { dlg.querySelector('#espList').innerHTML = timeline(); } const on = dlg.querySelector('.espT.on'); if (on) on.scrollIntoView({ block: 'nearest' }); bindNote();
+    /* Pfeiltasten wirken weiter, auch wenn das angeklickte Element neu gezeichnet wurde */
+    if (!dlg.contains(document.activeElement) || document.activeElement === document.body) dlg.focus({ preventScroll: true }); };
+  const go = id => { cur = id; showNotes = false; tab = 0; picking = false; draw(); };
+  const step = d => { const b = booked(), i = b.findIndex(y => y.id === cur); const j = i < 0 ? 0 : Math.max(0, Math.min(b.length - 1, i + d)); if (b[j]) go(b[j].id); };
+  let nt;
+  const bindNote = () => { const t = dlg.querySelector('#espNote'); if (!t) return; t.oninput = () => { if (READONLY) return; clearTimeout(nt); const x = sl().find(y => y.id === cur); nt = setTimeout(() => { espSaveNote(x, t.value); const s = dlg.querySelector('#espSaved'); if (s) s.textContent = 'Gespeichert ✓'; dlg.querySelector('#espList').innerHTML = timeline(); }, 500); };
+    t.onblur = () => { clearTimeout(nt); const x = sl().find(y => y.id === cur); if (x && (x.note || '') !== t.value.trim()) { espSaveNote(x, t.value); dlg.querySelector('#espList').innerHTML = timeline(); } }; };
+  bindNote();
+  dlg.addEventListener('click', e => {
+    const t = e.target.closest('[data-esp]'); if (t) return go(t.dataset.esp);
+    const g = e.target.closest('[data-espgo]'); if (g) return step(+g.dataset.espgo);
+    const tb = e.target.closest('[data-esptab]'); if (tb) { tab = +tb.dataset.esptab; return draw(true); }
+    if (e.target.closest('[data-tvn]')) { showNotes = !showNotes; return draw(true); }
+    if (e.target.closest('#espRepick')) { picking = true; return draw(true); }
+    if (e.target.closest('[data-espimp]')) return espPick(cur);
+    if (e.target.closest('[data-espprint]')) return exportModel(modelEsp(), 'pdf');
+    if (e.target.closest('#espUnpick')) { const x = sl().find(y => y.id === cur); delete x.cid; delete x.sid; save(); picking = false; return draw(); }
+  });
+  dlg.addEventListener('change', e => { if (e.target.id !== 'espPick' || READONLY) return; const x = sl().find(y => y.id === cur), [cid, sid] = e.target.value.split('|');
+    if (x.note && x.noteBlk) espSaveNote(x, '');   /* Notiz zieht mit um */
+    const keep = x.note; if (cid) { x.cid = cid; x.sid = sid; } else { delete x.cid; delete x.sid; } x.noteBlk = ''; if (keep) espSaveNote(x, keep); save(); picking = false; draw(); });
+  dlg.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('input,textarea,select')) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { step(1); e.preventDefault(); } if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { step(-1); e.preventDefault(); } });
+  const on = dlg.querySelector('.espT.on'); if (on) on.scrollIntoView({ block: 'center' });
+}
+/* PDFs einlesen (Terminliste, Belegungsplan, Bericht Leistungsstand – einzeln oder zusammen) */
+async function espImport(files, back) {
+  if (READONLY || !files || !files.length) return;
+  const got = { list: null, grid: null, reports: [] }, errs = [];
+  for (const f of files) {
+    try { const r = Esp.parse(await Esp.readPdf(await f.arrayBuffer()));
+      if (r.error) errs.push(`${f.name}: ${r.error}`); else if (r.kind === 'report') got.reports.push(r); else got[r.kind] = r; }
+    catch (e) { errs.push(`${f.name}: konnte nicht gelesen werden (${e.message})`); }
+  }
+  if (!got.list && !got.grid && !got.reports.length) return sheet({ title: 'Nichts eingelesen', small: true, ok: '', cancel: 'Verstanden', body: `<p class="prose" style="margin:0">${errs.map(esc).join('<br>') || 'Keine passende Datei.'}</p><p class="hint">Gebraucht werden die Ausdrucke aus dem Infoportal: „Meine Termine“ (Terminliste), der Belegungsplan und für die Klassenleitung „Bericht Leistungsstand“ → „Alle erzeugen“.</p>` });
+  const date = (got.list && got.list.date) || (got.grid && got.grid.date) || '';
+  const old = D.esp && D.esp.date && date && D.esp.date !== date ? D.esp : null;
+  const lines = [];
+  let slots = null;
+  if (got.list || got.grid) {
+    const base = old ? [] : ((D.esp && D.esp.slots) || []);
+    const list = got.list ? got.list.slots : base.filter(x => x.st === 'booked').map(x => ({ ...x }));
+    const grid = got.grid ? got.grid.slots : (base.length && base.some(x => x.st === 'pause' || x.st === 'free') ? base.map(x => ({ t: x.t, st: x.st === 'gap' ? 'free' : x.st })) : null);
+    slots = Esp.mergeSlots(list, grid).map(x => { const o = base.find(y => y.t === x.t && y.last === x.last && y.first === x.first && y.parent === x.parent); return { ...x, id: o ? o.id : uid(), ...(o ? { cid: o.cid, sid: o.sid, note: o.note, noteBlk: o.noteBlk, noteCid: o.noteCid, noteSid: o.noteSid } : {}) }; });
+    const b = slots.filter(x => x.st === 'booked');
+    const found = b.filter(x => espHits(x).length).length;
+    const nOpen = b.filter(x => x.open && !espHits(x).length).length, nOut = b.length - found - nOpen;
+    if (got.list) lines.push(`<b>Terminliste ${esc(fdate(got.list.date))}</b>: ${b.length} Termine – ${found} in deinen Kursen gefunden${b.length - found ? `, ${b.length - found} ohne Zuordnung (${[nOpen ? nOpen + ' nur mit Elternnamen' : '', nOut ? nOut + ' nicht in deinen Kursen' : ''].filter(Boolean).join(', ')} – in der Ansicht selbst zuordnen)` : ''}`);
+    const miss = b.filter(x => !x.open && !espHits(x).length);
+    if (got.list && miss.length) lines.push(`<details class="espMiss"><summary>Ohne Zuordnung – warum?</summary><ul>${miss.map(x => `<li><b>${esc(x.last)}${x.first ? ', ' + esc(x.first) : ''}</b> (${esc([x.cls, espSubj(x.subj)].filter(Boolean).join(' · '))}): ${esc(Esp.explain(x, D.courses))}</li>`).join('')}</ul></details>`);
+    if (got.grid) lines.push(`<b>Belegungsplan ${esc(fdate(got.grid.date))}</b>: ${got.grid.slots.length} Zeiten, ${got.grid.slots.filter(x => x.st === 'pause').length} Pausen, ${got.grid.slots.filter(x => x.st === 'free').length} frei`);
+    if (got.list && got.grid && got.list.date && got.grid.date && got.list.date !== got.grid.date) errs.push(`Terminliste (${fdate(got.list.date)}) und Belegungsplan (${fdate(got.grid.date)}) gehören zu verschiedenen Tagen – übernommen wird die Terminliste.`);
+    if (got.grid && got.list) { const gb = got.grid.slots.filter(x => x.st === 'booked').length; if (gb !== got.list.slots.length) errs.push(`Im Belegungsplan sind ${gb} Termine gebucht, in der Terminliste stehen ${got.list.slots.length} – bitte beide am selben Tag neu ausdrucken.`); }
+  }
+  got.reports.forEach(r => lines.push(`<b>Bericht Leistungsstand Klasse ${esc(r.cls)}</b> (Stand ${esc(fdate(r.stand))}): ${r.students.length} Schülerinnen und Schüler, ${[...new Set(r.students.flatMap(s => s.subjects.map(x => x.subj)))].length} Fächer`));
+  if (!got.reports.length && !Object.keys((D.esp && !old && D.esp.reports) || {}).length) lines.push('<span class="hint">Klassenleitung? Den Bericht „Leistungsstand“ (Infoportal → „Alle erzeugen“) kannst du gleich mit auswählen oder später im Kasten „Elternsprechtag“ dazu einlesen.</span>');
+  if (!slots && !D.esp && got.reports.length) errs.push('Für die Terminansicht fehlt noch die Terminliste („Meine Termine“) – du kannst sie jederzeit dazu einlesen.');
+  const ok = await new Promise(res => { const { dlg, close } = sheet({ title: 'Elternsprechtag einlesen', ok: 'Übernehmen', cancel: 'Abbrechen',
+    body: `<ul class="espSum">${lines.map(l => `<li>${l}</li>`).join('')}</ul>${errs.length ? `<div class="notices">${errs.map(e => `<div class="notice info"><div class="grow">${esc(e)}</div></div>`).join('')}</div>` : ''}
+      ${old ? `<div class="notice"><div class="grow">Die bisherige Terminliste vom ${esc(fdate(old.date))} wird ersetzt. Gesprächsnotizen stehen schon bei den Schülern und bleiben.</div></div>` : ''}
+      <p class="hint">Libretto behält Terminliste und Bericht nur für den Elternsprechtag und bietet danach an, sie zu löschen. Alles bleibt verschlüsselt auf diesem Computer.</p>`,
+    onOk: () => { res(true); } }); void close; dlg.addEventListener('close', () => res(false)); });
+  if (!ok) return;
+  if (old && old.slots.some(x => x.note && !x.noteBlk) && !(await ask('Bei der alten Terminliste gibt es Gesprächsnotizen zu Personen, die in keinem deiner Kurse stehen. Sie gehen beim Ersetzen verloren. Trotzdem ersetzen?', 'Ersetzen', true))) return;
+  if (!D.esp || old) D.esp = { date: '', room: '', teacher: '', slots: [], reports: {} };
+  if (slots) { D.esp.slots = slots; D.esp.date = date || D.esp.date; if (got.list) { D.esp.room = got.list.room || ''; D.esp.teacher = got.list.teacher || ''; } }
+  if (!D.esp.date && got.reports.length) D.esp.date = '';
+  got.reports.forEach(r => { D.esp.reports = D.esp.reports || {}; D.esp.reports[espKey(r.cls)] = r; });
+  save(); toast('Elternsprechtag eingelesen'); closeAll(); render();
+  if (espOn()) espView(back && D.esp.slots.some(x => x.id === back) ? back : undefined);
+}
+function espPick(back) {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.pdf,application/pdf'; inp.multiple = true;
+  inp.onchange = () => espImport([...inp.files], back); inp.click();
+}
+async function espDelete() {
+  if (READONLY || !D.esp) return;
+  const lost = (D.esp.slots || []).filter(x => x.note && !x.noteBlk).length;
+  const nRep = Object.keys(D.esp.reports || {}).length;
+  if (!(await ask(`Terminliste${nRep ? ' und Bericht Leistungsstand' : ''} vom Elternsprechtag${D.esp.date ? ' am ' + fdate(D.esp.date) : ''} löschen? Die Gesprächsnotizen bleiben bei den Schülern unter „Notizen“.${lost ? ` <b>${lost} ${lost === 1 ? 'Notiz' : 'Notizen'} zu Personen ohne Kurs bei dir ${lost === 1 ? 'geht' : 'gehen'} dabei verloren</b> – vorher mit „Mappe drucken“ sichern.` : ''}`, 'Löschen', true))) return;
+  delete D.esp; save(); closeAll(); toast('Elternsprechtag gelöscht'); render();
+}
+function espStartRow(today) {
+  const b = D.esp.slots.filter(x => x.st === 'booked');
+  return `<button type="button" class="trow sRow espRow${today ? ' today' : ''}" data-act="espView"><span class="d">${sdate(D.esp.date)}<small>${today ? 'heute' : ''}</small></span><span><b>Elternsprechtag${today ? ' heute' : ''}</b><br><small>${b.length} Termine${b.length ? ' · ' + esc(b[0].t) + '–' + esc(b[b.length - 1].t) + ' Uhr' : ''} · Raum ${esc((D.esp.room || '').replace(/,?\s*Gebäude:.*$/, '') || '–')}</small></span><span class="pill${today ? '' : ' info'}">Ansicht öffnen</span></button>`;
+}
+/* Mappe zum Elternsprechtag: erste Seite alle Termine, danach je Termin eine Seite (Noten bei dir, alle Fächer, Gesprächsnotiz oder Linien) */
+function modelEsp() {
+  const E = D.esp, b = E.slots.filter(x => x.st === 'booked'), room = (E.room || '').replace(/,?\s*Gebäude:.*$/, '');
+  const blocks = [{ table: { head: ['Uhrzeit', 'Schüler/in', 'Klasse · Fach', 'Eltern', 'Bei dir', 'Notiz'], align: ['l', 'l', 'l', 'l', 'c', 'c'],
+    rows: E.slots.filter(x => b.length && x.t >= b[0].t && x.t <= b[b.length - 1].t).map(x => { if (x.st !== 'booked') return { cells: [x.t, x.st === 'pause' ? 'Pause' : 'frei', '', '', '', ''], cls: 'sub' };
+      const h = espHits(x)[0]; return [x.t, espName(x) || '(nur Eltern eingetragen)', [x.cls, espSubj(x.subj)].filter(Boolean).join(' · ') || (h ? `${h.c.name} · ${h.c.subject || ''}` : ''), x.parent || '', h ? finalOf(h.c, h.s).v : '', x.note ? '✓' : '']; }) } }];
+  b.forEach((x, i) => {
+    const hits = espHits(x), rep = espReport(x, hits[0]);
+    blocks.push({ pagebreak: true }, { head: { eyebrow: `Elternsprechtag · ${wdate(E.date)} · ${x.t} Uhr`, title: espName(x) || 'Termin ohne Namen', subtitle: [x.cls ? 'Klasse ' + x.cls : '', espSubj(x.subj)].filter(Boolean).join(' · '),
+      meta: [...(x.parent ? [['Eltern', x.parent]] : []), ['Termin', `${i + 1} von ${b.length}`], ...(room ? [['Raum', room]] : [])] } });
+    hits.forEach(h => {
+      const up = upper(h.c), st = (modelStudents(h.c, [h.s]).blocks || []).find(k => k.stats);
+      const as = h.c.assessments.concat((h.c.entries || []).filter(e => e.sid === h.s.id).map(e => ({ ...e, title: R.TYPES[e.type].label, results: { [h.s.id]: e } }))).filter(a => a.results && a.results[h.s.id]).sort((p, q) => (p.date || '').localeCompare(q.date || ''));
+      const it = a => { const r = a.results[h.s.id], v = R.valueOf(r, up); return { g: R.cellText(r, up) || '–', n: v == null ? null : up ? R.POINT_GRADE(v) : v, lbl: a.title || R.TYPES[a.type].short, date: a.date ? sdate(a.date) : '' }; };
+      blocks.push({ group: [{ h: `Bei dir · ${cLabel(h.c)} · ${scopeLabel(h.c)}` }, ...(st ? [st] : []), { espChips: { bigT: up ? 'Schulaufgaben' : 'Große Leistungsnachweise', big: as.filter(a => R.isBig(a)).map(it), small: as.filter(a => !R.isBig(a)).map(it) } }] });
+      if (supOf(h.c, h.s.id)) blocks.push({ p: supText(h.c, h.s.id) + '.' });
+    });
+    if (rep) { const me = Esp.deburr((D.settings.teacher || '').replace(/^.*\s/, ''));
+      blocks.push({ h: `Alle Fächer · Klasse ${rep.rep.cls}` }, { espRep: { cls: rep.rep.cls, stand: fdate(rep.rep.stand), remarks: rep.st.remarks, subjects: rep.st.subjects.map(y => ({ ...y, mine: !!me && Esp.deburr(y.teacher).endsWith(me) })) } }); }
+    if (!hits.length && !rep) blocks.push({ p: x.open ? 'Die Eltern haben einen Termin gebucht, aber keinen Namen eingetragen.' : 'Diese Person steht in keinem deiner Kurse.' });
+    blocks.push({ group: [{ h: 'Gesprächsnotiz' }, x.note ? { espNote: x.note } : { lines: 7 }] });
+  });
+  return { espCss: true, eyebrow: 'Elternsprechtag', title: wdate(E.date), subtitle: `${b.length} Termine${b.length ? ` · ${b[0].t}–${b[b.length - 1].t} Uhr` : ''}${room ? ' · Raum ' + room : ''}`,
+    file: `${E.date} Elternsprechtag`, blocks };
+}
+/* Panel im Reiter „Kalender & Termine“ */
+function espPanel() {
+  const E = D.esp, b = E ? (E.slots || []).filter(x => x.st === 'booked') : [], reps = E ? Object.values(E.reports || {}) : [];
+  const evt = (D.events || []).filter(e => /elternsprech/i.test(e.title || '') && (e.to || e.from) >= todayISO()).sort((a, b) => a.from.localeCompare(b.from))[0];
+  return `<section class="panel glass espPanel"><div class="phead"><h2 class="ptitle">Elternsprechtag</h2>${b.length ? `<span class="count">${b.length}</span>` : ''}</div>
+    ${E ? `<p class="espP">${b.length ? `<b>${esc(wdate(E.date))}</b> · ${b.length} Termine${E.room ? ' · Raum ' + esc(E.room.replace(/,?\s*Gebäude:.*$/, '')) : ''}` : 'Noch keine Terminliste'}${reps.length ? `<br><small>Bericht Leistungsstand: ${reps.map(r => `Klasse ${esc(r.cls)} (Stand ${esc(sdate(r.stand))})`).join(', ')}</small>` : ''}</p>
+      <div class="panelBtns">${b.length ? '<button type="button" class="mini accent" id="espOpen">Ansicht öffnen</button><button type="button" class="mini" id="espPrint">Mappe drucken (PDF)</button>' : ''}<button type="button" class="mini" id="espAdd">PDF dazu einlesen …</button>${reps.length ? '' : '<button type="button" class="mini" id="espRep" title="Infoportal → Bericht Leistungsstand → „Alle erzeugen“ als PDF speichern">Leistungsstand der Klasse (Klassenleitung) …</button>'}</div>
+      <p class="note">Gilt nur für diesen Elternsprechtag. Gesprächsnotizen stehen sofort bei den Schülern. <button type="button" class="linkbtn danger" id="espDel">Terminliste${reps.length ? ' und Bericht' : ''} löschen</button></p>`
+    : `<p class="hint" style="margin-top:0">${evt ? `Laut Schulterminen am <b>${esc(wdate(evt.from))}</b>. ` : ''}Terminliste und Belegungsplan aus dem Infoportal einlesen – dann blätterst du am Abend Termin für Termin durch die Noten, über alle deine Kurse. Als Klassenleitung zusätzlich den Bericht „Leistungsstand“ (alle Fächer).</p>
+      <div class="panelBtns"><button type="button" class="mini accent" id="espAdd">Ausdrucke einlesen (PDF) …</button><button type="button" class="mini" id="espRep" title="Infoportal → Bericht Leistungsstand → „Alle erzeugen“ als PDF speichern">Leistungsstand der Klasse (Klassenleitung) …</button></div>`}
+  </section>`;
+}
+function bindEspPanel() {
+  const q = id => document.getElementById(id);
+  if (q('espAdd')) q('espAdd').onclick = espPick;
+  if (q('espRep')) q('espRep').onclick = espPick;
+  if (q('espOpen')) q('espOpen').onclick = () => espView();
+  if (q('espDel')) q('espDel').onclick = espDelete;
+  if (q('espPrint')) q('espPrint').onclick = () => exportModel(modelEsp(), 'pdf');
 }
 function studentSheet(c, s) {
   const up = upper(c);
@@ -3366,6 +3604,7 @@ function renderDates() {
       <div class="tlist">${bigs.length ? bigs.map(({ c, a, cls }) => ({ c, a, hit: cls.some(k => confKeys.has(k + a.date)) })).map(({ c, a, hit }) => `<div class="trow ${hit ? 'conf' : ''} ${a.date && a.date < t ? 'past' : ''}"><span class="d">${a.date ? fdate(a.date) : 'ohne Datum'}</span><span>${esc(c.name)} · ${esc(c.subject)}<br><small>${esc(a.title || R.TYPES[a.type].label)}${a.bigWeight && +a.bigWeight !== 1 ? ' · ' + wLabel(a.bigWeight) : ''}</small></span>${hit ? '<span class="pill part">Termin prüfen</span>' : ''}</div>`).join('') : '<p class="hint">Noch keine Schulaufgaben eingetragen.</p>'}</div>
       <p class="note">§ 22 GSO: große schriftliche Leistungsnachweise spätestens eine Woche vorher ankündigen; höchstens einer pro Tag und zwei pro Woche je Klasse. Libretto prüft deine eigenen Termine und die unten eingetragenen anderer Fächer.</p></section>
     <div style="display:flex;flex-direction:column;gap:16px">
+    ${espPanel()}
     <section class="panel glass"><div class="phead"><h2 class="ptitle">Offene Nachtermine (§ 27 GSO)</h2><span class="count">${open.length}</span></div>
       <div class="tlist">${open.length ? open.map(({ c, a, s }) => `<div class="trow"><span class="d">${a.date ? fdate(a.date) : ''}</span><span>${esc(s.name)}<br><small>${esc(c.name)} ${esc(c.subject)} · ${esc(a.title || R.TYPES[a.type].label)}</small></span><button class="mini" data-goto="${c.id}">Öffnen</button></div>`).join('') : '<p class="hint">Keine offenen Nachtermine. Mit „E“ in der Notentabelle markierst du entschuldigtes Fehlen.</p>'}</div>
       <p class="note">Mehrere versäumte große LN eines Fachs können in einem Nachtermin zusammengefasst werden. Wird auch der Nachtermin entschuldigt versäumt, kann eine Ersatzprüfung angesetzt werden (einmal pro Halbjahr und Fach, Ankündigung eine Woche vorher).</p></section>
@@ -3377,6 +3616,7 @@ function renderDates() {
   const f = $('#cdForm'); f.onsubmit = e => { e.preventDefault(); const s = $('#cdSubj').value.trim(), d = $('#cdDate').value; if (!s || !d) return toast('Fach und Datum angeben'); D.classDates.push({ id: uid(), cls: $('#cdCls').value, subject: s, date: d }); save(); renderDates(); };
   $$('[data-cddel]').forEach(b => b.onclick = () => { if (READONLY) return; D.classDates = D.classDates.filter(x => x.id !== b.dataset.cddel); save(); renderDates(); });
   $$('[data-goto]').forEach(b => b.onclick = () => { UI.course = b.dataset.goto; rememberCourse(); UI.tab = 'grades'; render(); });
+  bindEspPanel();
   bindCalendar();
 }
 
@@ -3473,13 +3713,18 @@ function renderStart() {
   const dlOpen = x => dlCs(x).reduce((k, c) => k + d.missing.filter(m => m.c.id === c.id).length + d.makeup.filter(m => m.c.id === c.id).length, 0);
   dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).forEach(x => { const o = dlOpen(x), cs = dlCs(x);
     todo.push(`<button type="button" class="trow sRow dlRowS" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${dlWhen(dlDays(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${esc(cs.slice(0, 4).map(c => c.name).join(', '))}${cs.length > 4 ? ' …' : ''}${o ? ` · noch offen: ${o} (fehlende Noten, Nachtermine)` : ''}</small></span><span class="pill ${dlDays(x) <= 7 ? 'late' : 'part'}">Frist</span></button>`); });
+  if (espOn() && D.esp.date === t) todo.unshift(espStartRow(true));
+  if (D.esp && D.esp.date && D.esp.date < t) todo.push(`<button type="button" class="trow sRow" data-act="espDel"><span class="d">Datenschutz</span><span><b>Elternsprechtag vom ${esc(sdate(D.esp.date))} vorbei</b><br><small>Terminliste mit Elternnamen${Object.keys(D.esp.reports || {}).length ? ' und Bericht Leistungsstand' : ''} löschen – Gesprächsnotizen bleiben bei den Schülern</small></span><span class="pill info">Löschen</span></button>`);
   { const old = ldoDue(); if (old.length) todo.push(`<button type="button" class="trow sRow" data-act="ldo"><span class="d">Datenschutz</span><span><b>${old.length === 1 ? '1 alter Kurs kann gelöscht werden' : old.length + ' alte Kurse können gelöscht werden'}</b><br><small>Noten sind spätestens zwei Jahre nach Ende des Schuljahres zu löschen (LDO § 14a Abs. 2)</small></span><span class="pill info">Ansehen</span></button>`); }
   if (bkBad) todo.push(`<button type="button" class="trow sRow" data-tabgo="backup"><span class="d">Sicherung</span><span><b>${esc(bkText)}</b><br><small>${ST.backupDir ? 'Deine Noten liegen sonst nur auf diesem Computer.' : 'USB-Stick oder Cloud-Ordner wählen – sonst liegen deine Noten nur auf diesem Computer.'}</small></span><span class="pill part">Einrichten</span></button>`);
   /* Als Nächstes: Leistungsnachweise und Schultermine der kommenden Wochen */
   const horizon = Cal.iso(Cal.add(new Date(t + 'T12:00'), 28));
   const coming = d.next.filter(x => x.a.date <= horizon).map(x => ({ date: x.a.date, html: `<button type="button" class="trow sRow" data-goto="${x.c.id}"><span class="d">${sdate(x.a.date)}<small>${inDays(x.a.date)}</small></span><span><b>${lnName(x)}</b><br><small>${cName(x.c)}</small></span>${R.isBig(x.a) ? '<span class="pill big">groß</span>' : ''}</button>` }))
     .concat(dls.filter(x => dlDays(x) > 14).map(x => ({ date: dlDue(x), html: `<button type="button" class="trow sRow" data-act="deadlines"><span class="d">${sdate(dlDue(x))}<small>${inDays(dlDue(x))}</small></span><span><b>${esc(dlTitle(x))}</b><br><small>${DL_G[dlG(x)]}</small></span><span class="pill info">Frist</span></button>` })))
-    .concat(d.events.filter(e => e.from <= horizon).slice(0, 8).map(e => ({ date: e.from < t ? t : e.from, html: `<div class="trow sRow ev"><span class="d">${sdate(e.from)}<small>${e.from <= t ? 'läuft' : inDays(e.from)}</small></span><span>${esc(e.title)}${e.time ? `<br><small>${esc(e.time)}</small>` : ''}</span><span class="pill">Schule</span></div>` })))
+    .concat(d.events.filter(e => e.from <= horizon).slice(0, 8).map(e => ({ date: e.from < t ? t : e.from, html: /elternsprech/i.test(e.title || '') && !(espOn() && D.esp.date === e.from) ? `<button type="button" class="trow sRow ev" data-act="espAdd" title="Terminliste und Belegungsplan aus dem Infoportal einlesen"><span class="d">${sdate(e.from)}<small>${e.from <= t ? 'läuft' : inDays(e.from)}</small></span><span>${esc(e.title)}<br><small>Terminliste einlesen …</small></span><span class="pill">Schule</span></button>`
+      : /elternsprech/i.test(e.title || '') ? '' : `<div class="trow sRow ev"><span class="d">${sdate(e.from)}<small>${e.from <= t ? 'läuft' : inDays(e.from)}</small></span><span>${esc(e.title)}${e.time ? `<br><small>${esc(e.time)}</small>` : ''}</span><span class="pill">Schule</span></div>` })))
+    .concat(espOn() && D.esp.date > t && D.esp.date <= horizon ? [{ date: D.esp.date, html: espStartRow(false) }] : [])
+    .filter(x => x.html)
     .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 9);
   const later = d.next.filter(x => x.a.date > horizon).length;
   /* Kurse */
@@ -3498,7 +3743,7 @@ function renderStart() {
       <div class="sHeadActs">${lastC ? `<button type="button" class="mini" data-goto="${lastC.id}" title="Zuletzt geöffneter Kurs">Weiter in ${esc(lastC.name)}</button>` : ''}<button type="button" class="mini accent" id="sNewLN">+ Leistungsnachweis</button></div></header>
     ${top ? `<div class="notices">${top}</div>` : ''}
     <div class="sCols">
-      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0) + (ldoDue().length ? 1 : 0) + dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).length}</span></div>
+      <section class="panel glass"><div class="phead"><h2 class="ptitle">Zu erledigen</h2><span class="count">${d.missing.length + d.makeup.length + d.xfer.length + (d.conflicts ? 1 : 0) + (bkBad ? 1 : 0) + (ldoDue().length ? 1 : 0) + dls.filter(x => dlDays(x) <= 14 && dlCs(x).length).length + (espOn() && D.esp.date === t ? 1 : 0) + (D.esp && D.esp.date && D.esp.date < t ? 1 : 0)}</span></div>
         <div class="tlist">${todo.length ? todo.join('') : '<div class="sDone"><b>Alles erledigt.</b><span>Keine fehlenden Noten, keine offenen Nachtermine, Sicherung aktuell.</span></div>'}</div></section>
       <section class="panel glass"><div class="phead"><h2 class="ptitle">Als Nächstes</h2><span class="count">${coming.length}</span></div>
         <div class="tlist">${coming.length ? coming.map(x => x.html).join('') : '<p class="hint" style="margin:6px 10px">In den nächsten vier Wochen steht nichts an. Geplante Leistungsnachweise trägst du mit Datum ein – dann erscheinen sie hier und im Kalender.</p>'}</div>
@@ -3999,7 +4244,19 @@ function helpSheet(opts) {
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
     
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
-    <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen.</p>${fig('schuelerblatt', 'Schülerblatt mit Durchschnitten, allen Noten und Zeugnisnote')}${fig('uebertrag', 'Übertrag: was schon im Infoportal steht')}`],
+    <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen. Mit der Terminliste aus dem Infoportal geht es noch bequemer – siehe „Elternsprechtag mit Terminliste“.</p>${fig('schuelerblatt', 'Schülerblatt mit Durchschnitten, allen Noten und Zeugnisnote')}${fig('uebertrag', 'Übertrag: was schon im Infoportal steht')}`],
+  ['esp', 'Elternsprechtag mit Terminliste aus dem Infoportal', 'Zeugnis und Gespräche', `
+    <p>Am Elternsprechtag kommen die Eltern im Fünf-Minuten-Takt – aus verschiedenen Klassen und Fächern. Libretto zeigt dir Termin für Termin die richtige Person mit allen Noten, über alle deine Kurse hinweg. Mit ↑ ↓ geht es zum nächsten Termin.</p>
+    <p><b>1. Ausdrucke aus dem Infoportal speichern</b> (als PDF):</p>
+    <ul><li><b>Terminliste</b> („Termine am Elternsprechtag …“ mit Uhrzeit, Schüler/in und Erziehungsberechtigten) – die wichtigste Datei.</li>
+      <li><b>Belegungsplan</b> („Elternsprechtag am …“ mit GEBUCHT und PAUSE) – zeigt zusätzlich Pausen und freie Zeiten.</li>
+      <li><b>Für die Klassenleitung:</b> im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“ und als PDF speichern – dann siehst du bei jedem Gespräch über ein Kind deiner Klasse alle Fächer mit allen Noten, Gewichten und Durchschnitten, auch Hinweise wie „Erreichen des Ziels der Jahrgangsstufe gefährdet“. Einlesen geht zusammen mit der Terminliste oder jederzeit später: in der Elternsprechtag-Ansicht oben links „PDF einlesen …“ (solange noch kein Bericht da ist, steht bei jeder Person ein Knopf „Leistungsstand einlesen …“) oder im Kasten „Elternsprechtag“ unter „Kalender &amp; Termine“. Unterrichtest du in deiner Klasse auch selbst, siehst du beides: oben „Bei dir“ mit deinen Noten aus Libretto, darunter alle Fächer aus dem Infoportal – dein Fach ist mit „du“ markiert.</li></ul>
+    <p><b>2. Einlesen:</b> Steht ein Elternsprechtag in den Schulterminen, erscheint er vier Wochen vorher in der Übersicht und links unter „Allgemein“ – ein Klick, dann die PDFs auswählen (alle auf einmal oder nacheinander). Jederzeit geht es auch im Reiter <b>Kalender &amp; Termine</b> im Kasten „Elternsprechtag“. Libretto erkennt selbst, welche Datei was ist, und zeigt vor dem Übernehmen, wie viele Termine es in deinen Kursen gefunden hat.</p>
+    <p><b>3. Am Abend:</b> Am Tag selbst steht der Elternsprechtag ganz oben in der Übersicht. Links die Terminleiste (der aktuelle Termin ist nach der Uhr markiert), rechts die Person: oben „Bei dir“ mit Zeugnisnote und allen Noten, darunter „Alle Fächer“ aus dem Bericht; dein eigenes Fach ist mit „du“ markiert. Ist jemand in zwei deiner Kurse, wechselst du oben zwischen den Kursen.</p>
+    <p><b>Gesprächsnotiz:</b> Was du ins Feld „Gesprächsnotiz“ schreibst, steht sofort bei der Person unter „Notizen“ – mit Datum, zum Beispiel „Elternsprechtag 1.12.2026: …“. Frühere Notizen sind zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen.</p>
+    <p><b>Nicht zugeordnet (?):</b> Haben die Eltern nur ihren eigenen Namen eingetragen („Hier eintragen“) oder steht die Person in keinem deiner Kurse, wählst du sie in der Ansicht unten unter „Person aus deinen Kursen zuordnen“. Libretto ordnet nie unsicher zu – gibt es einen Namen doppelt, fragt es lieber.</p>
+    <p><b>Mappe drucken:</b> Im Kasten „Elternsprechtag“ druckt „Mappe drucken (PDF)“ eine Terminübersicht und je Termin eine Seite mit allen Noten und Linien für handschriftliche Notizen – oder mit der schon geschriebenen Gesprächsnotiz.</p>
+    <p><b>Datenschutz:</b> Terminliste (mit den Namen der Eltern) und Bericht braucht es nur für diesen Tag. Danach bietet die Übersicht an, beides zu löschen; die Gesprächsnotizen bleiben bei den Schülern. Alles bleibt verschlüsselt auf diesem Computer.</p>${fig('elternsprechtag', 'Elternsprechtag: Terminleiste, Noten bei dir und alle Fächer aus dem Bericht Leistungsstand')}`],
   ['kalender', 'Kalender, Termine und Klassen austauschen', 'Organisation', `
     <p>Alle schriftlichen Leistungsnachweise im Monatskalender, mit Ferien und Feiertagen in Bayern, filterbar nach Klasse. <b>Schultermine einlesen:</b> im Infoportal unter Termine „als CSV exportieren“ und hier auswählen (auch ICS-Dateien). <b>Oder abonnieren:</b> Gibt es einen Link zum Schulkalender (ICS oder webcal – z. B. im Infoportal, auf der Homepage, Google- oder Outlook-Kalender), wählt „Schulkalender abonnieren …“. Libretto holt neue und geänderte Termine dann selbst (beim Start höchstens alle sechs Stunden, sonst „Jetzt aktualisieren“); abgerufen wird nur, gesendet nichts. Dazu: Terminprüfung nach § 22 GSO, offene Nachtermine und Schulaufgaben anderer Fächer deiner Klassen („Termin anderer Fächer“).</p>${fig('kalender', 'Kalender')}
     <p><b>Klassen austauschen:</b> exportiert deine Kurse (nur Namen und Klassen, keine Noten) als theis-Klassen-Datei – etwa für Voce – oder liest eine solche Datei ein. Libretto zeigt vorher, was neu, geändert oder entfallen ist; übernommen wird nur, was du anhakst, und vorher wird gesichert.</p>
@@ -4175,8 +4432,18 @@ function renderSide() {
   const c = course(), q = $('#sideCourseQ');
   q.textContent = c ? 'Im Kurs ' + c.name : 'Im Kurs'; q.parentNode.title = c ? c.name + ' · ' + (c.subject || '') : '';
   $$('#side [data-qa=newAssessment],#side [data-qa=editCourse],#side [data-qa=transfer],#side [data-qa=print]').forEach(b => b.disabled = !c);
+  paintSideEsp();
   paintSideBk();
   if (Date.now() - stFetched > 30000) { stFetched = Date.now(); N.status().then(x => { if (x) { ST = x; paintSideBk(); } }).catch(() => {}); }
+}
+/* „Elternsprechtag“ in der Leiste nur, wenn einer ansteht (Schultermin in den nächsten vier Wochen) oder eine Terminliste eingelesen ist */
+function espSoon() { const t = todayISO(), h = Cal.iso(Cal.add(new Date(t + 'T12:00'), 28)); return (D.events || []).filter(e => /elternsprech/i.test(e.title || '') && (e.to || e.from) >= t && e.from <= h).sort((a, b) => a.from.localeCompare(b.from))[0] || null; }
+function paintSideEsp() {
+  const b = $('#sideEsp'); if (!b) return;
+  const ev = espSoon(), on = espOn() || (D.esp && Object.keys(D.esp.reports || {}).length);
+  b.hidden = !(on || ev); if (b.hidden) return;
+  let sm = b.querySelector('small'); if (!sm) { sm = document.createElement('small'); b.querySelector('span').appendChild(sm); }
+  sm.textContent = espOn() ? `${sdate(D.esp.date)} · ${D.esp.slots.filter(x => x.st === 'booked').length} Termine` : ev ? `${sdate(ev.from)} · Terminliste einlesen` : 'Terminliste fehlt noch';
 }
 /* Sicherungsstand in der Leiste: grün, wenn die letzte Sicherung im Sicherungsordner höchstens 7 Tage her ist */
 function paintSideBk() {
@@ -4200,6 +4467,7 @@ $('#sideToggle').onclick = () => { if (document.body.classList.contains('sideNar
 $('#side').addEventListener('click', async e => {
   const q = e.target.closest('[data-qa]'); if (!q || !D) return;
   const a = q.dataset.qa;
+  if (a === 'esp') { sidePeek(false); if (espOn()) espView(); else { UI.tab = 'dates'; render(); espPick(); } return; }
   if (['newAssessment', 'editCourse', 'transfer', 'print'].includes(a)) {
     if (!D.courses.length) { toast('Lege zuerst einen Kurs an'); return; }
     if (!course()) UI.course = D.courses[0].id;
@@ -4289,6 +4557,9 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.7', ['Elternsprechtag: PDF einlesen und Mappe drucken jetzt direkt in der Ansicht; solange kein Bericht Leistungsstand da ist, erklärt ein Hinweis bei jeder Person, wie die Klassenleitung alle Fächer dazuholt']],
+  ['1.1.6', ['Elternsprechtag: Zuordnung zu deinen Kursen zuverlässiger (auch bei älteren Kursen, bei Klassen wie „09F“, bei mehreren Vornamen oder anderer Reihenfolge); beim Einlesen steht bei jeder nicht zugeordneten Person, warum', 'Klassenleitung: eigener Knopf „Leistungsstand der Klasse“ im Kasten Elternsprechtag']],
+  ['1.1.5', ['Neu: Elternsprechtag mit Terminliste aus dem Infoportal – Terminliste, Belegungsplan und (für die Klassenleitung) Bericht Leistungsstand als PDF einlesen; am Abend Termin für Termin alle Noten über alle Kurse, alle Fächer der Klasse, Gesprächsnotiz direkt bei der Person, Mappe zum Ausdrucken; danach löschen (Datenschutz)']],
   ['1.1.4', ['Schülerübersichten jetzt auch grafisch: Ring für die Notenpunkte, jede Teilnote als Balken auf der Skala 0–15 und ein Gesamtbalken, der zeigt, wie viel jeder Teil beiträgt', 'Fenster: Aus einem Unterfenster (z. B. Teilnoten eintragen, Quellenverzeichnis, Fristen) kommst du beim Schließen wieder dorthin zurück, wo du warst – nicht gesicherte Eingaben bleiben erhalten', 'Ausdrucke: Balken in den Schülerübersichten überall exakt gleich dick, Schriftgrößen vereinheitlicht']],
   ['1.1.3', ['Neu: Schülerübersichten für Klausuren nach Prüfungsteilen (Oberstufe) – je Schüler ein Abschnitt mit allen Prüfungsteilen, Teilnoten und der vollständigen Rechnung, drei je A4-Seite zum Ausschneiden']],
   ['1.1.2', ['Touch ID schöner eingebunden: Fingerabdruck-Zeichen direkt im Passwortfeld statt eigener Schaltfläche; der Mac fragt beim Start und nach dem automatischen Sperren von selbst; klarere Abfrage („Libretto“ möchte deine Noten öffnen)', 'Schärfere Bilder in Hilfe und Handbuch, neues Bild „Kurs aus mehreren Klassen“']],
