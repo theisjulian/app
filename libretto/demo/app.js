@@ -2248,14 +2248,15 @@ function espView(startId) {
     const none = !h && !rep ? `<div class="notice info"><div class="grow">${x.open ? 'Die Eltern haben einen Termin gebucht, aber keinen Namen eingetragen.' : 'Diese Person steht in keinem deiner Kurse' + (Object.keys(E.reports || {}).length ? ' und nicht im eingelesenen Bericht.' : '.')} Ordne sie unten zu, dann siehst du ihre Noten.</div></div>` : '';
     const note = h ? h.c.notes[h.s.id] : '';
     const older = note && x.noteBlk ? note.replace(x.noteBlk, '').trim() : note;
-    return top + none + mine + (rep ? espReportHtml(rep) : '')
+    const noRep = !Object.keys(E.reports || {}).length ? `<div class="espRepHint"><div><b>Klassenleitung?</b> Dann siehst du hier bei jedem Kind deiner Klasse alle Fächer mit allen Noten. Dafür im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“, als PDF speichern – und hier einlesen.</div><button type="button" class="mini accent" data-espimp>Leistungsstand einlesen …</button></div>` : '';
+    return top + none + mine + (rep ? espReportHtml(rep) : noRep)
       + `<section class="espSec"><div class="espSecT">Gesprächsnotiz <span>${h ? 'wird sofort bei der Person unter „Notizen“ gespeichert' : 'bleibt beim Termin, bis du die Terminliste löschst'}</span></div>
         <textarea id="espNote" rows="3" placeholder="Was wurde besprochen? Vereinbarungen, Rückmeldung an …">${esc(x.note || '')}</textarea><small class="hint" id="espSaved"></small>
         ${older ? `<div class="tvNote">${showNotes ? `<b>Frühere Notizen (nur für dich)</b><p>${esc(older)}</p><button type="button" class="linkbtn" data-tvn>verbergen</button>` : '<button type="button" class="linkbtn" data-tvn>Frühere Notizen zeigen</button> <small class="hint">– zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen</small>'}</div>` : ''}</section>`
       + (picking || !h || x.cid ? picker(x) : `<p class="hint espFoot"><button type="button" class="linkbtn" id="espRepick">Andere Person zuordnen</button></p>`);
   };
   const { dlg } = sheet({ title: `Elternsprechtag · ${wdate(E.date)}${E.room ? ' · Raum ' + E.room.replace(/,?\s*Gebäude:.*$/, '') : ''}`, wide: true, ok: '', cancel: 'Fertig',
-    body: `<div class="espWrap"><nav class="espList" id="espList" aria-label="Termine">${timeline()}</nav><div class="espMain" id="espMain">${detail()}</div></div><p class="hint tvKeys">↑ ↓ nächster Termin · Esc schließt</p>` });
+    body: `<div class="espWrap"><div class="espSide"><div class="espTools"><button type="button" class="mini" data-espimp title="Terminliste, Belegungsplan oder Bericht Leistungsstand (Klassenleitung) aus dem Infoportal">PDF einlesen …</button><button type="button" class="mini" data-espprint>Mappe drucken</button></div><nav class="espList" id="espList" aria-label="Termine">${timeline()}</nav></div><div class="espMain" id="espMain">${detail()}</div></div><p class="hint tvKeys">↑ ↓ nächster Termin · Esc schließt</p>` });
   dlg.classList.add('tvDlg', 'espDlg'); dlg.tabIndex = -1;
   const draw = (keepList) => { const m = dlg.querySelector('#espMain'); m.innerHTML = detail(); m.scrollTop = 0; if (!keepList) { dlg.querySelector('#espList').innerHTML = timeline(); } const on = dlg.querySelector('.espT.on'); if (on) on.scrollIntoView({ block: 'nearest' }); bindNote();
     /* Pfeiltasten wirken weiter, auch wenn das angeklickte Element neu gezeichnet wurde */
@@ -2272,6 +2273,8 @@ function espView(startId) {
     const tb = e.target.closest('[data-esptab]'); if (tb) { tab = +tb.dataset.esptab; return draw(true); }
     if (e.target.closest('[data-tvn]')) { showNotes = !showNotes; return draw(true); }
     if (e.target.closest('#espRepick')) { picking = true; return draw(true); }
+    if (e.target.closest('[data-espimp]')) return espPick(cur);
+    if (e.target.closest('[data-espprint]')) return exportModel(modelEsp(), 'pdf');
     if (e.target.closest('#espUnpick')) { const x = sl().find(y => y.id === cur); delete x.cid; delete x.sid; save(); picking = false; return draw(); }
   });
   dlg.addEventListener('change', e => { if (e.target.id !== 'espPick' || READONLY) return; const x = sl().find(y => y.id === cur), [cid, sid] = e.target.value.split('|');
@@ -2282,7 +2285,7 @@ function espView(startId) {
   const on = dlg.querySelector('.espT.on'); if (on) on.scrollIntoView({ block: 'center' });
 }
 /* PDFs einlesen (Terminliste, Belegungsplan, Bericht Leistungsstand – einzeln oder zusammen) */
-async function espImport(files) {
+async function espImport(files, back) {
   if (READONLY || !files || !files.length) return;
   const got = { list: null, grid: null, reports: [] }, errs = [];
   for (const f of files) {
@@ -2324,12 +2327,12 @@ async function espImport(files) {
   if (slots) { D.esp.slots = slots; D.esp.date = date || D.esp.date; if (got.list) { D.esp.room = got.list.room || ''; D.esp.teacher = got.list.teacher || ''; } }
   if (!D.esp.date && got.reports.length) D.esp.date = '';
   got.reports.forEach(r => { D.esp.reports = D.esp.reports || {}; D.esp.reports[espKey(r.cls)] = r; });
-  save(); toast('Elternsprechtag eingelesen'); render();
-  if (espOn()) espView();
+  save(); toast('Elternsprechtag eingelesen'); closeAll(); render();
+  if (espOn()) espView(back && D.esp.slots.some(x => x.id === back) ? back : undefined);
 }
-function espPick() {
+function espPick(back) {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.pdf,application/pdf'; inp.multiple = true;
-  inp.onchange = () => espImport([...inp.files]); inp.click();
+  inp.onchange = () => espImport([...inp.files], back); inp.click();
 }
 async function espDelete() {
   if (READONLY || !D.esp) return;
@@ -4247,7 +4250,7 @@ function helpSheet(opts) {
     <p><b>1. Ausdrucke aus dem Infoportal speichern</b> (als PDF):</p>
     <ul><li><b>Terminliste</b> („Termine am Elternsprechtag …“ mit Uhrzeit, Schüler/in und Erziehungsberechtigten) – die wichtigste Datei.</li>
       <li><b>Belegungsplan</b> („Elternsprechtag am …“ mit GEBUCHT und PAUSE) – zeigt zusätzlich Pausen und freie Zeiten.</li>
-      <li><b>Für die Klassenleitung:</b> im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“ und als PDF speichern – dann siehst du bei jedem Gespräch über ein Kind deiner Klasse alle Fächer mit allen Noten, Gewichten und Durchschnitten, auch Hinweise wie „Erreichen des Ziels der Jahrgangsstufe gefährdet“. Einlesen geht zusammen mit der Terminliste oder später über „Leistungsstand der Klasse (Klassenleitung) …“ im Kasten „Elternsprechtag“. Unterrichtest du in deiner Klasse auch selbst, siehst du beides: oben „Bei dir“ mit deinen Noten aus Libretto, darunter alle Fächer aus dem Infoportal – dein Fach ist mit „du“ markiert.</li></ul>
+      <li><b>Für die Klassenleitung:</b> im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“ und als PDF speichern – dann siehst du bei jedem Gespräch über ein Kind deiner Klasse alle Fächer mit allen Noten, Gewichten und Durchschnitten, auch Hinweise wie „Erreichen des Ziels der Jahrgangsstufe gefährdet“. Einlesen geht zusammen mit der Terminliste oder jederzeit später: in der Elternsprechtag-Ansicht oben links „PDF einlesen …“ (solange noch kein Bericht da ist, steht bei jeder Person ein Knopf „Leistungsstand einlesen …“) oder im Kasten „Elternsprechtag“ unter „Kalender &amp; Termine“. Unterrichtest du in deiner Klasse auch selbst, siehst du beides: oben „Bei dir“ mit deinen Noten aus Libretto, darunter alle Fächer aus dem Infoportal – dein Fach ist mit „du“ markiert.</li></ul>
     <p><b>2. Einlesen:</b> Steht ein Elternsprechtag in den Schulterminen, erscheint er vier Wochen vorher in der Übersicht und links unter „Allgemein“ – ein Klick, dann die PDFs auswählen (alle auf einmal oder nacheinander). Jederzeit geht es auch im Reiter <b>Kalender &amp; Termine</b> im Kasten „Elternsprechtag“. Libretto erkennt selbst, welche Datei was ist, und zeigt vor dem Übernehmen, wie viele Termine es in deinen Kursen gefunden hat.</p>
     <p><b>3. Am Abend:</b> Am Tag selbst steht der Elternsprechtag ganz oben in der Übersicht. Links die Terminleiste (der aktuelle Termin ist nach der Uhr markiert), rechts die Person: oben „Bei dir“ mit Zeugnisnote und allen Noten, darunter „Alle Fächer“ aus dem Bericht; dein eigenes Fach ist mit „du“ markiert. Ist jemand in zwei deiner Kurse, wechselst du oben zwischen den Kursen.</p>
     <p><b>Gesprächsnotiz:</b> Was du ins Feld „Gesprächsnotiz“ schreibst, steht sofort bei der Person unter „Notizen“ – mit Datum, zum Beispiel „Elternsprechtag 1.12.2026: …“. Frühere Notizen sind zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen.</p>
@@ -4554,6 +4557,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.7', ['Elternsprechtag: PDF einlesen und Mappe drucken jetzt direkt in der Ansicht; solange kein Bericht Leistungsstand da ist, erklärt ein Hinweis bei jeder Person, wie die Klassenleitung alle Fächer dazuholt']],
   ['1.1.6', ['Elternsprechtag: Zuordnung zu deinen Kursen zuverlässiger (auch bei älteren Kursen, bei Klassen wie „09F“, bei mehreren Vornamen oder anderer Reihenfolge); beim Einlesen steht bei jeder nicht zugeordneten Person, warum', 'Klassenleitung: eigener Knopf „Leistungsstand der Klasse“ im Kasten Elternsprechtag']],
   ['1.1.5', ['Neu: Elternsprechtag mit Terminliste aus dem Infoportal – Terminliste, Belegungsplan und (für die Klassenleitung) Bericht Leistungsstand als PDF einlesen; am Abend Termin für Termin alle Noten über alle Kurse, alle Fächer der Klasse, Gesprächsnotiz direkt bei der Person, Mappe zum Ausdrucken; danach löschen (Datenschutz)']],
   ['1.1.4', ['Schülerübersichten jetzt auch grafisch: Ring für die Notenpunkte, jede Teilnote als Balken auf der Skala 0–15 und ein Gesamtbalken, der zeigt, wie viel jeder Teil beiträgt', 'Fenster: Aus einem Unterfenster (z. B. Teilnoten eintragen, Quellenverzeichnis, Fristen) kommst du beim Schließen wieder dorthin zurück, wo du warst – nicht gesicherte Eingaben bleiben erhalten', 'Ausdrucke: Balken in den Schülerübersichten überall exakt gleich dick, Schriftgrößen vereinheitlicht']],

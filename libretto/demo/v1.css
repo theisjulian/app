@@ -841,7 +841,7 @@ td.res:not(:has(.gb)) .flag ~ .flag{margin:-4px 0 0 21px}
 dialog.espDlg{width:min(1320px,97vw);max-height:94vh}
 dialog.espDlg .sheetbody{padding-top:8px}
 .espWrap{display:grid;grid-template-columns:262px minmax(0,1fr);gap:18px;min-height:min(70vh,760px)}
-.espList{display:flex;flex-direction:column;gap:2px;max-height:min(74vh,800px);overflow:auto;padding:2px 6px 2px 0;border-right:.5px solid var(--hairline)}
+.espList{display:flex;flex-direction:column;gap:2px;max-height:calc(min(74vh,800px) - 44px);overflow:auto;padding:2px 6px 2px 0;border-right:.5px solid var(--hairline)}
 .espT{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;text-align:left;padding:6px 8px;border-radius:10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer;position:relative}
 .espT .t{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:650;color:var(--label-2)}
 .espT .w{min-width:0} .espT .w b{display:block;font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -897,3 +897,8 @@ table.espRep .avg{width:132px}
 .linkbtn.danger{color:var(--red)}
 .espPanel .note .linkbtn{display:inline;padding:0;margin:0;width:auto;font-size:inherit}
 .espMiss{margin-top:4px} .espMiss summary{cursor:pointer;color:var(--blue)} .espMiss ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.5}
+.espSide{display:flex;flex-direction:column;min-height:0;border-right:.5px solid var(--hairline)}
+.espSide .espList{border-right:0}
+.espTools{display:flex;gap:6px;padding:0 6px 10px 0;flex-wrap:wrap} .espTools .mini{font-size:12.5px;padding:5px 10px}
+.espRepHint{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--blue) 8%,transparent);display:flex;gap:14px;align-items:center;font-size:13.5px;line-height:1.45}
+.espRepHint .mini{flex:none}
