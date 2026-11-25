@@ -190,7 +190,7 @@ const Print = (() => {
       <table class="eRep"><colgroup><col style="width:27%"><col style="width:17%"><col><col style="width:9%"><col style="width:9%"><col style="width:17%"></colgroup>
       <thead><tr><th>Fach · Lehrkraft</th><th>Große LN</th><th>Kleine LN</th><th class="n">Ø groß</th><th class="n">Ø klein</th><th>Ø gesamt</th></tr></thead>
       <tbody>${r.subjects.map(x => { last = ''; const b = list(x.big); last = ''; const k = list(x.small); return `<tr class="${x.mine ? 'mine' : ''}"><td><b>${esc(x.subj)}</b><small>${esc(x.teacher)}</small></td><td>${b}</td><td>${k}</td><td class="n">${esc(x.avgBig || '–')}</td><td class="n">${esc(x.avgSmall || '–')}</td><td>${bar(x.avg)}</td></tr>`; }).join('')}</tbody></table>
-      <p class="note">Bericht Leistungsstand aus dem Infoportal, Klasse ${esc(r.cls)}, Stand ${esc(r.stand)}. Kleine Zahl: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben.</p>`;
+      <p class="note">Bericht Leistungsstand aus dem Infoportal, Klasse ${esc(r.cls)}, Stand ${esc(r.stand)} – Noten, die erst in Libretto stehen, fehlen hier (sie stehen oben unter „Bei dir“). Kleine Zahl: Gewicht der Note · x = nicht mitgeschrieben oder noch nicht geschrieben.</p>`;
   }
   const ESP_CSS = `
       .eChips{break-inside:avoid;margin:0 0 6px} .eChips > p{grid-column:1/-1}
