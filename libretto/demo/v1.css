@@ -837,3 +837,62 @@ table.grid.noSA th.hSm,table.grid.noSA td[data-sum="sm"],table.grid.noSA td.fSm{
 td.res:not(:has(.gb)) .flag{margin:-4px 0 0 9px;box-shadow:none}
 td.res:not(:has(.gb)) .flag ~ .flag{margin:-4px 0 0 21px}
 .dateWarn{display:block;margin-top:4px;font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--orange) 75%,var(--label))}
+/* ---------- Elternsprechtag mit Terminliste ---------- */
+dialog.espDlg{width:min(1320px,97vw);max-height:94vh}
+dialog.espDlg .sheetbody{padding-top:8px}
+.espWrap{display:grid;grid-template-columns:262px minmax(0,1fr);gap:18px;min-height:min(70vh,760px)}
+.espList{display:flex;flex-direction:column;gap:2px;max-height:min(74vh,800px);overflow:auto;padding:2px 6px 2px 0;border-right:.5px solid var(--hairline)}
+.espT{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;text-align:left;padding:6px 8px;border-radius:10px;border:0;background:none;color:inherit;font:inherit;cursor:pointer;position:relative}
+.espT .t{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:650;color:var(--label-2)}
+.espT .w{min-width:0} .espT .w b{display:block;font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.espT .w small{display:block;font-size:11.5px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .espT .w i{font-style:normal;color:color-mix(in srgb,var(--orange) 80%,var(--label))}
+.espT:hover{background:var(--fill)}
+.espT.on{background:color-mix(in srgb,var(--blue) 14%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--blue) 50%,transparent)}
+.espT.on .t{color:var(--blue)}
+.espT.off{cursor:default;padding:3px 8px} .espT.off .w{font-size:12px;color:var(--label-3);font-style:italic}
+.espT.live::before{content:'';position:absolute;left:-1px;top:7px;bottom:7px;width:3px;border-radius:3px;background:var(--orange)}
+.espT .dot{width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.espMain{min-width:0;max-height:min(74vh,800px);overflow:auto;padding-right:4px}
+.espTop{margin-top:0} .espTop .tvName h2{font-size:28px}
+.espTime{margin:0 0 2px!important;font-size:12.5px!important;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue)!important}
+.espEmpty{text-align:center;margin-top:40px}
+.espSec{margin:16px 0 0;padding-top:14px;border-top:.5px solid var(--hairline)}
+.espSecT{font-size:12.5px;font-weight:700;color:var(--label-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.espSecT span{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px;color:var(--label-3)}
+.espTabs{margin:0 0 12px;display:inline-flex}
+.espMain .tvStat b{font-size:32px} .espMain .tvChip{min-width:44px;height:44px;font-size:19px;border-radius:12px}
+.espMain textarea{width:100%;resize:vertical;min-height:76px}
+table.espRep{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+table.espRep th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--label-2);text-align:left;padding:0 8px 6px;border-bottom:.5px solid var(--hairline)}
+table.espRep td{padding:7px 8px;border-bottom:.5px solid var(--hairline);vertical-align:middle}
+table.espRep td:first-child{width:24%} table.espRep td b{display:block;font-weight:650} table.espRep td small{display:block;font-size:11.5px;color:var(--label-2)}
+table.espRep tr.mine td{background:color-mix(in srgb,var(--blue) 6%,transparent)} table.espRep tr.mine td:first-child b::after{content:'du';margin-left:6px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue);vertical-align:1px}
+table.espRep .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--label-2);width:62px;white-space:nowrap}
+table.espRep .avg{width:132px}
+.espTyp{display:inline-block;font-size:11px;font-weight:600;color:var(--label-2);margin:0 4px 0 6px} .espTyp:first-child{margin-left:0}
+.espG{display:inline-flex;align-items:center;justify-content:center;gap:1px;min-width:26px;height:26px;padding:0 5px;margin:2px 3px 2px 0;border-radius:8px;font-weight:750;font-size:14px;color:#fff;background:var(--g,var(--label-3));font-variant-numeric:tabular-nums;position:relative}
+.espG sub{font-size:9px;font-weight:600;opacity:.92;line-height:1;align-self:flex-end;margin-bottom:4px;vertical-align:baseline}
+.espG.x{background:var(--fill-2);color:var(--label-2)}
+.espNone{color:var(--label-3)}
+.espAvg{display:flex;align-items:center;gap:8px} .espAvg b{font-variant-numeric:tabular-nums;font-weight:750;min-width:34px;color:color-mix(in srgb,var(--g) 85%,var(--label))}
+.espAvg svg{flex:1;height:8px;min-width:50px}
+.espPick{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--fill);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.espPick label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600} .espPick select{max-width:340px}
+.espFoot{text-align:right;margin-top:14px}
+.espSum{margin:0 0 10px;padding-left:18px;line-height:1.55}
+.espP{margin:0 0 10px}
+.sRow.espRow.today{background:color-mix(in srgb,var(--blue) 10%,transparent)}
+@media (max-width:860px){.espWrap{grid-template-columns:1fr}.espList{max-height:180px;border-right:0;border-bottom:.5px solid var(--hairline)}}
+.espT .q{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;font-size:11px;font-weight:800;font-style:normal;color:#fff;background:var(--orange)}
+.espGr{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;align-items:start}
+.espGr > .tvStats,.espGr > .notices,.espGr > p{grid-column:1/-1}
+.espGr .tvStats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:6px}
+.espGr .tvStat{padding:9px 13px;border-radius:13px}
+.espMain .espGr .tvStat b{font-size:26px}
+.espGr .tvRow{margin:8px 0 4px}
+@media (max-width:1100px){.espGr{grid-template-columns:1fr}}
+#sideEsp span small{display:block;font-size:11px;color:var(--blue);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sideEsp{min-height:38px}
+#sideEsp[hidden]{display:none}
+.linkbtn.danger{color:var(--red)}
+.espPanel .note .linkbtn{display:inline;padding:0;margin:0;width:auto;font-size:inherit}

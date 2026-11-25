@@ -133,7 +133,7 @@ window.LibrettoDemoData = function (R, Cal) {
   w.notes[w.students[10].id] = 'Thema noch offen – Gespräch mit Oberstufenkoordination vereinbart.';
 
   const courses = [e9, e6, i8, g10, q12, w];
-  courses.forEach(c => c.students.forEach(s => delete s.lvl));
+  const LVL = new Map(); courses.forEach(c => c.students.forEach(s => { LVL.set(s.id, s.lvl); delete s.lvl; }));   /* Leistungsstand merken – für den Bericht zum Elternsprechtag */
 
   /* Schulaufgaben anderer Fächer der 9b: zeigt die Terminprüfung nach § 22 GSO (höchstens zwei pro Woche) */
   const cls = R.classOf(e9.name);
@@ -150,6 +150,29 @@ window.LibrettoDemoData = function (R, Cal) {
     ev('Notenschluss Zwischenzeugnis', sd(2, 19)), ev('Schüleraustausch: Besuch der Partnerschule', sd(3, 9), sd(3, 16)), ev('2. Elternsprechtag', sd(4, 28), '', '16:00–19:00'),
     ev('Projekttage', sd(7, 20), sd(7, 22)), ev('Sommerfest', sd(7, 23), '', '15:00'),
   ];
+  /* ---------- Elternsprechtag: Terminliste und Bericht Leistungsstand (Klasse 9b) wie aus dem Infoportal – alles erfunden ---------- */
+  const today = iso(now), espEv = events.filter(e => /Elternsprech/.test(e.title)).sort((x, y) => x.from.localeCompare(y.from)), espDate = (espEv.find(e => e.from >= today) || espEv[espEv.length - 1]).from;
+  const PAR = ['Andrea', 'Thomas', 'Sabine', 'Michael', 'Claudia', 'Stefan', 'Katrin', 'Markus', 'Julia', 'Frank'];
+  const pick = (c, k) => c.students[k % c.students.length];
+  const who = [[e9, 1, 'E'], [e9, 4, 'E'], [i8, 2, 'It'], null, [g10, 3, 'G'], [e9, 7, 'E'], 'open', [q12, 2, 'E'], 'pause', [e9, 9, 'E'], [i8, 8, 'It'], [e9, 12, 'E'], [g10, 6, 'G']];
+  const slots = who.map((w, k) => { const m = 16 * 60 + k * 5, t = `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+    if (!w) return { id: id('t'), t, st: 'free' }; if (w === 'pause') return { id: id('t'), t, st: 'pause' };
+    if (w === 'open') return { id: id('t'), t, st: 'booked', open: true, last: '', first: '', cls: '', subj: '', parent: 'Brandl' };
+    const [c, i, subj] = w, s = pick(c, i); return { id: id('t'), t, st: 'booked', last: s.last, first: s.first, cls: s.cls || (c.grade >= 12 ? `${c.grade} G9` : c.name), subj: c.grade >= 12 ? '' : subj, parent: `${s.last}, ${PAR[k % PAR.length]}` }; });
+  const TEACH = [['Deutsch', 'Sophie Krämer', 2, true], ['Mathematik', 'Tobias Köhler', 2, true], ['Englisch', 'Martin Beispiel', 2, true], ['Latein', 'Nora Lindt', 2, true], ['Biologie', 'Ida Weber', 0, false], ['Geschichte', 'Paul Engel', 0, false]];
+  const fx = v => v.toFixed(2).replace('.', ',');
+  const rep = { kind: 'report', cls: '9b', stand: espDate < today ? espDate : today, year: `${Y}/${Y + 1}`, school: 'Gymnasium Musterstadt', warnings: [],
+    students: e9.students.map(s0 => { const s = { ...s0, lvl: LVL.get(s0.id) };
+      const subjects = TEACH.map(([subj, teacher, nBig]) => {
+        const big = Array.from({ length: nBig }, () => ({ t: 'S', g: String(grade(s, 0.7)), w: 1 }));
+        const small = Array.from({ length: 2 + Math.floor(rnd() * 2) }, (_, k) => { const v = grade(s, 0.9), tn = rnd(); return { t: k === 0 ? 'M' : 'ksL', g: v + (v < 6 && tn < 0.2 ? '-' : ''), w: k === 0 ? 1 : 0.5 }; });
+        const mb = big.length ? big.reduce((a, g) => a + parseInt(g.g), 0) / big.length : null;
+        const ws = small.reduce((a, g) => a + g.w, 0), ms = small.reduce((a, g) => a + parseInt(g.g) * g.w, 0) / ws;
+        return { subj, teacher, big, small, avgBig: mb == null ? '' : fx(mb), avgSmall: fx(ms), avg: fx(mb == null ? ms : (2 * mb + ms) / 3) }; });
+      const remarks = s.lvl > 4.4 ? ['Nach dem gegenwärtigen Notenbild ist das Erreichen des Ziels der Jahrgangsstufe gefährdet.'] : [];
+      return { name: `${s.first} ${s.last}`, remarks, subjects }; }) };
+  const esp = { date: espDate, room: '214, Gebäude: Hauptbau', teacher: 'Beispiel, Martin', slots, reports: { '9B': rep } };
+
   return { v: 1, settings: { teacher: 'M. Beispiel', school: 'Gymnasium Musterstadt', year: `${Y}/${String((Y + 1) % 100).padStart(2, '0')}`, half1End: sd(2, 19), autoLock: 10, hues: {}, keyPresets: {}, lastTerm: {} },
-    courses, classDates, events };
+    courses, classDates, events, esp };
 };

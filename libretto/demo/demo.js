@@ -38,6 +38,8 @@
     const t = e.target;
     if (t && t.matches && t.matches('input[type="file"]')) { e.preventDefault(); e.stopPropagation(); X.locked('Das Einlesen von Dateien'); }
   }, true);
+  /* Elternsprechtag: Ausdrucke einlesen ebenfalls gesperrt (die Demo hat schon eine erfundene Terminliste) */
+  espPick = function () { X.locked('Das Einlesen von Dateien'); };
   ['dragenter', 'dragover', 'drop'].forEach(ev => document.addEventListener(ev, e => {
     if (!e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return;
     e.preventDefault(); e.stopPropagation();
