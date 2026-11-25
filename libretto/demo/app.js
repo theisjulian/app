@@ -2170,12 +2170,12 @@ const espKey = x => String(x || '').replace(/\s+/g, '').toUpperCase();
 const espCls = c => { const k = classesOf(c); return k.length === 1 ? k[0] : ''; };
 /* eigene Kurse, in denen die Person steht (manuelle Zuordnung geht vor) */
 function espHits(sl) {
-  if (sl.cid && sl.sid) { const c = D.courses.find(x => x.id === sl.cid), s = c && c.students.find(x => x.id === sl.sid); if (s) return [{ c, s }].concat(Esp.matchStudent({ last: s.last, first: s.first }, D.courses.filter(x => x.id !== c.id))); }
+  if (sl.cid && sl.sid) { const c = D.courses.find(x => x.id === sl.cid), s = c && c.students.find(x => x.id === sl.sid); if (s) return [{ c, s }].concat(Esp.matchStudent(Esp.nameOf(s), D.courses.filter(x => x.id !== c.id))); }
   return Esp.matchStudent(sl, D.courses, { classOf: espCls });
 }
 function espReport(sl, hit) {
   const reps = Object.values((D.esp && D.esp.reports) || {}); if (!reps.length) return null;
-  const s = hit ? hit.s : null, probe = s ? { last: s.last, first: s.first, cls: s.cls || sl.cls || espCls(hit.c) } : sl;
+  const s = hit ? hit.s : null, probe = s ? { ...Esp.nameOf(s), cls: s.cls || sl.cls || espCls(hit.c) } : sl;
   for (const r of reps) { const m = Esp.matchReport(probe, r); if (m) return { rep: r, st: m }; }
   return null;
 }
@@ -2304,11 +2304,14 @@ async function espImport(files) {
     const found = b.filter(x => espHits(x).length).length;
     const nOpen = b.filter(x => x.open && !espHits(x).length).length, nOut = b.length - found - nOpen;
     if (got.list) lines.push(`<b>Terminliste ${esc(fdate(got.list.date))}</b>: ${b.length} Termine – ${found} in deinen Kursen gefunden${b.length - found ? `, ${b.length - found} ohne Zuordnung (${[nOpen ? nOpen + ' nur mit Elternnamen' : '', nOut ? nOut + ' nicht in deinen Kursen' : ''].filter(Boolean).join(', ')} – in der Ansicht selbst zuordnen)` : ''}`);
+    const miss = b.filter(x => !x.open && !espHits(x).length);
+    if (got.list && miss.length) lines.push(`<details class="espMiss"><summary>Ohne Zuordnung – warum?</summary><ul>${miss.map(x => `<li><b>${esc(x.last)}${x.first ? ', ' + esc(x.first) : ''}</b> (${esc([x.cls, espSubj(x.subj)].filter(Boolean).join(' · '))}): ${esc(Esp.explain(x, D.courses))}</li>`).join('')}</ul></details>`);
     if (got.grid) lines.push(`<b>Belegungsplan ${esc(fdate(got.grid.date))}</b>: ${got.grid.slots.length} Zeiten, ${got.grid.slots.filter(x => x.st === 'pause').length} Pausen, ${got.grid.slots.filter(x => x.st === 'free').length} frei`);
     if (got.list && got.grid && got.list.date && got.grid.date && got.list.date !== got.grid.date) errs.push(`Terminliste (${fdate(got.list.date)}) und Belegungsplan (${fdate(got.grid.date)}) gehören zu verschiedenen Tagen – übernommen wird die Terminliste.`);
     if (got.grid && got.list) { const gb = got.grid.slots.filter(x => x.st === 'booked').length; if (gb !== got.list.slots.length) errs.push(`Im Belegungsplan sind ${gb} Termine gebucht, in der Terminliste stehen ${got.list.slots.length} – bitte beide am selben Tag neu ausdrucken.`); }
   }
   got.reports.forEach(r => lines.push(`<b>Bericht Leistungsstand Klasse ${esc(r.cls)}</b> (Stand ${esc(fdate(r.stand))}): ${r.students.length} Schülerinnen und Schüler, ${[...new Set(r.students.flatMap(s => s.subjects.map(x => x.subj)))].length} Fächer`));
+  if (!got.reports.length && !Object.keys((D.esp && !old && D.esp.reports) || {}).length) lines.push('<span class="hint">Klassenleitung? Den Bericht „Leistungsstand“ (Infoportal → „Alle erzeugen“) kannst du gleich mit auswählen oder später im Kasten „Elternsprechtag“ dazu einlesen.</span>');
   if (!slots && !D.esp && got.reports.length) errs.push('Für die Terminansicht fehlt noch die Terminliste („Meine Termine“) – du kannst sie jederzeit dazu einlesen.');
   const ok = await new Promise(res => { const { dlg, close } = sheet({ title: 'Elternsprechtag einlesen', ok: 'Übernehmen', cancel: 'Abbrechen',
     body: `<ul class="espSum">${lines.map(l => `<li>${l}</li>`).join('')}</ul>${errs.length ? `<div class="notices">${errs.map(e => `<div class="notice info"><div class="grow">${esc(e)}</div></div>`).join('')}</div>` : ''}
@@ -2370,15 +2373,16 @@ function espPanel() {
   const evt = (D.events || []).filter(e => /elternsprech/i.test(e.title || '') && (e.to || e.from) >= todayISO()).sort((a, b) => a.from.localeCompare(b.from))[0];
   return `<section class="panel glass espPanel"><div class="phead"><h2 class="ptitle">Elternsprechtag</h2>${b.length ? `<span class="count">${b.length}</span>` : ''}</div>
     ${E ? `<p class="espP">${b.length ? `<b>${esc(wdate(E.date))}</b> · ${b.length} Termine${E.room ? ' · Raum ' + esc(E.room.replace(/,?\s*Gebäude:.*$/, '')) : ''}` : 'Noch keine Terminliste'}${reps.length ? `<br><small>Bericht Leistungsstand: ${reps.map(r => `Klasse ${esc(r.cls)} (Stand ${esc(sdate(r.stand))})`).join(', ')}</small>` : ''}</p>
-      <div class="panelBtns">${b.length ? '<button type="button" class="mini accent" id="espOpen">Ansicht öffnen</button><button type="button" class="mini" id="espPrint">Mappe drucken (PDF)</button>' : ''}<button type="button" class="mini" id="espAdd">PDF dazu einlesen …</button></div>
+      <div class="panelBtns">${b.length ? '<button type="button" class="mini accent" id="espOpen">Ansicht öffnen</button><button type="button" class="mini" id="espPrint">Mappe drucken (PDF)</button>' : ''}<button type="button" class="mini" id="espAdd">PDF dazu einlesen …</button>${reps.length ? '' : '<button type="button" class="mini" id="espRep" title="Infoportal → Bericht Leistungsstand → „Alle erzeugen“ als PDF speichern">Leistungsstand der Klasse (Klassenleitung) …</button>'}</div>
       <p class="note">Gilt nur für diesen Elternsprechtag. Gesprächsnotizen stehen sofort bei den Schülern. <button type="button" class="linkbtn danger" id="espDel">Terminliste${reps.length ? ' und Bericht' : ''} löschen</button></p>`
     : `<p class="hint" style="margin-top:0">${evt ? `Laut Schulterminen am <b>${esc(wdate(evt.from))}</b>. ` : ''}Terminliste und Belegungsplan aus dem Infoportal einlesen – dann blätterst du am Abend Termin für Termin durch die Noten, über alle deine Kurse. Als Klassenleitung zusätzlich den Bericht „Leistungsstand“ (alle Fächer).</p>
-      <div class="panelBtns"><button type="button" class="mini accent" id="espAdd">Ausdrucke einlesen (PDF) …</button></div>`}
+      <div class="panelBtns"><button type="button" class="mini accent" id="espAdd">Ausdrucke einlesen (PDF) …</button><button type="button" class="mini" id="espRep" title="Infoportal → Bericht Leistungsstand → „Alle erzeugen“ als PDF speichern">Leistungsstand der Klasse (Klassenleitung) …</button></div>`}
   </section>`;
 }
 function bindEspPanel() {
   const q = id => document.getElementById(id);
   if (q('espAdd')) q('espAdd').onclick = espPick;
+  if (q('espRep')) q('espRep').onclick = espPick;
   if (q('espOpen')) q('espOpen').onclick = () => espView();
   if (q('espDel')) q('espDel').onclick = espDelete;
   if (q('espPrint')) q('espPrint').onclick = () => exportModel(modelEsp(), 'pdf');
@@ -4243,7 +4247,7 @@ function helpSheet(opts) {
     <p><b>1. Ausdrucke aus dem Infoportal speichern</b> (als PDF):</p>
     <ul><li><b>Terminliste</b> („Termine am Elternsprechtag …“ mit Uhrzeit, Schüler/in und Erziehungsberechtigten) – die wichtigste Datei.</li>
       <li><b>Belegungsplan</b> („Elternsprechtag am …“ mit GEBUCHT und PAUSE) – zeigt zusätzlich Pausen und freie Zeiten.</li>
-      <li><b>Für die Klassenleitung:</b> unter „Bericht Leistungsstand“ auf „Alle erzeugen“ – dann siehst du beim Gespräch alle Fächer der Klasse mit allen Noten, Gewichten und Durchschnitten, auch Hinweise wie „Erreichen des Ziels der Jahrgangsstufe gefährdet“.</li></ul>
+      <li><b>Für die Klassenleitung:</b> im Infoportal unter „Bericht Leistungsstand“ deine Klasse wählen, „Alle erzeugen“ und als PDF speichern – dann siehst du bei jedem Gespräch über ein Kind deiner Klasse alle Fächer mit allen Noten, Gewichten und Durchschnitten, auch Hinweise wie „Erreichen des Ziels der Jahrgangsstufe gefährdet“. Einlesen geht zusammen mit der Terminliste oder später über „Leistungsstand der Klasse (Klassenleitung) …“ im Kasten „Elternsprechtag“. Unterrichtest du in deiner Klasse auch selbst, siehst du beides: oben „Bei dir“ mit deinen Noten aus Libretto, darunter alle Fächer aus dem Infoportal – dein Fach ist mit „du“ markiert.</li></ul>
     <p><b>2. Einlesen:</b> Steht ein Elternsprechtag in den Schulterminen, erscheint er vier Wochen vorher in der Übersicht und links unter „Allgemein“ – ein Klick, dann die PDFs auswählen (alle auf einmal oder nacheinander). Jederzeit geht es auch im Reiter <b>Kalender &amp; Termine</b> im Kasten „Elternsprechtag“. Libretto erkennt selbst, welche Datei was ist, und zeigt vor dem Übernehmen, wie viele Termine es in deinen Kursen gefunden hat.</p>
     <p><b>3. Am Abend:</b> Am Tag selbst steht der Elternsprechtag ganz oben in der Übersicht. Links die Terminleiste (der aktuelle Termin ist nach der Uhr markiert), rechts die Person: oben „Bei dir“ mit Zeugnisnote und allen Noten, darunter „Alle Fächer“ aus dem Bericht; dein eigenes Fach ist mit „du“ markiert. Ist jemand in zwei deiner Kurse, wechselst du oben zwischen den Kursen.</p>
     <p><b>Gesprächsnotiz:</b> Was du ins Feld „Gesprächsnotiz“ schreibst, steht sofort bei der Person unter „Notizen“ – mit Datum, zum Beispiel „Elternsprechtag 1.12.2026: …“. Frühere Notizen sind zunächst verborgen, falls die Eltern mit auf den Bildschirm schauen.</p>
@@ -4550,6 +4554,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.6', ['Elternsprechtag: Zuordnung zu deinen Kursen zuverlässiger (auch bei älteren Kursen, bei Klassen wie „09F“, bei mehreren Vornamen oder anderer Reihenfolge); beim Einlesen steht bei jeder nicht zugeordneten Person, warum', 'Klassenleitung: eigener Knopf „Leistungsstand der Klasse“ im Kasten Elternsprechtag']],
   ['1.1.5', ['Neu: Elternsprechtag mit Terminliste aus dem Infoportal – Terminliste, Belegungsplan und (für die Klassenleitung) Bericht Leistungsstand als PDF einlesen; am Abend Termin für Termin alle Noten über alle Kurse, alle Fächer der Klasse, Gesprächsnotiz direkt bei der Person, Mappe zum Ausdrucken; danach löschen (Datenschutz)']],
   ['1.1.4', ['Schülerübersichten jetzt auch grafisch: Ring für die Notenpunkte, jede Teilnote als Balken auf der Skala 0–15 und ein Gesamtbalken, der zeigt, wie viel jeder Teil beiträgt', 'Fenster: Aus einem Unterfenster (z. B. Teilnoten eintragen, Quellenverzeichnis, Fristen) kommst du beim Schließen wieder dorthin zurück, wo du warst – nicht gesicherte Eingaben bleiben erhalten', 'Ausdrucke: Balken in den Schülerübersichten überall exakt gleich dick, Schriftgrößen vereinheitlicht']],
   ['1.1.3', ['Neu: Schülerübersichten für Klausuren nach Prüfungsteilen (Oberstufe) – je Schüler ein Abschnitt mit allen Prüfungsteilen, Teilnoten und der vollständigen Rechnung, drei je A4-Seite zum Ausschneiden']],

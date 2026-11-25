@@ -211,35 +211,60 @@ const Esp = (() => {
   const ABBR = { e: 'englisch', it: 'italienisch', f: 'französisch', l: 'latein', d: 'deutsch', m: 'mathematik', g: 'geschichte', geo: 'geographie', b: 'biologie', c: 'chemie', ph: 'physik',
     k: 'katholische', ev: 'evangelische', eth: 'ethik', mu: 'musik', ku: 'kunst', s: 'spanisch', sp: 'sport', gr: 'griechisch', inf: 'informatik', wr: 'wirtschaft', pug: 'politik', smw: 'sport' };
   const subjHit = (abbr, subject) => { const a = deburr(abbr), s = deburr(subject); if (!a || !s) return false; return s.startsWith(deburr(ABBR[a] || a)) || s.startsWith(a); };
+  /* Namen vergleichbar machen: ohne Akzente, ä = ae = a, ß = ss, Bindestriche wie Leerzeichen */
+  const canon = x => deburr(x).replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u');
+  /* Name einer Person in Libretto: last/first – ältere Kurse haben nur „Nachname, Vorname“ in name */
+  const nameOf = st => { if (st.last || st.first) return { last: st.last || '', first: st.first || '' }; const n = String(st.name || '');
+    if (n.includes(',')) { const k = n.indexOf(','); return { last: n.slice(0, k).trim(), first: n.slice(k + 1).trim() }; }
+    const p = n.trim().split(/\s+/); const f = p.shift() || ''; return { last: p.join(' '), first: f }; };
   const nameHit = (slot, st) => {
-    const l1 = deburr(slot.last), f1 = deburr(slot.first), l2 = deburr(st.last), f2 = deburr(st.first);
-    if (!l1 || l1 !== l2) return false;
-    if (!f1 || !f2) return !f1 && !f2 ? true : false;
-    return f1 === f2 || f1.split(' ')[0] === f2.split(' ')[0];
+    const n = nameOf(st), l1 = canon(slot.last), l2 = canon(n.last); if (!l1 || l1 !== l2) return false;
+    const f1 = canon(slot.first).split(' ').filter(Boolean), f2 = canon(n.first).split(' ').filter(Boolean);
+    if (!f1.length || !f2.length) return !f1.length && !f2.length;
+    return f1.some(x => f2.includes(x));   /* Rufname reicht: „Laura“ ↔ „Laura Sophie“ oder „Sophie Laura“ */
   };
+  /* zweite Stufe: alle Wörter des Namens, egal in welcher Reihenfolge gespeichert („Laura Caredda de Sousa“, „Caredda de Sousa Laura“) */
+  const tokens = st => { const n = nameOf(st); return canon((n.last || '') + ' ' + (n.first || '') + ' ' + (st.name && !st.last && !st.first ? '' : '')).split(' ').filter(Boolean); };
+  const tokenHit = (slot, st) => { const a = canon(slot.last + ' ' + slot.first).split(' ').filter(Boolean), b = canon(st.name || (nameOf(st).last + ' ' + nameOf(st).first)).split(' ').filter(Boolean).concat(tokens(st));
+    const last = canon(slot.last).split(' ').filter(Boolean); return last.length > 0 && last.every(x => b.includes(x)) && a.filter(x => !last.includes(x)).some(x => b.includes(x)); };
+  /* Klasse vergleichbar: „09 f“ = „9F“; was nicht wie eine Klasse aussieht (z. B. Kursname „Englisch Q12“), zählt nicht */
+  const clsNorm = x => { const k = String(x || '').replace(/\s+/g, '').toUpperCase().replace(/^0+(?=\d)/, ''); return /^\d{1,2}[A-ZÄÖÜ]{0,3}$/.test(k) ? k : ''; };
   /* gibt [{ c, s }] zurück – alle eigenen Kurse, in denen die Person steht; der passendste zuerst */
   function matchStudent(slot, courses, opts = {}) {
     if (!slot || slot.open || !slot.last) return [];
-    const cls = String(slot.cls || '').replace(/\s+/g, '').toUpperCase();
+    const cls = clsNorm(slot.cls), upperCls = /^(Q?1[23])/.test(String(slot.cls || '').replace(/\s+/g, '').toUpperCase());
     let hits = [];
     courses.forEach(c => (c.students || []).forEach(s => { if (nameHit(slot, s)) hits.push({ c, s }); }));
-    const clsOk = h => { const k = String(h.s.cls || (opts.classOf ? opts.classOf(h.c) : '') || '').replace(/\s+/g, '').toUpperCase(); return !cls || !k || k === cls || /^(Q?1[123])/.test(cls); };
+    if (!hits.length) courses.forEach(c => (c.students || []).forEach(s => { if (tokenHit(slot, s)) hits.push({ c, s }); }));
+    /* Klasse nur dann als Ausschluss, wenn beide Seiten eine eindeutige Klasse haben und sie sich widersprechen */
+    const clsOk = h => { const k = clsNorm(h.s.cls) || clsNorm(opts.classOf ? opts.classOf(h.c) : ''); return !cls || !k || upperCls || k === cls; };
     hits = hits.filter(clsOk);
     /* derselbe Name zweimal in verschiedenen Personen eines Kurses → unsicher */
     const per = new Map(); hits.forEach(h => per.set(h.c.id, (per.get(h.c.id) || 0) + 1));
     if ([...per.values()].some(n => n > 1)) return [];
-    const score = h => (subjHit(slot.subj, h.c.subject) ? 2 : 0) + (cls && opts.classOf && String(opts.classOf(h.c) || '').toUpperCase() === cls ? 1 : 0);
+    const score = h => (subjHit(slot.subj, h.c.subject) ? 2 : 0) + (cls && (clsNorm(h.s.cls) || clsNorm(opts.classOf ? opts.classOf(h.c) : '')) === cls ? 1 : 0);
     return hits.sort((a, b) => score(b) - score(a));
+  }
+  /* Warum keine Zuordnung? Für den Hinweis beim Einlesen: ähnliche Namen in den eigenen Kursen */
+  function explain(slot, courses, opts = {}) {
+    if (!slot || slot.open || !slot.last) return '';
+    const l = canon(slot.last), near = [];
+    courses.forEach(c => (c.students || []).forEach(s => { const n = nameOf(s); if (canon(n.last) === l || canon(s.name || '').split(' ').includes(l.split(' ').pop())) near.push(`${s.name || n.last + ', ' + n.first} (${c.name})`); }));
+    if (!near.length) return 'in keinem deiner Kurse';
+    const all = []; courses.forEach(c => (c.students || []).forEach(s => { if (nameHit(slot, s) || tokenHit(slot, s)) all.push({ c, s }); }));
+    if (all.length) { const k = clsNorm(slot.cls); return `Name gefunden (${all.map(h => h.c.name).join(', ')}), aber die Klasse passt nicht${k ? ' zu ' + k : ''} oder der Name steht dort doppelt`; }
+    return 'ähnlich: ' + near.slice(0, 3).join(', ');
   }
   /* Termin → Person im Bericht Leistungsstand („Vorname Nachname“) */
   function matchReport(slot, report) {
     if (!report || !slot || slot.open || !slot.last) return null;
-    const cls = String(slot.cls || '').replace(/\s+/g, '').toUpperCase(), rc = String(report.cls || '').replace(/\s+/g, '').toUpperCase();
+    const cls = clsNorm(slot.cls), rc = clsNorm(report.cls);
     if (cls && rc && cls !== rc) return null;
-    const l = deburr(slot.last), f = deburr(slot.first).split(' ')[0];
-    const hits = report.students.filter(st => { const n = ' ' + deburr(st.name) + ' '; return n.endsWith(' ' + l + ' ') && (!f || n.startsWith(' ' + f + ' ')); });
+    const nm = nameOf(slot), l = canon(nm.last), fs = canon(nm.first).split(' ').filter(Boolean);
+    const hits = report.students.filter(st => { const n = ' ' + canon(st.name) + ' '; if (!l || !n.endsWith(' ' + l + ' ')) return false;
+      const given = n.slice(0, n.length - l.length - 1).trim().split(' ').filter(Boolean); return !fs.length || fs.some(x => given.includes(x)); });
     return hits.length === 1 ? hits[0] : null;
   }
-  return { readPdf, kind, parse, parseList, parseGrid, parseReport, mergeSlots, matchStudent, matchReport, splitStudent, lines, deburr };
+  return { readPdf, kind, parse, parseList, parseGrid, parseReport, mergeSlots, matchStudent, matchReport, explain, splitStudent, nameOf, lines, deburr };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Esp;
