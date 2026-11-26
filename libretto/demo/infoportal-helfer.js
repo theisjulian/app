@@ -37,19 +37,32 @@
     var all = []; docs().forEach(function (doc) { all = all.concat([].slice.call(doc.querySelectorAll('tr'))); });
     var head = null; all.some(function (tr) { var tx = [].map.call(tr.cells, function (c) { return (c.textContent || '').trim(); }); if (tx.indexOf('Note') >= 0 && (tx.indexOf('Name') >= 0 || tx.indexOf('Datum') >= 0)) { head = tr; return true; } return false; });
     var col = {}; if (head) [].forEach.call(head.cells, function (c, i) { col[(c.textContent || '').trim()] = i; });
-    var nameRows = all.filter(function (tr) { return tr !== head && tr.cells && tr.cells.length > 3 && tr.querySelector('select'); });
+    /* Notenfeld: Auswahlliste ODER Eingabefeld (im Infoportal oft ein Textfeld mit Vorschlagsliste „--, 1, 2 …“) */
+    function noteField(tr) { var c = head && col.Note != null ? tr.cells[col.Note] : null; return (c && c.querySelector('select,input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea')) || (!head || col.Note == null ? tr.querySelector('select') : null); }
+    function setVal(el, v) { var proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      var d = Object.getOwnPropertyDescriptor(proto, 'value'); if (d && d.set) d.set.call(el, v); else el.value = v;
+      ['input', 'change', 'blur'].forEach(function (ev) { el.dispatchEvent(new Event(ev, { bubbles: true })); }); }
+    var nameRows = all.filter(function (tr) { return tr !== head && tr.cells && tr.cells.length > 3 && noteField(tr); });
     function rowName(tr) { var c = head && col.Name != null ? tr.cells[col.Name] : null; var cells = c ? [c] : [].slice.call(tr.cells, 0, 3); return cells.map(function (x) { return deb(x.textContent); }).join(' '); }
     items.forEach(function (it) {
       var l = deb(it.last), f = deb(it.first).split(' ').filter(Boolean);
       var hits = nameRows.filter(function (tr) { var n = ' ' + rowName(tr) + ' '; return n.indexOf(' ' + l + ' ') >= 0 && (!f.length || f.some(function (x) { return n.indexOf(' ' + x + ' ') >= 0; })); });
       if (hits.length !== 1) { miss.push(it.last + (it.first ? ', ' + it.first : '') + (hits.length > 1 ? ' (mehrfach)' : '')); return; }
       var tr = hits[0]; if (used.indexOf(tr) >= 0) { multi.push(it.last); return; } used.push(tr);
-      var sel = (head && col.Note != null && tr.cells[col.Note] && tr.cells[col.Note].querySelector('select')) || tr.querySelector('select');
+      var sel = noteField(tr);
       var g = String(it.g).trim(), tend = ''; var m = /^(\d{1,2})\s*([+-])$/.exec(g); if (m) { g = m[1]; tend = m[2]; }
-      var opt = [].filter.call(sel.options, function (o) { return o.text.trim() === g || o.value.trim() === g; })[0];
-      if (!opt) { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; }
-      sel.value = opt.value; ['input', 'change'].forEach(function (ev) { sel.dispatchEvent(new Event(ev, { bubbles: true })); });
-      function setIn(colName, v, onlyEmpty) { if (v == null || v === '' || !head || col[colName] == null) return; var cell = tr.cells[col[colName]]; var inp = cell && cell.querySelector('input,textarea'); if (!inp || (onlyEmpty && inp.value.trim())) return; inp.value = v; ['input', 'change'].forEach(function (ev) { inp.dispatchEvent(new Event(ev, { bubbles: true })); }); }
+      if (sel.tagName === 'SELECT') {
+        var opt = [].filter.call(sel.options, function (o) { return o.text.trim() === g || o.value.trim() === g; })[0];
+        if (!opt) { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; }
+        setVal(sel, opt.value);
+      } else {
+        /* Eingabefeld: mit Vorschlagsliste nur Werte daraus, sonst die Zahl */
+        var dl = sel.list || (sel.getAttribute('list') && sel.ownerDocument.getElementById(sel.getAttribute('list')));
+        if (dl && dl.options && dl.options.length) { var ok = [].some.call(dl.options, function (o) { return (o.value || o.text).trim() === g; }); if (!ok) { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; } }
+        setVal(sel, g);
+        if (String(sel.value).trim() !== g) { miss.push(it.last + ' (Feld nimmt die Note nicht an)'); return; }
+      }
+      function setIn(colName, v, onlyEmpty) { if (v == null || v === '' || !head || col[colName] == null) return; var cell = tr.cells[col[colName]]; var inp = cell && cell.querySelector('input,textarea'); if (!inp || (onlyEmpty && inp.value.trim())) return; setVal(inp, v); }
       if (tend) setIn('Tendenz', tend);
       if (it.art) setIn('Art', it.art, true);
       if (it.d && data.kind === 'e') {
