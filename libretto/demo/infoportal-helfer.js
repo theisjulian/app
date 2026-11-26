@@ -31,8 +31,47 @@
     }); });
     return lines.join('\n');
   }
+  /* Ein Feld setzen – Auswahlliste, einfaches Textfeld oder die selbst gebauten Felder des Infoportals
+     (sichtbares Textfeld + verstecktes Feld + eigene Liste „--, 1, 2 …“): dort wie von Hand – Liste öffnen, Eintrag anklicken.
+     Rückgabe: 'ok' | 'unsure' (steht da, aber nicht bestätigt) | 'fail' | 'none' (Wert gibt es nicht) */
+  function fire(el, types) { types.forEach(function (t) { var ev = /mouse|click/.test(t) ? new MouseEvent(t, { bubbles: true, cancelable: true, view: window }) : new Event(t, { bubbles: true }); el.dispatchEvent(ev); }); }
+  function setNative(el, v) { var proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    var d = Object.getOwnPropertyDescriptor(proto, 'value'); if (d && d.set) d.set.call(el, v); else el.value = v; }
+  function shown(e) { return !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length); }
+  function leafWith(root, v) { return [].filter.call(root.querySelectorAll('*'), function (e) { return !/^(INPUT|SELECT|OPTION|SCRIPT|STYLE|TEXTAREA)$/.test(e.tagName) && !e.closest('#libHelfer') && e.textContent.trim() === v && ![].some.call(e.children, function (k) { return k.textContent.trim() === v; }); }); }
+  function setCell(cell, v) {
+    if (!cell) return 'fail';
+    var sel = cell.querySelector('select');
+    if (sel) { var o = [].filter.call(sel.options, function (x) { return x.text.trim() === v || x.value.trim() === v; })[0]; if (!o) return 'none'; setNative(sel, o.value); fire(sel, ['input', 'change']); return sel.value === o.value ? 'ok' : 'fail'; }
+    var t = cell.querySelector('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea'), h = cell.querySelector('input[type=hidden]');
+    if (!t) return 'fail';
+    var dl = t.list || (t.getAttribute('list') && t.ownerDocument.getElementById(t.getAttribute('list')));
+    if (dl && dl.options && dl.options.length && ![].some.call(dl.options, function (o) { return (o.value || o.text).trim() === v; })) return 'none';
+    if (!h) { setNative(t, v); fire(t, ['input', 'change', 'blur']); return t.value.trim() === v ? 'ok' : 'fail'; }
+    /* selbst gebautes Feld: öffnen, Eintrag mit genau diesem Text anklicken */
+    var before = h.value, doc = cell.ownerDocument;
+    fire(t, ['focus', 'mousedown', 'mouseup', 'click']);
+    var cand = leafWith(cell, v);
+    if (!cand.length) cand = leafWith(doc.body, v).filter(function (e) { return shown(e) && !e.closest('table tr td:nth-child(2)') && (e.getAttribute('role') === 'option' || /^(LI|A|DIV|SPAN|TD)$/.test(e.tagName)) && e.parentElement && e.parentElement.children.length >= 3; });
+    if (cand.length) { fire(cand[0], ['mouseover', 'mousedown', 'mouseup', 'click']); }
+    else { setNative(t, v); fire(t, ['input', 'keyup', 'change']); }
+    if (cand.length && t.value.trim() !== v) { var dv = cand[0].getAttribute('data-value') || cand[0].getAttribute('data-id') || cand[0].getAttribute('value'); if (dv != null) { h.value = dv; setNative(t, v); fire(h, ['change']); fire(t, ['input', 'change']); } }
+    var disp = t.value.trim() || (cell.innerText || '').trim().split(/\s+/)[0];
+    if (disp !== v) return cand.length ? 'fail' : 'none';
+    return h.value !== before || h.value === v ? 'ok' : 'unsure';
+  }
+  /* Aufbau eines Notenfelds für die Fehlersuche: Elemente, Klassen, Attributnamen; Text nur, wenn er wie ein Auswahlwert aussieht */
+  function cellShape(cell) {
+    var out = []; (function walk(e, d) { if (d > 6 || out.length > 60) return; [].forEach.call(e.children, function (k) {
+      var own = [].filter.call(k.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.textContent.trim(); }).join(' ').trim();
+      var txt = /^(--?|[0-6][+-]?|[+-]|x|\d+,\d+|[A-Z]{2,3}|)$/.test(own) ? own : 'T' + own.length;
+      out.push(new Array(d + 1).join('  ') + k.tagName.toLowerCase() + (k.type ? ':' + k.type : '') + (k.className && typeof k.className === 'string' ? '.' + k.className.trim().split(/\s+/).join('.') : '') +
+        ' [' + [].map.call(k.attributes, function (a) { return a.name; }).filter(function (n) { return n !== 'class' && n !== 'style'; }).join(',') + ']' + (k.tagName === 'INPUT' ? ' value=' + (/^(--?|[0-6][+-]?|)$/.test(k.value) ? '"' + k.value + '"' : 'L' + k.value.length) : '') + (txt && txt !== 'T0' ? ' "' + txt + '"' : '') + (shown(k) ? '' : ' (verborgen)'));
+      walk(k, d + 1); }); })(cell, 0);
+    return out.join('\n');
+  }
   function fill(data) {
-    var items = data.items || [], done = 0, miss = [], multi = [], used = [], noDate = [];
+    var items = data.items || [], done = 0, miss = [], multi = [], used = [], noDate = [], unsure = [];
     /* Kopfzeile mit „Note“ und „Datum“ finden → Spaltennummern */
     var all = []; docs().forEach(function (doc) { all = all.concat([].slice.call(doc.querySelectorAll('tr'))); });
     var head = null; all.some(function (tr) { var tx = [].map.call(tr.cells, function (c) { return (c.textContent || '').trim(); }); if (tx.indexOf('Note') >= 0 && (tx.indexOf('Name') >= 0 || tx.indexOf('Datum') >= 0)) { head = tr; return true; } return false; });
@@ -51,27 +90,21 @@
       var tr = hits[0]; if (used.indexOf(tr) >= 0) { multi.push(it.last); return; } used.push(tr);
       var sel = noteField(tr);
       var g = String(it.g).trim(), tend = ''; var m = /^(\d{1,2})\s*([+-])$/.exec(g); if (m) { g = m[1]; tend = m[2]; }
-      if (sel.tagName === 'SELECT') {
-        var opt = [].filter.call(sel.options, function (o) { return o.text.trim() === g || o.value.trim() === g; })[0];
-        if (!opt) { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; }
-        setVal(sel, opt.value);
-      } else {
-        /* Eingabefeld: mit Vorschlagsliste nur Werte daraus, sonst die Zahl */
-        var dl = sel.list || (sel.getAttribute('list') && sel.ownerDocument.getElementById(sel.getAttribute('list')));
-        if (dl && dl.options && dl.options.length) { var ok = [].some.call(dl.options, function (o) { return (o.value || o.text).trim() === g; }); if (!ok) { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; } }
-        setVal(sel, g);
-        if (String(sel.value).trim() !== g) { miss.push(it.last + ' (Feld nimmt die Note nicht an)'); return; }
-      }
-      function setIn(colName, v, onlyEmpty) { if (v == null || v === '' || !head || col[colName] == null) return; var cell = tr.cells[col[colName]]; var inp = cell && cell.querySelector('input,textarea'); if (!inp || (onlyEmpty && inp.value.trim())) return; setVal(inp, v); }
+      var noteCell = head && col.Note != null ? tr.cells[col.Note] : sel.closest('td,th');
+      var r1 = setCell(noteCell, g);
+      if (r1 === 'none') { miss.push(it.last + ' (Note ' + it.g + ' gibt es hier nicht)'); return; }
+      if (r1 === 'fail') { miss.push(it.last + ' (Feld nimmt die Note nicht an)'); return; }
+      if (r1 === 'unsure') unsure.push(it.last);
+      function setIn(colName, v, onlyEmpty) { if (v == null || v === '' || !head || col[colName] == null) return; var cell = tr.cells[col[colName]]; if (!cell) return; var vis = cell.querySelector('input:not([type=hidden]),textarea,select'); if (!vis || (onlyEmpty && vis.value.trim() && vis.value.trim() !== '--')) return; setCell(cell, v); }
       if (tend) setIn('Tendenz', tend);
       if (it.art) setIn('Art', it.art, true);
       if (it.d && data.kind === 'e') {
         /* mündliche Noten: Datum je Zeile – eintragen und nachprüfen */
-        var dc = head && col.Datum != null ? tr.cells[col.Datum] : null, di = dc && dc.querySelector('input');
+        var dc = head && col.Datum != null ? tr.cells[col.Datum] : null, di = dc && dc.querySelector('input:not([type=hidden])');
         if (!di) noDate.push(it.last); else { setIn('Datum', it.d); if (di.value.trim() !== it.d) noDate.push(it.last); }
       }
-      [].forEach.call(tr.cells, function (c) { c.style.background = '#e7f6ea'; });
-      sel.style.outline = '3px solid #2f8a46'; sel.style.outlineOffset = '1px';
+      [].forEach.call(tr.cells, function (c) { c.style.background = r1 === 'unsure' ? '#fff3df' : '#e7f6ea'; });
+      sel.style.outline = '3px solid ' + (r1 === 'unsure' ? '#c96500' : '#2f8a46'); sel.style.outlineOffset = '1px';
       done++;
     });
     var html = '<div><b>' + done + ' von ' + items.length + '</b> Noten eingetragen (grün markiert).</div>';
@@ -83,6 +116,7 @@
       if (pm && (+pm[1] !== +want[0] || +pm[2] !== +want[1] || pm[3] !== want[2])) html += '<div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#fdf0ef;color:#7a1712"><b>Achtung Datum:</b> Hier steht ' + esc(pm[0].replace(/^Datum\s*:?\s*/, '')) + ', in Libretto ist die Arbeit vom ' + esc(data.date) + '. Ist das die richtige Arbeit? Datum im Infoportal prüfen.</div>';
       else if (pm) html += '<div style="margin-top:6px;color:#2f6b3a">Datum passt: ' + esc(data.date) + '.</div>';
     }
+    if (unsure.length) html += '<div style="margin-top:6px;color:#8a4b00"><b>Bitte genau prüfen (orange):</b> ' + esc(unsure.join(', ')) + ' – die Note steht im Feld, aber das Infoportal hat es nicht eindeutig bestätigt.</div>';
     if (noDate.length) html += '<div style="margin-top:6px;color:#b42318"><b>Datum nicht gesetzt bei:</b> ' + esc(noDate.join(', ')) + ' – bitte von Hand eintragen.</div>';
     else if (data.kind === 'e' && done) html += '<div style="margin-top:6px;color:#2f6b3a">Datum bei allen eingetragen (je Note das Datum aus Libretto).</div>';
     if (miss.length) html += '<div style="margin-top:6px;color:#b42318"><b>Nicht gefunden:</b> ' + esc(miss.join('; ')) + ' – bitte von Hand eintragen.</div>';

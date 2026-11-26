@@ -4611,6 +4611,7 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.10', ['Lesezeichen „Libretto → Infoportal“: arbeitet jetzt mit den eigenen Auswahlfeldern des Infoportals (öffnet die Liste und wählt die Note wie von Hand); Unsicheres wird orange markiert – bitte das Lesezeichen noch einmal neu in die Favoritenleiste ziehen']],
   ['1.1.9', ['Lesezeichen „Libretto → Infoportal“: erkennt jetzt auch Notenfelder, die Eingabefelder mit Vorschlagsliste sind (z. B. bei Stegreifaufgaben) – bitte das Lesezeichen einmal neu in die Favoritenleiste ziehen']],
   ['1.1.8', ['Neu: Schneller ins Infoportal – „Fürs Infoportal kopieren“ im Übertrag und ein Lesezeichen „Libretto → Infoportal“, das die Noten bei den richtigen Personen einträgt (gespeichert wird erst im Infoportal)', 'Aufgaben-Schnelleingabe: Die Zeile bleibt stehen und lässt sich verbessern (z. B. vergessene erste Aufgabe davor schreiben); gelöschte Aufgaben kommen nicht mehr zurück; Enter in der Aufgabenbezeichnung sichert nicht mehr versehentlich das ganze Fenster', 'Elternsprechtag: Hinweis, dass „Alle Fächer“ den Stand des Infoportals zeigt']],
   ['1.1.7', ['Elternsprechtag: PDF einlesen und Mappe drucken jetzt direkt in der Ansicht; solange kein Bericht Leistungsstand da ist, erklärt ein Hinweis bei jeder Person, wie die Klassenleitung alle Fächer dazuholt']],
