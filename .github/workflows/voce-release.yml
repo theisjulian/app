@@ -66,11 +66,27 @@ jobs:
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           cd /tmp/out && sha256sum Voce-* | tee SHA256.txt
-          gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce ${{ steps.req.outputs.version }}" --notes "Voce ${{ steps.req.outputs.version }}" --latest=false
-          for i in 1 2 3; do gh release upload "${{ steps.req.outputs.tag }}" Voce-* --clobber -R "$GITHUB_REPOSITORY" && break; echo "Hochladen fehlgeschlagen – neuer Versuch"; sleep 20; done
+          gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce $(echo ${{ steps.req.outputs.version }} | cut -d. -f1,2)" --notes "Voce ${{ steps.req.outputs.version }}" --latest=false
+          # Sicher ersetzen: neue Datei erst unter Zwischennamen hochladen, dann alte löschen und umbenennen –
+          # so ist nie eine Datei weg, auch wenn GitHub zwischendurch Fehler meldet (25.11.2026: HTTP 500 beim Löschen)
+          TAG="${{ steps.req.outputs.tag }}"; R="$GITHUB_REPOSITORY"
+          aid() { for i in 1 2 3; do x=$(gh api "repos/$R/releases/tags/$TAG" --jq ".assets[] | select(.name==\"$1\") | .id") && { echo "$x"; return 0; }; sleep 10; done; return 0; }
+          retry() { for i in 1 2 3 4 5 6; do "$@" && return 0; echo "Fehler – neuer Versuch in $((i*20)) s"; sleep $((i*20)); done; return 1; }
+          # Löschen: gilt als erledigt, wenn die Datei danach weg ist (auch wenn GitHub einen Fehler meldet)
+          del() { gh api -X DELETE "repos/$R/releases/assets/$1" && return 0; sleep 5; ! gh api "repos/$R/releases/assets/$1" >/dev/null 2>&1; }
+          for f in Voce-*; do
+            t="neu-$f"; old=$(aid "$t"); [ -n "$old" ] && retry del "$old"
+            cp "$f" "$t"
+            # GitHub meldet beim Hochladen manchmal HTTP 500, obwohl die Datei ankommt → danach nachsehen, ob sie vollständig da ist
+            up() { gh release upload "$TAG" "$t" -R "$R" --clobber && return 0; sleep 5; sz=$(gh api "repos/$R/releases/tags/$TAG" --jq ".assets[] | select(.name==\"$t\" and .state==\"uploaded\") | .size" || true); [ "$sz" = "$(stat -c %s "$t")" ]; }
+            retry up || { echo "::error::$f konnte nicht hochgeladen werden – alte Datei bleibt online"; exit 1; }
+            old=$(aid "$f"); [ -n "$old" ] && retry del "$old"
+            retry gh api -X PATCH "repos/$R/releases/assets/$(aid "$t")" -f name="$f" >/dev/null || { echo "::error::Umbenennen von $t fehlgeschlagen"; exit 1; }
+            rm -f "$t"
+          done
           # Kontrolle: Größe jeder Datei im Release = gebaute Datei
           for f in Voce-*; do s=$(gh release view "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --json assets --jq ".assets[] | select(.name==\"$f\") | .size"); [ "$s" = "$(stat -c %s "$f")" ] || { echo "Kontrolle fehlgeschlagen: $f"; exit 1; }; done
-          gh release edit "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce ${{ steps.req.outputs.version }}" --notes "Voce ${{ steps.req.outputs.version }} – macOS 13 oder neuer (Apple-Chip: Voce-Mac.dmg, Intel: Voce-Mac-Intel.dmg), Windows 10/11 (Voce-Windows-Setup.exe). Ältere Macs (macOS 11/12): Release 1.10.0. Prüfsummen (SHA-256): $(tr '\n' ' ' < SHA256.txt)"
+          gh release edit "${{ steps.req.outputs.tag }}" -R "$GITHUB_REPOSITORY" --title "Voce $(echo ${{ steps.req.outputs.version }} | cut -d. -f1,2)" --notes "Voce ${{ steps.req.outputs.version }} – macOS 13 oder neuer (Apple-Chip: Voce-Mac.dmg, Intel: Voce-Mac-Intel.dmg), Windows 10/11 (Voce-Windows-Setup.exe). Ältere Macs (macOS 11/12): Release 1.10.0. Prüfsummen (SHA-256): $(tr '\n' ' ' < SHA256.txt)"
           gh release delete voce-probe -R "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
       - name: versions.json aktualisieren (erst jetzt – die Dateien sind online)
         if: steps.req.outputs.dry != 'true'
