@@ -76,6 +76,19 @@ function save() {
     catch (e) { toast('Speichern fehlgeschlagen – bitte eine Sicherung anlegen.'); }
   }, 250);
 }
+/* Cmd/Strg+S: sofort speichern (wie Libretto) und höchstens alle 10 Minuten zusätzlich eine Sicherung anlegen – zur Beruhigung während der Prüfung */
+let lastShortcutBk = 0;
+async function saveNow() {
+  clearTimeout(saveT); saveT = null; const txt = snap();
+  if (NATIVE) await NATIVE.save(txt); else localStorage.setItem('mp_state', txt);
+}
+async function saveShortcut() {
+  try { await saveNow(); } catch (e) { toast('Speichern fehlgeschlagen – bitte eine Sicherung anlegen.', 6000); return; }
+  if (!NATIVE || !NATIVE.backup || window.__voceDemo || Date.now() - lastShortcutBk < 10 * 60e3) { toast('Gespeichert ✓', 1600); return; }
+  let r = null; try { r = await NATIVE.backup.now(); } catch (e) {}
+  if (r && r.ok && r.local) lastShortcutBk = Date.now();
+  toast(r && r.ok && r.local ? (r.externalError ? 'Gespeichert ✓ – Sicherung im eigenen Ordner fehlgeschlagen: ' + r.externalError : 'Gespeichert und gesichert ✓') : 'Gespeichert ✓', r && r.externalError ? 6000 : 2000);
+}
 window.addEventListener('beforeunload', () => { if (saveT) { clearTimeout(saveT); const txt = snap(); try { if (NATIVE) NATIVE.saveSync(txt); else localStorage.setItem('mp_state', txt); } catch (e) {} } });
 
 /* Beispiel beim ersten Start (erfundene Namen) */
@@ -914,11 +927,11 @@ function printOverview(ex) {
 
 /* ---------- Reiter 2: Bewerten ---------- */
 let timer = { left: null, run: false, id: null, group: null };
-let stickIO = null;
+let stickIO = null, timerIO = null;
 function renderGrade() {
   const ex = exam();
   if (!ex.groups.length) { $('main').innerHTML = isRef(ex) ? `<div class="empty glass"><div><strong>Noch keine Referate eingetragen</strong><p>Trage zuerst unter „Referate“ ein, wer ein Referat hält.</p><button class="go" id="toPlan">Zur Referatsliste</button></div></div>` : `<div class="empty glass"><div><strong>Noch keine Gruppen</strong><p>Bilde zuerst im Reiter „Gruppen &amp; Plan“ die Prüfungsgruppen.</p><button class="go" id="toPlan">Zu den Gruppen</button></div></div>`; $('toPlan').onclick = () => setTab('plan'); return; }
-  ex.cur = Math.min(Math.max(0, ex.cur || 0), ex.groups.length - 1);
+  ex.cur = Math.min(Math.max(0, ex.cur || 0), ex.groups.length - 1); applyNoteH();
   const sch = schedule(ex); const cur = sch[ex.cur]; const g = cur.g;
   const tLen = (isRef(ex) ? cur.end - cur.start : ex.dur) * 60;
   if (timer.group !== g.id) { stopTimer(); timer = { left: tLen, run: false, id: null, group: g.id }; }
@@ -941,7 +954,8 @@ function renderGrade() {
           <button class="mini" id="tStart"></button><button class="mini" id="tReset">Zurücksetzen</button></div>
         <div class="nav"><button class="mini" id="descTog" aria-pressed="${!!S.settings.hideDesc}" title="Beschreibungen der Rasterstufen bei allen Prüflingen ein- oder ausblenden">${S.settings.hideDesc ? 'Beschreibungen einblenden' : 'Beschreibungen ausblenden'}</button><button class="mini" id="prevG" ${ex.cur === 0 ? 'disabled' : ''}>← Vorherige</button><button class="mini accent" id="nextG" ${ex.cur === ex.groups.length - 1 ? 'disabled' : ''}>Nächste →</button></div>
       </div>
-      <div class="cards ${S.settings.hideDesc ? 'noDesc' : ''}" style="--n:${Math.max(1, Math.min(g.members.length, 6))}">${g.members.map(id => stById(ex, id)).filter(Boolean).map(s => cardHtml(ex, s)).join('') || '<p class="hint">Diese Gruppe ist leer.</p>'}</div>
+      <div class="cards ${S.settings.hideDesc ? 'noDesc' : ''} ${g.members.length === 1 ? 'one' : ''}" style="--n:${Math.max(1, Math.min(g.members.length, 6))}">${g.members.map(id => stById(ex, id)).filter(Boolean).map(s => cardHtml(ex, s)).join('') || '<p class="hint">Diese Gruppe ist leer.</p>'}</div>
+      <button type="button" class="tFloat" id="tFloat" hidden title="Uhr anhalten oder weiterlaufen lassen"><b id="tFloatClock"></b><span id="tFloatAct"></span></button>
     </section>
   </div>`;
   document.querySelectorAll('.gitem').forEach(b => b.onclick = () => { ex.cur = +b.dataset.g; save(); renderGrade(); });
@@ -952,6 +966,10 @@ function renderGrade() {
   $('nextG').onclick = () => { ex.cur++; save(); renderGrade(); window.scrollTo(0, 0); };
   $('tStart').onclick = () => timer.run ? stopTimer() : startTimer();
   $('tReset').onclick = () => { stopTimer(); timer.left = tLen; paintTimer(); };
+  $('tFloat').onclick = () => timer.run ? stopTimer() : startTimer();
+  if (timerIO) timerIO.disconnect();
+  timer.boxVisible = true;
+  if (window.IntersectionObserver) { timerIO = new IntersectionObserver(es => { timer.boxVisible = es[0].isIntersecting; paintTimer(); }); timerIO.observe($('timerBox')); }
   paintTimer();
   bindCards(ex);
 }
@@ -960,8 +978,12 @@ function stopTimer() { timer.run = false; clearInterval(timer.id); timer.id = nu
 function paintTimer() {
   const c = $('clock'); if (!c) return; const l = timer.left; const a = Math.abs(l);
   c.textContent = `${l < 0 ? '+' : ''}${Math.floor(a / 60)}:${String(a % 60).padStart(2, '0')}`;
-  $('timerBox').classList.toggle('over', l < 0);
-  $('tStart').textContent = timer.run ? 'Pause' : (l === (timer.full ?? exam().dur * 60) ? 'Start' : 'Weiter');
+  const warn = l >= 0 && l <= 120 && l < (timer.full ?? 0);
+  $('timerBox').classList.toggle('over', l < 0); $('timerBox').classList.toggle('warn', warn);
+  const fresh = l === (timer.full ?? exam().dur * 60);
+  $('tStart').textContent = timer.run ? 'Pause' : (fresh ? 'Start' : 'Weiter');
+  /* schwebende Uhr unten rechts: nur wenn die Uhr oben nicht zu sehen ist und sie läuft oder angehalten wurde */
+  const f = $('tFloat'); if (f) { f.hidden = timer.boxVisible !== false || (fresh && !timer.run); f.classList.toggle('over', l < 0); f.classList.toggle('warn', warn); $('tFloatClock').textContent = c.textContent; $('tFloatAct').textContent = timer.run ? 'Pause' : 'Weiter'; }
 }
 function groupStatus(ex, g) {
   const ms = g.members.filter(id => stById(ex, id)); if (!ms.length) return { cls: '', txt: 'leer' };
@@ -974,7 +996,7 @@ function countDone(ex) { return studentsOf(ex).filter(s => { const r = ex.result
 function cardHtml(ex, s) {
   const r = res(ex, s.id); const cats = catsOf(ex.scheme); const sc = SCHEMES[ex.scheme];
   return `<article class="card glass ${r.absent ? 'isAbsent' : ''}" data-sid="${esc(s.id)}" style="--rows:${cats.length + 3}">
-    <div class="cardHead"><h3>${esc(fullName(s))}</h3>
+    <div class="cardHead"><h3 title="${esc(fullName(s))}">${esc(fullName(s))}</h3>
       <label>fehlt <input type="checkbox" class="sw" data-absent ${r.absent ? 'checked' : ''}></label></div>
     <div class="hsp" style="grid-row:1"></div>
     ${cats.map((c, i) => catHtml(ex, s, c, i + 2)).join('')}
@@ -1001,6 +1023,7 @@ function catHtml(ex, s, c, row) {
     ${d.length ? `<ul class="desc">${d.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     <textarea class="catNote" rows="1" data-note="${c}" placeholder="Notiz zu ${esc(CATS[c].short)} (erscheint auf dem Bogen bei diesem Bereich)">${esc(r.notes[c] || '')}</textarea>
     ${(c === 'pron' || c === 'flu') && SUBJECT_LANG[ex.subject] ? '<button type="button" class="mini pronBtn" data-pron title="Laute und häufige Fehler auswählen und in die Notiz einfügen">Aussprache markieren …</button>' : ''}
+    ${(c === 'lang' || c === 'npLang') && SUBJECT_LANG[ex.subject] ? '<button type="button" class="mini pronBtn" data-fehler title="Typische Fehler auswählen und in die Notiz einfügen">Typische Fehler markieren …</button>' : ''}
   </div>`;
 }
 const fmt = n => String(Math.round(n * 10) / 10).replace('.', ',');
@@ -1033,7 +1056,8 @@ function bindCards(ex) {
       });
       const h = box.querySelector('[data-half]');
       if (h) h.onclick = () => { const c = h.dataset.c; const cur = r.scores[c]; if (cur == null) return toast('Erst eine ganze Punktzahl wählen'); if (cur % 1) r.scores[c] = Math.floor(cur); else if (cur < maxOf(ex.scheme, c)) r.scores[c] = cur + .5; refresh(c); };
-      const pb = box.querySelector('[data-pron]'); if (pb) pb.onclick = () => openPron(ex, id);
+      const pb = box.querySelector('[data-pron]'); if (pb) pb.onclick = () => openPron(ex, id, box.dataset.cat, 'pron');
+      const fb = box.querySelector('[data-fehler]'); if (fb) fb.onclick = () => openPron(ex, id, box.dataset.cat, 'fehler');
       const t = box.querySelector('[data-note]'); autoGrow(t);
       t.oninput = () => { r.notes[t.dataset.note] = t.value; autoGrow(t); if (r.verdictAuto) r.verdict = ''; save(); };
     };
@@ -1042,36 +1066,43 @@ function bindCards(ex) {
     const gn = card.querySelector('[data-general]'); autoGrow(gn); gn.oninput = () => { r.general = gn.value; autoGrow(gn); save(); };
   });
 }
-/* ---------------- Aussprache markieren (Laute / häufige Fehler) ---------------- */
-const PD = { lang: 'en', stage: 1, tab: 's', sel: new Map(), cur: null, ctx: null };
+/* ---------------- Aussprache markieren (Laute / häufige Fehler) und Typische Fehler markieren (Sprache) ---------------- */
+const PD = { lang: 'en', stage: 1, tab: 's', sel: new Map(), cur: null, ctx: null, mode: 'pron' };
 const SEQ_START = { fs1: 5, e1: 5, e2: 6, fs2: 6, fs3: 8, ru3: 8, zh3: 8, spb: 11 };
 const STAGES = [{ n: 1, t: 'Anfang', s: '1.–2. Lernjahr' }, { n: 2, t: 'Mitte', s: '3.–4. Lernjahr' }, { n: 3, t: 'Fortgeschritten', s: 'ab 5. Lernjahr' }];
 function pronStage(ex) { const y = (+ex.jgst || 9) - (SEQ_START[ex.seq] || 6) + 1; return y <= 2 ? 1 : y <= 4 ? 2 : 3; }
 /* Text für die Notiz – in der Sprache des Bewertungsbogens, wenn die Liste dieselbe Sprache hat (Italienisch-Liste auf italienischem Bogen …), sonst deutsch */
 function pronEntryText(e, wl = PD.wl) {
   const use = wl && wl !== 'de' && wl === e.lang ? AUSSPR_TR[wl] : null; const tt = x => (use && use.t[x]) || x;
+  if (e.kind === 'f') return wl && wl !== 'de' && wl === e.lang ? e.item[1] : e.item[0];
   if (e.kind === 'e') return tt(e.item[0]);
   const it = e.item; const lab = it.lab ? tt(it.lab) : `/${it.i}/`;
   const ph = e.sub ? (e.sub[0] === '=' ? tt(e.sub.slice(1)) : (use ? use.as(e.sub) : `wie /${e.sub}/ gesprochen`)) : (use ? use.bad : 'nicht korrekt gesprochen');
   return `${lab} (${it.w}) → ${ph}`;
 }
-function openPron(ex, id) {
-  PD.ctx = { id }; PD.wl = ex.wlang || 'de'; PD.lang = SUBJECT_LANG[ex.subject] || 'en'; PD.stage = pronStage(ex); PD.stageAuto = PD.stage; PD.tab = 's'; PD.sel = new Map(); PD.cur = null;
+/* note = Bereich, in dessen Notiz eingefügt wird (pron, flu, lang, npLang); mode = 'pron' (Aussprache) oder 'fehler' (Typische Fehler) */
+function openPron(ex, id, note = 'pron', mode = 'pron') {
+  PD.mode = mode; PD.ctx = { id, note }; PD.wl = ex.wlang || 'de'; PD.lang = SUBJECT_LANG[ex.subject] || 'en'; PD.stage = pronStage(ex); PD.stageAuto = PD.stage; PD.tab = mode === 'fehler' ? 'f' : 's'; PD.sel = new Map(); PD.cur = null;
+  $('pronDlg').querySelector('h2').textContent = mode === 'fehler' ? 'Typische Fehler markieren' : 'Aussprache markieren';
   const y = (+ex.jgst || 9) - (SEQ_START[ex.seq] || 6) + 1; PD.year = y;
   pronRender(); $('pronDlg').showModal();
 }
 function pronRender() {
-  const D = AUSSPR[PD.lang];
-  $('pdLang').innerHTML = Object.keys(AUSSPR).map(k => `<button type="button" data-l="${k}" aria-pressed="${k === PD.lang}">${esc(AUSSPR[k].name)}</button>`).join('');
+  const F = PD.mode === 'fehler'; const SRC = F ? FEHLER : AUSSPR; if (!SRC[PD.lang]) PD.lang = 'en';
+  const D = F ? { errors: FEHLER[PD.lang].items, sounds: [] } : AUSSPR[PD.lang];
+  $('pdLang').innerHTML = Object.keys(SRC).map(k => `<button type="button" data-l="${k}" aria-pressed="${k === PD.lang}">${esc(SRC[k].name)}</button>`).join('');
+  $('pdTab').hidden = F;
   $('pdStage').innerHTML = STAGES.map(s => `<button type="button" data-st="${s.n}" aria-pressed="${s.n === PD.stage}" title="${esc(s.s)}">${esc(s.t)}</button>`).join('');
   $('pdTab').innerHTML = `<button type="button" data-t="s" aria-pressed="${PD.tab === 's'}">Laute</button><button type="button" data-t="e" aria-pressed="${PD.tab === 'e'}">Häufige Fehler</button>`;
-  const list = (PD.tab === 's' ? D.sounds : D.errors).map((it, idx) => ({ it, idx })).filter(o => (PD.tab === 's' ? o.it.lv : o.it[1]) <= PD.stage);
+  const list = (PD.tab === 's' ? D.sounds : D.errors).map((it, idx) => ({ it, idx })).filter(o => (PD.tab === 's' ? o.it.lv : F ? o.it[2] : o.it[1]) <= PD.stage);
+  /* Typische Fehler: die der gewählten Lernstufe zuerst, dann die früherer Stufen (innerhalb jeweils nach Häufigkeit) */
+  if (F) list.sort((x, y) => (y.it[2] - x.it[2]) || (x.idx - y.idx));
   const btn = o => {
     const key = `${PD.lang}|${PD.tab}|${o.idx}`; const on = PD.sel.has(key);
     if (PD.tab === 's') { const it = o.it; const big = it.lab || '/' + it.i + '/'; return `<button type="button" class="pdItem snd ${on ? 'on' : ''}" data-k="${key}" data-i="${o.idx}" aria-pressed="${on}" ${it.h ? `title="${esc(it.h)}"` : ''}><b class="${big.length > 7 ? 'lg' : ''}">${esc(big)}</b><small>${esc(it.w)}</small></button>`; }
     return `<button type="button" class="pdItem err ${on ? 'on' : ''}" data-k="${key}" data-i="${o.idx}" aria-pressed="${on}">${esc(o.it[0])}</button>`;
   };
-  const TOP = PD.tab === 's' ? 8 : 6;
+  const TOP = PD.tab === 's' || F ? 8 : 6;
   $('pdGrid').className = 'pdGrid ' + (PD.tab === 's' ? 'snds' : 'errs');
   $('pdGridMore').className = $('pdGrid').className;
   $('pdGrid').innerHTML = list.slice(0, TOP).map(btn).join('');
@@ -1083,9 +1114,9 @@ function pronRender() {
   $('pdSub').innerHTML = cur && cur.kind === 's' && cur.item.s.length
     ? `<span class="pdLbl">Wie wurde er gesprochen? <small>(optional)</small></span><div class="chips">${cur.item.s.map(x => `<button type="button" class="chip pdSubBtn" data-sub="${esc(x)}" aria-pressed="${cur.sub === x}">${esc(x[0] === '=' ? x.slice(1) : 'wie /' + x + '/')}</button>`).join('')}</div>` : '';
   const ents = [...PD.sel.values()];
-  $('pdPrev').innerHTML = ents.length ? ents.map(e => `<div class="pdLine">${esc(pronEntryText(e))}</div>`).join('') : '<div class="pdEmpty">Tippe Laute oder Fehler an. Sie werden hier gesammelt und beim Schließen automatisch in die Notiz zur Aussprache übernommen – in der Sprache des Bogens.</div>';
+  $('pdPrev').innerHTML = ents.length ? ents.map(e => `<div class="pdLine">${esc(pronEntryText(e))}</div>`).join('') : `<div class="pdEmpty">${F ? 'Tippe Fehler an. Sie werden hier gesammelt und beim Schließen automatisch in die Notiz zur Sprache übernommen – in der Sprache des Bogens.' : 'Tippe Laute oder Fehler an. Sie werden hier gesammelt und beim Schließen automatisch in die Notiz zur Aussprache übernommen – in der Sprache des Bogens.'}</div>`;
   $('pdIns').disabled = $('pdClr').disabled = !ents.length;
-  $('pdUndo').hidden = !(PD.last && PD.ctx && PD.last.id === PD.ctx.id);
+  $('pdUndo').hidden = !(PD.last && PD.ctx && PD.last.id === PD.ctx.id && (PD.last.note || 'pron') === PD.ctx.note);
   const yr = PD.year;
   $('pdHint').textContent = PD.lang === 'fr' || PD.lang === 'es' ? 'Entwurf, bitte gegenlesen.' : (PD.stage === PD.stageAuto && yr ? `Voreinstellung: ${yr}. Lernjahr.` : '');
   pronBind();
@@ -1097,6 +1128,7 @@ function pronBind() {
   document.querySelectorAll('#pronDlg .pdItem').forEach(b => b.onclick = () => {
     const k = b.dataset.k; const D = AUSSPR[PD.lang]; const i = +b.dataset.i;
     if (PD.sel.has(k)) { PD.sel.delete(k); if (PD.cur === k) PD.cur = null; }
+    else if (PD.mode === 'fehler') { PD.sel.set(k, { kind: 'f', item: FEHLER[PD.lang].items[i], lang: PD.lang }); PD.cur = null; }
     else { PD.sel.set(k, PD.tab === 's' ? { kind: 's', item: D.sounds[i], sub: null, lang: PD.lang } : { kind: 'e', item: D.errors[i], lang: PD.lang }); PD.cur = PD.tab === 's' ? k : null; }
     pronRender();
   });
@@ -1106,28 +1138,43 @@ $('pdClr').onclick = () => { PD.sel.clear(); PD.cur = null; pronRender(); };
 /* Auswahl in die Notiz übernehmen – rein additiv, gleiche Einträge nicht doppelt. Auch beim Schließen des Dialogs (Fertig, Esc, Klick daneben). */
 function pronCommit(quiet) {
   if (!PD.sel.size || !PD.ctx) return false;
-  const card = document.querySelector(`.card[data-sid="${CSS.escape(PD.ctx.id)}"]`); const t = card && card.querySelector('[data-note="pron"]'); if (!t) return false;
+  const card = document.querySelector(`.card[data-sid="${CSS.escape(PD.ctx.id)}"]`); const t = card && card.querySelector(`[data-note="${CSS.escape(PD.ctx.note || 'pron')}"]`); if (!t) return false;
   const old = t.value.trim().replace(/[;,]\s*$/, '');
   const parts = [...PD.sel.values()].map(e => pronEntryText(e)).filter(x => !old.split(/;\s*/).includes(x));
   PD.sel.clear(); PD.cur = null;
   if (!parts.length) return false;
   const add = parts.join('; ');
   t.value = old ? `${old}; ${add}` : add; t.dispatchEvent(new Event('input'));
-  PD.last = { id: PD.ctx.id, text: add };
+  PD.last = { id: PD.ctx.id, note: PD.ctx.note, text: add };
   if (!quiet) toast('In die Notiz eingefügt');
   return true;
 }
 $('pdIns').onclick = () => { pronCommit(); pronRender(); };
-$('pronDlg').addEventListener('close', () => { if (pronCommit(true)) toast('Aussprache in die Notiz übernommen'); });
+$('pronDlg').addEventListener('close', () => { if (pronCommit(true)) toast(PD.mode === 'fehler' ? 'Typische Fehler in die Notiz übernommen' : 'Aussprache in die Notiz übernommen'); });
 $('pdUndo').onclick = () => {
   const L = PD.last; if (!L) return;
-  const card = document.querySelector(`.card[data-sid="${CSS.escape(L.id)}"]`); const t = card && card.querySelector('[data-note="pron"]');
+  const card = document.querySelector(`.card[data-sid="${CSS.escape(L.id)}"]`); const t = card && card.querySelector(`[data-note="${CSS.escape(L.note || 'pron')}"]`);
   if (!t) return; const v = t.value.trim();
   if (v.endsWith(L.text)) { t.value = v.slice(0, v.length - L.text.length).replace(/[;,]\s*$/, ''); t.dispatchEvent(new Event('input')); toast('Letzten Eintrag entfernt'); }
   PD.last = null; pronRender();
 };
 
-function autoGrow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 240) + 'px'; }
+function autoGrow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, Math.max(240, parseFloat(getComputedStyle(t).minHeight) || 0)) + 'px'; }
+/* Notizfelder gemeinsam größer/kleiner ziehen: wer eine Bereichsnotiz (bzw. eine allgemeine Notiz) am Anfasser zieht, ändert alle dieser Art – Voce merkt sich die Höhe */
+function applyNoteH() { const r = document.documentElement.style; r.setProperty('--noteH', (S.settings.noteH || 38) + 'px'); r.setProperty('--genH', (S.settings.genH || 38) + 'px'); }
+let noteDrag = null;
+document.addEventListener('mousedown', e => {
+  const t = e.target; if (!t.matches || !t.matches('.cards .catNote, .cards .generalNote')) return;
+  const b = t.getBoundingClientRect(); if (e.clientX < b.right - 20 || e.clientY < b.bottom - 20) return;
+  noteDrag = { t, h: b.height, gen: t.classList.contains('generalNote') }; t.style.minHeight = '38px';
+});
+document.addEventListener('mouseup', () => {
+  if (!noteDrag) return; const { t, h, gen } = noteDrag; noteDrag = null;
+  const nh = Math.round(t.getBoundingClientRect().height); t.style.minHeight = '';
+  if (Math.abs(nh - h) < 4) { autoGrow(t); return; }
+  S.settings[gen ? 'genH' : 'noteH'] = Math.max(38, Math.min(600, nh)); applyNoteH();
+  document.querySelectorAll(gen ? '.cards .generalNote' : '.cards .catNote').forEach(autoGrow); save();
+});
 function updateRailStatus(ex) {
   document.querySelectorAll('.gitem').forEach(b => { const st = groupStatus(ex, ex.groups[+b.dataset.g]); const p = b.querySelector('.pill'); p.className = 'pill ' + st.cls; p.textContent = st.txt; });
   const c = document.querySelector('.rail .count'); if (c) c.textContent = `${countDone(ex)} / ${studentsOf(ex).length} bewertet`;
@@ -1893,13 +1940,16 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' && ex.cur < ex.groups.length - 1) { ex.cur++; save(); renderGrade(); }
   if (e.key === 'ArrowLeft' && ex.cur > 0) { ex.cur--; save(); renderGrade(); }
 });
-if (NATIVE && NATIVE.onMenu) NATIVE.onMenu(cmd => { if (cmd === 'settings') openSettings(); if (cmd === 'new') openExamDlg(null); if (cmd === 'backup') $('expBtn').click(); if (cmd === 'classes') openClassesDlg(); if (cmd === 'licenses') openLicenses(); });
+if (!(NATIVE && NATIVE.onMenu) || window.__voceDemo) document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveShortcut(); } });
+if (NATIVE && NATIVE.onMenu) NATIVE.onMenu(cmd => { if (cmd === 'save') saveShortcut(); if (cmd === 'settings') openSettings(); if (cmd === 'new') openExamDlg(null); if (cmd === 'backup') $('expBtn').click(); if (cmd === 'classes') openClassesDlg(); if (cmd === 'licenses') openLicenses(); });
 
 /* Hinweis auf neue Version (nur Mac/Windows-App, abschaltbar) */
 const UPD = NATIVE && NATIVE.update;
-function showUpd(u) { $('updNote').hidden = !u; if (u) { $('updTxt').textContent = `Neue Version ${u.version} verfügbar. Deine Klassen und Prüfungen bleiben beim Aktualisieren erhalten. –`; $('updGet').href = u.url; } }
+/* Ausblenden gilt für diese Version: der Hinweis erscheint erst bei der nächsten neuen Version wieder (wie Libretto) */
+let UPD_CUR = null;
+function showUpd(u) { if (u && S.settings.updHide === u.version) u = null; UPD_CUR = u; $('updNote').hidden = !u; if (u) { $('updTxt').textContent = `Neue Version ${u.version} verfügbar. Deine Klassen und Prüfungen bleiben beim Aktualisieren erhalten. –`; $('updGet').href = u.url; } }
 if (UPD) {
   $('updChk').onchange = e => { UPD.set(e.target.checked); if (!e.target.checked) showUpd(null); else UPD.check().then(showUpd).catch(() => {}); };
-  $('updX').onclick = () => showUpd(null);
+  $('updX').onclick = () => { const v = UPD_CUR && UPD_CUR.version; showUpd(null); if (v) { S.settings.updHide = v; save(); toast(`Hinweis ausgeblendet. Er erscheint wieder, sobald es eine Version nach ${v} gibt.`, 4500); } };
 }
 loadState().then(() => { if (!exam() && S.exams[0]) S.current = S.exams[0].id; renderAll(); if (UPD) UPD.check().then(showUpd).catch(() => {}); });

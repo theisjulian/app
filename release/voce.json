@@ -1,7 +1,7 @@
 {
-  "version": "2.0.1",
-  "tag": "2.0",
-  "ref": "1477936d410ae02f154307311f4ee45cd07fc212",
-  "dry": false,
-  "notes": "Voce 2.0.1: Worturteile je Niveau (A1, A2, B1, Oberstufe) noch genauer an den ISB-Rastern, sehr volle Bewertungsbögen sicher auf einer Seite, neu gestaltetes Handbuch mit ausführlichem Quellenverzeichnis. Voce 2.0 ist auf aktueller Technik neu aufgebaut; Voraussetzung am Mac ist macOS 13 Ventura oder neuer – auf älteren Macs bitte Voce 1.10.0 weiter verwenden (theisapps.de/voce). Ihre Klassen und Prüfungen bleiben beim Update erhalten. Die Raster der Schulaufgaben bleiben unverändert."
+ "version": "2.0.2",
+ "tag": "2.0",
+ "ref": "f9a75d4aac6766cd62cda47fe62235a24259e8cc",
+ "dry": false,
+ "notes": "Voce 2.0.2: Neu „Typische Fehler markieren“ für den Bereich Sprache (häufige Grammatik- und Wortschatzfehler mit Korrektur), Speichern mit Cmd/Strg+S, Notizfelder lassen sich gemeinsam größer ziehen, die Uhr bleibt beim Scrollen sichtbar, deutlichere Namen, Update-Hinweis dauerhaft ausblendbar und dunkles App-Icon am Mac. Behoben: „Aussprache markieren“ übernimmt die Auswahl jetzt auch bei Referaten. Voraussetzung am Mac ist macOS 13 Ventura oder neuer – auf älteren Macs bitte Voce 1.10.0 weiter verwenden (theisapps.de/voce). Ihre Klassen und Prüfungen bleiben beim Update erhalten."
 }

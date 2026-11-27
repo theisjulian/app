@@ -192,7 +192,7 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
     if (v === null) return !NODEL[k];
     if (typeof v !== 'string') return false;
     const d = parse(v); if (d === undefined) return false;
-    if (k === 'orario_v1') return !!(d && typeof d === 'object' && d.teachers && typeof d.teachers === 'object' && Object.keys(d.teachers).length && Array.isArray(d.periods));
+    if (k === 'orario_v1') return !!(d && typeof d === 'object' && d.teachers && typeof d.teachers === 'object' && d.classes && typeof d.classes === 'object' && (Object.keys(d.teachers).length || Object.keys(d.classes).length) && Array.isArray(d.periods));
     if (k === 'gb_classes') return !!(d && typeof d === 'object' && !Array.isArray(d) && Object.keys(d).length && Object.values(d).every(c => c && typeof c === 'object' && (typeof c.raw === 'string' || Array.isArray(c.students))));
     if (k === 'gb_seen') return Array.isArray(d);
     if (/^gb_hist_/.test(k)) return Array.isArray(d);
@@ -224,12 +224,16 @@ html[data-dark] #tabs .lens{background:linear-gradient(180deg,rgba(255,255,255,.
       const o = Object.assign({}, lNew ? b : a, lNew ? a : b); o.e = [...m.values()].sort((p, q) => (p.d < q.d ? -1 : p.d > q.d ? 1 : (p.u || 0) - (q.u || 0))); return JSON.stringify(o); }
     return JSON.stringify(deep(a, b, lNew));
   }
+  const imp = v => { const d = parse(v); return d && +d.importedAt || 0; };
   function merge(local, remote) {
     local = clean(local); remote = clean(remote);
     const out = {}, remoteWon = [], localWon = []; const ks = new Set(Object.keys(local).concat(Object.keys(remote)));
     ks.forEach(k => { const l = local[k], r = remote[k];
       /* Arbeitszeit und Statistik: Einträge beider Geräte zusammenführen statt überschreiben */
       if (l && r && l.v && r.v && l.v !== r.v && UNION[k]) { const m = unite(k, l, r); if (m) { out[k] = { v: m, t: Math.max(l.t, r.t) }; if (m !== l.v) remoteWon.push(k); if (m !== r.v) localWon.push(k); return; } }
+      /* Stundenplan: der zuletzt eingelesene Untis-Stand gewinnt immer – auch wenn ein anderes Gerät später noch am alten Stand etwas geändert hat */
+      if (k === 'orario_v1' && l && r && l.v && r.v && l.v !== r.v) { const ia = imp(l.v), ib = imp(r.v);
+        if (ia !== ib) { const w = ia > ib ? l : r, e = { v: w.v, t: Math.max(l.t, r.t) }; out[k] = e; if (e.v !== l.v || e.t !== l.t) remoteWon.push(k); if (e.v !== r.v || e.t !== r.t) localWon.push(k); return; } }
       if (l && (!r || l.t >= r.t)) { out[k] = l; if (!r || r.v !== l.v) localWon.push(k); } else { out[k] = r; if (!l || l.v !== r.v) remoteWon.push(k); } });
     return { merged: out, remoteWon, localWon };
   }

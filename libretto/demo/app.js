@@ -405,7 +405,12 @@ $('#settingsBtn').onclick = () => settingsSheet();
 $('#lockBtn').onclick = () => lockNow();
 $('#helpBtn').onclick = () => helpSheet();
 
-function updateNotice() { return UPDATE ? `<div class="notice info"><div class="grow"><b>Neue Version ${esc(UPDATE.version)} verfügbar.</b> ${esc(UPDATE.notes)} Deine Daten bleiben beim Aktualisieren erhalten – Libretto sichert vorher automatisch.</div><a class="mini" href="${esc(UPDATE.url)}" target="_blank" rel="noopener">Herunterladen</a></div>` : ''; }
+function updateNotice() { return UPDATE && ST.updHide !== UPDATE.version ? `<div class="notice info"><div class="grow"><b>Neue Version ${esc(UPDATE.version)} verfügbar.</b> ${esc(UPDATE.notes)} Deine Daten bleiben beim Aktualisieren erhalten – Libretto sichert vorher automatisch.</div><a class="mini" href="${esc(UPDATE.url)}" target="_blank" rel="noopener">Herunterladen</a><button type="button" class="iconbtn updHide" data-updhide title="Hinweis ausblenden – er erscheint erst bei der nächsten neuen Version wieder">✕</button></div>` : ''; }
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('[data-updhide]') || !UPDATE) return;
+  const v = UPDATE.version; ST.updHide = v; N.setCfg({ updHide: v }).then(x => { ST = x; }).catch(() => {}); render();
+  toast(`Hinweis ausgeblendet. Er erscheint wieder, sobald es eine Version nach ${v} gibt.`, 4500);
+});
 function backupNotice() {
   return betaNotice() + updateNotice() + backupNotice0();
 }
@@ -667,7 +672,7 @@ function entScope(c) { return upper(c) ? { term: scopeOf(c).term } : scopeOf(c);
 function entriesOf(c, sid, sc = entScope(c)) { return (c.entries || []).filter(e => e.sid === sid && R.inScope(e, sc)).sort((a, b) => (a.date || '').localeCompare(b.date || '')); }
 function entCell(c, s) {
   const up = upper(c);
-  const chips = entriesOf(c, s.id).map(e => `<button class="echip ${e.status ? 'st' : ''} ${{ done: 'xd', changed: 'xc' }[xState(c, xKeyE(e), e)] || ''}" data-ent="${s.id}" title="${esc(R.TYPES[e.type].label + (e.date ? ' · ' + fdate(e.date) : '') + (e.note ? ' · ' + e.note : ''))}">${esc(R.cellText(e, up))}</button>`).join('');
+  const chips = entriesOf(c, s.id).map(e => `<button class="echip ${e.status ? 'st' : ''} ${{ done: 'xd', changed: 'xc' }[xState(c, xKeyE(e), e)] || ''}" data-ent="${s.id}" title="${esc(R.TYPES[e.type].label + (e.date ? ' · ' + fdate(e.date) : '') + (entW(c, e) != null ? ' · zählt ' + wTxt(entW(c, e)) : '') + (e.note ? ' · ' + e.note : ''))}">${esc(R.cellText(e, up))}${entW(c, e) != null ? `<sub>${wTxt(entW(c, e))}</sub>` : ''}</button>`).join('');
   return `<td class="ent sep"><div class="ents">${chips}<input class="cell entq" data-eq="${s.id}" placeholder="+" autocomplete="off" title="Note tippen + Enter = neue Einzelnote mit heutigem Datum"></div></td>`;
 }
 /* Zwischenzeile je Klasse (nur bei Kursen aus mehreren Klassen) */
@@ -2094,6 +2099,14 @@ function entTypeOptsLF(t, part) {
   return ENTRY_TYPES.flatMap(k => k === 'prak' ? [[k + '|f', R.TYPES[k].label + ' · Fach Sport', t === k]] : [[k + '|f', R.TYPES[k].label + ' · Fach Sport', t === k && part === 'f'], [k + '|t', R.TYPES[k].label + ' · Sporttheorie', t === k && part === 't']])
     .map(([v, l, sel]) => `<option value="${v}" ${sel ? 'selected' : ''}>${l}</option>`).join('');
 }
+/* Gewicht einer Einzelnote: Standard der Art oder ausdrücklich ×½ / ×1 / ×2 (wie bei Stegreifaufgaben) */
+function wTxt(w) { return '×' + ({ 0.5: '½', 0.25: '¼', 0.333: '⅓' }[+w] || String(+w).replace('.', ',')); }
+function entWOpts(c, r) {
+  const def = R.weightOf({ type: r.type, weight: null }, c), cur = r.weight != null && r.weight !== '' ? +r.weight : null;
+  const vals = [0.5, 1, 2].filter(v => v !== def); if (cur != null && cur !== def && !vals.includes(cur)) vals.push(cur);
+  return `<option value="">${wTxt(def)} · normal</option>` + vals.sort((a, b) => a - b).map(v => `<option value="${v}" ${cur === v ? 'selected' : ''}>${wTxt(v)}</option>`).join('');
+}
+function entW(c, e) { return e.weight != null && e.weight !== '' && +e.weight !== R.weightOf({ type: e.type, weight: null }, c) ? +e.weight : null; }
 function entrySheet(c, s) {
   const up = upper(c), sc = entScope(c);
   let rows = entriesOf(c, s.id, sc).map(e => ({ ...e }));
@@ -2109,12 +2122,13 @@ function entrySheet(c, s) {
     } });
   const list = dlg.querySelector('#entList');
   const draw = () => {
-    list.innerHTML = rows.length ? `<div class="entRow entHead"><span>Datum</span><span>Art</span><span>${up ? 'Punkte' : 'Note'}</span><span>Notiz</span><span></span></div>` + rows.map((r, i) => `<div class="entRow" data-i="${i}"><input type="date" data-f="date" value="${esc(r.date || '')}"><select data-f="type">${typeOpts(r.type, r)}</select><input type="text" data-f="grade" value="${esc(R.cellText(r, up))}" placeholder="${up ? '0–15' : '1–6'}"><input type="text" data-f="note" value="${esc(r.note || '')}" placeholder="Notiz (optional)"><button type="button" class="mini del" data-del="${i}">Löschen</button></div>`).join('')
+    list.innerHTML = rows.length ? `<div class="entRow entHead"><span>Datum</span><span>Art</span><span>${up ? 'Punkte' : 'Note'}</span><span>Gewicht</span><span>Notiz</span><span></span></div>` + rows.map((r, i) => `<div class="entRow" data-i="${i}"><input type="date" data-f="date" value="${esc(r.date || '')}"><select data-f="type">${typeOpts(r.type, r)}</select><input type="text" data-f="grade" value="${esc(R.cellText(r, up))}" placeholder="${up ? '0–15' : '1–6'}"><select data-f="w" title="Wie stark zählt diese Note? Standard ist das Gewicht der Art (unter „Klasse bearbeiten“)">${entWOpts(c, r)}</select><input type="text" data-f="note" value="${esc(r.note || '')}" placeholder="Notiz (optional)"><button type="button" class="mini del" data-del="${i}">Löschen</button></div>`).join('')
       : '<div class="stEmpty">Noch keine Einzelnoten.</div>';
     $$('.entRow[data-i]', list).forEach(row => { const r = rows[+row.dataset.i];
       row.querySelector('[data-f=date]').onchange = e => r.date = e.target.value;
-      row.querySelector('[data-f=type]').onchange = e => { const [k, st] = e.target.value.split('|'); r.type = k; if (st && k !== 'prak') r.st = st; else delete r.st; };
+      row.querySelector('[data-f=type]').onchange = e => { const [k, st] = e.target.value.split('|'); r.type = k; if (st && k !== 'prak') r.st = st; else delete r.st; row.querySelector('[data-f=w]').innerHTML = entWOpts(c, r); };
       row.querySelector('[data-f=note]').oninput = e => r.note = e.target.value;
+      row.querySelector('[data-f=w]').onchange = e => { if (e.target.value === '') delete r.weight; else r.weight = +e.target.value; };
       const g = row.querySelector('[data-f=grade]'); g.onchange = () => { const p = R.parseCell(g.value, up); if (!g.value.trim()) { delete r.v; delete r.tend; delete r.status; return; } if (p.error) { toast(p.error); g.select(); return; } delete r.v; delete r.tend; delete r.status; Object.assign(r, p); };
     });
     $$('[data-del]', list).forEach(b => b.onclick = () => { rows.splice(+b.dataset.del, 1); draw(); });
@@ -3038,7 +3052,7 @@ function transferSheet(c) {
     let list = [], what = '';
     if (id === 'ent') {
       const ents = (c.entries || []).filter(e => R.inScope(e, entScope(c)) && xSig(c, e) && xState(c, xKeyE(e), e) !== 'done').sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-      const seen = new Set(); ents.forEach(e => { if (seen.has(e.sid)) return; seen.add(e.sid); list.push({ key: xKeyE(e), s: c.students.find(x => x.id === e.sid), g: xSig(c, e), d: dmy(e.date), art: IP_ART.includes((R.TYPES[e.type].short || '').toUpperCase()) ? R.TYPES[e.type].short.toUpperCase() : '' }); });
+      const seen = new Set(); ents.forEach(e => { if (seen.has(e.sid)) return; seen.add(e.sid); list.push({ key: xKeyE(e), s: c.students.find(x => x.id === e.sid), g: xSig(c, e), d: dmy(e.date), art: IP_ART.includes((R.TYPES[e.type].short || '').toUpperCase()) ? R.TYPES[e.type].short.toUpperCase() : '', w: entW(c, e) }); });
       const rest = ents.length - list.length; what = `Einzelnoten · je Person die älteste offene${rest ? ` (danach noch ${rest} weitere)` : ''}`;
     } else {
       const a = asById(id); let its = items(a).filter(x => xState(c, x.key, x.r) !== 'done'); if (!its.length) its = items(a);
@@ -3047,7 +3061,7 @@ function transferSheet(c) {
     const ok = list.filter(x => x.s && /^\d{1,2}[+-]?$/.test(String(x.g).trim())), skip = list.filter(x => !ok.includes(x));
     if (!ok.length) { toast('Nichts zu kopieren – alles schon übertragen.'); return; }
     const aa = id === 'ent' ? null : asById(id);
-    const data = { kind: id === 'ent' ? 'e' : 'a', date: aa && aa.date ? dmy(aa.date) : '', what: `${cLabel(c)} · ${what}`, items: ok.map(x => { const n = splitName(x.s); return { last: n.last, first: n.first, cls: x.s.cls || '', g: String(x.g).trim(), d: x.d, ...(x.art ? { art: x.art } : {}) }; }) };
+    const data = { kind: id === 'ent' ? 'e' : 'a', date: aa && aa.date ? dmy(aa.date) : '', what: `${cLabel(c)} · ${what}`, items: ok.map(x => { const n = splitName(x.s); return { last: n.last, first: n.first, cls: x.s.cls || '', g: String(x.g).trim(), d: x.d, ...(x.art ? { art: x.art } : {}), ...(x.w != null ? { w: String(x.w).replace('.', ',') } : {}) }; }) };
     try { await navigator.clipboard.writeText('LIBRETTO-INFOPORTAL 1\n' + JSON.stringify(data)); } catch (e) { toast('Kopieren ging nicht: ' + e.message); return; }
     ipKeys = { id, keys: ok.map(x => x.key) }; refresh();
     toast(`${ok.length} ${ok.length === 1 ? 'Note' : 'Noten'} kopiert – jetzt im Infoportal das Lesezeichen „Libretto → Infoportal“ anklicken${skip.length ? `. Nicht dabei (keine Zahl): ${skip.map(x => x.s ? x.s.name : '').join(', ')}` : ''}`, 6500);
@@ -3082,7 +3096,7 @@ function baseMeta(c) { return [['Kurs', `${c.name} · ${c.seminar || c.psem ? (c
 function studMeta(c, s) { const m = baseMeta(c); if (isMixed(c.students) && s.cls) m.splice(1, 0, ['Klasse', s.cls]); return m; }
 const ct = (c, a, s, up) => R.cellText(a.results && a.results[s.id], up) || (isAway(c, s.id, a.date) ? 'abw.' : '');
 function lnName(a) { return (a.short || R.TYPES[a.type].short) + (a.date ? ' ' + sdate(a.date) : ''); }
-function entTxt(c, s) { return entriesOf(c, s.id).map(e => R.cellText(e, upper(c))).join(' ') || ''; }
+function entTxt(c, s) { return entriesOf(c, s.id).map(e => R.cellText(e, upper(c)) + (entW(c, e) != null ? ' (' + wTxt(entW(c, e)) + ')' : '')).join(' ') || ''; }
 /* EIN Ergebnis für Ansicht und alle Ausgaben (Übertragsliste, Schülerblatt, Notenübersicht, CSV): „ohne Note“ und „Gast ohne Wertung“ gehen vor jeder Rechnung.
    kind: 'ng' | 'guest' | 'ov' | 'calc'; v = Eintrag (Note bzw. Punkte oder „–“); sub = kurze Erläuterung */
 function finalOf(c, s, term) {
@@ -4219,7 +4233,7 @@ function helpSheet(opts) {
     <p><b>Wer wird gewertet?</b> Im Notenspiegel und im Durchschnitt einer Arbeit zählen alle mit Note – auch ${kbd('N')} (Note 6 bzw. 0 Punkte, versäumt ohne Entschuldigung, § 26 Abs. 4 GSO) und Unterschleif, denn das sind echte Noten. Nicht gezählt werden ${kbd('E')} (entschuldigt, Nachtermin offen), ${kbd('B')} (befreit) und leere Felder. „Gewertet: 10 von 12“ zeigt beim Darüberfahren, wer genau mitzählt.</p>
     <p><b>Nachtermin (NT):</b> Wer mit ${kbd('E')} markiert war und dann eine Note bekommt, hat den Nachtermin geschrieben: Die Note zählt für die Person (Zeugnis), aber nicht im Notenspiegel und Durchschnitt der Arbeit – der Nachtermin ist an einem anderen Tag mit anderen Aufgaben. In der Zelle steht ein kleines „NT“, im Ausdruck „NT“ hinter der Note. Die GSO regelt das nicht ausdrücklich; wenn eure Fachschaft den Nachtermin mitzählt, im Eingabeblatt den Status von „NT“ auf „–“ stellen.</p>
     <p><b>Vertippt?</b> Überschreibst oder löschst du eine vorhandene Note, erscheint unten kurz „Rückgängig“. Die unterste Zeile <b>„Ø Klasse“</b> zeigt den Durchschnitt je Spalte und rechnet mit. Kleine Marken rechts über der Tabelle (z. B. „1 Nachtermin offen“) klappen beim Anklicken ihre Erklärung auf.</p>${fig('tabelle', 'Notentabelle')}
-    <p><b>Einzelnoten mit Datum</b> (Unterrichtsbeiträge, Rechenschaftsablagen – nicht die ganze Klasse am selben Tag): Spalte „Einzeln“, Note ins Feld „+“ tippen und ${kbd('Enter')}. Gespeichert wird mit dem heutigen Datum; ein Klick auf eine Note öffnet die Liste zum Ändern oder Löschen. Die Art für die schnelle Eingabe stellst du über den Spaltenkopf ein.</p>${fig('einzeln', 'Einzelnoten')}`],
+    <p><b>Einzelnoten mit Datum</b> (Unterrichtsbeiträge, Rechenschaftsablagen – nicht die ganze Klasse am selben Tag): Spalte „Einzeln“, Note ins Feld „+“ tippen und ${kbd('Enter')}. Gespeichert wird mit dem heutigen Datum; ein Klick auf eine Note öffnet die Liste zum Ändern oder Löschen. Dort kannst du auch das <b>Gewicht</b> ändern, etwa einen Unterrichtsbeitrag doppelt (×2) oder halb (×½) zählen lassen, so wie bei Stegreifaufgaben. Die Note zeigt das Gewicht dann klein daneben. Die Art für die schnelle Eingabe stellst du über den Spaltenkopf ein.</p>${fig('einzeln', 'Einzelnoten')}`],
   ['ln', 'Leistungsnachweise, Gewichte und Notenschlüssel', 'Leistungsnachweise', `
     <p>„+ Leistungsnachweis“: Art, Datum und ggf. Gewicht (z. B. Jahrgangsstufentest als ½ Schulaufgabe, eine Stegreifaufgabe doppelt). In Fächern mit Schulaufgaben ist „Schulaufgabe“ vorausgewählt, bis die Mindestzahl (bzw. die unter „Kurs &amp; Schüler“ geplante Zahl) erreicht ist. Fällt das Datum in die Ferien, auf einen Feiertag oder ein Wochenende, steht darunter ein kleiner Hinweis – speichern geht trotzdem. Spaltenkopf anklicken: bearbeiten, Notenspiegel, drucken.</p>
     <p>Mit <b>„Rohpunkte eingeben“</b> tippst du Punkte ein, Libretto rechnet über den Notenschlüssel in Noten bzw. Notenpunkte um. Den Schlüssel berechnet Libretto aus den Vorgaben eurer Fachschaft – etwa <b>Note 4 ab 50 %, Note 5 ab 33 %</b>; die Noten 1–3 werden gleichmäßig verteilt, jede Grenze bleibt änderbar. Libretto merkt sich die Vorgabe je Fach.</p>${fig('schluessel', 'Notenschlüssel')}
@@ -4296,7 +4310,7 @@ function helpSheet(opts) {
     <p><b>Stand Zwischenzeugnis:</b> Der Stichtag unter Einstellungen steuert die Ansicht „Stand Zwischenzeugnis“ (§ 40 GSO). Die Zeugnisnote ist ein Vorschlag nach § 28 GSO; genau x,5 wird als Grenzfall markiert – die pädagogische Entscheidung triffst du im Schülerblatt unter „Zeugnisnote“ → „Festlegen“, mit Begründung.</p>
     
     <p><b>Übertrag ins Notenprogramm der Schule:</b> Mit „Übertrag“ merkst du dir, was schon im Infoportal steht – je Leistungsnachweis oder Note. ✓ = alles übertragen, <b style="color:var(--orange)">●</b> = danach geändert, Nachtrag nötig. Die Namen stehen in der Reihenfolge der Klassenliste. Libretto schickt nichts ab – es ist deine Merkhilfe. Die Übertragsliste zum Abhaken druckst du über „Drucken &amp; Export“.</p>
-    <p><b>Schneller ins Infoportal – Lesezeichen „Libretto → Infoportal“:</b> Einmal einrichten (im Fenster „Übertrag“ → „Lesezeichen einrichten …“: den blauen Knopf in die Favoritenleiste von Safari oder Chrome ziehen). Dann: im Infoportal die passende Seite öffnen (z. B. Noten → Mündlich), in Libretto beim Leistungsnachweis oder bei den Einzelnoten <b>„Fürs Infoportal kopieren“</b>, im Infoportal das Lesezeichen anklicken. Es trägt jede Note bei der richtigen Person ein (bei Einzelnoten auch Art und Datum) und markiert die Zeilen grün. <b>Gespeichert wird erst, wenn du im Infoportal speicherst</b> – danach in Libretto „Diese … als übertragen markieren“. Bei Einzelnoten kommt je Person die älteste offene Note; hat jemand mehrere, kopierst du nach dem Speichern einfach die nächste Runde. Findet das Lesezeichen eine Person nicht, nennt es sie – die trägst du von Hand ein. Das Lesezeichen läuft nur in deinem Browser und schickt nichts weg.</p>
+    <p><b>Schneller ins Infoportal – Lesezeichen „Libretto → Infoportal“:</b> Einmal einrichten (im Fenster „Übertrag“ → „Lesezeichen einrichten …“: den blauen Knopf in die Favoritenleiste von Safari oder Chrome ziehen). Dann: im Infoportal die passende Seite öffnen (z. B. Noten → Mündlich), in Libretto beim Leistungsnachweis oder bei den Einzelnoten <b>„Fürs Infoportal kopieren“</b>, im Infoportal das Lesezeichen anklicken. Es trägt jede Note bei der richtigen Person ein (bei Einzelnoten auch Art, Datum und ein abweichendes Gewicht wie ×2) und markiert die Zeilen grün. <b>Gespeichert wird erst, wenn du im Infoportal speicherst</b> – danach in Libretto „Diese … als übertragen markieren“. Bei Einzelnoten kommt je Person die älteste offene Note; hat jemand mehrere, kopierst du nach dem Speichern einfach die nächste Runde. Findet das Lesezeichen eine Person nicht, nennt es sie – die trägst du von Hand ein. Das Lesezeichen läuft nur in deinem Browser und schickt nichts weg.</p>
     <p><b>Elternsprechtag:</b> Im Schülerblatt (Klick auf den Namen) öffnet „Elternsprechtag-Ansicht“ eine große Ansicht mit Zeugnisnote, Durchschnitten und allen Noten in zeitlicher Folge; mit ← → geht es zur nächsten Person. Deine Notizen sind dort zunächst verborgen. Mit der Terminliste aus dem Infoportal geht es noch bequemer – siehe „Elternsprechtag mit Terminliste“.</p>${fig('schuelerblatt', 'Schülerblatt mit Durchschnitten, allen Noten und Zeugnisnote')}${fig('uebertrag', 'Übertrag: was schon im Infoportal steht')}`],
   ['esp', 'Elternsprechtag mit Terminliste aus dem Infoportal', 'Zeugnis und Gespräche', `
     <p>Am Elternsprechtag kommen die Eltern im Fünf-Minuten-Takt – aus verschiedenen Klassen und Fächern. Libretto zeigt dir Termin für Termin die richtige Person mit allen Noten, über alle deine Kurse hinweg. Mit ↑ ↓ geht es zum nächsten Termin.</p>
@@ -4611,6 +4625,9 @@ applyLook('standard', 'auto');   /* sofort, bevor die gemerkte Einstellung gelad
 const SITE_URL = 'https://theisapps.de/', SUPPORT_URL = 'https://buy.stripe.com/3cI3cv0i8eLk31g4mNgw000';
 /* Was ist neu – je Version (neueste zuerst); im Fenster „Über Libretto“ */
 const CHANGES = [
+  ['1.1.11', ['Einzelnoten (z. B. Unterrichtsbeiträge) können jetzt auch doppelt (×2) oder halb (×½) zählen – im Fenster der Einzelnoten unter „Gewicht“. Das Lesezeichen „Libretto → Infoportal“ trägt das Gewicht mit ein.', 'Den Hinweis auf eine neue Version kannst du mit ✕ ausblenden; er erscheint erst bei der nächsten Version wieder.']],
+  ['1.1.10', ['Lesezeichen „Libretto → Infoportal“: arbeitet jetzt mit den eigenen Auswahlfeldern des Infoportals (öffnet die Liste und wählt die Note wie von Hand); Unsicheres wird orange markiert – bitte das Lesezeichen noch einmal neu in die Favoritenleiste ziehen']],
+  ['1.1.9', ['Lesezeichen „Libretto → Infoportal“: erkennt jetzt auch Notenfelder, die Eingabefelder mit Vorschlagsliste sind (z. B. bei Stegreifaufgaben) – bitte das Lesezeichen einmal neu in die Favoritenleiste ziehen']],
   ['1.1.8', ['Neu: Schneller ins Infoportal – „Fürs Infoportal kopieren“ im Übertrag und ein Lesezeichen „Libretto → Infoportal“, das die Noten bei den richtigen Personen einträgt (gespeichert wird erst im Infoportal)', 'Aufgaben-Schnelleingabe: Die Zeile bleibt stehen und lässt sich verbessern (z. B. vergessene erste Aufgabe davor schreiben); gelöschte Aufgaben kommen nicht mehr zurück; Enter in der Aufgabenbezeichnung sichert nicht mehr versehentlich das ganze Fenster', 'Elternsprechtag: Hinweis, dass „Alle Fächer“ den Stand des Infoportals zeigt']],
   ['1.1.7', ['Elternsprechtag: PDF einlesen und Mappe drucken jetzt direkt in der Ansicht; solange kein Bericht Leistungsstand da ist, erklärt ein Hinweis bei jeder Person, wie die Klassenleitung alle Fächer dazuholt']],
   ['1.1.6', ['Elternsprechtag: Zuordnung zu deinen Kursen zuverlässiger (auch bei älteren Kursen, bei Klassen wie „09F“, bei mehreren Vornamen oder anderer Reihenfolge); beim Einlesen steht bei jeder nicht zugeordneten Person, warum', 'Klassenleitung: eigener Knopf „Leistungsstand der Klasse“ im Kasten Elternsprechtag']],

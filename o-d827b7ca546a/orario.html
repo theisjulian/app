@@ -449,6 +449,11 @@ const D = {
  'Klasse': ['Class', 'Classe', 'Classe', 'Clase'],
  'Fach': ['Subject', 'Materia', 'Matière', 'Asignatura'],
  'Speichern': ['Save', 'Salva', 'Enregistrer', 'Guardar'],
+ 'Du hattest deinen eigenen Plan geändert.': ['You had edited your own timetable.', 'Avevi modificato il tuo orario.', 'Tu avais modifié ton emploi du temps.', 'Habías modificado tu horario.'],
+ 'Im neuen Untis-Plan hat sich dein Plan geändert.': ['Your timetable has changed in the new Untis plan.', 'Nel nuovo orario Untis il tuo orario è cambiato.', 'Ton emploi du temps a changé dans le nouveau plan Untis.', 'Tu horario ha cambiado en el nuevo plan de Untis.'],
+ 'Dein Plan ist im neuen Untis-Plan gleich geblieben.': ['Your timetable is unchanged in the new Untis plan.', 'Nel nuovo orario Untis il tuo orario è invariato.', 'Ton emploi du temps est inchangé dans le nouveau plan Untis.', 'Tu horario no ha cambiado en el nuevo plan de Untis.'],
+ 'Neuen Untis-Plan nehmen': ['Use the new Untis plan', 'Usa il nuovo orario Untis', 'Prendre le nouveau plan Untis', 'Usar el nuevo plan de Untis'],
+ 'Meine Änderungen behalten': ['Keep my changes', 'Mantieni le mie modifiche', 'Garder mes modifications', 'Mantener mis cambios'],
  'Auf Untis-Plan zurücksetzen': ['Reset to Untis timetable', 'Ripristina l’orario Untis', 'Revenir à l’emploi du temps Untis', 'Restablecer el horario de Untis'],
  'Deine Änderungen gehen dabei verloren. Fortfahren?': ['Your changes will be lost. Continue?', 'Le tue modifiche andranno perse. Continuare?', 'Tes modifications seront perdues. Continuer ?', 'Se perderán tus cambios. ¿Continuar?'],
  'angepasst': ['edited', 'modificato', 'modifié', 'editado'],
@@ -497,8 +502,12 @@ function buildIndex(D) {
   const R = {}, rk = new Set();
   const addR = (l, teacher, cls) => { const r = (l.room || '').trim(); if (!r || l.mentor) return; const k = [r, l.d, l.p0, l.p1, cls || '', teacher || ''].join('|'); if (rk.has(k)) return; rk.add(k);
     (R[r] = R[r] || { name: r, plan: true, lessons: [] }).lessons.push({ d: l.d, p0: l.p0, p1: l.p1, fach: l.fach, cls: cls || '', teacher: teacher || '', room: r, grp: l.grp }); };
-  Object.values(T).forEach(t => t.lessons.forEach(l => addR(l, t.name, l.cls)));
-  Object.values(C).forEach(c => c.lessons.forEach(l => { const tn = l.teacher ? (match(l.teacher) || l.teacher) : ''; if (!rk.has([(l.room || '').trim(), l.d, l.p0, l.p1, c.name, tn].join('|'))) addR(l, tn, c.name); }));
+  /* Maßgeblich ist der zuletzt eingelesene Teil: Wurden nur neue Lehrerpläne eingelesen, kommen aus den (älteren) Klassenplänen nur noch
+     Stunden von Lehrkräften ohne eigenen Plan dazu – und umgekehrt. So zeigt ein Raumplan nie Stunden aus einem überholten Plan. */
+  const tAt = D.tAt || D.importedAt || 0, cAt = D.cAt || D.importedAt || 0, tFirst = tAt >= cAt;
+  const fromT = () => Object.values(T).forEach(t => t.lessons.forEach(l => { if (!tFirst && t.plan && l.cls && D.classes[l.cls]) return; addR(l, t.name, l.cls); }));
+  const fromC = () => Object.values(C).forEach(c => c.lessons.forEach(l => { const tn = l.teacher ? (match(l.teacher) || l.teacher) : ''; if (tFirst && c.plan && tn && D.teachers[tn]) return; if (!rk.has([(l.room || '').trim(), l.d, l.p0, l.p1, c.name, tn].join('|'))) addR(l, tn, c.name); }));
+  if (tFirst) { fromT(); fromC(); } else { fromC(); fromT(); }
   const rnames = Object.keys(R).sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
   return { T, C, R, match, tnames: Object.keys(T).sort((a, b) => a.localeCompare(b, 'de')), cnames: Object.keys(C).sort(sortCls), rnames };
 }
@@ -796,14 +805,23 @@ function reviewImport(recs, fnames) {
   const keepT = !R.nT && old && old.year === R.year, keepC = !R.nC && old && old.year === R.year;
   if (!R.nT && old && Object.keys(old.teachers).length && !keepT) drop = _('Die bisherigen Lehrerpläne ({0}) werden ersetzt.', old.year || _('anderes Schuljahr'));
   if (!R.nC && old && Object.keys(old.classes).length && !keepC) drop = (drop ? drop + ' ' : '') + _('Die bisherigen Klassenpläne ({0}) werden entfernt.', old.year || _('anderes Schuljahr'));
+  /* Eigene Änderungen am eigenen Plan: nicht mehr stillschweigend über den neuen Plan legen, sondern fragen */
+  const me = myName(), mine = store.get(MINE), hasMine = !!(me && mine && mine.name === me && R.teachers[me]);
+  const sig = L => JSON.stringify((L || []).map(l => [l.d, l.p0, l.p1, l.cls || '', l.fach || '', l.room || '']).sort());
+  const untisChanged = hasMine && sig(R.teachers[me].lessons) !== sig(mine.orig);
+  let keepMine = hasMine && !untisChanged;
+  const mineBox = hasMine ? `<div class="note" id="mineBox"><b>${_('Du hattest deinen eigenen Plan geändert.')}</b> ${untisChanged ? _('Im neuen Untis-Plan hat sich dein Plan geändert.') : _('Dein Plan ist im neuen Untis-Plan gleich geblieben.')}<div class="chips" style="margin-top:8px"><button class="chip" type="button" data-mine="0" aria-pressed="${!keepMine}">${_('Neuen Untis-Plan nehmen')}</button><button class="chip" type="button" data-mine="1" aria-pressed="${keepMine}">${_('Meine Änderungen behalten')}</button></div></div>` : '';
   openSheet(`<h3>${_('Gefunden')}</h3><div class="stat"><span>${_('Lehrkräfte')}</span><b>${R.nT}${R.nT ? ' · ' + _('{0} Stunden', R.les(R.teachers)) : ''}</b><span>${_('Klassen')}</span><b>${R.nC}${R.nC ? ' · ' + _('{0} Stunden', R.les(R.classes)) : ''}</b><span>${_('Stundenraster')}</span><b>${_('{0} Stunden', R.periods.length)}</b><span>${_('Schuljahr')}</span><b>${esc(R.year || '–')}</b><span>${_('Stand')}</span><b>${esc(R.stamp || '–')}</b><span>${_('gültig ab')}</span><b>${esc(R.valid || '–')}</b></div>
   ${R.bad.length ? `<div class="note">${_('{0} Seite(n) konnten nicht gelesen werden.', R.bad.length)}</div><div class="list">${R.bad.slice(0, 30).map(esc).join('<br>')}</div>` : ''}
   ${R.warn.length ? `<p class="hint">${_('{0} Zeile(n) mit ungewöhnlichem Aufbau wurden übernommen.', R.warn.length)}</p>` : ''}${drop ? `<div class="note">${esc(drop)} ${_('Der vorherige Stand bleibt als Sicherung erhalten.')}</div>` : ''}
-  ${old ? '' : ''}<div class="row"><button class="btn" id="take" type="button">${_('Übernehmen')}</button><button class="btn sec" id="no" type="button">${_('Verwerfen')}</button></div>`);
+  ${mineBox}<div class="row"><button class="btn" id="take" type="button">${_('Übernehmen')}</button><button class="btn sec" id="no" type="button">${_('Verwerfen')}</button></div>`);
   $('no').onclick = closeSheet;
+  $('sheetBody').querySelectorAll('[data-mine]').forEach(b => b.onclick = () => { keepMine = b.dataset.mine === '1'; $('sheetBody').querySelectorAll('[data-mine]').forEach(c => c.setAttribute('aria-pressed', c === b)); });
   $('take').onclick = () => {
     if (old) store.set(PREV, old);
-    const nd = { v: 1, year: R.year, valid: R.valid, stamp: R.stamp, periods: R.periods, teachers: R.nT ? R.teachers : (keepT ? old.teachers : {}), classes: R.nC ? R.classes : (keepC ? old.classes : {}), importedAt: Date.now(), files: fnames };
+    if (hasMine) { if (keepMine) { mine.orig = JSON.parse(JSON.stringify(R.teachers[me].lessons)); store.set(MINE, mine); } else store.del(MINE); }
+    const at = Date.now(), oT = old && (old.tAt || old.importedAt) || 0, oC = old && (old.cAt || old.importedAt) || 0;
+    const nd = { v: 1, year: R.year, valid: R.valid, stamp: R.stamp, periods: R.periods, teachers: R.nT ? R.teachers : (keepT ? old.teachers : {}), classes: R.nC ? R.classes : (keepC ? old.classes : {}), importedAt: at, tAt: R.nT ? at : (keepT ? oT : 0), cAt: R.nC ? at : (keepC ? oC : 0), files: fnames };
     DATA = nd; persist(); IDX = buildIndex(DATA); S = { tab: R.nT ? 't' : 'c', q: '', sel: null, mode: 'now', d: 0, p: 1 }; closeSheet(); render();
   };
 }
@@ -862,6 +880,7 @@ setInterval(() => { if (DATA && S.mode === 'now' && !document.hidden && $('sheet
 function embTheme() { if (!EMB) return; try { document.documentElement.dataset.skin = parent.document.documentElement.dataset.skin || ''; const P = parent.document.documentElement, cs = parent.getComputedStyle(P), r = document.documentElement, map = { '--blue': '--blue', '--bg': '--canvas', '--solid': '--glass-solid', '--tx': '--label', '--tx2': '--label-2', '--glass': '--glass', '--fill': '--fill', '--line': '--hair', '--onb': '--on-accent' };
   Object.keys(map).forEach(k => { const v = cs.getPropertyValue(map[k]).trim(); if (v) r.style.setProperty(k, v); }); r.style.setProperty('--blue-t', 'color-mix(in srgb,var(--blue) 14%,transparent)'); const dk = P.dataset.theme === 'dark' || (P.dataset.theme !== 'light' && parent.matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = dk ? 'dark' : 'light'; r.style.colorScheme = dk ? 'dark' : 'light'; try { parent.document.getElementById('stFrame').style.colorScheme = dk ? 'dark' : 'light'; } catch (e) {} r.style.background = document.body.style.background = 'var(--bg)'; document.body.classList.add('emb'); const ff = parent.getComputedStyle(parent.document.body).fontFamily; if (ff) document.body.style.fontFamily = ff; } catch (e) {} }
 embTheme(); window._orTheme = embTheme;
+window._orTest = { buildIndex, data: () => DATA, loadDemo }; /* nur für die automatischen Tests */
 window._orShortSync = function () { try { SHORTDAY = store.get(SHORTK) || ''; } catch (e) { SHORTDAY = ''; } if (DATA) render(); };
 window._orHome = function () { if (!DATA) return; closeSheet(); S = { init: true, tab: 't', q: '', sel: null, mode: 'now', d: 0, p: 1 }; const me = myName(); if (me) S.sel = me; render(); try { window.scrollTo(0, 0); document.querySelectorAll('*').forEach(e => { if (e.scrollTop) e.scrollTop = 0; }); } catch (e) {} };
 load(); render();
