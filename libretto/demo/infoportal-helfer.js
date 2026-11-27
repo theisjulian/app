@@ -71,7 +71,7 @@
     return out.join('\n');
   }
   function fill(data) {
-    var items = data.items || [], done = 0, miss = [], multi = [], used = [], noDate = [], unsure = [];
+    var items = data.items || [], done = 0, miss = [], multi = [], used = [], noDate = [], unsure = [], noW = [];
     /* Kopfzeile mit „Note“ und „Datum“ finden → Spaltennummern */
     var all = []; docs().forEach(function (doc) { all = all.concat([].slice.call(doc.querySelectorAll('tr'))); });
     var head = null; all.some(function (tr) { var tx = [].map.call(tr.cells, function (c) { return (c.textContent || '').trim(); }); if (tx.indexOf('Note') >= 0 && (tx.indexOf('Name') >= 0 || tx.indexOf('Datum') >= 0)) { head = tr; return true; } return false; });
@@ -98,6 +98,13 @@
       function setIn(colName, v, onlyEmpty) { if (v == null || v === '' || !head || col[colName] == null) return; var cell = tr.cells[col[colName]]; if (!cell) return; var vis = cell.querySelector('input:not([type=hidden]),textarea,select'); if (!vis || (onlyEmpty && vis.value.trim() && vis.value.trim() !== '--')) return; setCell(cell, v); }
       if (tend) setIn('Tendenz', tend);
       if (it.art) setIn('Art', it.art, true);
+      if (it.w) {
+        /* abweichendes Gewicht (z. B. ×2 oder ×½): Schreibweisen der Liste durchprobieren */
+        var wc = head && col.Gewicht != null ? tr.cells[col.Gewicht] : null, wOk = false;
+        if (wc) { var w0 = String(it.w), w1 = w0.replace(',', '.'), vs = [w0, w1, w0.indexOf(',') < 0 ? w0 + ',0' : '', w1.indexOf('.') < 0 ? w1 + '.0' : '', w0 === '0,5' ? '½' : '', 'x' + w0, '×' + w0];
+          vs.filter(Boolean).some(function (v) { var r = setCell(wc, v); if (r === 'ok' || r === 'unsure') { wOk = true; return true; } return false; }); }
+        if (!wOk) noW.push(it.last + ' (×' + it.w + ')');
+      }
       if (it.d && data.kind === 'e') {
         /* mündliche Noten: Datum je Zeile – eintragen und nachprüfen */
         var dc = head && col.Datum != null ? tr.cells[col.Datum] : null, di = dc && dc.querySelector('input:not([type=hidden])');
@@ -119,6 +126,7 @@
     if (unsure.length) html += '<div style="margin-top:6px;color:#8a4b00"><b>Bitte genau prüfen (orange):</b> ' + esc(unsure.join(', ')) + ' – die Note steht im Feld, aber das Infoportal hat es nicht eindeutig bestätigt.</div>';
     if (noDate.length) html += '<div style="margin-top:6px;color:#b42318"><b>Datum nicht gesetzt bei:</b> ' + esc(noDate.join(', ')) + ' – bitte von Hand eintragen.</div>';
     else if (data.kind === 'e' && done) html += '<div style="margin-top:6px;color:#2f6b3a">Datum bei allen eingetragen (je Note das Datum aus Libretto).</div>';
+    if (noW.length) html += '<div style="margin-top:6px;color:#b42318"><b>Gewicht nicht gesetzt bei:</b> ' + esc(noW.join(', ')) + ' – bitte von Hand eintragen.</div>';
     if (miss.length) html += '<div style="margin-top:6px;color:#b42318"><b>Nicht gefunden:</b> ' + esc(miss.join('; ')) + ' – bitte von Hand eintragen.</div>';
     if (multi.length) html += '<div style="margin-top:6px">Mehrere Noten für ' + esc(multi.join(', ')) + ': nach dem Speichern die nächste Runde in Libretto kopieren.</div>';
     html += '<div style="margin-top:8px"><b>Bitte prüfen und dann wie gewohnt im Infoportal speichern.</b> Gespeichert wird erst mit deinem Klick.</div>';
