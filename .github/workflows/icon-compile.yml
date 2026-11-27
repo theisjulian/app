@@ -1,0 +1,85 @@
+# macOS-26-Icon kompilieren (hell / dunkel / getönt): Icon-Composer-Paket (.icon) aus dem privaten Quellcode → Assets.car.
+# Für alle theis-Apps nutzbar. Ausgelöst durch eine Änderung an release/icon.json:
+#   { "app": "voce", "ref": "<Commit in theis-quelle>", "icon": "voce/tools/icon/Voce.icon" }
+# Ergebnis als Workflow-Artefakt "icon-<app>": Assets.car, partial Info.plist, assetutil-Bericht, Vorschaubilder.
+# Der App-Chat lädt das Artefakt und legt Assets.car in theis-quelle ab (QUELLE_TOKEN kann nur lesen). Es wird nichts veröffentlicht.
+name: Icon kompilieren
+on:
+  push:
+    branches: [main]
+    paths: ['release/icon.json']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: icon-compile
+  cancel-in-progress: false
+jobs:
+  icon:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - name: Website-Repository holen
+        uses: actions/checkout@v4
+        with: { path: site }
+      - name: Auftrag lesen
+        id: req
+        run: |
+          f=site/release/icon.json
+          for k in app ref icon; do echo "$k=$(jq -r .$k $f)" >> "$GITHUB_OUTPUT"; done
+      - name: Quellcode holen (privat)
+        uses: actions/checkout@v4
+        with:
+          repository: theisjulian/theis-quelle
+          ref: ${{ steps.req.outputs.ref }}
+          token: ${{ secrets.QUELLE_TOKEN }}
+          path: q
+      - name: Xcode 26 wählen
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1); [ -n "$X" ] && sudo xcode-select -s "$X"
+          xcodebuild -version; sw_vers; xcrun actool --version
+      - name: Kompilieren
+        run: |
+          I="q/${{ steps.req.outputs.icon }}"; N=$(basename "$I" .icon); O=/tmp/out; mkdir -p $O
+          xcrun actool "$I" --compile $O --output-format human-readable-text --notices --warnings --errors \
+            --output-partial-info-plist $O/partial-Info.plist --app-icon "$N" --include-all-app-icons \
+            --enable-on-demand-resources NO --development-region de --target-device mac \
+            --minimum-deployment-target 13.0 --platform macosx | tee $O/actool.txt
+          test -s $O/Assets.car
+          xcrun assetutil --info $O/Assets.car > $O/assetutil.json
+          cat $O/partial-Info.plist; ls -la $O
+      - name: Vorschau (hell / dunkel)
+        run: |
+          I="q/${{ steps.req.outputs.icon }}"; N=$(basename "$I" .icon); O=/tmp/out; A=/tmp/Probe.app/Contents
+          mkdir -p $A/MacOS $A/Resources && cp $O/Assets.car $A/Resources/
+          printf '#!/bin/sh\n' > $A/MacOS/Probe && chmod +x $A/MacOS/Probe
+          plutil -create xml1 $A/Info.plist
+          plutil -insert CFBundleExecutable -string Probe $A/Info.plist
+          plutil -insert CFBundleIdentifier -string de.theisapps.iconprobe.$RANDOM $A/Info.plist
+          plutil -insert CFBundlePackageType -string APPL $A/Info.plist
+          plutil -insert CFBundleIconName -string "$N" $A/Info.plist
+          cat > /tmp/p.swift <<'EOF'
+          import AppKit
+          let img = NSWorkspace.shared.icon(forFile: CommandLine.arguments[1])
+          for (n, a) in [("hell", NSAppearance.Name.aqua), ("dunkel", NSAppearance.Name.darkAqua)] {
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 512, pixelsHigh: 512, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            NSAppearance(named: a)!.performAsCurrentDrawingAppearance {
+              NSGraphicsContext.saveGraphicsState()
+              NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+              img.draw(in: NSRect(x: 0, y: 0, width: 512, height: 512))
+              NSGraphicsContext.restoreGraphicsState()
+            }
+            try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: CommandLine.arguments[2] + "/vorschau-\(n).png"))
+          }
+          EOF
+          swift /tmp/p.swift /tmp/Probe.app $O || echo "Vorschau per AppKit fehlgeschlagen"
+          IC="$(xcode-select -p)/../Applications/Icon Composer.app/Contents/Executables/ictool"
+          if [ -x "$IC" ]; then "$IC" --help > $O/ictool-help.txt 2>&1 || true
+            for R in Default Dark ClearLight ClearDark TintedLight TintedDark; do "$IC" "$I" --export-preview macOS $R 1024 1024 1 0 "$O/ictool-$R.png" >> $O/ictool.txt 2>&1 || true; done
+          else echo "ictool nicht gefunden" > $O/ictool.txt; fi
+          ls -la $O
+      - uses: actions/upload-artifact@v4
+        with:
+          name: icon-${{ steps.req.outputs.app }}
+          path: /tmp/out
+          retention-days: 7
